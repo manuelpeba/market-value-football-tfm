@@ -1,0 +1,21 @@
+project:
+  name: market-value-football-tfm
+  unit_of_analysis: player-season
+
+paths:
+  raw_data: data/raw
+  interim_data: data/interim
+  processed_data: data/processed
+  logs: logs
+
+transfermarkt:
+  raw_dir: data/raw/transfermarkt
+  interim_dir: data/interim/transfermarkt
+  expected_columns:
+    - player_name
+    - season
+    - age
+    - position
+    - club
+    - league
+    - market_value_eur
