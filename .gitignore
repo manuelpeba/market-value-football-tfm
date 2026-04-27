@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Data - evitar subir datasets pesados o sensibles
+data/raw/*
+data/interim/*
+data/processed/*
+data/external/*
+
+# Pero mantener las carpetas
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# Outputs
+reports/figures/*
+reports/tables/*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
