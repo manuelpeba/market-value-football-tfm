@@ -1,7 +1,7 @@
 # Project Status
 
 ## Fecha
-28-04-2026 - Construcción del pipeline completo de ingestión e integración inicial de datos (Transfermarkt + FBref)
+28-04-2026 - Pipeline completo + Feature Engineering + EDA
 
 ---
 
@@ -13,13 +13,15 @@ Desarrollar un sistema reproducible de construcción del dataset jugador-tempora
 
 ## Estado del proyecto
 
-El proyecto ha evolucionado desde la definición de la estructura y el schema objetivo hacia la construcción de un pipeline funcional completo que permite:
+El proyecto ha evolucionado desde la definición del esquema objetivo hacia la construcción de un sistema completo de preparación de datos que permite:
 
 - Ingestar datos desde múltiples fuentes
 - Validar su estructura
 - Analizar su calidad
 - Generar variables derivadas
 - Integrar datasets en un panel jugador-temporada
+- Construir variables explicativas orientadas a modelado
+- Validar el dataset mediante análisis exploratorio (EDA)
 
 ---
 
@@ -28,288 +30,320 @@ El proyecto ha evolucionado desde la definición de la estructura y el schema ob
 ## 1.1 Ingestión de Transfermarkt
 
 Archivo:
-
 - `src/data/ingest_transfermarkt.py`
 
 Funcionalidad:
+- Lectura de datos brutos
+- Validación de esquema
+- Conversión a Parquet
 
-- Lectura de datos brutos desde `data/raw/transfermarkt/`
-- Validación de esquema mínimo
-- Conversión a formato Parquet
-- Almacenamiento en `data/interim/transfermarkt/`
-
-Variables clave:
-
-- `player_name`
-- `season`
-- `age`
-- `position`
-- `club`
-- `league`
-- `market_value_eur`
-
-Rol en el sistema:
-
-- Fuente principal del target (valor de mercado)
+Rol:
+- Fuente del target (`market_value_eur`)
 
 ---
 
 ## 1.2 Profiling de datos
 
 Archivo:
-
 - `src/data/profile_dataset.py`
 
 Funcionalidad:
-
-- Generación automática de informe descriptivo:
-  - Tipos de variables
-  - Valores nulos
-  - Cardinalidad
-  - Ejemplos de valores
-
-Output:
-
-- `reports/tables/transfermarkt_profile.csv`
-
-Conclusión:
-
-- Dataset estructuralmente válido
-- Sin valores nulos en la muestra inicial
+- Análisis descriptivo automático
+- Detección de nulos, tipos y cardinalidad
 
 ---
 
-## 1.3 Control de calidad de datos
+## 1.3 Control de calidad
 
 Archivo:
-
 - `src/data/quality_checks_transfermarkt.py`
 
-Checks implementados:
-
-- Duplicados por `player_name + season`
-- Valores de mercado inválidos (≤ 0)
-- Edades fuera de rango
-- Valores nulos
+Checks:
+- Duplicados
+- Valores inválidos
+- Nulos
 
 Resultado:
-
-```text
-Duplicates: 0
-Invalid market values: 0
-Invalid ages: 0
-Missing values: 0
-```
-
-Interpretación:
-
-* Dataset limpio a nivel estructural
-* Aún no evaluado a nivel semántico
+- Dataset limpio a nivel estructural
 
 ---
 
 ## 1.4 Feature engineering inicial (Transfermarkt)
 
 Archivo:
+- `src/data/build_transfermarkt_features.py`
 
-* `src/data/build_transfermarkt_features.py`
-
-Variables generadas:
-
-* `player_id` (hash de nombre, solución temporal)
-* `season_start_year`
-* `position_group` (GK / DEF / MID / ATT)
-* `log_market_value_eur`
-
-Decisiones clave:
-
-* Transformación logarítmica del valor de mercado para reducir asimetría
-* Reducción de dimensionalidad de posición
-* Creación de identificador interno de jugador
-
-Output:
-
-* `data/processed/transfermarkt_features.parquet`
+Variables:
+- `player_id`
+- `season_start_year`
+- `position_group`
+- `log_market_value_eur`
 
 ---
 
 # 📊 2. Ingestión de FBref
 
-## 2.1 Ingestión de datos de rendimiento
-
 Archivo:
+- `src/data/ingest_fbref.py`
 
-* `src/data/ingest_fbref.py`
+Variables:
+- Métricas por 90 minutos
+- Variables ofensivas, defensivas y de progresión
 
-Funcionalidad:
-
-* Lectura de datos desde `data/raw/fbref/`
-* Validación de esquema
-* Conversión a Parquet
-
-Variables clave:
-
-* `minutes_played`
-* `goals_per90`
-* `assists_per90`
-* `shots_per90`
-* `progressive_passes_per90`
-* `progressive_carries_per90`
-* `tackles_per90`
-* `interceptions_per90`
-
-Rol en el sistema:
-
-* Fuente principal de variables explicativas
-
-Output:
-
-* `data/interim/fbref/fbref_player_standard.parquet`
+Rol:
+- Fuente principal de variables explicativas
 
 ---
 
-# 🔗 3. Integración de datasets (Matching v0)
-
-## 3.1 Construcción del player-season panel
+# 🔗 3. Integración de datos (Matching v0)
 
 Archivo:
+- `src/data/build_player_season_panel.py`
 
-* `src/data/build_player_season_panel.py`
-
-Funcionalidad:
-
-* Integración de Transfermarkt y FBref
-* Creación de dataset final a nivel jugador-temporada
-
-Claves utilizadas para el join:
-
+Join:
 ```text
 normalized_name + season + age
 ```
 
-Preprocesamiento:
-
-* Normalización de nombres (`lowercase + sin tildes`)
-* Homogeneización de columnas
-
----
-
-## 3.2 Variables generadas
+Variables:
 
 * `matching_status`
 * `matching_confidence`
 
-Valores posibles:
+Resultado:
+
+* Matching 100% en dataset de prueba
+
+Output:
+
+* `player_season_panel.parquet`
+
+---
+
+# 📦 4. Feature engineering avanzado
+
+## 4.1 Script principal
+
+Archivo:
+
+* `src/features/build_performance_features.py`
+
+---
+
+## 4.2 Normalización contextual
+
+Se aplica:
 
 ```text
-matched
-unmatched_transfermarkt
-unmatched_fbref
+z-score por:
+- position_group
+- league
+```
+
+Objetivo:
+
+* Comparabilidad entre jugadores
+* Eliminación de sesgos por contexto
+
+---
+
+## 4.3 Variables generadas
+
+### Variables normalizadas
+
+* `z_goals_per90`
+* `z_assists_per90`
+* `z_shots_per90`
+* `z_progressive_passes_per90`
+* `z_progressive_carries_per90`
+* `z_tackles_per90`
+* `z_interceptions_per90`
+
+---
+
+### Índices de rendimiento
+
+* `finishing_index`
+* `playmaking_index`
+* `progression_index`
+* `defensive_index`
+
+---
+
+### Variables de control
+
+* `minutes_bucket`
+* `is_low_minutes`
+
+---
+
+## 4.4 Output final
+
+```text
+data/processed/player_season_features.parquet
 ```
 
 ---
 
-## 3.3 Resultados
+## 4.5 Observación importante
+
+En el dataset de prueba:
 
 ```text
-Rows: 3
-Columns: 26
-```
-
-Distribución:
-
-```text
-matched: 3
-unmatched_transfermarkt: 0
-unmatched_fbref: 0
+std ≈ 0 en índices
 ```
 
 Interpretación:
 
-* Matching perfecto en dataset de prueba (100%)
-* Validación del pipeline completo de integración
-
-Output:
-
-* `data/processed/player_season_panel.parquet`
+* Limitación del tamaño de muestra
+* Comportamiento esperado, no error metodológico
 
 ---
 
-# ⚠️ 4. Limitaciones del matching v0
+# 📊 5. Análisis exploratorio (EDA)
 
-El enfoque actual presenta limitaciones importantes:
+## 5.1 Notebook
 
-## Problemas potenciales:
+Archivo:
 
-* Variaciones en nombres (acentos, abreviaturas)
-* Jugadores con nombres idénticos
-* Diferencias entre fuentes
-* Cambios de club dentro de la temporada
-* Inconsistencias en edad
-
-## Conclusión:
-
-El matching implementado es una **baseline funcional**, pero no escalable a datos reales.
+* `notebooks/01_data_understanding.ipynb`
 
 ---
 
-# 🧠 5. Decisiones metodológicas clave
+## 5.2 Objetivo
 
-1. La unidad de análisis es jugador-temporada
-2. Transfermarkt define el target del modelo
-3. FBref define las variables explicativas
-4. Se separan claramente las fases:
-
-   * raw → ingestión
-   * interim → validación
-   * processed → modelado
-5. Se introduce el concepto de:
-
-   * `matching_confidence`
-6. Se prioriza trazabilidad y reproducibilidad del pipeline
+* Validar dataset integrado
+* Analizar calidad de datos
+* Explorar distribución de variables
+* Verificar coherencia del feature engineering
 
 ---
 
-# 🚀 6. Estado actual del proyecto
+## 5.3 Resultados principales
 
-Se ha completado el primer ciclo completo de CRISP-DM:
+### Calidad de datos
 
-✔ Comprensión de datos
-✔ Preparación inicial de datos
-✔ Integración multi-fuente
+* Sin valores nulos
+* Sin duplicados
+* Dataset consistente
 
-El proyecto ya dispone de un:
+---
+
+### Matching
+
+* `matching_status = matched`
+* `matching_confidence = 1.0`
+
+---
+
+### Target
+
+* Alta dispersión en `market_value_eur`
+* Transformación log adecuada
+
+---
+
+### Variables de rendimiento
+
+* Variabilidad entre perfiles
+* Necesidad de normalización confirmada
+
+---
+
+### Índices
+
+* Valores constantes debido a muestra pequeña
+
+---
+
+## 5.4 Conclusión EDA
+
+* Pipeline validado
+* Dataset coherente
+* Base lista para modelado
+
+Limitación:
+
+* Dataset de prueba no permite inferencia real
+
+---
+
+# ⚠️ 6. Limitaciones actuales
+
+* Tamaño reducido del dataset
+* Matching simplificado (v0)
+* Falta de variables avanzadas (xG, eventos)
+* Sin ajuste por fuerza de liga
+* Baja variabilidad en features derivadas
+
+---
+
+# 🧠 7. Decisiones metodológicas clave
+
+1. Unidad de análisis: jugador-temporada
+2. Uso de logaritmo en variable objetivo
+3. Separación estricta de capas de datos
+4. Normalización por contexto competitivo
+5. Construcción de índices interpretables
+6. Introducción de métricas de calidad de matching
+
+---
+
+# 🚀 8. Estado actual del proyecto
+
+El proyecto ha completado:
+
+✔ Data ingestion
+✔ Data validation
+✔ Data integration
+✔ Feature engineering
+✔ Data understanding (EDA)
+
+El sistema dispone de un:
 
 ```text
-Dataset integrado jugador-temporada listo para análisis
+Dataset listo para modelado econométrico
 ```
 
 ---
 
-# 🎯 7. Próximos pasos
+# 📈 9. Próximo paso
+
+Construcción de modelo baseline:
+
+```text
+log_market_value ~ performance + controls
+```
+
+Objetivo:
+
+* Estimar valor esperado
+* Detectar ineficiencias de mercado
+
+---
+
+# 🎯 10. Próximos pasos
 
 ## Corto plazo
 
-* Mejorar el matching (fuzzy matching + scoring)
-* Incorporar Understat (xG, xA)
-* Ampliar cobertura de datos
+* Modelo baseline
+* Evaluación de variables
+* Mejora del matching
 
 ## Medio plazo
 
-* Feature engineering avanzado:
-
-  * índices de rendimiento
-  * normalización por posición y liga
-* Construcción del modelo de valor de mercado
+* Variables categóricas (liga, posición)
+* Modelos no lineales
+* Understat (xG, xA)
 
 ## Largo plazo
 
-* Modelo de crecimiento (Growth Score)
-* Construcción del Inefficiency Score
-* Generación de rankings de jugadores
+* Growth model
+* Inefficiency Score
+* Ranking de jugadores
 
 ---
 
 ## Conclusión
 
-Se ha establecido una base técnica sólida y reproducible que permite evolucionar el sistema hacia fases más avanzadas de modelado y análisis, manteniendo coherencia metodológica y alineación con los objetivos de negocio del proyecto.
+Se ha construido una base técnica sólida, reproducible y alineada con el objetivo del proyecto, permitiendo avanzar hacia la fase de modelado con un dataset estructurado, validado y enriquecido mediante variables de rendimiento contextualizadas.
