@@ -1,151 +1,315 @@
 # Project Status
 
 ## Fecha
-Inicio del proyecto y construcción del pipeline inicial de datos. 27/04/2026
+28-04-2026 - Construcción del pipeline completo de ingestión e integración inicial de datos (Transfermarkt + FBref)
+
+---
 
 ## Objetivo actual
-Construir la base técnica y metodológica del dataset inicial del TFM antes de descargar o limpiar datos reales, definiendo una estructura reproducible para un panel jugador-temporada.
 
-## Estructura inicial del proyecto
-Se ha creado una estructura de repositorio orientada a reproducibilidad:
+Desarrollar un sistema reproducible de construcción del dataset jugador-temporada, integrando múltiples fuentes de datos y estableciendo las bases para el modelado del valor de mercado.
 
-- `data/raw/`: datos originales sin modificar.
-- `data/interim/`: datos validados o transformados parcialmente.
-- `data/processed/`: datasets preparados para análisis/modelado.
-- `src/data/`: scripts reutilizables de ingestión, validación, profiling, calidad y feature engineering.
-- `config/`: configuración del proyecto.
-- `reports/tables/`: salidas tabulares de análisis descriptivo.
-- `docs/`: documentación metodológica y decisiones de diseño.
+---
 
-## Dataset objetivo
-Se ha definido como unidad de análisis principal:
+## Estado del proyecto
 
-- `player_id`
-- `season`
+El proyecto ha evolucionado desde la definición de la estructura y el schema objetivo hacia la construcción de un pipeline funcional completo que permite:
 
-Cada fila representa un jugador en una temporada concreta.
+- Ingestar datos desde múltiples fuentes
+- Validar su estructura
+- Analizar su calidad
+- Generar variables derivadas
+- Integrar datasets en un panel jugador-temporada
 
-## Pipeline inicial construido
+---
 
-### 1. Validación de esquema
-Archivo:
+# 🧱 1. Pipeline de datos construido
 
-- `src/data/validate_schema.py`
+## 1.1 Ingestión de Transfermarkt
 
-Función:
-- Validar que el dataset de Transfermarkt contiene las columnas mínimas necesarias:
-  - `player_name`
-  - `season`
-  - `age`
-  - `position`
-  - `club`
-  - `league`
-  - `market_value_eur`
-
-### 2. Ingestión de Transfermarkt
 Archivo:
 
 - `src/data/ingest_transfermarkt.py`
 
-Función:
-- Leer un CSV bruto desde `data/raw/transfermarkt/`.
-- Validar el esquema mínimo.
-- Guardar el resultado en formato Parquet dentro de `data/interim/transfermarkt/`.
+Funcionalidad:
 
-Comando probado:
+- Lectura de datos brutos desde `data/raw/transfermarkt/`
+- Validación de esquema mínimo
+- Conversión a formato Parquet
+- Almacenamiento en `data/interim/transfermarkt/`
 
-```bash
-python -m src.data.ingest_transfermarkt --input data/raw/transfermarkt/sample_transfermarkt.csv
-```
+Variables clave:
 
-Resultado:
+- `player_name`
+- `season`
+- `age`
+- `position`
+- `club`
+- `league`
+- `market_value_eur`
 
-* 3 filas.
-* 7 columnas.
-* Dataset generado correctamente en `data/interim/transfermarkt/transfermarkt_player_market_values.parquet`.
+Rol en el sistema:
 
-### 3. Profiling automático
+- Fuente principal del target (valor de mercado)
 
-Archivo:
+---
 
-* `src/data/profile_dataset.py`
-
-Función:
-
-* Generar un resumen descriptivo automático del dataset:
-
-  * tipos de datos
-  * nulos
-  * porcentaje de nulos
-  * cardinalidad
-  * valores de ejemplo
-
-Comando probado:
-
-```bash
-python -m src.data.profile_dataset --input data/interim/transfermarkt/transfermarkt_player_market_values.parquet --output reports/tables/transfermarkt_profile.csv
-```
-
-Resultado:
-
-* Dataset con 3 filas y 7 columnas.
-* Sin nulos.
-* Tipos detectados correctamente.
-
-### 4. Quality checks iniciales
+## 1.2 Profiling de datos
 
 Archivo:
 
-* `src/data/quality_checks_transfermarkt.py`
+- `src/data/profile_dataset.py`
 
-Función:
+Funcionalidad:
 
-* Detectar duplicados por `player_name + season`.
-* Detectar valores de mercado inválidos.
-* Detectar edades fuera de rango.
-* Detectar valores nulos.
+- Generación automática de informe descriptivo:
+  - Tipos de variables
+  - Valores nulos
+  - Cardinalidad
+  - Ejemplos de valores
 
-Comando probado:
+Output:
 
-```bash
-python -m src.data.quality_checks_transfermarkt --input data/interim/transfermarkt/transfermarkt_player_market_values.parquet
-```
+- `reports/tables/transfermarkt_profile.csv`
+
+Conclusión:
+
+- Dataset estructuralmente válido
+- Sin valores nulos en la muestra inicial
+
+---
+
+## 1.3 Control de calidad de datos
+
+Archivo:
+
+- `src/data/quality_checks_transfermarkt.py`
+
+Checks implementados:
+
+- Duplicados por `player_name + season`
+- Valores de mercado inválidos (≤ 0)
+- Edades fuera de rango
+- Valores nulos
 
 Resultado:
 
-* Duplicados: 0.
-* Valores de mercado inválidos: 0.
-* Edades inválidas: 0.
-* Nulos: 0.
+```text
+Duplicates: 0
+Invalid market values: 0
+Invalid ages: 0
+Missing values: 0
+```
 
-### 5. Feature engineering inicial
+Interpretación:
+
+* Dataset limpio a nivel estructural
+* Aún no evaluado a nivel semántico
+
+---
+
+## 1.4 Feature engineering inicial (Transfermarkt)
 
 Archivo:
 
 * `src/data/build_transfermarkt_features.py`
 
-Función:
+Variables generadas:
 
-* Crear primeras variables derivadas:
+* `player_id` (hash de nombre, solución temporal)
+* `season_start_year`
+* `position_group` (GK / DEF / MID / ATT)
+* `log_market_value_eur`
 
-  * `player_id`
-  * `season_start_year`
-  * `position_group`
-  * `log_market_value_eur`
+Decisiones clave:
 
-Estas variables son necesarias para avanzar hacia el dataset de modelización.
+* Transformación logarítmica del valor de mercado para reducir asimetría
+* Reducción de dimensionalidad de posición
+* Creación de identificador interno de jugador
 
-## Decisiones metodológicas tomadas
+Output:
 
-1. La unidad de análisis será jugador-temporada.
-2. El valor de mercado se modelará preferentemente en escala logarítmica.
-3. Se mantendrá separación estricta entre datos brutos, intermedios y procesados.
-4. `player_name` no se considera identificador fiable; se requiere `player_id`.
-5. La variable `season` se mantendrá como string, pero se creará `season_start_year` para análisis temporal.
-6. La posición detallada se agrupará en `position_group`: GK, DEF, MID, ATT.
-7. Transfermarkt será la fuente principal para el target de valor de mercado.
-8. FBref será la fuente principal futura para variables explicativas de rendimiento.
+* `data/processed/transfermarkt_features.parquet`
 
-## Próximo paso
+---
 
-Construir el pipeline de ingestión de FBref y diseñar el proceso de matching entre Transfermarkt y FBref, que será una de las partes críticas del proyecto.
+# 📊 2. Ingestión de FBref
+
+## 2.1 Ingestión de datos de rendimiento
+
+Archivo:
+
+* `src/data/ingest_fbref.py`
+
+Funcionalidad:
+
+* Lectura de datos desde `data/raw/fbref/`
+* Validación de esquema
+* Conversión a Parquet
+
+Variables clave:
+
+* `minutes_played`
+* `goals_per90`
+* `assists_per90`
+* `shots_per90`
+* `progressive_passes_per90`
+* `progressive_carries_per90`
+* `tackles_per90`
+* `interceptions_per90`
+
+Rol en el sistema:
+
+* Fuente principal de variables explicativas
+
+Output:
+
+* `data/interim/fbref/fbref_player_standard.parquet`
+
+---
+
+# 🔗 3. Integración de datasets (Matching v0)
+
+## 3.1 Construcción del player-season panel
+
+Archivo:
+
+* `src/data/build_player_season_panel.py`
+
+Funcionalidad:
+
+* Integración de Transfermarkt y FBref
+* Creación de dataset final a nivel jugador-temporada
+
+Claves utilizadas para el join:
+
+```text
+normalized_name + season + age
+```
+
+Preprocesamiento:
+
+* Normalización de nombres (`lowercase + sin tildes`)
+* Homogeneización de columnas
+
+---
+
+## 3.2 Variables generadas
+
+* `matching_status`
+* `matching_confidence`
+
+Valores posibles:
+
+```text
+matched
+unmatched_transfermarkt
+unmatched_fbref
+```
+
+---
+
+## 3.3 Resultados
+
+```text
+Rows: 3
+Columns: 26
+```
+
+Distribución:
+
+```text
+matched: 3
+unmatched_transfermarkt: 0
+unmatched_fbref: 0
+```
+
+Interpretación:
+
+* Matching perfecto en dataset de prueba (100%)
+* Validación del pipeline completo de integración
+
+Output:
+
+* `data/processed/player_season_panel.parquet`
+
+---
+
+# ⚠️ 4. Limitaciones del matching v0
+
+El enfoque actual presenta limitaciones importantes:
+
+## Problemas potenciales:
+
+* Variaciones en nombres (acentos, abreviaturas)
+* Jugadores con nombres idénticos
+* Diferencias entre fuentes
+* Cambios de club dentro de la temporada
+* Inconsistencias en edad
+
+## Conclusión:
+
+El matching implementado es una **baseline funcional**, pero no escalable a datos reales.
+
+---
+
+# 🧠 5. Decisiones metodológicas clave
+
+1. La unidad de análisis es jugador-temporada
+2. Transfermarkt define el target del modelo
+3. FBref define las variables explicativas
+4. Se separan claramente las fases:
+
+   * raw → ingestión
+   * interim → validación
+   * processed → modelado
+5. Se introduce el concepto de:
+
+   * `matching_confidence`
+6. Se prioriza trazabilidad y reproducibilidad del pipeline
+
+---
+
+# 🚀 6. Estado actual del proyecto
+
+Se ha completado el primer ciclo completo de CRISP-DM:
+
+✔ Comprensión de datos
+✔ Preparación inicial de datos
+✔ Integración multi-fuente
+
+El proyecto ya dispone de un:
+
+```text
+Dataset integrado jugador-temporada listo para análisis
+```
+
+---
+
+# 🎯 7. Próximos pasos
+
+## Corto plazo
+
+* Mejorar el matching (fuzzy matching + scoring)
+* Incorporar Understat (xG, xA)
+* Ampliar cobertura de datos
+
+## Medio plazo
+
+* Feature engineering avanzado:
+
+  * índices de rendimiento
+  * normalización por posición y liga
+* Construcción del modelo de valor de mercado
+
+## Largo plazo
+
+* Modelo de crecimiento (Growth Score)
+* Construcción del Inefficiency Score
+* Generación de rankings de jugadores
+
+---
+
+## Conclusión
+
+Se ha establecido una base técnica sólida y reproducible que permite evolucionar el sistema hacia fases más avanzadas de modelado y análisis, manteniendo coherencia metodológica y alineación con los objetivos de negocio del proyecto.
