@@ -149,4 +149,3 @@ Estas variables son necesarias para avanzar hacia el dataset de modelización.
 ## Próximo paso
 
 Construir el pipeline de ingestión de FBref y diseñar el proceso de matching entre Transfermarkt y FBref, que será una de las partes críticas del proyecto.
-EOF

@@ -43,3 +43,33 @@ def load_and_validate_transfermarkt(path: str | Path) -> pd.DataFrame:
     validate_transfermarkt_schema(df)
 
     return df
+
+REQUIRED_FBREF_COLUMNS = [
+    "player_name",
+    "season",
+    "age",
+    "squad",
+    "league",
+    "position",
+    "minutes_played",
+]
+
+
+def validate_fbref_schema(df: pd.DataFrame) -> None:
+    validate_not_empty(df)
+    validate_required_columns(df, REQUIRED_FBREF_COLUMNS)
+
+
+def load_and_validate_fbref(path: str | Path) -> pd.DataFrame:
+    path = Path(path)
+
+    if path.suffix == ".csv":
+        df = pd.read_csv(path)
+    elif path.suffix == ".parquet":
+        df = pd.read_parquet(path)
+    else:
+        raise ValueError(f"Unsupported file format: {path.suffix}")
+
+    validate_fbref_schema(df)
+
+    return df
