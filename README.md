@@ -1,45 +1,52 @@
-# Market Value Dynamics and Inefficiency in European Football Transfers
+# ⚽ Market Value Dynamics & Inefficiency in European Football Transfers
 
-TFM - Máster en Data Science
-
----
-
-## 🎯 Objetivo del proyecto
-
-El objetivo de este proyecto es desarrollar un sistema analítico que permita identificar jugadores infravalorados en el mercado de fichajes europeo, mediante la estimación del valor de mercado esperado y su evolución futura.
-
-El sistema busca apoyar la toma de decisiones en departamentos deportivos, permitiendo:
-
-- Identificar oportunidades de fichaje (buy low)
-- Optimizar inversiones en transferencias
-- Reducir el riesgo económico en el mercado
+Sistema de analítica avanzada para identificar jugadores infravalorados en el mercado de fichajes europeo mediante econometría y machine learning.
 
 ---
 
-## 🧠 Enfoque metodológico
+## 🎯 Problema de negocio
 
-El proyecto sigue una adaptación del framework **CRISP-DM**:
+El mercado de fichajes en el fútbol profesional presenta ineficiencias derivadas de:
 
-1. Comprensión del negocio
-2. Comprensión de los datos
-3. Preparación de los datos
-4. Modelado
-5. Evaluación
-6. Despliegue (conceptual)
+- Asimetrías de información
+- Sesgos en la evaluación del talento
+- Diferencias estructurales entre ligas
 
----
-
-## 🧱 Unidad de análisis
+Esto genera oportunidades de inversión para clubes capaces de detectar discrepancias entre:
 
 ```text
-Jugador - Temporada (player-season)
+Valor de mercado observado vs Valor real del jugador
 ```
 
-Cada fila del dataset representa:
+---
 
-* Un jugador
-* En una temporada concreta
-* Con variables de mercado, rendimiento y contexto
+## 🧠 Solución propuesta
+
+Se desarrolla un sistema analítico que permite:
+
+* Estimar el valor de mercado esperado de un jugador
+* Predecir su evolución futura
+* Detectar oportunidades de fichaje
+
+### 🎯 Outputs clave
+
+* **Inefficiency Score** → jugadores infravalorados
+* **Growth Score** → potencial de revalorización
+* **Confidence Score** → fiabilidad de la estimación
+
+---
+
+## 📊 Unidad de análisis
+
+```text
+Jugador – Temporada (player-season)
+```
+
+Dataset estructurado como panel longitudinal, adecuado para:
+
+* Modelos econométricos
+* Machine Learning supervisado
+* Análisis de evolución temporal
 
 ---
 
@@ -49,38 +56,35 @@ Cada fila del dataset representa:
 
 * Valor de mercado (target)
 * Edad, club, posición
-* Historial de mercado
+* Historial de fichajes
 
 ### FBref
 
 * Métricas de rendimiento por 90 minutos
 * Variables ofensivas, defensivas y de posesión
 
-### (Futuro)
+### (Próximamente)
 
 * Understat → xG, xA
-* StatsBomb Open Data → eventos avanzados
+* StatsBomb → eventos avanzados
 
 ---
 
 ## ⚙️ Arquitectura del proyecto
 
-```text
+```
 data/
   raw/        → datos originales
   interim/    → datos validados
-  processed/  → datasets listos para modelado
+  processed/  → dataset final para modelado
 
 src/
-  data/       → ingestión, validación, matching
+  data/       → ingestión y validación
   features/   → feature engineering
-  models/     → modelos econométricos / ML
+  models/     → modelos (en desarrollo)
 
 notebooks/
   → análisis exploratorio (EDA)
-
-reports/
-  → outputs tabulares y resultados
 
 docs/
   → decisiones metodológicas
@@ -88,160 +92,56 @@ docs/
 
 ---
 
-## 🔄 Pipeline de datos implementado
+## 🔄 Pipeline de datos
 
-### 1. Ingestión de datos
+### 1. Ingestión
 
-Scripts:
+* Transfermarkt
+* FBref
 
-* `ingest_transfermarkt.py`
-* `ingest_fbref.py`
+### 2. Validación
 
-Funcionalidad:
+* Esquema
+* Calidad de datos (nulos, duplicados)
 
-* Lectura de datos brutos
-* Validación de esquema
-* Conversión a formato Parquet
+### 3. Integración
 
----
+* Matching multi-fuente (player-season)
 
-### 2. Validación y calidad de datos
+### 4. Feature engineering
 
-Scripts:
-
-* `validate_schema.py`
-* `quality_checks_transfermarkt.py`
-* `profile_dataset.py`
-
-Incluye:
-
-* Validación de columnas
-* Detección de nulos
-* Duplicados
-* Valores inválidos
-* Profiling automático
-
----
-
-### 3. Feature engineering (Transfermarkt)
-
-Script:
-
-* `build_transfermarkt_features.py`
-
-Variables creadas:
-
-* `player_id` (identificador interno)
-* `season_start_year`
-* `position_group` (GK / DEF / MID / ATT)
-* `log_market_value_eur`
-
----
-
-### 4. Integración de fuentes (Matching v0)
-
-Script:
-
-* `build_player_season_panel.py`
-
-Join basado en:
-
-```text
-normalized_name + season + age
-```
-
-Output:
-
-```text
-player_season_panel.parquet
-```
-
-Incluye:
-
-* `matching_status`
-* `matching_confidence`
-
----
-
-### 5. Feature engineering de rendimiento
-
-Script:
-
-* `build_performance_features.py`
-
-Incluye:
-
-#### Normalización (clave del proyecto)
+#### Normalización contextual (clave)
 
 ```text
 z-score por:
-- position_group
-- league
+- posición
+- liga
 ```
 
-#### Variables generadas
+#### Índices construidos
 
-* `z_goals_per90`
-* `z_assists_per90`
-* `z_progressive_passes_per90`
-* ...
-
-#### Índices de scouting
-
-* `finishing_index`
-* `playmaking_index`
-* `progression_index`
-* `defensive_index`
-
-#### Variables de control
-
-* `minutes_bucket`
-* `is_low_minutes`
-
-Output final:
-
-```text
-data/processed/player_season_features.parquet
-```
+* finishing_index
+* playmaking_index
+* progression_index
+* defensive_index
 
 ---
 
-## 📈 Estado actual del proyecto
+## 📈 Estado del proyecto
 
-Se ha completado:
+### ✅ Completado
 
-* ✔ Pipeline completo de datos
-* ✔ Integración multi-fuente (Transfermarkt + FBref)
-* ✔ Matching inicial (v0)
-* ✔ Feature engineering avanzado
-* ✔ Dataset listo para modelado
-* ✔ Análisis exploratorio inicial (EDA)
+* Pipeline de datos reproducible
+* Integración multi-fuente
+* Feature engineering avanzado
+* Dataset listo para modelado
+* EDA inicial
 
----
-
-## 📊 Análisis exploratorio (EDA)
-
-Notebook:
-
-* `notebooks/01_data_understanding.ipynb`
-
-Incluye:
-
-* Validación del dataset
-* Distribución del target
-* Análisis por posición y liga
-* Evaluación de minutos jugados
-* Revisión de métricas de rendimiento
-* Validación de índices construidos
-
----
-
-## ⚠️ Limitaciones actuales
+### ⚠️ Limitaciones actuales
 
 * Dataset de prueba reducido
 * Matching simplificado (v0)
-* Falta de variables avanzadas (xG, eventos)
-* Sin ajuste aún por fuerza de liga
+* Falta de métricas avanzadas (xG, eventos)
 
 ---
 
@@ -249,45 +149,57 @@ Incluye:
 
 ### Corto plazo
 
-* Mejorar matching (fuzzy matching + scoring)
-* Incorporar Understat (xG, xA)
+* Modelo baseline (regresión)
+* Evaluación de variables
 
 ### Medio plazo
 
-* Modelo baseline de valor de mercado
-* Incorporación de variables categóricas (liga, posición)
-* Modelado no lineal (edad²)
+* Modelos ML (Random Forest, XGBoost)
+* Variables no lineales
 
 ### Largo plazo
 
-* Modelo de crecimiento (Growth Score)
-* Cálculo del Inefficiency Score
-* Ranking de jugadores infravalorados
+* Growth model
+* Inefficiency Score
+* Ranking final de jugadores
 
 ---
 
-## 🎯 Output esperado
+## 📦 Versionado
 
-El sistema generará:
+### v0.1-data-pipeline
 
-```text
-Inefficiency Score → jugadores infravalorados
-Growth Score → potencial de revalorización
-Confidence Score → fiabilidad del modelo
-```
+Primer snapshot estable del sistema:
+
+* Pipeline de datos completo
+* Feature engineering implementado
+* Dataset listo para modelado
 
 ---
 
 ## 🧪 Reproducibilidad
 
-Ejemplo de ejecución del pipeline:
+Ejemplo de ejecución:
 
 ```bash
-python -m src.data.ingest_transfermarkt ...
-python -m src.data.ingest_fbref ...
-python -m src.data.build_player_season_panel ...
-python -m src.features.build_performance_features ...
+python -m src.data.ingest_transfermarkt
+python -m src.data.ingest_fbref
+python -m src.data.build_player_season_panel
+python -m src.features.build_performance_features
 ```
+
+---
+
+## 🧠 Enfoque metodológico
+
+El proyecto sigue una adaptación de **CRISP-DM**:
+
+1. Comprensión de negocio
+2. Comprensión de datos
+3. Preparación de datos
+4. Modelado
+5. Evaluación
+6. Despliegue
 
 ---
 
