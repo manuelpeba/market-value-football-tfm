@@ -1,118 +1,94 @@
 from pathlib import Path
-import argparse
 import pandas as pd
-from unidecode import unidecode
-from rapidfuzz import fuzz
+from rapidfuzz import process, fuzz
 
+from src.data.name_normalization import normalize_name
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def normalize_name(name: str) -> str:
-    """Normalize player names to improve matching across sources."""
-    return unidecode(str(name)).lower().strip()
+def load_data():
+    fbref = pd.read_parquet(ROOT / "data/processed/fbref_features.parquet")
+    tm = pd.read_parquet(ROOT / "data/processed/transfermarkt_features.parquet")
+
+    return fbref, tm
 
 
-def load_parquet(path: str) -> pd.DataFrame:
-    """Load a parquet file from project root."""
-    return pd.read_parquet(ROOT / path)
+def prepare_data(fbref, tm):
+    fbref["player_name_norm"] = fbref["player_name"].apply(normalize_name)
+    tm["player_name_norm"] = tm["player_name_norm"]  # ya viene normalizado
+
+    return fbref, tm
 
 
-def compute_name_similarity(name_tm: str, name_fbref: str) -> float:
-    """Compute fuzzy similarity between normalized player names."""
-    return fuzz.token_sort_ratio(str(name_tm), str(name_fbref)) / 100.0
-
-
-def build_matching_status(row: pd.Series) -> str:
-    """Assign matching status based on merge result."""
-    if row["_merge"] == "both":
-        return "matched"
-    if row["_merge"] == "left_only":
-        return "unmatched_transfermarkt"
-    if row["_merge"] == "right_only":
-        return "unmatched_fbref"
-    return "unknown"
-
-
-def build_panel(
-    transfermarkt_path: str,
-    fbref_path: str,
-    output_path: str,
-) -> Path:
-    tm = load_parquet(transfermarkt_path)
-    fb = load_parquet(fbref_path)
-
-    tm = tm.copy()
-    fb = fb.copy()
-
-    # Normalize names for exact baseline matching
-    tm["normalized_name"] = tm["player_name"].apply(normalize_name)
-    fb["normalized_name"] = fb["player_name"].apply(normalize_name)
-
-    panel = tm.merge(
-        fb,
-        how="outer",
-        on=["normalized_name", "season", "age"],
-        suffixes=("_tm", "_fbref"),
-        indicator=True,
+def exact_matching(fbref, tm):
+    df = fbref.merge(
+        tm,
+        on=["player_name_norm", "season"],
+        how="left",
+        suffixes=("_fbref", "_tm")
     )
 
-    panel["matching_status"] = panel.apply(build_matching_status, axis=1)
+    df["matching_method"] = "exact"
+    df["matching_confidence"] = df["market_value_eur"].notna().astype(float)
 
-    # Name similarity is 1.0 for exact normalized joins.
-    # Kept as explicit variable to support future fuzzy matching v1.
-    panel["name_similarity"] = panel.apply(
-        lambda row: compute_name_similarity(
-            row.get("player_name_tm", ""),
-            row.get("player_name_fbref", ""),
+    return df
+
+
+def fuzzy_matching(df, tm):
+    unmatched = df[df["market_value_eur"].isna()].copy()
+
+    candidates = tm["player_name_norm"].unique()
+
+    def match(row):
+        name = row["player_name_norm"]
+        season = row["season"]
+
+        best_match, score, _ = process.extractOne(
+            name,
+            candidates,
+            scorer=fuzz.token_sort_ratio
         )
-        if row["_merge"] == "both"
-        else 0.0,
-        axis=1,
-    )
 
-    # Matching confidence v0:
-    # - exact matched records receive similarity-based confidence
-    # - unmatched records receive 0
-    panel["matching_confidence"] = panel.apply(
-        lambda row: row["name_similarity"] if row["_merge"] == "both" else 0.0,
-        axis=1,
-    )
+        if score >= 90:
+            tm_match = tm[
+                (tm["player_name_norm"] == best_match) &
+                (tm["season"] == season)
+            ]
 
-    panel = panel.drop(columns=["_merge"])
+            if len(tm_match) > 0:
+                return pd.Series([
+                    tm_match.iloc[0]["market_value_eur"],
+                    "fuzzy",
+                    score / 100
+                ])
 
-    output = ROOT / output_path
-    output.parent.mkdir(parents=True, exist_ok=True)
-    panel.to_parquet(output, index=False)
+        return pd.Series([None, None, 0])
 
-    print("Player-season panel built")
-    print(f"Rows: {len(panel):,}")
-    print(f"Columns: {len(panel.columns):,}")
-    print("\nMatching status:")
-    print(panel["matching_status"].value_counts(dropna=False))
-    print("\nMatching confidence:")
-    print(panel["matching_confidence"].describe())
-    print(f"\nOutput: {output}")
+    unmatched[["market_value_eur", "matching_method", "matching_confidence"]] = \
+        unmatched.apply(match, axis=1)
 
-    return output
+    df.update(unmatched)
+
+    return df
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--transfermarkt", required=True)
-    parser.add_argument("--fbref", required=True)
-    parser.add_argument(
-        "--output",
-        default="data/processed/player_season_panel.parquet",
-    )
-    args = parser.parse_args()
+def build_panel():
+    fbref, tm = load_data()
+    fbref, tm = prepare_data(fbref, tm)
 
-    build_panel(
-        transfermarkt_path=args.transfermarkt,
-        fbref_path=args.fbref,
-        output_path=args.output,
-    )
+    df = exact_matching(fbref, tm)
+    df = fuzzy_matching(df, tm)
+
+    df["matching_status"] = df["market_value_eur"].notna()
+
+    output_path = ROOT / "data/processed/player_season_panel.parquet"
+    df.to_parquet(output_path, index=False)
+
+    print("Panel construido")
+    print(f"Rows: {len(df):,}")
+    print(f"Match rate: {df['matching_status'].mean():.2%}")
 
 
 if __name__ == "__main__":
-    main()
+    build_panel()
