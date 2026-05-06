@@ -99,3 +99,18 @@ htmlcov/
 # =========================
 tmp/
 temp/
+
+# =========================
+# Artifacts
+# =========================
+artifacts/models/*
+artifacts/scalers/*
+artifacts/encoders/*
+artifacts/feature_importance/*
+artifacts/predictions/*
+
+!artifacts/models/.gitkeep
+!artifacts/scalers/.gitkeep
+!artifacts/encoders/.gitkeep
+!artifacts/feature_importance/.gitkeep
+!artifacts/predictions/.gitkeep
