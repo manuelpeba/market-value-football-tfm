@@ -114,3 +114,14 @@ artifacts/predictions/*
 !artifacts/encoders/.gitkeep
 !artifacts/feature_importance/.gitkeep
 !artifacts/predictions/.gitkeep
+
+# =========================
+# Reports
+# =========================
+reports/rankings/*
+reports/scouting_reports/*
+reports/model_diagnostics/*
+
+!reports/rankings/.gitkeep
+!reports/scouting_reports/.gitkeep
+!reports/model_diagnostics/.gitkeep
