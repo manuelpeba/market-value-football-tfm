@@ -39,6 +39,25 @@ def run_ml_pipeline():
     print(f"Rows after feature preparation: {len(df_model):,}")
     print(f"Features: {X.shape[1]:,}")
 
+    # Temporal split
+    train_mask = (
+        df_model["season_start_year"] <= 2023
+    )
+
+    test_mask = (
+        df_model["season_start_year"] == 2024
+    )
+
+    X_train = X.loc[train_mask]
+    y_train = y.loc[train_mask]
+
+    X_test = X.loc[test_mask]
+    y_test = y.loc[test_mask]
+
+    print("\nTemporal split:")
+    print(f"Train rows: {len(X_train):,}")
+    print(f"Test rows: {len(X_test):,}")
+
     models = build_ml_models()
 
     results = []
@@ -47,12 +66,12 @@ def run_ml_pipeline():
 
         print(f"\nTraining {model_name}...")
 
-        model.fit(X, y)
+        model.fit(X_train, y_train)
 
-        predictions = model.predict(X)
+        predictions = model.predict(X_test)
 
         metrics = regression_metrics(
-            y_true=y,
+            y_true=y_test,
             y_pred=predictions,
             model_name=model_name,
         )
