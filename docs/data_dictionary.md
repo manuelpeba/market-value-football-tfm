@@ -1,347 +1,534 @@
-# Data Dictionary
+# 📘 Data Dictionary
 
-## Dataset principal: `player_season_modeling.parquet`
+---
 
-Unidad de análisis:
+# 📑 Tabla de contenidos
+
+- [🧠 Descripción general](#-descripción-general)
+- [⚙️ Unidad de análisis](#️-unidad-de-análisis)
+- [🏗️ Arquitectura conceptual del dataset](#️-arquitectura-conceptual-del-dataset)
+- [🔑 Variables de identificación](#-variables-de-identificación)
+- [📚 Variables temporales](#-variables-temporales)
+- [🌍 Variables contextuales](#-variables-contextuales)
+- [👤 Variables demográficas](#-variables-demográficas)
+- [💰 Variables de mercado](#-variables-de-mercado)
+- [📈 Variables deportivas actualmente implementadas](#-variables-deportivas-actualmente-implementadas)
+- [🚀 Variables deportivas previstas](#-variables-deportivas-previstas)
+- [📊 Variables derivadas](#-variables-derivadas)
+- [🏷️ Variables categóricas](#️-variables-categóricas)
+- [⚠️ Variables de matching y calidad](#️-variables-de-matching-y-calidad)
+- [📈 Variables econométricas](#-variables-econométricas)
+- [🤖 Variables Machine Learning](#-variables-machine-learning)
+- [💡 Variables de scoring](#-variables-de-scoring)
+- [⏳ Variables de validación temporal](#-variables-de-validación-temporal)
+- [📤 Outputs generados](#-outputs-generados)
+- [🚨 Variables excluidas por leakage](#-variables-excluidas-por-leakage)
+- [📚 Relación conceptual entre variables](#-relación-conceptual-entre-variables)
+- [📊 Métricas actuales del sistema](#-métricas-actuales-del-sistema)
+- [🧠 Observaciones metodológicas](#-observaciones-metodológicas)
+
+---
+
+# 🧠 Descripción general
+
+## Dataset principal
 
 ```text
-Jugador–temporada
+player_season_modeling.parquet
 ```
 
-El dataset final de modelización integra información de mercado procedente de Transfermarkt con métricas de rendimiento deportivo procedentes de FBref.
+El dataset integra:
 
-Su objetivo es servir como tablón analítico para estimar el valor de mercado esperado de los jugadores y construir scores de ineficiencia de mercado.
+- información de mercado (Transfermarkt)
+- métricas deportivas (FBref)
+- variables derivadas
+- variables de matching
+- outputs de modelización
 
----
+El objetivo es construir un sistema para:
 
-## 1. Identificación del registro
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `player_id` | string / int | Identificador interno del jugador cuando está disponible | Transfermarkt / interna | Identificación |
-| `player_name` | string | Nombre del jugador | FBref / Transfermarkt | Identificación y reporting |
-| `player_name_norm` | string | Nombre normalizado para matching | Interna | Matching |
-| `season` | string | Temporada deportiva, por ejemplo `2022-2023` | FBref / Transfermarkt | Panel temporal |
-| `league` | string | Competición o liga | FBref | Fixed effect / segmentación |
-| `club` | string | Club del jugador en la temporada | FBref / Transfermarkt | Matching / contexto |
-| `club_norm` | string | Club normalizado para matching | Interna | Matching |
+- estimar valor esperado
+- detectar ineficiencias
+- generar rankings de scouting
 
 ---
 
-## 2. Variables demográficas y contextuales
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `age` | float | Edad del jugador en la temporada | Transfermarkt / FBref | Variable explicativa |
-| `position` | string | Posición específica original | FBref / Transfermarkt | Contexto deportivo |
-| `position_group` | category | Grupo posicional: `GK`, `DEF`, `MID`, `ATT` | Interna | Fixed effect / segmentación |
-| `nationality` | string | Nacionalidad principal del jugador | Transfermarkt | Contexto / futura extensión |
-
----
-
-## 3. Variables de mercado
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `market_value_eur` | float | Valor de mercado observado en euros | Transfermarkt | Target original |
-| `log_market_value_eur` | float | Logaritmo natural del valor de mercado | Derivada | Target econométrico |
-| `market_value_prev_eur` | float | Valor de mercado observado en temporada anterior | Derivada | Growth model futuro |
-| `market_value_next_eur` | float | Valor de mercado observado en temporada posterior | Derivada | Growth model futuro |
-| `market_value_growth_1y` | float | Crecimiento porcentual del valor de mercado a un año | Derivada | Growth Score futuro |
-| `delta_log_market_value_1y` | float | Diferencia logarítmica del valor de mercado a un año | Derivada | Growth model futuro |
-
-### Nota metodológica
-
-`market_value_eur` representa una estimación pública de valor de mercado, no necesariamente un precio real de transferencia. Por ello, el modelo estima discrepancias relativas al mercado observado, no plusvalías garantizadas.
-
----
-
-## 4. Variables de rendimiento deportivo
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `minutes_played` | float / int | Minutos jugados en la temporada | FBref | Variable explicativa principal |
-| `goals_per90` | float | Goles por 90 minutos | FBref | Producción ofensiva |
-| `assists_per90` | float | Asistencias por 90 minutos | FBref | Producción ofensiva / creación |
-| `shots_per90` | float | Tiros por 90 minutos | FBref | Finalización |
-| `progressive_passes_per90` | float | Pases progresivos por 90 minutos | FBref | Progresión |
-| `progressive_carries_per90` | float | Conducciones progresivas por 90 minutos | FBref | Progresión |
-| `tackles_per90` | float | Entradas por 90 minutos | FBref | Rendimiento defensivo |
-| `interceptions_per90` | float | Intercepciones por 90 minutos | FBref | Rendimiento defensivo |
-| `xg_per90` | float | Expected Goals por 90 minutos | Understat / FBref | Extensión futura |
-| `xa_per90` | float | Expected Assists por 90 minutos | Understat / FBref | Extensión futura |
-
----
-
-## 5. Variables normalizadas e índices derivados
-
-Estas variables se construyen para mejorar la comparabilidad entre jugadores de distintas posiciones y ligas.
-
-### 5.1 Z-scores contextuales
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `z_goals_per90` | float | Z-score de goles por 90 dentro de grupo contextual | Derivada | Feature engineering |
-| `z_assists_per90` | float | Z-score de asistencias por 90 | Derivada | Feature engineering |
-| `z_shots_per90` | float | Z-score de tiros por 90 | Derivada | Feature engineering |
-| `z_progressive_passes_per90` | float | Z-score de pases progresivos | Derivada | Feature engineering |
-| `z_progressive_carries_per90` | float | Z-score de conducciones progresivas | Derivada | Feature engineering |
-| `z_tackles_per90` | float | Z-score de entradas | Derivada | Feature engineering |
-| `z_interceptions_per90` | float | Z-score de intercepciones | Derivada | Feature engineering |
-
-Agrupación usada:
+# ⚙️ Unidad de análisis
 
 ```text
-position_group + league
+Jugador – Temporada
+```
+
+Cada fila representa:
+
+- rendimiento deportivo
+- contexto competitivo
+- valor de mercado
+- características demográficas
+
+de un jugador en una temporada concreta.
+
+---
+
+# 🏗️ Arquitectura conceptual del dataset
+
+```mermaid
+flowchart TD
+
+A[FBref] --> C[Feature Engineering]
+B[Transfermarkt] --> C
+
+C --> D[Matching]
+
+D --> E[Player-Season Panel]
+
+E --> F[Modeling Dataset]
+
+F --> G[Econometric Models]
+
+F --> H[Machine Learning]
+
+G --> I[Inefficiency Score]
+H --> I
 ```
 
 ---
 
-### 5.2 Índices deportivos
+# 🔑 Variables de identificación
 
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `finishing_index` | float | Índice agregado de finalización | Derivada | Feature engineering |
-| `playmaking_index` | float | Índice agregado de creación | Derivada | Feature engineering |
-| `progression_index` | float | Índice agregado de progresión | Derivada | Feature engineering |
-| `defensive_index` | float | Índice agregado defensivo | Derivada | Feature engineering |
-
-Construcción conceptual:
-
-```text
-finishing_index   = mean(z_goals_per90, z_shots_per90)
-playmaking_index  = mean(z_assists_per90, z_progressive_passes_per90)
-progression_index = mean(z_progressive_passes_per90, z_progressive_carries_per90)
-defensive_index   = mean(z_tackles_per90, z_interceptions_per90)
-```
+| Variable | Tipo | Descripción | Fuente |
+|---|---|---|---|
+| `player_id` | string/int | identificador interno unificado | interna |
+| `player_id_tm` | int | identificador Transfermarkt | Transfermarkt |
+| `fbref_id` | string | identificador FBref | FBref |
+| `player_name` | string | nombre del jugador | FBref / Transfermarkt |
+| `player_name_norm` | string | nombre normalizado | interna |
 
 ---
 
-## 6. Variables de control de minutos
+# 📚 Variables temporales
 
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `minutes_bucket` | category | Segmento de minutos: `low`, `medium`, `high`, `very_high` | Derivada | Control / segmentación |
-| `is_low_minutes` | bool | Indicador de jugador con menos de 900 minutos | Derivada | Control de fiabilidad |
-
----
-
-## 7. Variables de matching y calidad
-
-| Variable | Tipo esperado | Descripción | Fuente | Uso |
-|---|---:|---|---|---|
-| `matching_method` | string | Método de matching utilizado | Interna | Trazabilidad |
-| `matching_confidence` | float | Confianza del matching | Interna | Confidence Score |
-| `age_diff` | float | Diferencia absoluta de edad entre fuentes | Interna | Validación del matching |
-| `club_score` | float | Similitud entre nombres de club | Interna | Validación del matching |
-| `matching_status` | string | Estado del matching cuando está disponible | Interna | Calidad |
-
-Valores principales de `matching_method`:
-
-```text
-exact_age_club_validated
-fuzzy_age_club_validated
-```
-
-Resultados actuales del panel:
-
-```text
-exact_age_club_validated: 6,107
-fuzzy_age_club_validated: 74
-unmatched / NaN: 5,599
-```
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `season` | string | temporada deportiva |
+| `season_start_year` | int | año inicial de temporada |
+| `split` | category | train / test |
 
 ---
 
-## 8. Variables del modelo econométrico
+# 🌍 Variables contextuales
 
-Variables utilizadas actualmente en `03_econometric_model.ipynb`.
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `league` | category | liga principal |
+| `club` | string | club del jugador |
+| `club_norm` | string | club normalizado |
+| `current_club_name_tm` | string | club según Transfermarkt |
 
-### 8.1 Target
+---
 
-| Variable | Tipo esperado | Descripción |
-|---|---:|---|
-| `log_market_value_eur` | float | Variable dependiente del modelo OLS |
+# 👤 Variables demográficas
 
-### 8.2 Variables explicativas base
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `age` | float | edad del jugador |
+| `age_tm` | float | edad según Transfermarkt |
+| `position` | string | posición específica |
+| `position_group` | category | grupo posicional |
+| `nationality` | string | nacionalidad principal |
 
-| Variable | Tipo esperado | Descripción |
-|---|---:|---|
-| `minutes_played` | float | Exposición competitiva |
-| `goals_per90` | float | Producción goleadora |
-| `assists_per90` | float | Producción creativa |
-| `age` | float | Edad del jugador |
+---
 
-### 8.3 Fixed Effects
+# 💰 Variables de mercado
 
-Variables categóricas codificadas mediante dummies:
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `market_value_eur` | float | valor observado |
+| `log_market_value_eur` | float | logaritmo del valor |
+| `market_value_prev_eur` | float | valor previo |
+| `market_value_next_eur` | float | valor futuro |
+| `market_value_growth_1y` | float | crecimiento porcentual |
+| `delta_log_market_value_1y` | float | crecimiento logarítmico |
 
-| Variable original | Descripción |
+---
+
+## 📌 Nota metodológica
+
+El valor de mercado representa:
+
+```text
+estimación pública de mercado
+```
+
+No implica necesariamente:
+
+- precio real de transferencia
+- valor contractual exacto
+
+---
+
+# 📈 Variables deportivas actualmente implementadas
+
+## Producción ofensiva
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `goals_per90` | float | goles por 90 |
+| `assists_per90` | float | asistencias por 90 |
+| `g_a_per90` | float | goles + asistencias |
+
+---
+
+## Volumen competitivo
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `minutes_played` | float | minutos disputados |
+| `log_minutes_played` | float | logaritmo de minutos |
+
+---
+
+# 🚀 Variables deportivas previstas
+
+## Finalización
+
+- `shots_per90`
+- `shot_creating_actions_per90`
+
+---
+
+## Progresión
+
+- `progressive_passes_per90`
+- `progressive_carries_per90`
+
+---
+
+## Defensa
+
+- `tackles_per90`
+- `interceptions_per90`
+
+---
+
+## Calidad ofensiva
+
+- `xg_per90`
+- `xa_per90`
+
+---
+
+# 📊 Variables derivadas
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `log_market_value_eur` | float | target principal |
+| `log_minutes_played` | float | transformación logarítmica |
+| `g_a_per90` | float | contribución ofensiva total |
+| `season_start_year` | int | extracción temporal |
+
+---
+
+# 🏷️ Variables categóricas
+
+## Position Group
+
+| Valor | Descripción |
 |---|---|
-| `league` | Efectos fijos de liga |
-| `season` | Efectos fijos de temporada |
-| `position_group` | Efectos fijos de posición |
+| `GK` | portero |
+| `DEF` | defensa |
+| `MID` | centrocampista |
+| `ATT` | atacante |
 
-Ejemplos de columnas dummy generadas:
+---
+
+## League
+
+Valores principales:
+
+- Premier League
+- LaLiga
+- Bundesliga
+- Serie A
+- Ligue 1
+- Eredivisie
+- Liga Portugal
+
+---
+
+# ⚠️ Variables de matching y calidad
+
+## Objetivo
+
+Estas variables miden:
+
+```text
+calidad del matching
+```
+
+NO rendimiento deportivo.
+
+---
+
+| Variable | Tipo | Descripción |
+|---|---|---|
+| `matching_method` | string | método de matching |
+| `matching_confidence` | float | score de confianza |
+| `age_diff` | float | diferencia de edad |
+| `club_score` | float | similitud de club |
+| `matching_status` | string | estado del matching |
+
+---
+
+## Métodos implementados
+
+| Método | Descripción |
+|---|---|
+| `exact_age_validated` | matching exacto |
+| `exact_age_club_validated` | matching validado por club |
+| `fuzzy_age_club_validated` | fuzzy matching |
+
+---
+
+## Resultados finales
+
+| Método | Resultado |
+|---|---:|
+| exact_age_validated | 18,669 |
+| exact_age_club_validated | 2,146 |
+| fuzzy_age_club_validated | 21 |
+
+---
+
+# 📈 Variables econométricas
+
+## Variables explicativas principales
+
+| Variable | Uso |
+|---|---|
+| `age` | demografía |
+| `log_minutes_played` | volumen competitivo |
+| `goals_per90` | producción ofensiva |
+| `assists_per90` | creación ofensiva |
+
+---
+
+## Fixed Effects
+
+| Variable | Tipo |
+|---|---|
+| `league` | league FE |
+| `season` | season FE |
+| `position_group` | position FE |
+
+---
+
+## Variables dummy generadas
+
+Ejemplos:
 
 ```text
 league_Eredivisie
 league_LaLiga
-league_Liga Portugal
-league_Ligue 1
 league_Premier League
-league_Serie A
-season_2021-2022
 season_2022-2023
-season_2023-2024
 position_group_DEF
-position_group_GK
 position_group_MID
 ```
 
 ---
 
-## 9. Variables de predicción y scoring
+# 🤖 Variables Machine Learning
 
-Generadas en el notebook `03_econometric_model.ipynb`.
+## Variables actualmente utilizadas
 
-| Variable | Tipo esperado | Descripción | Interpretación |
-|---|---:|---|---|
-| `predicted_log_market_value` | float | Valor de mercado estimado en escala logarítmica | Predicción del modelo |
-| `predicted_market_value_eur` | float | Valor de mercado estimado en euros | `exp(predicted_log_market_value)` |
-| `residual_observed_minus_predicted` | float | Residuo econométrico clásico | Observado - predicho |
-| `inefficiency_score` | float | Score de infravaloración | Predicho - observado |
-| `inefficiency_score_z` | float | Inefficiency Score estandarizado | Comparabilidad |
-| `market_value_gap_eur` | float | Diferencia monetaria entre valor esperado y observado | Positivo = posible oportunidad |
-| `market_value_gap_pct` | float | Gap relativo respecto al valor observado | Positivo = posible oportunidad |
-| `confidence_score` | float | Fiabilidad de la estimación según matching | 0-1 aproximadamente |
-| `opportunity_score` | float | Score final inicial de oportunidad | Inefficiency ajustado por confianza |
+| Variable | Tipo |
+|---|---|
+| `age` | numérica |
+| `minutes_played` | numérica |
+| `goals_per90` | numérica |
+| `assists_per90` | numérica |
+| `league` | categórica |
+| `position_group` | categórica |
+| `season` | categórica |
 
 ---
 
-## 10. Definiciones críticas de scoring
+## Variables temporalmente incluidas
 
-### Residuo econométrico
+Variables utilizadas para robustness / comparación:
 
-```text
-residual_observed_minus_predicted = observed_log_market_value - predicted_log_market_value
-```
-
-### Inefficiency Score
-
-```text
-inefficiency_score = predicted_log_market_value - observed_log_market_value
-```
-
-Interpretación:
-
-```text
-inefficiency_score > 0 → valor esperado superior al observado → potencial infravaloración
-inefficiency_score < 0 → valor observado superior al esperado → potencial sobrevaloración
-```
-
-### Market Value Gap
-
-```text
-market_value_gap_eur = predicted_market_value_eur - market_value_eur
-market_value_gap_pct = market_value_gap_eur / market_value_eur
-```
-
-Interpretación:
-
-```text
-market_value_gap_eur > 0 → potencial oportunidad de mercado
-market_value_gap_eur < 0 → potencial sobrevaloración
-```
+| Variable |
+|---|
+| `club_score` |
+| `matching_confidence` |
+| `age_diff` |
 
 ---
 
-## 11. Outputs analíticos esperados
+## 📌 Decisión metodológica
 
-Los outputs se almacenan o se prevé almacenarlos en:
+Estas variables:
 
 ```text
-data/outputs/
+NO deberían formar parte del modelo predictivo final
 ```
 
-Tablas principales:
+porque representan:
+
+- calidad del matching
+- no rendimiento deportivo
+
+---
+
+# 💡 Variables de scoring
+
+## Predicciones
+
+| Variable | Descripción |
+|---|---|
+| `predicted_log_market_value` | predicción logarítmica |
+| `predicted_market_value_eur` | predicción en euros |
+
+---
+
+## Residuos y scoring
+
+| Variable | Descripción |
+|---|---|
+| `residual_observed_minus_predicted` | residuo clásico |
+| `inefficiency_score` | score de infravaloración |
+| `inefficiency_score_z` | score estandarizado |
+| `market_value_gap_eur` | gap monetario |
+| `market_value_gap_pct` | gap relativo |
+
+---
+
+## Variables de confianza
+
+| Variable | Descripción |
+|---|---|
+| `confidence_score` | fiabilidad estimación |
+| `opportunity_score` | score ajustado |
+
+---
+
+# ⏳ Variables de validación temporal
+
+## Split temporal
+
+| Split | Temporadas |
+|---|---|
+| Train | 2019-2020 → 2023-2024 |
+| Test | 2024-2025 |
+
+---
+
+## Objetivo
+
+Evitar:
+
+- leakage temporal
+- optimismo artificial
+- contaminación entre periodos
+
+---
+
+# 📤 Outputs generados
+
+## Outputs econométricos
 
 | Output | Descripción |
 |---|---|
-| `model_metrics` | Métricas MAE, RMSE, R² y R² ajustado |
-| `coefficient_table` | Coeficientes OLS con errores robustos HC3 |
-| `vif_table` | Diagnóstico de multicolinealidad |
-| `undervalued_ranking` | Ranking de jugadores potencialmente infravalorados |
-| `overvalued_ranking` | Ranking de jugadores potencialmente sobrevalorados |
-| `league_summary` | Resumen de scores por liga |
-| `position_summary` | Resumen de scores por posición |
+| `03_econometric_model_metrics.csv` | métricas OLS |
+| `03_econometric_model_coefficients.csv` | coeficientes |
+| `03_vif_table.csv` | multicolinealidad |
 
 ---
 
-## 12. Métricas actuales del modelo OLS
+## Outputs ML
 
-Resultados del notebook `03_econometric_model.ipynb`:
+| Output | Descripción |
+|---|---|
+| `04_ml_metrics.csv` | métricas ML |
+| `04_feature_importance.csv` | permutation importance |
+| `04_predictions.parquet` | predicciones ML |
+
+---
+
+## Rankings
+
+| Output | Descripción |
+|---|---|
+| `03_undervalued_ranking.csv` | infravalorados |
+| `03_overvalued_ranking.csv` | sobrevalorados |
+
+---
+
+# 🚨 Variables excluidas por leakage
+
+Variables NO utilizadas como features predictivas:
+
+| Variable | Motivo |
+|---|---|
+| `market_value_next_eur` | información futura |
+| `delta_log_market_value_1y` | leakage temporal |
+| `predicted_market_value_eur` | output derivado |
+| `inefficiency_score` | output derivado |
+
+---
+
+# 📚 Relación conceptual entre variables
+
+```mermaid
+flowchart TD
+
+market_value_eur --> log_market_value_eur
+
+goals_per90 --> g_a_per90
+assists_per90 --> g_a_per90
+
+log_market_value_eur --> predicted_log_market_value
+
+predicted_log_market_value --> inefficiency_score
+market_value_eur --> inefficiency_score
+```
+
+---
+
+# 📊 Métricas actuales del sistema
+
+## Modelo econométrico final
 
 | Métrica | Valor |
 |---|---:|
-| `MAE_log` | 0.6363 |
-| `RMSE_log` | 0.7964 |
-| `R2` | 0.6481 |
-| `Adj_R2` | 0.6424 |
-| `N_obs` | 1,012 |
-| `N_features` | 17 |
+| MAE | 0.7907 |
+| RMSE | 0.9823 |
+| R² | 0.4439 |
 
 ---
 
-## 13. Observaciones metodológicas
+## Mejor modelo ML
 
-- El target se modeliza en escala logarítmica para reducir asimetría y mejorar la interpretación porcentual de coeficientes.
-- El modelo econométrico actual prioriza interpretabilidad sobre máxima capacidad predictiva.
-- Las variables de scoring no deben interpretarse como recomendaciones automáticas de fichaje.
-- Los rankings son herramientas de priorización para revisión posterior por scouting experto.
-- Los residuos pueden reflejar ineficiencias, pero también variables omitidas como contrato, salario, lesiones, reputación, agente o potencial percibido.
+| Modelo | R² |
+|---|---:|
+| Gradient Boosting | 0.4807 |
 
 ---
 
-## 14. Próximas variables a incorporar
+# 🧠 Observaciones metodológicas
 
-### Rendimiento avanzado
-
-- `xg_per90`
-- `xa_per90`
-- `shot_creating_actions_per90`
-- `key_passes_per90`
-- `touches_attacking_third_per90`
-- `touches_box_per90`
-
-### Contexto de club y liga
-
-- fuerza relativa de la liga
-- nivel económico del club
-- clasificación del equipo
-- competición europea
-
-### Mercado y contrato
-
-- duración contractual
-- historial de transferencias
-- nacionalidad
-- internacionalidades
-- salario si estuviera disponible
-
-### Salud y disponibilidad
-
-- lesiones
-- partidos perdidos
-- continuidad competitiva
-
----
-
-## 15. Estado de uso por notebook
-
-| Notebook | Dataset principal | Estado |
-|---|---|---|
-| `01_data_understanding.ipynb` | `player_season_modeling.parquet` | Completado |
-| `02_econometric_baseline.ipynb` | `player_season_modeling.parquet` | Completado |
-| `03_econometric_model.ipynb` | `player_season_modeling.parquet` | Completado |
-| `04_machine_learning_model.ipynb` | Pendiente | Próximo paso |
+- El target se modeliza en escala logarítmica.
+- El sistema prioriza interpretabilidad.
+- OLS constituye el núcleo principal.
+- ML actúa como extensión predictiva.
+- Los rankings NO representan recomendaciones automáticas.
+- El matching puede introducir ruido residual.
+- Los scores deben interpretarse como herramientas de priorización para scouting experto.
+- Parte de la varianza no explicada puede deberse a:
+  - reputación
+  - salario
+  - agente
+  - contrato
+  - lesiones
+  - percepción mediática

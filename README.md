@@ -1,320 +1,572 @@
 # 📊 Identificación de jugadores infravalorados en el mercado de fichajes europeo
 
-## 🧠 Descripción del proyecto
+<div align="center">
 
-Este proyecto desarrolla un sistema analítico para mejorar la toma de decisiones en la identificación y adquisición de jugadores en el fútbol europeo.
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-orange)
+![Statsmodels](https://img.shields.io/badge/Statsmodels-Econometrics-green)
+![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-yellow)
+![Status](https://img.shields.io/badge/Status-Modeling%20%2F%20Evaluation-success)
 
-El objetivo principal es estimar el valor de mercado esperado de los jugadores a partir de su rendimiento deportivo y detectar ineficiencias en el mercado que permitan identificar oportunidades de fichaje (estrategia *buy low, sell high*).
-
----
-
-## 🎯 Problema de negocio
-
-Los clubes de fútbol toman decisiones de fichaje basadas en:
-
-- Scouting tradicional
-- Intuición
-- Métricas limitadas
-
-Sin embargo, el mercado presenta ineficiencias debido a:
-
-- Información incompleta
-- Sesgos de percepción
-- Diferencias entre ligas
-
-👉 Este proyecto busca responder:
-
-**¿Qué jugadores están infravalorados respecto a su rendimiento real?**
+</div>
 
 ---
 
-## 🧩 Enfoque analítico
+# 🧠 Descripción del proyecto
+
+Este proyecto desarrolla un sistema analítico para mejorar la toma de decisiones en scouting y fichajes dentro del mercado europeo de fútbol profesional.
+
+El objetivo principal es estimar el **valor de mercado esperado** de los futbolistas a partir de su rendimiento deportivo y detectar ineficiencias de mercado que permitan identificar oportunidades de fichaje bajo una estrategia:
+
+> **Buy low → Sell high**
 
 El sistema combina:
 
-- Econometría (modelo explicativo)
-- Machine Learning (extensiones futuras)
-- Feature engineering avanzado
+- Econometría aplicada
+- Machine Learning supervisado
+- Feature engineering deportivo
+- Integración robusta de datos heterogéneos
+- Scouting cuantitativo
 
-Unidad de análisis:
+---
 
-```
+# 📑 Tabla de contenidos
 
+- [🧠 Descripción del proyecto](#-descripción-del-proyecto)
+- [🎯 Problema de negocio](#-problema-de-negocio)
+- [🧩 Objetivos analíticos](#-objetivos-analíticos)
+- [⚙️ Enfoque metodológico](#️-enfoque-metodológico)
+- [📚 Metodología](#-metodología)
+- [⏳ Estrategia de validación](#-estrategia-de-validación)
+- [📦 Fuentes de datos](#-fuentes-de-datos)
+  - [Transfermarkt](#transfermarkt)
+  - [FBref](#fbref)
+- [⚠️ Problema crítico del proyecto](#️-problema-crítico-del-proyecto)
+- [🛠️ Sistema de matching implementado](#️-sistema-de-matching-implementado)
+- [📈 Resultados del matching](#-resultados-del-matching)
+- [🏗️ Arquitectura del pipeline](#️-arquitectura-del-pipeline)
+- [📊 Dataset final](#-dataset-final)
+- [📈 Modelización econométrica](#-modelización-econométrica)
+- [📊 Resultados econométricos](#-resultados-econométricos)
+- [🤖 Machine Learning supervisado](#-machine-learning-supervisado)
+- [📊 Resultados Machine Learning](#-resultados-machine-learning)
+- [💡 Inefficiency Score](#-inefficiency-score)
+- [📤 Outputs del sistema](#-outputs-del-sistema)
+- [📂 Estructura del proyecto](#-estructura-del-proyecto)
+- [▶️ Ejecución del pipeline](#️-ejecución-del-pipeline)
+- [📊 Resultados del sistema](#-resultados-del-sistema)
+- [🚀 Próximos pasos](#-próximos-pasos)
+- [🧠 Valor del proyecto](#-valor-del-proyecto)
+- [👤 Autores](#-autores)
+
+---
+
+# 🎯 Problema de negocio
+
+Los clubes toman decisiones de fichaje basándose en:
+
+- scouting tradicional
+- intuición
+- métricas limitadas
+- análisis parcialmente subjetivos
+
+Sin embargo, el mercado presenta ineficiencias derivadas de:
+
+- información incompleta
+- sesgos mediáticos
+- diferencias estructurales entre ligas
+- asimetrías de información
+
+👉 Este proyecto busca responder:
+
+## ❓ ¿Qué jugadores están infravalorados respecto a su rendimiento real?
+
+---
+
+# 🧩 Objetivos analíticos
+
+El sistema busca:
+
+- estimar el valor de mercado esperado
+- detectar jugadores infravalorados
+- construir rankings cuantitativos de scouting
+- analizar diferencias estructurales entre ligas
+- comparar econometría vs machine learning
+- generar outputs interpretables para toma de decisiones
+
+---
+
+# ⚙️ Enfoque metodológico
+
+## Unidad de análisis
+
+```text
 Jugador – Temporada
+```
 
+Cada observación representa:
+
+- rendimiento deportivo
+- contexto competitivo
+- valor de mercado
+- características demográficas
+
+de un jugador en una temporada concreta.
+
+---
+
+# 📚 Metodología
+
+El proyecto sigue una adaptación de:
+
+```text
+CRISP-DM
+```
+
+## Estado actual
+
+```text
+Modeling → Evaluation
 ```
 
 ---
 
-## 📦 Fuentes de datos
+# ⏳ Estrategia de validación
 
-### Transfermarkt
+El sistema utiliza validación temporal estricta para evitar leakage temporal y reproducir escenarios reales de scouting.
 
-- Valor de mercado
-- Edad
-- Club
-- Historial de traspasos
+| Split | Temporadas |
+|---|---|
+| Train | 2019-2020 → 2023-2024 |
+| Test | 2024-2025 |
 
-👉 Uso:
-- Variable objetivo (`market_value_eur`)
-- Base del Inefficiency Score
+👉 No se utiliza random split.
 
 ---
 
-### FBref
+# 📦 Fuentes de datos
 
-- Métricas de rendimiento por 90 minutos
-- Variables ofensivas, defensivas y de posesión
+## Transfermarkt
 
-👉 Uso:
-- Variables explicativas del modelo
+### Variables principales
 
----
+- valor de mercado
+- edad
+- club
+- posición
+- historial de traspasos
 
-## ⚠️ Problema crítico: integración de datos (FBref vs Transfermarkt)
+### Uso
 
-### 🚧 Contexto
+- target principal
+- construcción del Inefficiency Score
+- contexto de mercado
 
-Uno de los principales retos del proyecto es la integración de ambas fuentes, ya que:
+### Dataset utilizado
 
-- ❌ No existe un identificador único común
-- ❌ Diferencias en nombres de jugadores (idioma, acentos, formatos)
-- ❌ Diferencias en nombres de clubes
-- ❌ Desalineación en edad (distintas fechas de captura)
-- ❌ Diferencias en granularidad temporal
-
-👉 Este es un problema real en sports analytics y una fuente clave de error si no se trata correctamente.
-
----
-
-### 🛠️ Solución implementada
-
-Se ha desarrollado un sistema de matching robusto basado en:
-
-#### 1. Normalización de nombres
-
-- Eliminación de acentos
-- Lowercase
-- Limpieza de strings
-
-#### 2. Matching jerárquico
-
-- Matching exacto (nombre + edad)
-- Matching validado por club
-- Matching fuzzy (distancia de strings)
-
-#### 3. Validación por edad
-
-- Diferencia máxima permitida: 1.5 años
-
-#### 4. Reducción del espacio de búsqueda
-
-- Filtro por temporada
-- Filtro por liga
-- Filtro por edad
-
----
-
-### 📈 Resultados del matching
-
-- Match rate: **88.36%**
-- Observaciones emparejadas: **20,836 / 23,580**
-
-Distribución:
-
-- Matching exacto → dominante
-- Matching fuzzy → residual
-
-👉 Este componente es uno de los principales aportes técnicos del proyecto.
-
----
-
-## 🏗️ Pipeline de datos
-
-```
-
-Raw Data
-↓
-Ingesta (FBref + Transfermarkt)
-↓
-Feature Engineering
-↓
-Matching jugador–temporada
-↓
-Dataset panel
-↓
-Dataset de modelización
-
+```text
+Kaggle — player-scores (davidcariboo)
 ```
 
 ---
 
-## 📊 Dataset final
+## FBref
 
-### Panel completo
+### Variables principales
 
-- Observaciones: 23,580
-- Temporadas: 2019-2020 → 2024-2025
-- Ligas: 7 principales ligas europeas
+- estadísticas por 90 minutos
+- métricas ofensivas
+- métricas defensivas
+- métricas de posesión
 
----
+### Uso
 
-### Dataset modelizable
-
-- Observaciones: 3,297
-- Jugadores: 1,847
-- Edad: 18–23 años
+- variables explicativas
+- feature engineering deportivo
 
 ---
 
-## 📈 Modelización
+# ⚠️ Problema crítico del proyecto
 
-### Modelo base
+# Integración FBref ↔ Transfermarkt
+
+Uno de los principales retos del proyecto es el matching entre ambas fuentes.
+
+## Problemas estructurales
+
+- ❌ no existe identificador único común
+- ❌ nombres inconsistentes
+- ❌ transliteraciones
+- ❌ diferencias de clubes
+- ❌ diferencias de edad
+- ❌ cambios intra-temporada
+- ❌ granularidad distinta
+
+👉 Este problema consumió aproximadamente el 40-50% del trabajo total del proyecto.
+
+---
+
+# 🛠️ Sistema de matching implementado
+
+Se desarrolló un pipeline jerárquico robusto:
+
+## 1️⃣ Normalización de nombres
+
+- lowercase
+- eliminación de acentos
+- limpieza de strings
+
+---
+
+## 2️⃣ Matching exacto
+
+- nombre
+- temporada
+- edad aproximada
+
+---
+
+## 3️⃣ Validación por club
+
+- fuzzy matching
+- similarity score
+
+---
+
+## 4️⃣ Matching fuzzy
+
+- RapidFuzz
+- token sort ratio
+- threshold elevado
+
+---
+
+## 5️⃣ Validación final
+
+- diferencia máxima de edad:
+  
+```python
+MAX_AGE_DIFF = 1.5
+```
+
+---
+
+# 📈 Resultados del matching
+
+| Métrica | Resultado |
+|---|---:|
+| Match rate | 88.36% |
+| Observaciones emparejadas | 20,836 |
+| Observaciones totales | 23,580 |
+
+## Distribución
+
+- exact matching → dominante
+- fuzzy matching → residual
+
+👉 El matching constituye uno de los principales aportes técnicos del proyecto.
+
+---
+
+# 🏗️ Arquitectura del pipeline
+
+```mermaid
+flowchart TD
+
+A[Raw Data] --> B[FBref Ingestion]
+A --> C[Transfermarkt Ingestion]
+
+B --> D[Feature Engineering]
+C --> D
+
+D --> E[Name Normalization]
+
+E --> F[Player-Season Matching]
+
+F --> G[Panel Dataset]
+
+G --> H[Modeling Dataset]
+
+H --> I[Econometric Modeling]
+
+H --> J[Machine Learning]
+
+I --> K[Inefficiency Score]
+J --> K
+
+K --> L[Scouting Rankings]
+```
+
+---
+
+# 📊 Dataset final
+
+## Panel completo
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones | 23,580 |
+| Temporadas | 2019-2020 → 2024-2025 |
+| Ligas | 7 |
+
+---
+
+## Dataset modelizable
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones | 3,297 |
+| Jugadores | 1,847 |
+| Edad | 18–23 |
+
+---
+
+## Ligas incluidas
+
+- Premier League
+- LaLiga
+- Bundesliga
+- Serie A
+- Ligue 1
+- Eredivisie
+- Liga Portugal
+
+---
+
+# 📈 Modelización econométrica
+
+## Modelo econométrico final
 
 Regresión OLS con:
 
-- Efectos fijos por liga
-- Efectos fijos por temporada
-- Efectos por posición
+- efectos fijos por liga
+- efectos fijos por temporada
+- efectos fijos por posición
+- errores robustos HC3
 
-### Variable objetivo
+## Variable objetivo
 
-```
-
+```python
 log_market_value_eur
-
 ```
 
 ---
 
-## 💡 Inefficiency Score
+## Especificación principal
 
-Se define como:
-
+```python
+log_market_value_eur ~
+age +
+log_minutes_played +
+goals_per90 +
+assists_per90 +
+league FE +
+season FE +
+position FE
 ```
-
-residual = valor_real - valor_estimado
-
-```
-
-Interpretación:
-
-- Positivo → jugador infravalorado
-- Negativo → jugador sobrevalorado
 
 ---
 
-## 📂 Estructura del proyecto
+# 📊 Resultados econométricos
+
+## Evaluación out-of-sample
+
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS simple | 1.0036 | 1.2165 | 0.1472 |
+| OLS + League FE | 0.7954 | 0.9896 | 0.4356 |
+| OLS final FE | **0.7907** | **0.9823** | **0.4439** |
+
+---
+
+## Principales hallazgos
+
+### 📌 Premier League
+
+- prima estructural positiva significativa
+
+### 📌 Eredivisie / Liga Portugal
+
+- descuentos estructurales relevantes
+
+### 📌 Variables más importantes
+
+- minutos jugados
+- goles por 90
+- asistencias por 90
+
+👉 El contexto competitivo explica gran parte del valor de mercado.
+
+---
+
+# 🤖 Machine Learning supervisado
+
+Se implementan modelos ML utilizando exactamente la misma partición temporal que el modelo econométrico.
+
+## Modelos implementados
+
+- Random Forest
+- HistGradientBoosting
+- GradientBoostingRegressor
+
+---
+
+# 📊 Resultados Machine Learning
+
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS final | 0.7907 | 0.9823 | 0.4439 |
+| Random Forest | 0.7704 | 0.9691 | 0.4587 |
+| HistGradientBoosting | 0.7723 | 0.9680 | 0.4600 |
+| Gradient Boosting | **0.7613** | **0.9493** | **0.4807** |
+
+---
+
+# 💡 Inefficiency Score
+
+El sistema estima:
+
+```python
+inefficiency_score = valor_estimado - valor_real
+```
+
+## Interpretación
+
+| Score | Interpretación |
+|---|---|
+| Positivo | posible infravaloración |
+| Negativo | posible sobrevaloración |
+
+---
+
+# 📤 Outputs del sistema
+
+El pipeline genera automáticamente:
+
+- predicciones de valor esperado
+- rankings de jugadores infravalorados
+- rankings de jugadores sobrevalorados
+- métricas econométricas
+- métricas ML
+- tablas de coeficientes
+- feature importance
+- predicciones out-of-sample
+
+---
+
+# 📂 Estructura del proyecto
 
 ```bash
+market-value-football-tfm/
 
-src/
-data/
-ingest_fbref.py
-ingest_transfermarkt.py
-build_fbref_features.py
-build_transfermarkt_features.py
-build_player_season_panel.py
-build_modeling_dataset.py
-
-data/
-raw/
-processed/
-
-notebooks/
-01_data_understanding.ipynb
-02_modeling.ipynb
-
-docs/
-data_sources.md
-data_quality.md
-schema_decisions.md
-modeling_decisions.md
-project_status.md
-
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── outputs/
+│
+├── docs/
+│   ├── data_quality.md
+│   ├── data_sources.md
+│   ├── schema_decisions.md
+│   ├── modeling_decisions.md
+│   └── project_status.md
+│
+├── notebooks/
+│   ├── 01_data_understanding.ipynb
+│   ├── 02_econometric_baseline.ipynb
+│   ├── 03_econometric_model.ipynb
+│   └── 04_supervised_machine_learning.ipynb
+│
+├── src/
+│   ├── data/
+│   │   ├── ingest_fbref.py
+│   │   ├── build_fbref_features.py
+│   │   ├── build_transfermarkt_features.py
+│   │   ├── build_player_season_panel.py
+│   │   └── build_modeling_dataset.py
+│   │
+│   └── features/
+│       └── build_performance_features.py
+│
+└── README.md
 ```
 
 ---
 
-## ▶️ Ejecución
+# ▶️ Ejecución del pipeline
 
-### 1. Construir features FBref
+## 1️⃣ Construir features FBref
 
-```
-
+```bash
 python -m src.data.build_fbref_features
-
-```
-
-### 2. Construir features Transfermarkt
-
-```
-
-python -m src.data.build_transfermarkt_features
-
-```
-
-### 3. Construir panel jugador–temporada
-
-```
-
-python -m src.data.build_player_season_panel
-
-```
-
-### 4. Construir dataset de modelización
-
-```
-
-python -m src.data.build_modeling_dataset
-
 ```
 
 ---
 
-## 📊 Resultados esperados
+## 2️⃣ Construir features Transfermarkt
+
+```bash
+python -m src.data.build_transfermarkt_features
+```
+
+---
+
+## 3️⃣ Construir panel jugador–temporada
+
+```bash
+python -m src.data.build_player_season_panel
+```
+
+---
+
+## 4️⃣ Construir dataset modelizable
+
+```bash
+python -m src.data.build_modeling_dataset
+```
+
+---
+
+# 📊 Resultados del sistema
 
 El sistema permite:
 
-- Estimar valor de mercado esperado
-- Detectar ineficiencias
-- Generar rankings de jugadores infravalorados
+✅ estimar valor esperado  
+✅ detectar ineficiencias de mercado  
+✅ generar rankings de scouting  
+✅ comparar econometría vs ML  
+✅ identificar ligas infravaloradas  
+✅ construir shortlists cuantitativas  
 
 ---
 
-## 🚀 Próximos pasos
+# 🚀 Próximos pasos
 
-- Modelización econométrica final
-- Validación out-of-sample
-- Ranking de jugadores
-- Integración con dashboards / scouting tools
-
----
-
-## 📚 Metodología
-
-Se sigue CRISP-DM adaptado:
-
-```
-
-Business → Data → Preparation → Modeling → Evaluation → Deployment
-
-```
+- feature engineering avanzado
+- Growth Score
+- dashboard interactivo
+- visualizaciones finales
+- business insights
+- scouting reports automáticos
+- despliegue del sistema
 
 ---
 
-## 🧠 Valor del proyecto
+# 🧠 Valor del proyecto
 
-Este proyecto aporta:
+El proyecto aporta:
 
-- Integración robusta de datos heterogéneos
-- Modelización interpretable
-- Aplicación directa a decisiones de negocio
-- Identificación de ineficiencias reales en el mercado
+- integración robusta de datos heterogéneos
+- modelización interpretable
+- aplicación directa a decisiones de negocio
+- validación temporal realista
+- detección de ineficiencias de mercado
+- enfoque reproducible y escalable
 
 ---
 
-## 👤 Autores
+# 👤 Autores
 
 - Isabel Muñoz Martín
 - Laura González Macho
@@ -322,4 +574,9 @@ Este proyecto aporta:
 
 Trabajo Fin de Máster — Data Science aplicado al fútbol profesional.
 
-Enfoque: scouting cuantitativo, econometría aplicada y machine learning para identificación de ineficiencias de mercado.
+Enfoque:
+- sports analytics
+- scouting cuantitativo
+- econometría aplicada
+- machine learning
+- identificación de ineficiencias de mercado

@@ -1,131 +1,236 @@
-# Diseño del dataset y decisiones de modelado
-
-## 1. Introducción
-
-El presente documento describe las decisiones estructurales adoptadas en el diseño del dataset final, incluyendo la definición de la unidad de análisis, la selección de variables, la integración de fuentes y los trade-offs metodológicos.
-
-Estas decisiones son críticas para garantizar la coherencia analítica del sistema y la validez de los modelos econométricos posteriores.
+# 📘 Schema Decisions
 
 ---
 
-## 2. Unidad de análisis
+# 📑 Tabla de contenidos
 
-La unidad de análisis del proyecto se define a nivel:
+- [🧠 Objetivo del diseño del dataset](#-objetivo-del-diseño-del-dataset)
+- [⚙️ Unidad de análisis](#️-unidad-de-análisis)
+- [🗂️ Arquitectura general del dataset](#️-arquitectura-general-del-dataset)
+- [🔑 Claves primarias e identificadores](#-claves-primarias-e-identificadores)
+- [🎯 Variable objetivo](#-variable-objetivo)
+- [📈 Variables derivadas](#-variables-derivadas)
+- [📊 Bloques de variables explicativas](#-bloques-de-variables-explicativas)
+- [🏷️ Variables categóricas](#️-variables-categóricas)
+- [⚠️ Variables de matching y calidad](#️-variables-de-matching-y-calidad)
+- [📚 Transformaciones aplicadas](#-transformaciones-aplicadas)
+- [🛠️ Integración de datos](#️-integración-de-datos)
+- [📉 Reglas de inclusión](#-reglas-de-inclusión)
+- [📊 Dataset final de modelización](#-dataset-final-de-modelización)
+- [⏳ Diseño temporal y prevención de leakage](#-diseño-temporal-y-prevención-de-leakage)
+- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
+- [🚨 Riesgos identificados](#-riesgos-identificados)
+- [🧠 Conclusión](#-conclusión)
 
-```
+---
 
+# 🧠 Objetivo del diseño del dataset
+
+El diseño del dataset busca construir una estructura robusta y reproducible para modelar el valor de mercado de futbolistas jóvenes en el fútbol europeo.
+
+El esquema debe permitir:
+
+- integración multi-fuente
+- modelización econométrica
+- machine learning supervisado
+- validación temporal
+- construcción de rankings de scouting
+
+---
+
+# ⚙️ Unidad de análisis
+
+La unidad de análisis utilizada es:
+
+```text
 Jugador – Temporada
-
 ```
 
-Cada fila representa el rendimiento deportivo, el contexto competitivo y el valor de mercado de un jugador en una temporada específica.
+Cada fila representa:
 
-### Justificación
+- rendimiento deportivo
+- contexto competitivo
+- valor de mercado
+- situación demográfica
 
-Esta elección responde a varias razones:
-
-- El valor de mercado es una variable dinámica dependiente del rendimiento reciente
-- Las fuentes de datos (Transfermarkt, FBref) están estructuradas por temporada
-- Permite aplicar técnicas de econometría de panel
-- Facilita la incorporación de efectos fijos (liga, temporada, posición)
+de un jugador en una temporada concreta.
 
 ---
 
-## 3. Clave primaria e identificadores
+## 📌 Justificación
 
-### Clave primaria
+Esta decisión se adopta porque:
 
-La clave primaria del dataset se define como:
-
-- `player_id`
-- `season`
-
-Esto garantiza unicidad a nivel jugador–temporada.
-
----
-
-### Identificador de jugador
-
-Se construye un identificador interno (`player_id`) debido a la ausencia de un identificador común entre fuentes.
-
-Además, se almacenan identificadores externos:
-
-- `fbref_id`
-- `transfermarkt_id`
-
-### Justificación
-
-- Evita dependencia de una fuente concreta
-- Permite trazabilidad y reproducibilidad
-- Facilita futuras ampliaciones del dataset
+- el valor de mercado es dinámico
+- las fuentes están estructuradas por temporada
+- permite econometría de panel
+- facilita efectos fijos
+- reduce inconsistencias temporales
 
 ---
 
-## 4. Variable objetivo (target)
+# 🗂️ Arquitectura general del dataset
 
-### Target principal
+El sistema se estructura en cuatro capas principales:
 
-La variable objetivo del modelo es:
+```mermaid
+flowchart TD
 
+A[Raw Sources] --> B[Feature Engineering]
+
+B --> C[Player-Season Panel]
+
+C --> D[Modeling Dataset]
+
+D --> E[Econometric Modeling]
+D --> F[Machine Learning]
 ```
 
+---
+
+# 🔑 Claves primarias e identificadores
+
+## Clave primaria
+
+La unicidad del dataset se define mediante:
+
+```python
+player_id + season
+```
+
+---
+
+## Identificadores internos
+
+| Variable | Descripción |
+|---|---|
+| `player_id` | identificador interno unificado |
+| `season` | temporada deportiva |
+
+---
+
+## Identificadores externos
+
+| Variable | Fuente |
+|---|---|
+| `player_id_tm` | Transfermarkt |
+| `fbref_id` | FBref |
+
+---
+
+## Justificación
+
+Se evita dependencia de una única fuente y se facilita:
+
+- trazabilidad
+- reproducibilidad
+- futuras ampliaciones
+
+---
+
+# 🎯 Variable objetivo
+
+## Variable principal
+
+```python
 log_market_value_eur
-
 ```
 
 Derivada de:
 
-- `market_value_eur`
+```python
+market_value_eur
+```
 
-### Justificación
+Fuente:
 
-- El valor de mercado presenta una distribución altamente sesgada
-- La transformación logarítmica:
-  - Reduce la asimetría
-  - Mejora la linealidad del modelo
-  - Permite interpretación en términos relativos (%)
+```text
+Transfermarkt
+```
 
 ---
 
-### Target secundario (dinámico)
+## Justificación
 
-Se define una variable de crecimiento:
+El valor de mercado presenta:
 
-```
+- skewness positiva
+- colas largas
+- heterocedasticidad
 
-delta_log_market_value_1y
+La transformación logarítmica:
 
-```
-
-Construida como:
-
-- Diferencia del log del valor de mercado entre t y t+1
-
-### Uso
-
-- Modelización del crecimiento del jugador
-- Construcción del Growth Score
+- mejora linealidad
+- reduce impacto de outliers
+- estabiliza varianza
+- facilita interpretación relativa
 
 ---
 
-## 5. Variables explicativas
+# 📈 Variables derivadas
 
-Las variables se agrupan en tres bloques:
+## Variables principales
 
-### 5.1 Variables de rendimiento
+| Variable | Descripción |
+|---|---|
+| `log_market_value_eur` | target principal |
+| `log_minutes_played` | transformación logarítmica |
+| `g_a_per90` | goles + asistencias |
+| `season_start_year` | inicio de temporada |
+
+---
+
+## Variables futuras
+
+| Variable | Objetivo |
+|---|---|
+| `delta_log_market_value_1y` | Growth Score |
+| `finishing_index` | eficiencia ofensiva |
+| `playmaking_index` | creación |
+| `progression_index` | progresión |
+| `defensive_index` | defensa |
+
+---
+
+# 📊 Bloques de variables explicativas
+
+## 1️⃣ Variables deportivas
+
+### Producción ofensiva
 
 - `goals_per90`
 - `assists_per90`
 - `g_a_per90`
-- Métricas derivadas de minutos jugados
 
-### 5.2 Variables demográficas
+---
+
+### Volumen competitivo
+
+- `minutes_played`
+- `log_minutes_played`
+
+---
+
+### Variables futuras
+
+- `progressive_passes_per90`
+- `progressive_carries_per90`
+- `xG`
+- `xA`
+- `tackles_per90`
+- `interceptions_per90`
+
+---
+
+## 2️⃣ Variables demográficas
 
 - `age`
 - `position`
 - `position_group`
 
-### 5.3 Variables contextuales
+---
+
+## 3️⃣ Variables contextuales
 
 - `league`
 - `club`
@@ -133,161 +238,266 @@ Las variables se agrupan en tres bloques:
 
 ---
 
-## 6. Transformaciones clave
+# 🏷️ Variables categóricas
 
-### 6.1 Variables por 90 minutos
+## Position Group
 
-Motivación:
+Se agrupan posiciones en:
 
-- Permitir comparabilidad entre jugadores con diferente volumen de minutos
-- Reducir sesgos por tiempo de juego
+| Grupo | Descripción |
+|---|---|
+| GK | portero |
+| DEF | defensa |
+| MID | centrocampista |
+| ATT | atacante |
 
 ---
 
-### 6.2 Transformación logarítmica
+## Justificación
+
+- reducción dimensional
+- interpretabilidad
+- estabilidad econométrica
+- efectos fijos por posición
+
+---
+
+# ⚠️ Variables de matching y calidad
+
+El sistema incorpora variables específicas de calidad del matching.
+
+## Variables principales
+
+| Variable | Uso |
+|---|---|
+| `matching_method` | método de matching |
+| `matching_confidence` | calidad estimada |
+| `club_score` | similitud de club |
+| `age_diff` | diferencia de edad |
+
+---
+
+## Decisión metodológica
+
+Estas variables:
+
+```text
+NO representan rendimiento deportivo
+```
+
+Por tanto:
+
+- se utilizan para robustness checks
+- se utilizan para confidence scoring
+- deben limitarse en modelos predictivos finales
+
+---
+
+# 📚 Transformaciones aplicadas
+
+## Variables por 90 minutos
+
+Objetivo:
+
+- comparabilidad entre jugadores
+- reducción sesgo por minutos
+
+---
+
+## Transformación logarítmica
 
 Aplicada a:
 
 - `market_value_eur`
-
-Motivación:
-
-- Reducir skewness
-- Mejorar estabilidad del modelo
-- Evitar influencia desproporcionada de outliers
+- `minutes_played`
 
 ---
 
-### 6.3 Agrupación de posiciones
+## Normalización de nombres
 
-Se definen cuatro grupos:
+Aplicada para matching:
 
-- GK (portero)
-- DEF (defensa)
-- MID (centrocampista)
-- ATT (ataque)
-
-Motivación:
-
-- Reducir dimensionalidad
-- Mejorar interpretabilidad
-- Permitir efectos fijos por posición
+- lowercase
+- eliminación de acentos
+- limpieza de caracteres especiales
 
 ---
 
-## 7. Integración de datos (matching)
+# 🛠️ Integración de datos
 
-### Problema
+## Problema estructural
 
-Las fuentes utilizadas no comparten un identificador único, lo que genera:
+No existe identificador único compartido entre:
 
-- Ambigüedad en la unión de datos
-- Riesgo de errores de matching
-- Pérdida de observaciones
-
----
-
-### Solución implementada
-
-Se diseña un sistema de matching robusto basado en:
-
-#### 1. Normalización de nombres
-
-- Lowercase
-- Eliminación de acentos
-- Limpieza de strings
-
-#### 2. Matching jerárquico
-
-- Matching exacto (nombre + edad)
-- Matching validado por club
-- Matching fuzzy (distancia de strings)
-
-#### 3. Validación por edad
-
-- Diferencia máxima permitida: 1.5 años
-
-#### 4. Reducción del espacio de búsqueda
-
-- Filtro por temporada
-- Filtro por liga
-- Filtro por edad
+- FBref
+- Transfermarkt
 
 ---
 
-### Resultados
+## Estrategia implementada
 
-- Match rate: 88.36%
-- Observaciones emparejadas: 20,836
+Matching jerárquico:
 
----
-
-## 8. Reglas de inclusión del dataset
-
-Se incluyen únicamente observaciones que cumplen:
-
-- Matching válido entre fuentes
-- Edad entre 18 y 23 años
-- Minutos jugados por encima de un umbral mínimo
-- Valor de mercado disponible
+1. normalización
+2. exact matching
+3. validación por club
+4. fuzzy matching
 
 ---
 
-## 9. Dataset final de modelización
+## Thresholds finales
 
-Tras aplicar filtros:
-
-- Observaciones: 3,297
-- Jugadores: 1,847
-- Temporadas: 2019-2020 a 2024-2025
-
----
-
-## 10. Trade-offs metodológicos
-
-Durante el diseño del dataset se han asumido los siguientes trade-offs:
-
-### Cobertura vs precisión
-
-- Se prioriza mantener volumen de datos
-- Se controla el ruido mediante:
-  - validaciones
-  - variables de calidad de matching
+```python
+MAX_AGE_DIFF = 1.5
+MIN_CLUB_SCORE = 70
+FUZZY_THRESHOLD = 92
+```
 
 ---
 
-### Complejidad vs interpretabilidad
+## Resultados
 
-- Se selecciona un modelo interpretable (OLS)
-- Se limita la complejidad del feature engineering inicial
-
----
-
-### Robustez vs coste computacional
-
-- Se reduce el espacio de búsqueda en matching
-- Se optimiza el pipeline sin sacrificar calidad
+| Métrica | Resultado |
+|---|---:|
+| Match rate | 88.36% |
+| Observaciones emparejadas | 20,836 |
 
 ---
 
-## 11. Riesgos identificados
+# 📉 Reglas de inclusión
 
-- Matching incorrecto entre fuentes
-- Cambios de club dentro de temporada
-- Diferencias en naming entre datasets
-- Sesgo estructural por liga
-- Sesgo mediático en valor de mercado
+El dataset modelizable incluye únicamente:
+
+- matching válido
+- edad entre 18–23
+- minutos mínimos
+- valor de mercado disponible
+- posición válida
 
 ---
 
-## 12. Conclusión
+# 📊 Dataset final de modelización
 
-El diseño del dataset está orientado a maximizar:
+| Métrica | Resultado |
+|---|---:|
+| Observaciones | 3,297 |
+| Jugadores | 1,847 |
+| Ligas | 7 |
+| Temporadas | 2019-2020 → 2024-2025 |
 
-- Coherencia analítica
-- Robustez metodológica
-- Interpretabilidad de los resultados
+---
 
-Estas decisiones permiten construir un sistema sólido para la estimación del valor de mercado y la identificación de ineficiencias en el mercado de fichajes.
+# ⏳ Diseño temporal y prevención de leakage
 
+## Validación temporal
+
+| Split | Temporadas |
+|---|---|
+| Train | 2019-2020 → 2023-2024 |
+| Test | 2024-2025 |
+
+---
+
+## Decisión crítica
+
+```text
+No utilizar random split
+```
+
+---
+
+## Justificación
+
+El random split:
+
+- rompe coherencia temporal
+- introduce leakage
+- genera optimismo artificial
+
+---
+
+# ⚖️ Trade-offs metodológicos
+
+## Cobertura vs precisión
+
+Decisión:
+
+```text
+Priorizar cobertura
+```
+
+---
+
+## Justificación
+
+Un matching ultra estricto:
+
+- destruía tamaño muestral
+- introducía sesgo de selección
+- reducía capacidad predictiva
+
+---
+
+## Interpretabilidad vs complejidad
+
+Decisión:
+
+```text
+OLS como núcleo principal
+```
+
+ML se utiliza como:
+
+- comparación
+- extensión predictiva
+- validación complementaria
+
+---
+
+## Robustez vs coste computacional
+
+Se optimizó:
+
+- reducción espacio búsqueda
+- matching jerárquico
+- filtrado temporal
+
+---
+
+# 🚨 Riesgos identificados
+
+## Riesgos estructurales
+
+- ruido residual de matching
+- sesgo por liga
+- sesgo mediático
+- cambios intra-temporada
+- diferencias entre fuentes
+
+---
+
+## Riesgos metodológicos
+
+- feature engineering limitado
+- dependencia de métricas ofensivas
+- posible infrarepresentación defensiva
+
+---
+
+# 🧠 Conclusión
+
+El diseño del esquema de datos está orientado a maximizar:
+
+- coherencia analítica
+- robustez metodológica
+- interpretabilidad
+- capacidad predictiva
+
+El dataset final constituye una base sólida para:
+
+- econometría aplicada
+- machine learning supervisado
+- scouting cuantitativo
+- identificación de ineficiencias de mercado
+- construcción de rankings de fichajes
 

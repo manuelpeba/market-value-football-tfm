@@ -1,246 +1,480 @@
-# Estado del proyecto
+# 📌 Estado del proyecto
 
-## 1. Resumen ejecutivo
+# 🧠 Resumen ejecutivo
 
-El proyecto tiene como objetivo desarrollar un sistema analítico para identificar jugadores infravalorados en el mercado de fichajes europeo mediante la estimación del valor de mercado esperado.
+El proyecto desarrolla un sistema analítico para identificar jugadores infravalorados en el mercado de fichajes europeo mediante modelos econométricos y Machine Learning aplicados al valor de mercado de futbolistas.
 
-El sistema se basa en la integración de múltiples fuentes de datos y la aplicación de modelos econométricos sobre un dataset estructurado a nivel jugador–temporada.
+El sistema se basa en:
 
-Estado actual:
-
-- Dataset final de panel: 23,580 observaciones
-- Dataset modelizable: 3,297 observaciones
-- Jugadores únicos: 1,847
-- Cobertura temporal: 2019-2020 a 2024-2025
-- Cobertura geográfica: 7 ligas europeas
-
-El sistema ya permite estimar valor de mercado esperado y está preparado para construir el Inefficiency Score.
+- integración de múltiples fuentes
+- feature engineering deportivo
+- econometría aplicada
+- validación temporal out-of-sample
+- scouting cuantitativo
 
 ---
 
-## 2. Fase actual (CRISP-DM)
+## 📊 Estado actual del sistema
 
-Fase actual del proyecto:
+| Métrica | Valor |
+|---|---:|
+| Observaciones panel | 23,580 |
+| Dataset modelizable | 3,297 |
+| Jugadores únicos | 1,847 |
+| Cobertura temporal | 2019-2020 → 2024-2025 |
+| Ligas | 7 |
+| Match rate | 88.36% |
 
-```
+---
 
+## ✅ Capacidades actuales
+
+El sistema ya permite:
+
+- estimar valor de mercado esperado
+- calcular Inefficiency Score
+- generar rankings de scouting
+- comparar OLS vs Machine Learning
+- analizar diferencias estructurales entre ligas
+- producir predicciones out-of-sample
+
+---
+
+# 📚 Estado CRISP-DM
+
+## Fase actual
+
+```text
 Modeling → Evaluation
-
 ```
 
-Fases completadas:
+---
 
-- Business understanding
-- Data understanding
-- Data preparation
+## ✅ Fases completadas
 
-Fases en curso:
+### Business Understanding
 
-- Modelización econométrica
-- Evaluación del modelo
+- definición del problema de scouting
+- definición de objetivos de negocio
+- framing econométrico
+
+### Data Understanding
+
+- análisis exploratorio
+- estudio de distribuciones
+- detección de sesgos
+- evaluación de calidad
+
+### Data Preparation
+
+- feature engineering
+- normalización
+- matching
+- construcción del panel
+- dataset modelizable
 
 ---
 
-## 3. Arquitectura del pipeline de datos
+## 🔄 Fases en curso
 
-El pipeline implementado sigue una estructura modular:
+### Modeling
 
-1. Ingesta de datos
-   - FBref (HTML parsing)
-   - Transfermarkt (CSV estructurado)
+- modelo econométrico final
+- machine learning supervisado
+- scoring
 
-2. Feature engineering
-   - Variables por 90 minutos
-   - Transformaciones logarítmicas
-   - Normalización de nombres
+### Evaluation
 
-3. Integración (matching)
-   - Construcción del panel jugador–temporada
-
-4. Dataset de modelización
-   - Filtrado por calidad, edad y minutos
+- validación temporal
+- robustness checks
+- estabilidad de rankings
 
 ---
 
-## 4. Problema crítico: integración FBref – Transfermarkt
+# 🏗️ Arquitectura del pipeline
 
-### 4.1 Naturaleza del problema
+```mermaid
+flowchart TD
 
-El principal reto técnico del proyecto reside en la integración de las fuentes FBref y Transfermarkt, ya que:
+A[FBref] --> C[Feature Engineering]
+B[Transfermarkt] --> C
 
-- No existe identificador único común entre datasets
-- Diferencias en naming de jugadores (idioma, acentos, abreviaturas)
-- Diferencias en naming de clubes
-- Desalineación en edades (por fechas de captura distintas)
-- Diferencias en granularidad temporal
+C --> D[Normalización]
 
-Este problema es estructural en proyectos de sports analytics y representa una fuente clave de incertidumbre.
+D --> E[Matching jugador-temporada]
 
----
+E --> F[Panel dataset]
 
-### 4.2 Consecuencias del problema
+F --> G[Dataset modelizable]
 
-Sin un matching robusto:
+G --> H[OLS Econometric Model]
 
-- Se generan uniones incorrectas (false positives)
-- Se pierden observaciones válidas (false negatives)
-- Se introduce ruido en el modelo
-- Se compromete la validez del Inefficiency Score
+G --> I[Machine Learning Models]
 
----
+H --> J[Inefficiency Score]
+I --> J
 
-### 4.3 Estrategia de solución implementada
-
-Se ha diseñado un sistema de matching jerárquico basado en múltiples validaciones:
-
-#### 1. Normalización de nombres
-
-- Lowercase
-- Eliminación de acentos
-- Eliminación de caracteres especiales
-
-#### 2. Matching exacto
-
-- Nombre normalizado
-- Edad
-- Temporada
-
-#### 3. Matching validado por club
-
-- Similaridad de strings (fuzzy matching)
-- Score mínimo de similitud
-
-#### 4. Matching fuzzy
-
-- Distancia de Levenshtein
-- Umbral de aceptación elevado
-
-#### 5. Validación por edad
-
-- Diferencia máxima permitida: 1.5 años
+J --> K[Scouting Rankings]
+```
 
 ---
 
-### 4.4 Reducción del espacio de búsqueda
+# ⚠️ Problema crítico: integración FBref ↔ Transfermarkt
 
-Para mejorar eficiencia y precisión:
+## 🚧 Naturaleza del problema
 
-- Filtro por temporada
-- Filtro por liga
-- Filtro por rango de edad
+El principal reto técnico del proyecto reside en la integración entre FBref y Transfermarkt.
 
-Resultado:
+Problemas detectados:
 
-- Reducción de 616,377 → 293,640 registros en Transfermarkt
+- ❌ ausencia de identificador común
+- ❌ nombres inconsistentes
+- ❌ transliteraciones
+- ❌ diferencias entre clubes
+- ❌ edades no alineadas
+- ❌ granularidad temporal distinta
+- ❌ cambios intra-temporada
 
----
-
-### 4.5 Resultados del matching
-
-Resultados finales:
-
-- Match rate: 88.36%
-- Observaciones emparejadas: 20,836
-
-Distribución:
-
-- exact_age_validated: dominante
-- exact_age_club_validated: relevante
-- fuzzy matching: residual
+👉 Este problema representa una de las principales fuentes de incertidumbre en sports analytics.
 
 ---
 
-### 4.6 Validación del matching
+## 📉 Riesgos derivados
 
-Indicadores de calidad:
+Sin matching robusto:
 
-- Diferencia media de edad ≈ 0.72 años
-- Club score medio ≈ 32 (sin filtro fuerte de club)
-- Distribución estable por liga y temporada
+- false positives
+- false negatives
+- ruido en el modelo
+- rankings incorrectos
+- pérdida de validez del Inefficiency Score
 
 ---
 
-### 4.7 Trade-off metodológico
+# 🛠️ Estrategia de matching implementada
 
-Se ha tomado una decisión clave:
+Se desarrolló un pipeline jerárquico multi-validación.
 
-**Priorizar recall sobre precisión en fases iniciales**
+---
+
+## 1️⃣ Normalización de nombres
+
+- lowercase
+- eliminación de acentos
+- limpieza de strings
+
+---
+
+## 2️⃣ Matching exacto
+
+Variables utilizadas:
+
+- nombre normalizado
+- temporada
+- edad aproximada
+
+---
+
+## 3️⃣ Validación por club
+
+- fuzzy matching
+- token similarity
+
+Threshold:
+
+```python
+MIN_CLUB_SCORE = 70
+```
+
+---
+
+## 4️⃣ Matching fuzzy
+
+Algoritmo:
+
+```python
+RapidFuzz
+```
+
+Threshold:
+
+```python
+FUZZY_THRESHOLD = 92
+```
+
+---
+
+## 5️⃣ Validación por edad
+
+```python
+MAX_AGE_DIFF = 1.5
+```
+
+---
+
+# 📈 Resultados del matching
+
+## 📊 Resultados globales
+
+| Métrica | Resultado |
+|---|---:|
+| Match rate | 88.36% |
+| Observaciones emparejadas | 20,836 |
+| Observaciones totales | 23,580 |
+
+---
+
+## Distribución final
+
+| Método | Resultado |
+|---|---:|
+| exact_age_validated | dominante |
+| exact_age_club_validated | relevante |
+| fuzzy_age_club_validated | residual |
+
+---
+
+## 📌 Interpretación
+
+El matching exacto domina claramente la muestra final.
+
+El fuzzy matching queda limitado a casos ambiguos específicos, reduciendo riesgo de false positives.
+
+👉 El sistema prioriza cobertura sin perder control de calidad.
+
+---
+
+# 📊 Dataset final de modelización
+
+## Resultado tras filtros
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones | 3,297 |
+| Jugadores | 1,847 |
+| Ligas | 7 |
+| Edad | 18–23 |
+
+---
+
+## Filtros aplicados
+
+- matching válido
+- edad válida
+- minutos mínimos
+- valor de mercado disponible
+- posición válida
+
+---
+
+## Distribución por posición
+
+| Posición | Observaciones |
+|---|---:|
+| MID | 1,705 |
+| DEF | 1,147 |
+| ATT | 351 |
+| GK | 94 |
+
+---
+
+## Distribución por liga
+
+| Liga | Observaciones |
+|---|---:|
+| Ligue 1 | 627 |
+| Eredivisie | 557 |
+| Serie A | 494 |
+| Premier League | 466 |
+| Bundesliga | 438 |
+| LaLiga | 373 |
+| Liga Portugal | 342 |
+
+---
+
+# 📈 Estado actual de la modelización
+
+## Modelo econométrico final
+
+El sistema ya incorpora un modelo OLS final interpretable con:
+
+- efectos fijos por liga
+- efectos fijos por temporada
+- efectos fijos por posición
+- errores robustos HC3
+
+---
+
+## Especificación principal
+
+```python
+log_market_value_eur ~
+age +
+log_minutes_played +
+goals_per90 +
+assists_per90 +
+league FE +
+season FE +
+position FE
+```
+
+---
+
+## 📊 Resultados out-of-sample
+
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS simple | 1.0036 | 1.2165 | 0.1472 |
+| OLS + League FE | 0.7954 | 0.9896 | 0.4356 |
+| OLS final FE | **0.7907** | **0.9823** | **0.4439** |
+
+---
+
+## 📌 Principales hallazgos
+
+### Premier League
+
+- prima estructural positiva significativa
+
+### Eredivisie / Liga Portugal
+
+- descuentos estructurales relevantes
+
+### Drivers principales
+
+- minutos jugados
+- goles por 90
+- asistencias por 90
+
+👉 La liga tiene un impacto estructural muy fuerte sobre el valor de mercado.
+
+---
+
+# 🤖 Estado del Machine Learning
+
+## Modelos implementados
+
+- Random Forest
+- HistGradientBoosting
+- GradientBoostingRegressor
+
+---
+
+## 📊 Resultados ML
+
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS final | 0.7907 | 0.9823 | 0.4439 |
+| Random Forest | 0.7704 | 0.9691 | 0.4587 |
+| HistGradientBoosting | 0.7723 | 0.9680 | 0.4600 |
+| Gradient Boosting | **0.7613** | **0.9493** | **0.4807** |
+
+---
+
+## 📌 Conclusiones ML
+
+- ML mejora moderadamente el rendimiento predictivo
+- OLS mantiene mejor interpretabilidad
+- El feature engineering sigue siendo el principal cuello de botella
+- Existe estabilidad razonable entre rankings OLS y ML
+
+---
+
+# 📤 Outputs generados
+
+El pipeline ya genera automáticamente:
+
+- predicciones out-of-sample
+- rankings de infravalorados
+- rankings de sobrevalorados
+- métricas econométricas
+- métricas ML
+- tablas de coeficientes
+- feature importance
+- análisis por liga
+- análisis por posición
+
+---
+
+# ⚖️ Trade-offs metodológicos
+
+## Cobertura vs precisión
+
+Decisión adoptada:
+
+```text
+Priorizar cobertura muestral
+```
 
 Justificación:
 
-- Mantener mayor volumen de datos para modelización
-- Controlar ruido posteriormente mediante:
+- mantener tamaño suficiente para modelización
+- controlar ruido posteriormente mediante:
+  - confidence score
+  - robustness checks
   - filtros
-  - variables de confianza
-  - robustez del modelo
 
 ---
 
-## 5. Dataset final de modelización
+## Interpretabilidad vs complejidad
 
-Tras aplicar filtros:
+Decisión adoptada:
 
-- Observaciones: 3,297
-- Jugadores: 1,847
+```text
+OLS como núcleo principal
+```
 
-Filtros aplicados:
+ML se utiliza como:
 
-- Matching válido
-- Edad entre 18–23 años
-- Minutos jugados mínimos
-- Valor de mercado disponible
-
----
-
-## 6. Calidad del dataset
-
-Fortalezas:
-
-- Alta cobertura temporal
-- Buen balance entre ligas
-- Variables relevantes para modelización
-
-Limitaciones:
-
-- Sesgo por liga
-- Sesgo por posición
-- Ruido residual en matching
+- extensión predictiva
+- comparación metodológica
+- validación complementaria
 
 ---
 
-## 7. Estado de la modelización
+## Robustez vs coste computacional
 
-Preparado para:
+Se optimizó:
 
-- Modelo OLS con efectos fijos:
-  - Liga
-  - Temporada
-  - Posición
-
-Objetivo:
-
-Estimar:
-
-- Valor de mercado esperado
-- Inefficiency Score
+- reducción espacio de matching
+- filtrado jerárquico
+- búsqueda por temporada
 
 ---
 
-## 8. Próximos pasos
+# 🚀 Próximos pasos
 
-1. Construcción del modelo econométrico final
-2. Evaluación out-of-sample
-3. Cálculo del Inefficiency Score
-4. Ranking de jugadores infravalorados
-5. Interpretación económica de resultados
+## 🔜 Prioridad inmediata
+
+- feature engineering avanzado
+- índices deportivos por posición
+- limpieza de features de matching en ML
 
 ---
 
-## 9. Conclusión
+## 🔜 Fase posterior
 
-El proyecto ha superado con éxito la fase más crítica desde el punto de vista técnico: la integración de fuentes heterogéneas sin identificador común.
+- Growth Score
+- dashboard interactivo
+- visualizaciones finales
+- business insights
+- scouting reports automáticos
 
-El sistema resultante es metodológicamente sólido y permite avanzar hacia la modelización con un nivel de calidad adecuado para un Trabajo de Fin de Máster.
+---
 
-La complejidad del matching y su resolución constituyen uno de los principales aportes del proyecto.
+# 🧠 Conclusión
+
+El proyecto ha superado con éxito la fase técnicamente más compleja:
+
+# la integración robusta de fuentes heterogéneas sin identificador común.
+
+Actualmente, el sistema ya permite:
+
+- estimar valor esperado
+- detectar posibles ineficiencias
+- generar rankings cuantitativos
+- comparar econometría y ML
+- producir validación temporal realista
+
+El proyecto se encuentra en una fase avanzada y metodológicamente sólida para un Trabajo de Fin de Máster orientado a sports analytics y econometría aplicada al fútbol profesional.
 
