@@ -1,3 +1,4 @@
+import joblib
 import pandas as pd
 
 from src.models.machine_learning.pipelines import (
@@ -15,6 +16,7 @@ from src.models.evaluation.metrics import (
 from src.utils.paths import (
     PROCESSED_DATA_DIR,
     TABLES_DIR,
+    MODEL_ARTIFACTS_DIR,
 )
 
 
@@ -60,13 +62,32 @@ def run_ml_pipeline():
 
     models = build_ml_models()
 
-    results = []
+    results = {}
+
+    metrics_rows = []
+
+    MODEL_ARTIFACTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
     for model_name, model in models.items():
 
         print(f"\nTraining {model_name}...")
 
         model.fit(X_train, y_train)
+
+        model_path = (
+            MODEL_ARTIFACTS_DIR
+            / f"{model_name}.joblib"
+        )
+
+        joblib.dump(
+            model,
+            model_path,
+        )
+
+        print(f"Saved model: {model_path}")
 
         predictions = model.predict(X_test)
 
@@ -76,11 +97,18 @@ def run_ml_pipeline():
             model_name=model_name,
         )
 
-        results.append(metrics)
+        metrics_rows.append(metrics)
+
+        results[model_name] = {
+            "model": model,
+            "model_path": model_path,
+            "predictions": predictions,
+            "metrics": metrics,
+        }
 
         print(metrics)
 
-    metrics_df = pd.DataFrame(results)
+    metrics_df = pd.DataFrame(metrics_rows)
 
     TABLES_DIR.mkdir(
         parents=True,
@@ -98,9 +126,12 @@ def run_ml_pipeline():
 
     return {
         "models": models,
+        "results": results,
         "metrics": metrics_df,
-        "X": X,
-        "y": y,
+        "X_train": X_train,
+        "X_test": X_test,
+        "y_train": y_train,
+        "y_test": y_test,
         "dataset": df_model,
     }
 
