@@ -13,10 +13,15 @@ from src.models.evaluation.metrics import (
     regression_metrics,
 )
 
+from src.models.evaluation.feature_importance import (
+    extract_feature_importance,
+)
+
 from src.utils.paths import (
     PROCESSED_DATA_DIR,
     TABLES_DIR,
     MODEL_ARTIFACTS_DIR,
+    FEATURE_IMPORTANCE_DIR,
 )
 
 
@@ -41,7 +46,6 @@ def run_ml_pipeline():
     print(f"Rows after feature preparation: {len(df_model):,}")
     print(f"Features: {X.shape[1]:,}")
 
-    # Temporal split
     train_mask = (
         df_model["season_start_year"] <= 2023
     )
@@ -63,10 +67,14 @@ def run_ml_pipeline():
     models = build_ml_models()
 
     results = {}
-
     metrics_rows = []
 
     MODEL_ARTIFACTS_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    FEATURE_IMPORTANCE_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
@@ -107,6 +115,29 @@ def run_ml_pipeline():
         }
 
         print(metrics)
+
+        if hasattr(model, "feature_importances_"):
+
+            importance_df = extract_feature_importance(
+                model=model,
+                feature_names=X_train.columns,
+                model_name=model_name,
+            )
+
+            importance_path = (
+                FEATURE_IMPORTANCE_DIR
+                / f"{model_name}_feature_importance.csv"
+            )
+
+            importance_df.to_csv(
+                importance_path,
+                index=False,
+            )
+
+            print(
+                f"Saved feature importance: "
+                f"{importance_path}"
+            )
 
     metrics_df = pd.DataFrame(metrics_rows)
 
