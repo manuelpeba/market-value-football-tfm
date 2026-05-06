@@ -1,0 +1,21 @@
+features:
+  numeric:
+    - age
+    - log_minutes_played
+    - goals_per90
+    - assists_per90
+
+  categorical:
+    - league
+    - season
+    - position_group
+
+  excluded_from_model:
+    - market_value_next_eur
+    - delta_log_market_value_1y
+    - predicted_market_value_eur
+    - inefficiency_score
+    - matching_method
+    - matching_confidence
+    - club_score
+    - age_diff

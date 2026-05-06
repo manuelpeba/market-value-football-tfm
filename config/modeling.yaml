@@ -1,0 +1,23 @@
+modeling:
+  target: log_market_value_eur
+
+  filters:
+    min_season: 2019
+    max_season: 2024
+    min_age: 18
+    max_age: 23
+    min_minutes: 300
+    min_market_value_eur: 500000
+
+  temporal_split:
+    train_start: 2019
+    train_end: 2023
+    test_start: 2024
+    test_end: 2024
+
+  econometric:
+    robust_covariance: HC3
+    fixed_effects:
+      - league
+      - season
+      - position_group

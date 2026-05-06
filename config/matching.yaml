@@ -1,0 +1,5 @@
+matching:
+  max_age_diff: 1.5
+  min_club_score: 70
+  fuzzy_threshold: 92
+  min_matching_confidence: 0.85

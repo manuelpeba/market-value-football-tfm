@@ -1,0 +1,5 @@
+project:
+  name: market-value-football-tfm
+  unit_of_analysis: player-season
+  language: python
+  methodology: CRISP-DM adapted

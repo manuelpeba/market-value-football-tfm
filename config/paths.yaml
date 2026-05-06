@@ -1,0 +1,13 @@
+paths:
+  raw_data: data/raw
+  interim_data: data/interim
+  processed_data: data/processed
+  external_data: data/external
+
+  logs: logs
+  reports: reports
+  figures: reports/figures
+  tables: reports/tables
+
+  notebooks: notebooks
+  src: src
