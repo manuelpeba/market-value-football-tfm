@@ -5,6 +5,7 @@ from rapidfuzz import process, fuzz
 
 from src.data.name_normalization import normalize_name
 
+
 ROOT = Path(__file__).resolve().parents[2]
 
 FBREF_PATH = ROOT / "data/processed/fbref_features.parquet"
@@ -45,6 +46,9 @@ def prepare_fbref(fbref: pd.DataFrame) -> pd.DataFrame:
     if "season" not in fbref.columns:
         raise KeyError("FBref dataset must contain 'season'.")
 
+    if "club" not in fbref.columns:
+        raise KeyError("FBref dataset must contain 'club'.")
+
     return fbref
 
 
@@ -52,19 +56,7 @@ def prepare_transfermarkt(tm: pd.DataFrame) -> pd.DataFrame:
     tm = tm.copy()
 
     if "player_name_norm" not in tm.columns:
-        tm["player_name_norm"] = tm["player_name"].apply(normalize_name)
-
-    if "age" in tm.columns and "age_tm" not in tm.columns:
-        tm = tm.rename(columns={"age": "age_tm"})
-
-    if "season_start_year" in tm.columns and "season_start_year_tm" not in tm.columns:
-        tm = tm.rename(columns={"season_start_year": "season_start_year_tm"})
-
-    if "player_id" in tm.columns and "player_id_tm" not in tm.columns:
-        tm = tm.rename(columns={"player_id": "player_id_tm"})
-
-    if "player_name" in tm.columns and "player_name_tm" not in tm.columns:
-        tm = tm.rename(columns={"player_name": "player_name_tm"})
+        tm["player_name_norm"] = tm["player_name_tm"].apply(normalize_name)
 
     required_cols = [
         "player_id_tm",
@@ -83,9 +75,55 @@ def prepare_transfermarkt(tm: pd.DataFrame) -> pd.DataFrame:
         raise KeyError(f"Missing required Transfermarkt columns: {missing}")
 
     tm = tm.dropna(subset=["player_name_norm", "season", "market_value_eur"])
-    tm = tm[tm["market_value_eur"] > 0]
+    tm = tm[tm["market_value_eur"] > 0].copy()
 
     return tm
+
+
+def reduce_transfermarkt_search_space(
+    fbref: pd.DataFrame,
+    tm: pd.DataFrame,
+) -> pd.DataFrame:
+    tm = tm.copy()
+
+    seasons = set(fbref["season"].dropna().unique())
+    tm = tm[tm["season"].isin(seasons)].copy()
+
+    if "age_fbref" in fbref.columns and "age_tm" in tm.columns:
+        min_age = pd.to_numeric(fbref["age_fbref"], errors="coerce").min()
+        max_age = pd.to_numeric(fbref["age_fbref"], errors="coerce").max()
+
+        if pd.notna(min_age) and pd.notna(max_age):
+            tm = tm[
+                tm["age_tm"].between(
+                    min_age - MAX_AGE_DIFF - 1,
+                    max_age + MAX_AGE_DIFF + 1,
+                )
+            ].copy()
+
+    return tm
+
+
+def add_blocking_keys(df: pd.DataFrame, name_col: str) -> pd.DataFrame:
+    df = df.copy()
+
+    df["name_first_char"] = (
+        df[name_col]
+        .fillna("")
+        .astype(str)
+        .str[:1]
+    )
+
+    df["name_first_token"] = (
+        df[name_col]
+        .fillna("")
+        .astype(str)
+        .str.split()
+        .str[0]
+        .fillna("")
+    )
+
+    return df
 
 
 def candidate_age_filter(candidates: pd.DataFrame, age_fbref) -> pd.DataFrame:
@@ -96,10 +134,15 @@ def candidate_age_filter(candidates: pd.DataFrame, age_fbref) -> pd.DataFrame:
         return candidates
 
     candidates["age_diff"] = (candidates["age_tm"] - age_fbref).abs()
+
     return candidates[candidates["age_diff"] <= MAX_AGE_DIFF]
 
 
-def choose_best_candidate(candidates: pd.DataFrame, club_fbref=None) -> pd.Series | None:
+def choose_best_candidate(
+    candidates: pd.DataFrame,
+    club_fbref=None,
+    require_club_validation: bool = False,
+) -> pd.Series | None:
     if candidates.empty:
         return None
 
@@ -111,22 +154,26 @@ def choose_best_candidate(candidates: pd.DataFrame, club_fbref=None) -> pd.Serie
     if club_fbref is not None and "current_club_name_tm" in candidates.columns:
         club_norm = normalize_name(club_fbref)
 
-        candidates["club_score"] = candidates["current_club_name_tm"].fillna("").apply(
-            lambda x: fuzz.token_sort_ratio(club_norm, normalize_name(x))
+        candidates["club_score"] = (
+            candidates["current_club_name_tm"]
+            .fillna("")
+            .apply(lambda x: fuzz.token_sort_ratio(club_norm, normalize_name(x)))
         )
-
-        candidates = candidates[candidates["club_score"] >= MIN_CLUB_SCORE]
     else:
-        candidates["club_score"] = 0
+        candidates["club_score"] = np.nan
+
+    if require_club_validation:
+        candidates = candidates[candidates["club_score"] >= MIN_CLUB_SCORE]
 
     if candidates.empty:
         return None
 
     candidates["age_rank"] = candidates["age_diff"].fillna(999)
+    candidates["club_score_rank"] = candidates["club_score"].fillna(0)
 
     candidates = candidates.sort_values(
-        by=["club_score", "age_rank", "market_value_eur"],
-        ascending=[False, True, False],
+        by=["age_rank", "club_score_rank", "market_value_eur"],
+        ascending=[True, False, False],
     )
 
     return candidates.iloc[0]
@@ -142,34 +189,81 @@ def empty_match() -> dict:
     }
 
 
-def match_one_player(row: pd.Series, tm_by_season: dict[str, pd.DataFrame]) -> dict:
+def build_tm_indexes(tm: pd.DataFrame) -> tuple[dict, dict, dict]:
+    tm_by_exact_name = {
+        key: group
+        for key, group in tm.groupby(["season", "player_name_norm"], dropna=False)
+    }
+
+    tm_by_fuzzy_block = {
+        key: group
+        for key, group in tm.groupby(["season", "name_first_char"], dropna=False)
+    }
+
+    names_by_fuzzy_block = {}
+
+    for key, group in tm_by_fuzzy_block.items():
+        names_by_fuzzy_block[key] = (
+            group["player_name_norm"]
+            .dropna()
+            .unique()
+            .tolist()
+        )
+
+    return tm_by_exact_name, tm_by_fuzzy_block, names_by_fuzzy_block
+
+
+def match_one_player(
+    row: pd.Series,
+    tm_by_exact_name: dict,
+    tm_by_fuzzy_block: dict,
+    names_by_fuzzy_block: dict,
+) -> dict:
     season = row["season"]
     name_norm = row["player_name_norm"]
+    first_char = row["name_first_char"]
     age_fbref = row.get("age_fbref", np.nan)
     club_fbref = row.get("club", None)
 
-    season_candidates = tm_by_season.get(season)
+    # 1. Exact name + season
+    exact_candidates = tm_by_exact_name.get((season, name_norm))
 
-    if season_candidates is None or season_candidates.empty:
+    if exact_candidates is not None and not exact_candidates.empty:
+        exact_candidates = candidate_age_filter(exact_candidates, age_fbref)
+
+        best_exact = choose_best_candidate(
+            candidates=exact_candidates,
+            club_fbref=club_fbref,
+            require_club_validation=False,
+        )
+
+        if best_exact is not None:
+            club_score = best_exact.get("club_score", np.nan)
+
+            method = (
+                "exact_age_club_validated"
+                if pd.notna(club_score) and club_score >= MIN_CLUB_SCORE
+                else "exact_age_validated"
+            )
+
+            confidence = 1.0 if method == "exact_age_club_validated" else 0.85
+
+            return {
+                "match_index": best_exact.name,
+                "matching_method": method,
+                "matching_confidence": confidence,
+                "age_diff": best_exact.get("age_diff", np.nan),
+                "club_score": club_score,
+            }
+
+    # 2. Fuzzy name only within season + first character block
+    block_key = (season, first_char)
+    block_candidates = tm_by_fuzzy_block.get(block_key)
+
+    if block_candidates is None or block_candidates.empty:
         return empty_match()
 
-    exact_candidates = season_candidates[
-        season_candidates["player_name_norm"] == name_norm
-    ].copy()
-
-    exact_candidates = candidate_age_filter(exact_candidates, age_fbref)
-    best_exact = choose_best_candidate(exact_candidates, club_fbref)
-
-    if best_exact is not None:
-        return {
-            "match_index": best_exact.name,
-            "matching_method": "exact_age_club_validated",
-            "matching_confidence": 1.0,
-            "age_diff": best_exact.get("age_diff", np.nan),
-            "club_score": best_exact.get("club_score", np.nan),
-        }
-
-    names = season_candidates["player_name_norm"].dropna().unique().tolist()
+    names = names_by_fuzzy_block.get(block_key, [])
 
     if not names:
         return empty_match()
@@ -188,12 +282,17 @@ def match_one_player(row: pd.Series, tm_by_season: dict[str, pd.DataFrame]) -> d
     if score < FUZZY_THRESHOLD:
         return empty_match()
 
-    fuzzy_candidates = season_candidates[
-        season_candidates["player_name_norm"] == best_name
+    fuzzy_candidates = block_candidates[
+        block_candidates["player_name_norm"] == best_name
     ].copy()
 
     fuzzy_candidates = candidate_age_filter(fuzzy_candidates, age_fbref)
-    best_fuzzy = choose_best_candidate(fuzzy_candidates, club_fbref)
+
+    best_fuzzy = choose_best_candidate(
+        candidates=fuzzy_candidates,
+        club_fbref=club_fbref,
+        require_club_validation=True,
+    )
 
     if best_fuzzy is not None:
         return {
@@ -214,22 +313,37 @@ def build_player_season_panel() -> pd.DataFrame:
     fbref = prepare_fbref(fbref)
     tm = prepare_transfermarkt(tm)
 
-    tm_by_season = {
-        season: season_df
-        for season, season_df in tm.groupby("season", dropna=False)
-    }
-
     print("Building validated player-season matching...")
     print(f"FBref rows: {len(fbref):,}")
-    print(f"Transfermarkt rows: {len(tm):,}")
+    print(f"Transfermarkt rows before filtering: {len(tm):,}")
     print(f"Max age diff: {MAX_AGE_DIFF}")
     print(f"Min club score: {MIN_CLUB_SCORE}")
     print(f"Fuzzy threshold: {FUZZY_THRESHOLD}")
 
-    match_rows = []
+    tm = reduce_transfermarkt_search_space(fbref, tm)
 
-    for _, row in fbref.iterrows():
-        match_rows.append(match_one_player(row, tm_by_season))
+    fbref = add_blocking_keys(fbref, "player_name_norm")
+    tm = add_blocking_keys(tm, "player_name_norm")
+
+    print(f"Transfermarkt rows after filtering: {len(tm):,}")
+
+    tm_by_exact_name, tm_by_fuzzy_block, names_by_fuzzy_block = build_tm_indexes(tm)
+
+    match_rows = []
+    total = len(fbref)
+
+    for i, (_, row) in enumerate(fbref.iterrows(), start=1):
+        match_rows.append(
+            match_one_player(
+                row=row,
+                tm_by_exact_name=tm_by_exact_name,
+                tm_by_fuzzy_block=tm_by_fuzzy_block,
+                names_by_fuzzy_block=names_by_fuzzy_block,
+            )
+        )
+
+        if i % 1000 == 0:
+            print(f"Matched {i:,}/{total:,} rows...")
 
     matches = pd.DataFrame(match_rows, index=fbref.index)
 
@@ -284,6 +398,14 @@ def build_player_season_panel() -> pd.DataFrame:
     panel["club_score"] = matches["club_score"]
     panel["matching_status"] = panel["market_value_eur"].notna()
 
+    panel = panel.drop(
+        columns=[
+            "name_first_char",
+            "name_first_token",
+        ],
+        errors="ignore",
+    )
+
     dedup_cols = ["player_name_fbref", "season"]
 
     if "club" in panel.columns:
@@ -306,6 +428,20 @@ def build_player_season_panel() -> pd.DataFrame:
 
     print("\nClub score summary:")
     print(panel.loc[panel["matching_status"], "club_score"].describe())
+
+    print("\nMatch rate by season:")
+    print(
+        panel.groupby("season")["matching_status"]
+        .agg(["count", "sum", "mean"])
+        .sort_index()
+    )
+
+    print("\nMatch rate by league:")
+    print(
+        panel.groupby("league")["matching_status"]
+        .agg(["count", "sum", "mean"])
+        .sort_values("mean", ascending=False)
+    )
 
     print(f"\nOutput: {OUTPUT_PATH}")
 

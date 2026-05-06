@@ -6,14 +6,14 @@ ROOT = Path(__file__).resolve().parents[2]
 INPUT_PATH = ROOT / "data/processed/player_season_panel.parquet"
 OUTPUT_PATH = ROOT / "data/processed/player_season_modeling.parquet"
 
-MIN_SEASON = 2020
-MAX_SEASON = 2023
+MIN_SEASON = 2019
+MAX_SEASON = 2024
 
 MIN_AGE = 18
 MAX_AGE = 23
 
 MIN_MINUTES = 300
-MIN_MATCHING_CONFIDENCE = 0.90
+MIN_MATCHING_CONFIDENCE = 0.85
 MAX_AGE_DIFF = 1.5
 MIN_MARKET_VALUE_EUR = 500_000
 

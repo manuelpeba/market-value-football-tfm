@@ -1,572 +1,316 @@
-# ⚽ Market Value Dynamics & Inefficiency in European Football Transfers
+# 📊 Identificación de jugadores infravalorados en el mercado de fichajes europeo
 
-Sistema de analítica avanzada para identificar jugadores potencialmente infravalorados en el mercado de fichajes europeo mediante econometría aplicada, machine learning y scouting cuantitativo.
+## 🧠 Descripción del proyecto
+
+Este proyecto desarrolla un sistema analítico para mejorar la toma de decisiones en la identificación y adquisición de jugadores en el fútbol europeo.
+
+El objetivo principal es estimar el valor de mercado esperado de los jugadores a partir de su rendimiento deportivo y detectar ineficiencias en el mercado que permitan identificar oportunidades de fichaje (estrategia *buy low, sell high*).
 
 ---
 
 ## 🎯 Problema de negocio
 
-El mercado de fichajes en el fútbol profesional europeo es un entorno altamente competitivo, opaco y con información imperfecta. Los clubes deben tomar decisiones de inversión bajo incertidumbre, combinando scouting tradicional, intuición experta, restricciones presupuestarias y métricas deportivas.
+Los clubes de fútbol toman decisiones de fichaje basadas en:
 
-La hipótesis central del proyecto es:
+- Scouting tradicional
+- Intuición
+- Métricas limitadas
 
-```text
-Existen jugadores cuyo rendimiento deportivo justifica un valor de mercado superior al observado.
-```
+Sin embargo, el mercado presenta ineficiencias debido a:
 
-Estas discrepancias pueden deberse a:
+- Información incompleta
+- Sesgos de percepción
+- Diferencias entre ligas
 
-- Asimetrías de información.
-- Sesgos de popularidad o reputación.
-- Diferencias de visibilidad entre ligas.
-- Diferencias estructurales entre clubes.
-- Sobreexposición o infraexposición mediática.
-- Dificultad para comparar jugadores entre contextos competitivos.
+👉 Este proyecto busca responder:
 
-El proyecto busca convertir esta hipótesis en un sistema analítico reproducible que ayude a priorizar oportunidades de scouting.
+**¿Qué jugadores están infravalorados respecto a su rendimiento real?**
 
 ---
 
-## 🧠 Solución propuesta
+## 🧩 Enfoque analítico
 
-El proyecto desarrolla un pipeline completo que integra datos de mercado y rendimiento deportivo a nivel jugador-temporada.
+El sistema combina:
 
-La solución permite:
+- Econometría (modelo explicativo)
+- Machine Learning (extensiones futuras)
+- Feature engineering avanzado
 
-- Construir un panel longitudinal jugador-temporada.
-- Integrar Transfermarkt y FBref mediante matching validado.
-- Estimar el valor de mercado esperado de cada jugador.
-- Comparar valor esperado y valor observado.
-- Generar rankings de jugadores potencialmente infravalorados.
-- Evaluar la fiabilidad del matching y de las estimaciones.
+Unidad de análisis:
 
----
-
-## 📌 Outputs principales
-
-### Inefficiency Score
-
-Mide la discrepancia entre valor esperado y valor observado.
-
-```text
-inefficiency_score = predicted_log_market_value - observed_log_market_value
 ```
 
-Interpretación:
+Jugador – Temporada
 
-```text
-score > 0 → potencial infravaloración
-score < 0 → potencial sobrevaloración
 ```
 
 ---
 
-### Market Value Gap
+## 📦 Fuentes de datos
 
-Diferencia monetaria entre valor estimado y valor observado.
+### Transfermarkt
 
-```text
-market_value_gap_eur = predicted_market_value_eur - market_value_eur
-market_value_gap_pct = market_value_gap_eur / market_value_eur
-```
+- Valor de mercado
+- Edad
+- Club
+- Historial de traspasos
 
----
-
-### Confidence Score
-
-Mide la fiabilidad de la observación en función de la calidad del matching entre fuentes.
-
-Factores considerados:
-
-- método de matching
-- diferencia de edad
-- similitud de club
-- confianza de integración
-
----
-
-### Opportunity Score
-
-Combina infravaloración estimada y confianza del registro.
-
-```text
-opportunity_score = inefficiency_score_z * confidence_score
-```
-
----
-
-## 📊 Unidad de análisis
-
-```text
-Jugador–temporada
-```
-
-Esta granularidad permite:
-
-- Capturar evolución temporal.
-- Comparar jugadores dentro y entre temporadas.
-- Integrar datos de mercado y rendimiento.
-- Aplicar econometría de panel.
-- Construir futuros modelos de crecimiento del valor.
-
----
-
-## 🌍 Cobertura actual
-
-### Ligas
-
-- Premier League
-- LaLiga
-- Bundesliga
-- Serie A
-- Ligue 1
-- Eredivisie
-- Liga Portugal
-
-### Temporadas principales
-
-- 2020-2021
-- 2021-2022
-- 2022-2023
-- 2023-2024
-
----
-
-## 📚 Fuentes de datos
-
-### Transfermarkt / Kaggle Player Scores
-
-Fuente:
-
-```text
-davidcariboo/player-scores
-```
-
-Uso:
-
-- Valor de mercado histórico.
-- Edad.
-- Club.
-- Posición.
-- Nacionalidad.
-- Construcción del target `market_value_eur`.
-- Transformación `log_market_value_eur`.
-
-Resumen:
-
-```text
-Transfermarkt rows: 300,435
-```
+👉 Uso:
+- Variable objetivo (`market_value_eur`)
+- Base del Inefficiency Score
 
 ---
 
 ### FBref
 
-Uso:
+- Métricas de rendimiento por 90 minutos
+- Variables ofensivas, defensivas y de posesión
 
-- Minutos jugados.
-- Goles por 90.
-- Asistencias por 90.
-- Métricas ofensivas.
-- Métricas defensivas.
-- Métricas de progresión.
-- Liga, club y temporada.
+👉 Uso:
+- Variables explicativas del modelo
 
-Resumen:
+---
 
-```text
-FBref rows: 11,780
+## ⚠️ Problema crítico: integración de datos (FBref vs Transfermarkt)
+
+### 🚧 Contexto
+
+Uno de los principales retos del proyecto es la integración de ambas fuentes, ya que:
+
+- ❌ No existe un identificador único común
+- ❌ Diferencias en nombres de jugadores (idioma, acentos, formatos)
+- ❌ Diferencias en nombres de clubes
+- ❌ Desalineación en edad (distintas fechas de captura)
+- ❌ Diferencias en granularidad temporal
+
+👉 Este es un problema real en sports analytics y una fuente clave de error si no se trata correctamente.
+
+---
+
+### 🛠️ Solución implementada
+
+Se ha desarrollado un sistema de matching robusto basado en:
+
+#### 1. Normalización de nombres
+
+- Eliminación de acentos
+- Lowercase
+- Limpieza de strings
+
+#### 2. Matching jerárquico
+
+- Matching exacto (nombre + edad)
+- Matching validado por club
+- Matching fuzzy (distancia de strings)
+
+#### 3. Validación por edad
+
+- Diferencia máxima permitida: 1.5 años
+
+#### 4. Reducción del espacio de búsqueda
+
+- Filtro por temporada
+- Filtro por liga
+- Filtro por edad
+
+---
+
+### 📈 Resultados del matching
+
+- Match rate: **88.36%**
+- Observaciones emparejadas: **20,836 / 23,580**
+
+Distribución:
+
+- Matching exacto → dominante
+- Matching fuzzy → residual
+
+👉 Este componente es uno de los principales aportes técnicos del proyecto.
+
+---
+
+## 🏗️ Pipeline de datos
+
+```
+
+Raw Data
+↓
+Ingesta (FBref + Transfermarkt)
+↓
+Feature Engineering
+↓
+Matching jugador–temporada
+↓
+Dataset panel
+↓
+Dataset de modelización
+
 ```
 
 ---
 
-### Understat
+## 📊 Dataset final
 
-Estado:
+### Panel completo
 
-```text
-Extensión futura
-```
-
-Uso previsto:
-
-- xG por 90.
-- xA por 90.
-- Calidad ofensiva avanzada.
+- Observaciones: 23,580
+- Temporadas: 2019-2020 → 2024-2025
+- Ligas: 7 principales ligas europeas
 
 ---
 
-### StatsBomb Open Data
+### Dataset modelizable
 
-Estado:
-
-```text
-Extensión opcional
-```
-
-Uso previsto:
-
-- Eventos avanzados.
-- Presión.
-- Acciones defensivas.
-- Secuencias de juego.
+- Observaciones: 3,297
+- Jugadores: 1,847
+- Edad: 18–23 años
 
 ---
 
-## ⚙️ Arquitectura del proyecto
+## 📈 Modelización
 
-```text
-market-value-football-tfm/
+### Modelo base
 
-├── data/
-│   ├── raw/              # datos originales no versionados
-│   ├── interim/          # datos intermedios no versionados
-│   ├── processed/        # datasets procesados no versionados
-│   └── outputs/          # rankings, tablas y resultados analíticos
-│
-├── notebooks/
-│   ├── 01_data_understanding.ipynb
-│   ├── 02_econometric_baseline.ipynb
-│   └── 03_econometric_model.ipynb
-│
-├── src/
-│   ├── data/
-│   │   ├── build_transfermarkt_features.py
-│   │   ├── build_player_season_panel.py
-│   │   └── build_modeling_dataset.py
-│   │
-│   ├── features/
-│   │   └── build_performance_features.py
-│   │
-│   ├── models/
-│   └── visualization/
-│
-├── docs/
-│   ├── data_sources.md
-│   └── data_dictionary.md
-│
-├── reports/
-│   ├── figures/
-│   └── tables/
-│
-└── README.md
+Regresión OLS con:
+
+- Efectos fijos por liga
+- Efectos fijos por temporada
+- Efectos por posición
+
+### Variable objetivo
+
 ```
 
----
-
-## 🔄 Pipeline reproducible
-
-### 1. Construir features Transfermarkt
-
-```bash
-python -m src.data.build_transfermarkt_features
-```
-
-Output:
-
-```text
-data/processed/transfermarkt_features.parquet
-```
-
----
-
-### 2. Construir panel jugador-temporada
-
-```bash
-python -m src.data.build_player_season_panel
-```
-
-Output:
-
-```text
-data/processed/player_season_panel.parquet
-```
-
-Resultado actual:
-
-```text
-Rows: 11,780
-Match rate: 52.47%
-exact_age_club_validated: 6,107
-fuzzy_age_club_validated: 74
-unmatched: 5,599
-```
-
----
-
-### 3. Construir dataset de modelización
-
-```bash
-python -m src.data.build_modeling_dataset
-```
-
-Output:
-
-```text
-data/processed/player_season_modeling.parquet
-```
-
-Resultado actual:
-
-```text
-Rows: 6,181
-Players: 3,024
-```
-
----
-
-### 4. Ejecutar notebooks
-
-```text
-notebooks/01_data_understanding.ipynb
-notebooks/02_econometric_baseline.ipynb
-notebooks/03_econometric_model.ipynb
-```
-
----
-
-## 🔗 Matching Transfermarkt–FBref
-
-El matching es uno de los componentes críticos del proyecto, ya que Transfermarkt y FBref no comparten un identificador único.
-
-El proceso utiliza:
-
-- nombre normalizado
-- temporada
-- edad
-- club
-- fuzzy matching bajo umbrales estrictos
-
-Parámetros principales:
-
-```text
-MAX_AGE_DIFF = 1.5
-MIN_CLUB_SCORE = 70
-FUZZY_THRESHOLD = 92
-```
-
-Variables de control:
-
-- `matching_method`
-- `matching_confidence`
-- `age_diff`
-- `club_score`
-
----
-
-## 📈 Modelo econométrico final
-
-Notebook:
-
-```text
-notebooks/03_econometric_model.ipynb
-```
-
-### Especificación
-
-Target:
-
-```text
 log_market_value_eur
-```
 
-Variables explicativas:
-
-```text
-minutes_played
-goals_per90
-assists_per90
-age
-```
-
-Fixed Effects:
-
-```text
-league FE
-season FE
-position_group FE
-```
-
-Estimador:
-
-```text
-OLS con errores estándar robustos HC3
 ```
 
 ---
 
-## 📊 Resultados actuales del modelo
+## 💡 Inefficiency Score
 
-Muestra final del modelo:
+Se define como:
 
-```text
-N_obs: 1,012
-N_features: 17
 ```
 
-Métricas:
+residual = valor_real - valor_estimado
 
-```text
-MAE_log: 0.6363
-RMSE_log: 0.7964
-R2: 0.6481
-Adj_R2: 0.6424
 ```
 
 Interpretación:
 
-El modelo explica aproximadamente el 64% de la variabilidad del logaritmo del valor de mercado, un resultado sólido para un modelo interpretable con una especificación parsimoniosa.
+- Positivo → jugador infravalorado
+- Negativo → jugador sobrevalorado
 
 ---
 
-## 🧪 Diagnóstico econométrico
+## 📂 Estructura del proyecto
 
-### Multicolinealidad
+```bash
 
-Valores VIF principales:
+src/
+data/
+ingest_fbref.py
+ingest_transfermarkt.py
+build_fbref_features.py
+build_transfermarkt_features.py
+build_player_season_panel.py
+build_modeling_dataset.py
 
-```text
-age: 17.7635
-minutes_played: 4.6060
-goals_per90: 2.1186
-assists_per90: 1.9408
+data/
+raw/
+processed/
+
+notebooks/
+01_data_understanding.ipynb
+02_modeling.ipynb
+
+docs/
+data_sources.md
+data_quality.md
+schema_decisions.md
+modeling_decisions.md
+project_status.md
+
 ```
 
-Conclusión:
-
-- La mayoría de variables no presentan multicolinealidad severa.
-- La edad presenta VIF elevado, pero se mantiene por relevancia teórica.
-
 ---
 
-### Condition Number
+## ▶️ Ejecución
 
-```text
-Condition number: 31,293.66
+### 1. Construir features FBref
+
 ```
 
-Conclusión:
+python -m src.data.build_fbref_features
 
-El valor elevado aconseja interpretar los coeficientes con prudencia y justifica el uso de errores robustos HC3.
-
----
-
-## 🧩 Interpretación de resultados
-
-El modelo muestra resultados coherentes con la lógica del mercado:
-
-- `minutes_played`: efecto positivo y significativo.
-- `goals_per90`: efecto positivo y significativo.
-- `assists_per90`: efecto positivo y significativo.
-- `age`: efecto negativo y significativo en la muestra joven.
-
-Efectos de liga relevantes:
-
-- Premier League: prima positiva de mercado.
-- Eredivisie: descuento estructural relativo.
-- Liga Portugal: descuento estructural relativo.
-- Ligue 1: descuento relativo frente a la categoría base.
-
-Desde una perspectiva de scouting, las ligas con descuento estructural pueden ofrecer oportunidades para estrategias tipo `buy low, sell high`.
-
----
-
-## 📁 Outputs analíticos
-
-Outputs previstos o generados en:
-
-```text
-data/outputs/
 ```
 
-Tipos de outputs:
+### 2. Construir features Transfermarkt
 
-- ranking de jugadores infravalorados
-- ranking de jugadores sobrevalorados
-- tabla de métricas del modelo
-- tabla de coeficientes
-- resumen por liga
-- resumen por posición
+```
 
----
+python -m src.data.build_transfermarkt_features
 
-## ✅ Estado del proyecto
+```
 
-### Completado
+### 3. Construir panel jugador–temporada
 
-- Definición del problema de negocio.
-- Diseño metodológico CRISP-DM.
-- Definición de unidad de análisis jugador-temporada.
-- Pipeline Transfermarkt.
-- Pipeline FBref.
-- Matching Transfermarkt-FBref validado.
-- Dataset `player_season_panel.parquet`.
-- Dataset `player_season_modeling.parquet`.
-- Notebook de EDA.
-- Baseline econométrico.
-- Modelo econométrico OLS con FE y HC3.
-- Inefficiency Score corregido.
-- Opportunity Score inicial.
-- Rankings de mercado.
-- Conclusiones académicas del modelo.
+```
+
+python -m src.data.build_player_season_panel
+
+```
+
+### 4. Construir dataset de modelización
+
+```
+
+python -m src.data.build_modeling_dataset
+
+```
 
 ---
 
-## 🚧 Limitaciones actuales
+## 📊 Resultados esperados
 
-- El match rate actual es del 52.47%.
-- La muestra final del modelo OLS es de 1,012 observaciones.
-- El modelo actual usa variables deportivas básicas.
-- No se ha incorporado todavía Understat.
-- No hay aún validación temporal out-of-sample.
-- El valor de mercado de Transfermarkt es una estimación, no un precio real de transferencia.
-- Los residuos pueden capturar tanto ineficiencias como variables omitidas.
+El sistema permite:
+
+- Estimar valor de mercado esperado
+- Detectar ineficiencias
+- Generar rankings de jugadores infravalorados
 
 ---
 
 ## 🚀 Próximos pasos
 
-### Corto plazo
-
-- Crear `04_machine_learning_model.ipynb`.
-- Comparar OLS con Random Forest, XGBoost y LightGBM.
-- Implementar validación temporal.
-- Guardar outputs finales en `data/outputs/`.
-
-### Medio plazo
-
-- Integrar xG y xA.
-- Ampliar variables de rendimiento.
-- Mejorar Confidence Score.
-- Construir Growth Score.
-
-### Largo plazo
-
-- Ranking final combinado.
-- Simulación de retorno económico.
-- Dashboard de scouting.
-- Despliegue conceptual.
-- Redacción final de memoria.
+- Modelización econométrica final
+- Validación out-of-sample
+- Ranking de jugadores
+- Integración con dashboards / scouting tools
 
 ---
 
-## 📦 Versionado sugerido
+## 📚 Metodología
 
-### v0.1-data-pipeline
+Se sigue CRISP-DM adaptado:
 
-Pipeline inicial de datos y EDA.
+```
 
-### v0.2-transfermarkt-fbref-matching
+Business → Data → Preparation → Modeling → Evaluation → Deployment
 
-Integración multi-fuente y matching validado.
+```
 
-### v0.3-econometric-baseline
+---
 
-Baseline econométrico inicial.
+## 🧠 Valor del proyecto
 
-### v0.4-econometric-inefficiency-score
+Este proyecto aporta:
 
-Modelo OLS con fixed effects, errores robustos HC3 e Inefficiency Score operativo.
+- Integración robusta de datos heterogéneos
+- Modelización interpretable
+- Aplicación directa a decisiones de negocio
+- Identificación de ineficiencias reales en el mercado
 
 ---
 
