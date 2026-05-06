@@ -21,6 +21,7 @@ from src.models.scoring.rankings import (
 from src.utils.paths import (
     PROCESSED_DATA_DIR,
     TABLES_DIR,
+    RANKINGS_DIR,
 )
 
 
@@ -87,14 +88,39 @@ def run_ols_pipeline():
     undervalued = get_undervalued_players(df)
     overvalued = get_overvalued_players(df)
 
+    RANKINGS_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
+
+    undervalued_output = (
+        RANKINGS_DIR
+        / "ols_undervalued.csv"
+    )
+
+    overvalued_output = (
+        RANKINGS_DIR
+        / "ols_overvalued.csv"
+    )
+
     undervalued.to_csv(
-        TABLES_DIR / "ols_undervalued.csv",
+        undervalued_output,
         index=False,
     )
 
     overvalued.to_csv(
-        TABLES_DIR / "ols_overvalued.csv",
+        overvalued_output,
         index=False,
+    )
+
+    print(
+        f"\nSaved undervalued ranking: "
+        f"{undervalued_output}"
+    )
+
+    print(
+        f"Saved overvalued ranking: "
+        f"{overvalued_output}"
     )
 
     print("\nTop undervalued:")
