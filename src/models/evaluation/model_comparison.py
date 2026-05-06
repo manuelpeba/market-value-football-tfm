@@ -9,7 +9,7 @@ def build_model_comparison_table():
 
     ols_path = (
         TABLES_DIR
-        / "03_econometric_model_metrics.csv"
+        / "ols_model_metrics.csv"
     )
 
     ml_path = (

@@ -36,7 +36,6 @@ def run_ols_pipeline():
 
     df = pd.read_parquet(INPUT_PATH)
 
-    # Feature engineering
     df["log_minutes_played"] = np.log1p(
         df["minutes_played"]
     )
@@ -62,17 +61,31 @@ def run_ols_pipeline():
     print("\nMetrics:")
     print(metrics)
 
+    TABLES_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    metrics_df = pd.DataFrame([metrics])
+
+    metrics_output_path = (
+        TABLES_DIR
+        / "ols_model_metrics.csv"
+    )
+
+    metrics_df.to_csv(
+        metrics_output_path,
+        index=False,
+    )
+
+    print(f"\nSaved metrics: {metrics_output_path}")
+
     print("\nComputing inefficiency scores...")
 
     df = add_inefficiency_scores(df)
 
     undervalued = get_undervalued_players(df)
     overvalued = get_overvalued_players(df)
-
-    TABLES_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
 
     undervalued.to_csv(
         TABLES_DIR / "ols_undervalued.csv",
@@ -98,7 +111,7 @@ def run_ols_pipeline():
     return {
         "model": model,
         "dataset": df,
-        "metrics": metrics,
+        "metrics": metrics_df,
         "undervalued": undervalued,
         "overvalued": overvalued,
     }
