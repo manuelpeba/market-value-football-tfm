@@ -1,503 +1,815 @@
-# 📘 Schema Decisions
+# 🏗️ Decisiones de esquema y modelado de datos
+
+<div align="center">
+
+![Schema](https://img.shields.io/badge/Schema-Player--Season-blue)
+![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
+![Modeling](https://img.shields.io/badge/Modeling-Analytics%20Engineering-orange)
+![Validation](https://img.shields.io/badge/Validation-Leakage%20Aware-important)
+
+</div>
 
 ---
 
 # 📑 Tabla de contenidos
 
-- [🧠 Objetivo del diseño del dataset](#-objetivo-del-diseño-del-dataset)
+- [🧠 Objetivo del documento](#-objetivo-del-documento)
+- [🏗️ Filosofía de diseño](#️-filosofía-de-diseño)
 - [⚙️ Unidad de análisis](#️-unidad-de-análisis)
-- [🗂️ Arquitectura general del dataset](#️-arquitectura-general-del-dataset)
-- [🔑 Claves primarias e identificadores](#-claves-primarias-e-identificadores)
-- [🎯 Variable objetivo](#-variable-objetivo)
-- [📈 Variables derivadas](#-variables-derivadas)
-- [📊 Bloques de variables explicativas](#-bloques-de-variables-explicativas)
-- [🏷️ Variables categóricas](#️-variables-categóricas)
-- [⚠️ Variables de matching y calidad](#️-variables-de-matching-y-calidad)
-- [📚 Transformaciones aplicadas](#-transformaciones-aplicadas)
-- [🛠️ Integración de datos](#️-integración-de-datos)
-- [📉 Reglas de inclusión](#-reglas-de-inclusión)
-- [📊 Dataset final de modelización](#-dataset-final-de-modelización)
-- [⏳ Diseño temporal y prevención de leakage](#-diseño-temporal-y-prevención-de-leakage)
+- [📊 Estructura conceptual del sistema](#-estructura-conceptual-del-sistema)
+- [📂 Arquitectura física de datos](#-arquitectura-física-de-datos)
+- [📦 Separación entre capas](#-separación-entre-capas)
+- [📥 Esquema de datos raw](#-esquema-de-datos-raw)
+- [🧪 Esquema de datos procesados](#-esquema-de-datos-procesados)
+- [🔗 Esquema de integración y matching](#-esquema-de-integración-y-matching)
+- [📊 Esquema del modeling dataset](#-esquema-del-modeling-dataset)
+- [🏷️ Diseño de variables categóricas](#️-diseño-de-variables-categóricas)
+- [📈 Diseño de variables numéricas](#-diseño-de-variables-numéricas)
+- [📊 Diseño del target](#-diseño-del-target)
+- [📂 Separación entre dataset y outputs](#-separación-entre-dataset-y-outputs)
+- [💡 Variables derivadas y scoring](#-variables-derivadas-y-scoring)
+- [🛡️ Prevención de leakage](#️-prevención-de-leakage)
+- [⏳ Diseño temporal](#-diseño-temporal)
+- [📦 Gestión de artefactos](#-gestión-de-artefactos)
+- [⚙️ Configuración centralizada](#️-configuración-centralizada)
 - [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
-- [🚨 Riesgos identificados](#-riesgos-identificados)
+- [🚀 Evolución prevista del esquema](#-evolución-prevista-del-esquema)
 - [🧠 Conclusión](#-conclusión)
 
 ---
 
-# 🧠 Objetivo del diseño del dataset
+# 🧠 Objetivo del documento
 
-El diseño del dataset busca construir una estructura robusta y reproducible para modelar el valor de mercado de futbolistas jóvenes en el fútbol europeo.
+Este documento describe las decisiones de diseño del esquema de datos utilizadas en el sistema analítico orientado a:
 
-El esquema debe permitir:
+<pre>
+identificar jugadores infravalorados en el mercado de fichajes europeo
+</pre>
 
-- integración multi-fuente
-- modelización econométrica
-- machine learning supervisado
-- validación temporal
-- construcción de rankings de scouting
+El objetivo es documentar:
+
+- estructura lógica del dataset
+- arquitectura de almacenamiento
+- diseño de variables
+- separación entre capas
+- control de leakage
+- consistencia temporal
+- decisiones de analytics engineering
+
+---
+
+# 🏗️ Filosofía de diseño
+
+El diseño del sistema sigue principios de:
+
+- modularidad
+- reproducibilidad
+- trazabilidad
+- desacoplamiento
+- mantenibilidad
+- escalabilidad futura
+
+---
+
+## Principio central
+
+Separar explícitamente:
+
+- datos fuente
+- datasets procesados
+- datasets modelizables
+- outputs derivados
+- artefactos de modelos
+
+---
+
+## Objetivo
+
+Evitar:
+
+- contaminación entre etapas
+- leakage accidental
+- dependencia de notebooks
+- mezcla entre lógica y outputs
 
 ---
 
 # ⚙️ Unidad de análisis
 
-La unidad de análisis utilizada es:
+La unidad de análisis principal es:
 
-```text
+<pre>
 Jugador – Temporada
-```
+</pre>
+
+---
+
+## Justificación
+
+Esta estructura permite:
+
+- coherencia temporal
+- integración multi-fuente
+- modelización longitudinal
+- comparabilidad entre jugadores
+- validación temporal
+
+---
+
+## Implicaciones metodológicas
 
 Cada fila representa:
 
-- rendimiento deportivo
-- contexto competitivo
-- valor de mercado
-- situación demográfica
-
-de un jugador en una temporada concreta.
+- un jugador
+- en una temporada concreta
+- dentro de un contexto competitivo específico
 
 ---
 
-## 📌 Justificación
+# 📊 Estructura conceptual del sistema
 
-Esta decisión se adopta porque:
-
-- el valor de mercado es dinámico
-- las fuentes están estructuradas por temporada
-- permite econometría de panel
-- facilita efectos fijos
-- reduce inconsistencias temporales
-
----
-
-# 🗂️ Arquitectura general del dataset
-
-El sistema se estructura en cuatro capas principales:
-
-```mermaid
+```mermaid id="v8bgr5"
 flowchart TD
 
-A[Raw Sources] --> B[Feature Engineering]
+A[Raw Sources] --> B[Processed Features]
 
-B --> C[Player-Season Panel]
+B --> C[Matching Layer]
 
-C --> D[Modeling Dataset]
+C --> D[Player-Season Panel]
 
-D --> E[Econometric Modeling]
-D --> F[Machine Learning]
+D --> E[Modeling Dataset]
+
+E --> F[Econometric Pipeline]
+E --> G[Machine Learning Pipeline]
+
+F --> H[Scoring Outputs]
+G --> H
+
+H --> I[Rankings]
+H --> J[Predictions]
+H --> K[Diagnostics]
 ```
 
 ---
 
-# 🔑 Claves primarias e identificadores
-
-## Clave primaria
-
-La unicidad del dataset se define mediante:
-
-```python
-player_id + season
-```
-
----
-
-## Identificadores internos
-
-| Variable | Descripción |
-|---|---|
-| `player_id` | identificador interno unificado |
-| `season` | temporada deportiva |
-
----
-
-## Identificadores externos
-
-| Variable | Fuente |
-|---|---|
-| `player_id_tm` | Transfermarkt |
-| `fbref_id` | FBref |
-
----
-
-## Justificación
-
-Se evita dependencia de una única fuente y se facilita:
-
-- trazabilidad
-- reproducibilidad
-- futuras ampliaciones
-
----
-
-# 🎯 Variable objetivo
-
-## Variable principal
-
-```python
-log_market_value_eur
-```
-
-Derivada de:
-
-```python
-market_value_eur
-```
-
-Fuente:
+# 📂 Arquitectura física de datos
 
 ```text
-Transfermarkt
+data/
+
+├── raw/
+├── interim/
+├── processed/
+└── external/
 ```
 
 ---
 
+## 📌 Objetivo de separación
+
+| Capa      | Función                          |
+| --------- | -------------------------------- |
+| raw       | Datos originales                 |
+| interim   | Datos parcialmente transformados |
+| processed | Datasets finales reutilizables   |
+| external  | Datos auxiliares externos        |
+
+---
+
+# 📦 Separación entre capas
+
+La arquitectura separa explícitamente:
+
+| Elemento      | Directorio        |
+| ------------- | ----------------- |
+| Datasets      | `data/processed/` |
+| Outputs       | `reports/`        |
+| Artefactos    | `artifacts/`      |
+| Configuración | `config/`         |
+| Lógica        | `src/`            |
+
+---
+
+## Beneficios
+
+Esta separación mejora:
+
+* mantenibilidad
+* trazabilidad
+* auditoría
+* reproducibilidad
+* control de leakage
+
+---
+
+# 📥 Esquema de datos raw
+
+## Objetivo
+
+Mantener los datos originales lo más cercanos posible a la fuente.
+
+---
+
+## Características
+
+* mínima transformación
+* persistencia original
+* trazabilidad
+* posibilidad de reprocesado
+
+---
+
+## Directorios principales
+
+### FBref
+
+<pre>
+data/raw/fbref/
+</pre>
+
+---
+
+### Transfermarkt
+
+<pre>
+data/raw/transfermarkt/
+</pre>
+
+---
+
+# 🧪 Esquema de datos procesados
+
+## Objetivo
+
+Construir datasets limpios y reutilizables.
+
+---
+
+## Datasets principales
+
+| Archivo                          | Descripción               |
+| -------------------------------- | ------------------------- |
+| `fbref_features.parquet`         | Features deportivas       |
+| `transfermarkt_features.parquet` | Variables de mercado      |
+| `player_season_panel.parquet`    | Dataset integrado         |
+| `player_season_modeling.parquet` | Dataset final modelizable |
+
+---
+
+## Formato
+
+Se utiliza:
+
+<pre>
+Apache Parquet
+</pre>
+
+---
+
 ## Justificación
 
-El valor de mercado presenta:
+Parquet mejora:
 
-- skewness positiva
-- colas largas
-- heterocedasticidad
-
-La transformación logarítmica:
-
-- mejora linealidad
-- reduce impacto de outliers
-- estabiliza varianza
-- facilita interpretación relativa
+* compresión
+* velocidad
+* eficiencia analítica
+* integración con pandas y DuckDB
 
 ---
 
-# 📈 Variables derivadas
+# 🔗 Esquema de integración y matching
 
-## Variables principales
+## Problema principal
 
-| Variable | Descripción |
-|---|---|
-| `log_market_value_eur` | target principal |
-| `log_minutes_played` | transformación logarítmica |
-| `g_a_per90` | goles + asistencias |
-| `season_start_year` | inicio de temporada |
+FBref y Transfermarkt:
 
----
-
-## Variables futuras
-
-| Variable | Objetivo |
-|---|---|
-| `delta_log_market_value_1y` | Growth Score |
-| `finishing_index` | eficiencia ofensiva |
-| `playmaking_index` | creación |
-| `progression_index` | progresión |
-| `defensive_index` | defensa |
+<pre>
+NO comparten identificador universal
+</pre>
 
 ---
 
-# 📊 Bloques de variables explicativas
+## Variables utilizadas para matching
 
-## 1️⃣ Variables deportivas
-
-### Producción ofensiva
-
-- `goals_per90`
-- `assists_per90`
-- `g_a_per90`
-
----
-
-### Volumen competitivo
-
-- `minutes_played`
-- `log_minutes_played`
+| Variable         | Uso                   |
+| ---------------- | --------------------- |
+| player_name_norm | Matching principal    |
+| age              | Validación            |
+| club_norm        | Validación contextual |
+| season           | Restricción temporal  |
 
 ---
 
-### Variables futuras
+## Variables de auditoría
 
-- `progressive_passes_per90`
-- `progressive_carries_per90`
-- `xG`
-- `xA`
-- `tackles_per90`
-- `interceptions_per90`
-
----
-
-## 2️⃣ Variables demográficas
-
-- `age`
-- `position`
-- `position_group`
-
----
-
-## 3️⃣ Variables contextuales
-
-- `league`
-- `club`
-- `season`
-
----
-
-# 🏷️ Variables categóricas
-
-## Position Group
-
-Se agrupan posiciones en:
-
-| Grupo | Descripción |
-|---|---|
-| GK | portero |
-| DEF | defensa |
-| MID | centrocampista |
-| ATT | atacante |
-
----
-
-## Justificación
-
-- reducción dimensional
-- interpretabilidad
-- estabilidad econométrica
-- efectos fijos por posición
-
----
-
-# ⚠️ Variables de matching y calidad
-
-El sistema incorpora variables específicas de calidad del matching.
-
-## Variables principales
-
-| Variable | Uso |
-|---|---|
-| `matching_method` | método de matching |
-| `matching_confidence` | calidad estimada |
-| `club_score` | similitud de club |
-| `age_diff` | diferencia de edad |
+| Variable            | Objetivo           |
+| ------------------- | ------------------ |
+| matching_method     | Método utilizado   |
+| matching_confidence | Calidad estimada   |
+| age_diff            | Diferencia edad    |
+| club_score          | Similaridad clubes |
 
 ---
 
 ## Decisión metodológica
 
-Estas variables:
+Las variables de matching:
 
-```text
-NO representan rendimiento deportivo
-```
+* se preservan
+* permiten auditoría
+* facilitan robustness checks
 
-Por tanto:
+pero:
 
-- se utilizan para robustness checks
-- se utilizan para confidence scoring
-- deben limitarse en modelos predictivos finales
-
----
-
-# 📚 Transformaciones aplicadas
-
-## Variables por 90 minutos
-
-Objetivo:
-
-- comparabilidad entre jugadores
-- reducción sesgo por minutos
+<pre>
+NO deben interpretarse como variables deportivas
+</pre>
 
 ---
 
-## Transformación logarítmica
+# 📊 Esquema del modeling dataset
 
-Aplicada a:
+## Archivo principal
 
-- `market_value_eur`
-- `minutes_played`
-
----
-
-## Normalización de nombres
-
-Aplicada para matching:
-
-- lowercase
-- eliminación de acentos
-- limpieza de caracteres especiales
+<pre>
+data/processed/player_season_modeling.parquet
+</pre>
 
 ---
 
-# 🛠️ Integración de datos
+## Contenido
 
-## Problema estructural
+El dataset modelizable incluye:
 
-No existe identificador único compartido entre:
-
-- FBref
-- Transfermarkt
-
----
-
-## Estrategia implementada
-
-Matching jerárquico:
-
-1. normalización
-2. exact matching
-3. validación por club
-4. fuzzy matching
+* variables deportivas
+* variables demográficas
+* variables contextuales
+* variables derivadas
+* variables categóricas
 
 ---
 
-## Thresholds finales
+## Excluye explícitamente
+
+* outputs de scoring
+* predicciones
+* variables futuras
+* artefactos derivados
+
+---
+
+## Resultado actual
+
+| Métrica       | Valor |
+| ------------- | ----: |
+| Observaciones | 3,297 |
+| Jugadores     | 1,847 |
+| Edad          | 18–23 |
+
+---
+
+# 🏷️ Diseño de variables categóricas
+
+## Variables categóricas actuales
+
+| Variable         | Tipo     |
+| ---------------- | -------- |
+| `league`         | Category |
+| `season`         | Category |
+| `position_group` | Category |
+
+---
+
+## Justificación
+
+Estas variables permiten modelar:
+
+* efectos estructurales
+* diferencias competitivas
+* diferencias posicionales
+* cambios temporales
+
+---
+
+## Position Group
+
+| Grupo | Posiciones      |
+| ----- | --------------- |
+| GK    | Porteros        |
+| DEF   | Defensas        |
+| MID   | Centrocampistas |
+| ATT   | Atacantes       |
+
+---
+
+# 📈 Diseño de variables numéricas
+
+## Variables principales
+
+| Variable             | Función                |
+| -------------------- | ---------------------- |
+| `age`                | Desarrollo             |
+| `minutes_played`     | Exposición competitiva |
+| `log_minutes_played` | Volumen robusto        |
+| `goals_per90`        | Producción ofensiva    |
+| `assists_per90`      | Creación ofensiva      |
+
+---
+
+## Principios de diseño
+
+Las variables deben ser:
+
+* interpretables
+* coherentes futbolísticamente
+* robustas
+* temporalmente válidas
+
+---
+
+# 📊 Diseño del target
+
+## Variable objetivo
 
 ```python
-MAX_AGE_DIFF = 1.5
-MIN_CLUB_SCORE = 70
-FUZZY_THRESHOLD = 92
+market_value_eur
 ```
 
 ---
 
-## Resultados
+## Transformación utilizada
 
-| Métrica | Resultado |
-|---|---:|
-| Match rate | 88.36% |
-| Observaciones emparejadas | 20,836 |
-
----
-
-# 📉 Reglas de inclusión
-
-El dataset modelizable incluye únicamente:
-
-- matching válido
-- edad entre 18–23
-- minutos mínimos
-- valor de mercado disponible
-- posición válida
+```python id="rvlv5m"
+log_market_value_eur
+```
 
 ---
 
-# 📊 Dataset final de modelización
+## Justificación
 
-| Métrica | Resultado |
-|---|---:|
-| Observaciones | 3,297 |
-| Jugadores | 1,847 |
-| Ligas | 7 |
-| Temporadas | 2019-2020 → 2024-2025 |
+La transformación logarítmica mejora:
+
+* estabilidad
+* linealidad
+* robustez frente a outliers
+* interpretabilidad relativa
 
 ---
 
-# ⏳ Diseño temporal y prevención de leakage
+## Decisión metodológica
 
-## Validación temporal
+El sistema modela:
 
-| Split | Temporadas |
-|---|---|
-| Train | 2019-2020 → 2023-2024 |
-| Test | 2024-2025 |
+<pre>
+valor esperado de mercado
+</pre>
+
+y no:
+
+* precio real de transferencia
+* salario
+* valor contractual exacto
+
+---
+
+# 📂 Separación entre dataset y outputs
+
+## Dataset base
+
+El modeling dataset representa:
+
+<pre>
+información disponible antes de modelizar
+</pre>
+
+---
+
+## Outputs derivados
+
+Los siguientes elementos se generan posteriormente:
+
+* predicciones
+* rankings
+* scores
+* métricas
+* feature importance
+
+---
+
+## Directorios separados
+
+| Tipo       | Directorio        |
+| ---------- | ----------------- |
+| Dataset    | `data/processed/` |
+| Outputs    | `reports/`        |
+| Artefactos | `artifacts/`      |
+
+---
+
+## Justificación
+
+Evita:
+
+* contaminación del dataset
+* leakage accidental
+* mezcla entre inputs y outputs
+
+---
+
+# 💡 Variables derivadas y scoring
+
+## Variables derivadas
+
+| Variable               | Descripción                  |
+| ---------------------- | ---------------------------- |
+| `log_market_value_eur` | Log del target               |
+| `log_minutes_played`   | Log de minutos               |
+| `g_a_per90`            | Producción ofensiva agregada |
+
+---
+
+## Variables de scoring
+
+Generadas posteriormente:
+
+| Variable                     | Descripción               |
+| ---------------------------- | ------------------------- |
+| `predicted_market_value_eur` | Valor estimado            |
+| `market_value_gap_eur`       | Gap observado vs esperado |
+| `inefficiency_score`         | Score de infravaloración  |
+| `inefficiency_score_z`       | Score normalizado         |
 
 ---
 
 ## Decisión crítica
 
-```text
-No utilizar random split
-```
+Las variables de scoring:
+
+<pre>
+NO forman parte del dataset base de modelización
+</pre>
+
+---
+
+# 🛡️ Prevención de leakage
+
+## Principio fundamental
+
+Toda variable utilizada debe existir:
+
+<pre>
+en el momento real de decisión
+</pre>
+
+---
+
+## Variables explícitamente excluidas
+
+| Variable                     | Motivo             |
+| ---------------------------- | ------------------ |
+| `market_value_next_eur`      | Información futura |
+| `future_minutes`             | Información futura |
+| `future_xG`                  | Información futura |
+| `delta_log_market_value_1y`  | Información futura |
+| `predicted_market_value_eur` | Output derivado    |
+| `inefficiency_score`         | Output derivado    |
+
+---
+
+## Estrategia aplicada
+
+* separación temporal
+* separación entre datasets y outputs
+* exclusión explícita de variables futuras
+* validación temporal out-of-sample
+
+---
+
+# ⏳ Diseño temporal
+
+## Cobertura temporal
+
+| Temporadas |
+| ---------- |
+| 2019-2020  |
+| 2020-2021  |
+| 2021-2022  |
+| 2022-2023  |
+| 2023-2024  |
+| 2024-2025  |
+
+---
+
+## Split temporal
+
+| Split | Periodo     |
+| ----- | ----------- |
+| Train | ≤ 2023-2024 |
+| Test  | 2024-2025   |
 
 ---
 
 ## Justificación
 
-El random split:
+Evitar:
 
-- rompe coherencia temporal
-- introduce leakage
-- genera optimismo artificial
+* leakage temporal
+* optimismo artificial
+* validación irrealista
+
+---
+
+## Decisión metodológica
+
+<pre>
+NO utilizar random split
+</pre>
+
+---
+
+# 📦 Gestión de artefactos
+
+## Objetivo
+
+Persistir modelos y outputs reutilizables.
+
+---
+
+## Directorio
+
+<pre>
+artifacts/
+</pre>
+
+---
+
+## Contenido
+
+| Directorio            | Contenido                 |
+| --------------------- | ------------------------- |
+| `models/`             | Modelos entrenados        |
+| `predictions/`        | Predicciones              |
+| `feature_importance/` | Importancia variables     |
+| `encoders/`           | Encoders categóricos      |
+| `scalers/`            | Transformadores numéricos |
+
+---
+
+## Beneficios
+
+* reproducibilidad
+* comparabilidad
+* scoring posterior
+* despliegue futuro
+
+---
+
+# ⚙️ Configuración centralizada
+
+## Objetivo
+
+Separar configuración y lógica de negocio.
+
+---
+
+## Directorio
+
+<pre>
+config/
+</pre>
+
+---
+
+## Archivos principales
+
+| Archivo         | Función               |
+| --------------- | --------------------- |
+| `matching.yaml` | Matching              |
+| `features.yaml` | Features              |
+| `modeling.yaml` | Modelización          |
+| `paths.yaml`    | Paths                 |
+| `project.yaml`  | Configuración general |
+
+---
+
+## Beneficios
+
+* desacoplamiento
+* mantenibilidad
+* flexibilidad
+* trazabilidad
 
 ---
 
 # ⚖️ Trade-offs metodológicos
 
-## Cobertura vs precisión
+## Cobertura vs calidad
 
-Decisión:
+Se priorizó:
 
-```text
-Priorizar cobertura
+<pre>
+matching robusto sobre cobertura máxima
+</pre>
+
+---
+
+## Complejidad vs interpretabilidad
+
+Se priorizó inicialmente:
+
+* interpretabilidad
+* robustez
+* trazabilidad
+
+frente a complejidad excesiva.
+
+---
+
+## Señal vs dimensionalidad
+
+El feature set actual se mantiene relativamente compacto para:
+
+* evitar sobreingeniería prematura
+* reducir ruido
+* facilitar interpretación
+
+---
+
+# 🚀 Evolución prevista del esquema
+
+## Próximas ampliaciones
+
+### Features avanzadas
+
+* progression metrics
+* percentiles
+* z-scores
+* rolling metrics
+* growth indicators
+
+---
+
+### Nuevas fuentes
+
+* Understat
+* StatsBomb Open Data
+
+---
+
+### Nuevos outputs
+
+* Growth Score
+* Confidence Score
+* scouting reports automáticos
+
+---
+
+## Arquitectura futura prevista
+
+```mermaid id="ifpwbm"
+flowchart TD
+
+A[Base Features] --> B[Advanced Features]
+
+B --> C[League Normalization]
+
+C --> D[Position Z-Scores]
+
+D --> E[Trajectory Features]
+
+E --> F[Growth Features]
+
+F --> G[Advanced Scouting Outputs]
 ```
-
----
-
-## Justificación
-
-Un matching ultra estricto:
-
-- destruía tamaño muestral
-- introducía sesgo de selección
-- reducía capacidad predictiva
-
----
-
-## Interpretabilidad vs complejidad
-
-Decisión:
-
-```text
-OLS como núcleo principal
-```
-
-ML se utiliza como:
-
-- comparación
-- extensión predictiva
-- validación complementaria
-
----
-
-## Robustez vs coste computacional
-
-Se optimizó:
-
-- reducción espacio búsqueda
-- matching jerárquico
-- filtrado temporal
-
----
-
-# 🚨 Riesgos identificados
-
-## Riesgos estructurales
-
-- ruido residual de matching
-- sesgo por liga
-- sesgo mediático
-- cambios intra-temporada
-- diferencias entre fuentes
-
----
-
-## Riesgos metodológicos
-
-- feature engineering limitado
-- dependencia de métricas ofensivas
-- posible infrarepresentación defensiva
 
 ---
 
 # 🧠 Conclusión
 
-El diseño del esquema de datos está orientado a maximizar:
+El diseño del esquema de datos sigue principios de:
 
-- coherencia analítica
-- robustez metodológica
-- interpretabilidad
-- capacidad predictiva
+* analytics engineering
+* reproducibilidad
+* modularidad
+* trazabilidad
+* robustez metodológica
 
-El dataset final constituye una base sólida para:
+La arquitectura actual separa explícitamente:
 
-- econometría aplicada
-- machine learning supervisado
-- scouting cuantitativo
-- identificación de ineficiencias de mercado
-- construcción de rankings de fichajes
+* fuentes
+* datasets
+* pipelines
+* outputs
+* artefactos
 
+permitiendo construir un sistema analítico mantenible y escalable.
+
+La transición desde notebooks exploratorios hacia pipelines modulares reproducibles representa una mejora estructural relevante tanto desde la perspectiva técnica como metodológica.
+
+El esquema actual constituye una base sólida para:
+
+* econometría aplicada
+* machine learning supervisado
+* scoring cuantitativo
+* scouting profesional
+* futuras extensiones analíticas avanzadas
