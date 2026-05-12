@@ -1,0 +1,4 @@
+split,rows,players,seasons
+train,2159,1289,"2019-2020, 2020-2021, 2021-2022, 2022-2023"
+test_temporal,586,577,2023-2024
+scoring_recent,552,541,2024-2025

@@ -1,0 +1,19 @@
+feature,importance,model
+log_minutes_played,0.2346145293428651,gradient_boosting
+league_Eredivisie,0.18028368822210616,gradient_boosting
+league_Premier League,0.12143908967005382,gradient_boosting
+goals_per90,0.1207725840609854,gradient_boosting
+age,0.10032909669023482,gradient_boosting
+league_Liga Portugal,0.094673635928116,gradient_boosting
+assists_per90,0.09237933012459493,gradient_boosting
+league_LaLiga,0.014624722068110154,gradient_boosting
+league_Ligue 1,0.013368933179368575,gradient_boosting
+league_Serie A,0.006788841174409925,gradient_boosting
+position_group_DEF,0.004675228717972412,gradient_boosting
+season_2020-2021,0.004315406458759851,gradient_boosting
+season_2022-2023,0.0037146458189033483,gradient_boosting
+season_2021-2022,0.0029943523315917354,gradient_boosting
+position_group_MID,0.00222075384074894,gradient_boosting
+season_2023-2024,0.0021177645846318835,gradient_boosting
+position_group_GK,0.0006873977865467139,gradient_boosting
+season_2024-2025,0.0,gradient_boosting

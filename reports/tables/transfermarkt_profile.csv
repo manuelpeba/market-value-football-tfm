@@ -1,0 +1,8 @@
+column,dtype,non_null_count,null_count,null_pct,unique_count,sample_values
+player_name,str,3,0,0.0,3,"Pedri, Benjamin Sesko, Antonio Silva"
+season,str,3,0,0.0,1,2022-2023
+age,int64,3,0,0.0,2,"20, 19"
+position,str,3,0,0.0,3,"Central Midfield, Centre-Forward, Centre-Back"
+club,str,3,0,0.0,3,"FC Barcelona, RB Salzburg, Benfica"
+league,str,3,0,0.0,3,"LaLiga, Austrian Bundesliga, Liga Portugal"
+market_value_eur,int64,3,0,0.0,3,"100000000, 24000000, 25000000"
