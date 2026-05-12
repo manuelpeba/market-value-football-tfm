@@ -29,14 +29,11 @@ ENV/
 # =========================
 # Data
 # =========================
-
-# Raw / intermediate / processed data
 data/raw/*
 data/interim/*
 data/processed/*
 data/external/*
 
-# Keep folder structure
 !data/raw/.gitkeep
 !data/interim/.gitkeep
 !data/processed/.gitkeep
@@ -46,7 +43,12 @@ data/external/*
 !data/processed/sample/
 !data/processed/sample/**
 
-# Large files
+# Versioned analytical outputs
+!data/outputs/
+!data/outputs/**
+!data/outputs/**/*.csv
+
+# Large / binary files
 *.parquet
 *.feather
 *.csv.gz
@@ -54,16 +56,27 @@ data/external/*
 *.joblib
 
 # =========================
-# Outputs
+# Reports
 # =========================
 outputs/
-reports/figures/*
-reports/tables/*
 mlruns/
 
-# Keep report structure
+reports/figures/*
+reports/tables/*
+reports/rankings/*
+reports/scouting_reports/*
+reports/model_diagnostics/*
+
 !reports/figures/.gitkeep
 !reports/tables/.gitkeep
+!reports/rankings/.gitkeep
+!reports/scouting_reports/.gitkeep
+!reports/model_diagnostics/.gitkeep
+
+# Allow selected versioned report outputs if needed
+!reports/tables/*.csv
+!reports/rankings/*.csv
+!reports/model_diagnostics/*.csv
 
 # =========================
 # Logs
@@ -115,13 +128,6 @@ artifacts/predictions/*
 !artifacts/feature_importance/.gitkeep
 !artifacts/predictions/.gitkeep
 
-# =========================
-# Reports
-# =========================
-reports/rankings/*
-reports/scouting_reports/*
-reports/model_diagnostics/*
-
-!reports/rankings/.gitkeep
-!reports/scouting_reports/.gitkeep
-!reports/model_diagnostics/.gitkeep
+# Allow lightweight model diagnostics / feature importance if CSV
+!artifacts/feature_importance/*.csv
+!artifacts/predictions/*.csv
