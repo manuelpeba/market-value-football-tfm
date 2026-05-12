@@ -1,4 +1,3 @@
-````md
 # 📊 Identificación de jugadores infravalorados en el mercado de fichajes europeo
 
 <div align="center">
