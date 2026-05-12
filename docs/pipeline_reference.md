@@ -1,4 +1,3 @@
-````md id="xw0c2p"
 # ⚙️ Referencia de pipelines
 
 <div align="center">

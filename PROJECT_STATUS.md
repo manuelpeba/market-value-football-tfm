@@ -1,4 +1,3 @@
-````md id="0xgmxo"
 # 📌 Estado del proyecto
 
 <div align="center">

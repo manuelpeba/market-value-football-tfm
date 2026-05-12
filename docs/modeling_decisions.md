@@ -1,4 +1,3 @@
-````md id="8p6s2z"
 # 📈 Decisiones de modelización
 
 <div align="center">
