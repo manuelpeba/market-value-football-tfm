@@ -1,0 +1,10 @@
+{
+    "dataset_name": "player_season_modeling",
+    "logical_version": "v1",
+    "dataset_path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\data\\processed\\player_season_modeling.parquet",
+    "dataset_hash": "111e32d365e1797ba0ab6f9323e65742debc9bb123d67ebb86adfa40947ceac6",
+    "rows": 3297,
+    "columns": 54,
+    "created_at": "2026-05-16T03:00:58",
+    "pipeline_name": "run_ols_pipeline"
+}

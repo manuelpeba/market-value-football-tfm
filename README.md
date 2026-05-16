@@ -25,43 +25,44 @@ El objetivo principal es estimar el valor de mercado esperado de futbolistas jó
 
 El sistema combina:
 
-- Econometría aplicada
-- Machine Learning supervisado
-- Feature engineering deportivo
-- Integración robusta de fuentes heterogéneas
-- Validación temporal out-of-sample
-- Analytics engineering
-- Scouting cuantitativo
+* Econometría aplicada
+* Machine Learning supervisado
+* Feature engineering deportivo
+* Integración robusta de fuentes heterogéneas
+* Validación temporal out-of-sample
+* Analytics engineering
+* Scouting cuantitativo
 
 ---
 
 # 📑 Tabla de contenidos
 
-- [🧠 Descripción del proyecto](#-descripción-del-proyecto)
-- [🎯 Problema de negocio](#-problema-de-negocio)
-- [🧩 Objetivos analíticos](#-objetivos-analíticos)
-- [⚙️ Enfoque metodológico](#️-enfoque-metodológico)
-- [🔄 Evolución de arquitectura](#-evolución-de-arquitectura)
-- [🏗️ Analytics Engineering & Reproducibility](#️-analytics-engineering--reproducibility)
-- [📚 Metodología](#-metodología)
-- [⏳ Estrategia de validación temporal](#-estrategia-de-validación-temporal)
-- [📦 Fuentes de datos](#-fuentes-de-datos)
-- [⚠️ Problema crítico del proyecto](#️-problema-crítico-del-proyecto)
-- [🛠️ Sistema de matching implementado](#️-sistema-de-matching-implementado)
-- [📈 Resultados del matching](#-resultados-del-matching)
-- [🏗️ Arquitectura del pipeline](#️-arquitectura-del-pipeline)
-- [📊 Dataset final](#-dataset-final)
-- [📈 Pipeline econométrico](#-pipeline-econométrico)
-- [🤖 Pipeline Machine Learning](#-pipeline-machine-learning)
-- [💡 Inefficiency Score](#-inefficiency-score)
-- [📤 Business Outputs](#-business-outputs)
-- [📂 Estructura del proyecto](#-estructura-del-proyecto)
-- [▶️ Ejecución reproducible](#️-ejecución-reproducible)
-- [📊 Resultados actuales](#-resultados-actuales)
-- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
-- [🚀 Próximos pasos](#-próximos-pasos)
-- [🧠 Valor del proyecto](#-valor-del-proyecto)
-- [👤 Autores](#-autores)
+* [🧠 Descripción del proyecto](#-descripción-del-proyecto)
+* [🎯 Problema de negocio](#-problema-de-negocio)
+* [🧩 Objetivos analíticos](#-objetivos-analíticos)
+* [⚙️ Enfoque metodológico](#️-enfoque-metodológico)
+* [🔄 Evolución de arquitectura](#-evolución-de-arquitectura)
+* [🏗️ Analytics Engineering & Reproducibility](#️-analytics-engineering--reproducibility)
+* [🧪 Experiment Tracking & Dataset Versioning](#-experiment-tracking--dataset-versioning)
+* [📚 Metodología](#-metodología)
+* [⏳ Estrategia de validación temporal](#-estrategia-de-validación-temporal)
+* [📦 Fuentes de datos](#-fuentes-de-datos)
+* [⚠️ Problema crítico del proyecto](#️-problema-crítico-del-proyecto)
+* [🛠️ Sistema de matching implementado](#️-sistema-de-matching-implementado)
+* [📈 Resultados del matching](#-resultados-del-matching)
+* [🏗️ Arquitectura del pipeline](#️-arquitectura-del-pipeline)
+* [📊 Dataset final](#-dataset-final)
+* [📈 Pipeline econométrico](#-pipeline-econométrico)
+* [🤖 Pipeline Machine Learning](#-pipeline-machine-learning)
+* [💡 Inefficiency Score](#-inefficiency-score)
+* [📤 Business Outputs](#-business-outputs)
+* [📂 Estructura del proyecto](#-estructura-del-proyecto)
+* [▶️ Ejecución reproducible](#️-ejecución-reproducible)
+* [📊 Resultados actuales](#-resultados-actuales)
+* [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
+* [🚀 Próximos pasos](#-próximos-pasos)
+* [🧠 Valor del proyecto](#-valor-del-proyecto)
+* [👤 Autores](#-autores)
 
 ---
 
@@ -69,17 +70,17 @@ El sistema combina:
 
 Los clubes toman decisiones de fichaje basándose en:
 
-- scouting tradicional
-- intuición
-- métricas limitadas
-- análisis parcialmente subjetivos
+* scouting tradicional
+* intuición
+* métricas limitadas
+* análisis parcialmente subjetivos
 
 Sin embargo, el mercado presenta ineficiencias derivadas de:
 
-- información incompleta
-- sesgos mediáticos
-- diferencias estructurales entre ligas
-- asimetrías de información
+* información incompleta
+* sesgos mediáticos
+* diferencias estructurales entre ligas
+* asimetrías de información
 
 👉 Este proyecto busca responder:
 
@@ -91,12 +92,12 @@ Sin embargo, el mercado presenta ineficiencias derivadas de:
 
 El sistema busca:
 
-- estimar el valor de mercado esperado
-- detectar jugadores infravalorados
-- construir rankings cuantitativos de scouting
-- analizar diferencias estructurales entre ligas
-- comparar econometría vs machine learning
-- generar outputs interpretables para toma de decisiones
+* estimar el valor de mercado esperado
+* detectar jugadores infravalorados
+* construir rankings cuantitativos de scouting
+* analizar diferencias estructurales entre ligas
+* comparar econometría vs machine learning
+* generar outputs interpretables para toma de decisiones
 
 ---
 
@@ -164,6 +165,141 @@ La arquitectura facilita:
 * auditoría metodológica
 * replicabilidad académica
 * despliegue futuro
+
+---
+
+# 🧪 Experiment Tracking & Dataset Versioning
+
+El proyecto incorpora un sistema de trazabilidad experimental orientado a garantizar:
+
+* reproducibilidad
+* auditoría metodológica
+* comparación entre ejecuciones
+* persistencia de experimentos
+* control de versiones del dataset
+
+---
+
+## MLflow
+
+Se implementó integración completa con:
+
+```text
+MLflow
+```
+
+El sistema registra automáticamente:
+
+* métricas
+* hiperparámetros
+* configuración experimental
+* artifacts generados
+* metadata del dataset
+* timestamps
+* validación temporal utilizada
+
+---
+
+## Información registrada por experimento
+
+Cada ejecución almacena automáticamente:
+
+```text
+model_name
+dataset_version
+dataset_hash
+train_period
+test_period
+features
+metrics
+artifacts
+execution_timestamp
+```
+
+---
+
+## Dataset Versioning
+
+Se implementó versionado lógico del dataset modelizable.
+
+Ejemplo:
+
+```text
+player_season_modeling_v1
+player_season_modeling_v2
+player_season_modeling_v3
+```
+
+Cada versión almacena:
+
+* hash SHA256
+* número de filas
+* número de columnas
+* pipeline generador
+* fecha de creación
+
+Metadata persistida en:
+
+```text
+artifacts/metadata/
+```
+
+---
+
+## Validación temporal reproducible
+
+El pipeline econométrico utiliza:
+
+```text
+strict temporal out-of-sample validation
+```
+
+Split actual:
+
+| Split | Temporadas            |
+| ----- | --------------------- |
+| Train | 2019-2020 → 2023-2024 |
+| Test  | 2024-2025             |
+
+---
+
+## Consideración metodológica importante
+
+Los modelos predictivos temporales no utilizan:
+
+```text
+season fixed effects
+```
+
+durante inferencia out-of-sample, ya que la temporada futura no existe durante entrenamiento y generaría leakage estructural.
+
+Sin embargo:
+
+* league FE
+* position FE
+
+sí se mantienen para capturar heterogeneidad estructural del mercado.
+
+---
+
+## Artefactos experimentales
+
+Los experimentos generan automáticamente:
+
+```text
+mlruns/
+artifacts/
+reports/
+```
+
+Incluyendo:
+
+* métricas exportadas
+* rankings
+* metadata
+* outputs de scoring
+* predicciones
+* modelos persistidos
 
 ---
 
@@ -439,6 +575,10 @@ El pipeline econométrico está completamente modularizado.
 * rankings automáticos
 * export de outputs
 * evaluación temporal
+* experiment tracking
+* dataset versioning
+* MLflow logging
+* temporal split reproducible
 
 ---
 
@@ -447,9 +587,23 @@ El pipeline econométrico está completamente modularizado.
 Regresión OLS con:
 
 * league FE
-* season FE
 * position FE
 * HC3 robust standard errors
+* validación temporal estricta out-of-sample
+
+---
+
+## Consideración metodológica
+
+Los season fixed effects se utilizan únicamente en análisis explicativos e in-sample.
+
+Para validación temporal futura:
+
+```text
+season FE se desactiva
+```
+
+para evitar problemas de generalización hacia temporadas no observadas durante entrenamiento.
 
 ---
 
@@ -470,7 +624,6 @@ log_minutes_played +
 goals_per90 +
 assists_per90 +
 league FE +
-season FE +
 position FE
 ```
 
@@ -612,6 +765,7 @@ market-value-football-tfm/
 ├── artifacts/                             # Artefactos persistidos de modelos y predicciones
 │   ├── encoders/                          # Encoders categóricos serializados
 │   ├── feature_importance/                # Importancia de variables exportada
+│   ├── metadata/                          # Metadata y hashes de datasets versionados
 │   ├── models/                            # Modelos entrenados (.joblib)
 │   ├── predictions/                       # Predicciones persistidas
 │   └── scalers/                           # Transformadores numéricos serializados
@@ -623,7 +777,9 @@ market-value-football-tfm/
 │   ├── matching.yaml                      # Parámetros de matching
 │   ├── modeling.yaml                      # Configuración de modelización
 │   ├── paths.yaml                         # Paths del proyecto
-│   └── project.yaml                       # Configuración global
+│   ├── project.yaml                       # Configuración global
+│   ├── scoring.yaml                       # Configuración de scoring y rankings
+│   └── validation.yaml                    # Configuración centralizada de validación temporal
 │
 ├── data/
 │   ├── external/                          # Datos auxiliares externos
@@ -643,6 +799,8 @@ market-value-football-tfm/
 │   └── schema_decisions.md                # Diseño de esquema y arquitectura de datos
 │
 ├── logs/                                  # Logs de ejecución y debugging
+│
+├── mlruns/                                # Tracking experimental MLflow
 │
 ├── notebooks/                             # Notebooks exploratorios y análisis
 │   ├── 01_data_understanding.ipynb
@@ -666,6 +824,9 @@ market-value-football-tfm/
 │   │   ├── machine_learning/              # Pipelines ML
 │   │   └── scoring/                       # Inefficiency scoring
 │   └── utils/                             # Utilidades compartidas
+│       ├── config.py                      # Loader centralizado de configuración YAML
+│       ├── dataset_versioning.py          # Versionado y hashing de datasets
+│       └── experiment_tracking.py         # Integración MLflow
 │
 ├── tests/                                 # Tests futuros
 │
@@ -732,11 +893,23 @@ python -m src.models.machine_learning.run_ml_pipeline
 
 ## Modelo econométrico final
 
-| Modelo          |        MAE |       RMSE |         R² |
-| --------------- | ---------: | ---------: | ---------: |
-| OLS simple      |     1.0036 |     1.2165 |     0.1472 |
-| OLS + League FE |     0.7954 |     0.9896 |     0.4356 |
-| OLS final FE    | **0.7907** | **0.9823** | **0.4439** |
+Evaluación realizada mediante validación temporal estricta out-of-sample.
+
+| Modelo             |    MAE |   RMSE |     R² |
+| ------------------ | -----: | -----: | -----: |
+| OLS temporal final | 0.7947 | 0.9887 | 0.4366 |
+
+---
+
+## Interpretación metodológica
+
+La degradación mínima respecto a modelos in-sample sugiere que:
+
+```text
+el modelo mantiene capacidad explicativa robusta al generalizar hacia temporadas futuras
+```
+
+y que la señal predictiva proviene principalmente de variables deportivas y contextuales, no de sobreajuste temporal.
 
 ---
 
@@ -853,6 +1026,10 @@ El proyecto aporta:
 * comparación econometría vs ML
 * aplicación directa a scouting profesional
 * detección de ineficiencias de mercado
+* experiment tracking reproducible
+* dataset versioning
+* analytics engineering aplicado
+* trazabilidad experimental completa
 
 El sistema ya constituye una base sólida para:
 

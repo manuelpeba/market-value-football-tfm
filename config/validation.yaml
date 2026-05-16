@@ -1,0 +1,15 @@
+temporal_split:
+  train_max_season_start_year: 2023
+  test_season_start_year: 2024
+  train_label: "2019-2020_to_2023-2024"
+  test_label: "2024-2025"
+
+filters:
+  min_season_start_year: 2019
+  max_season_start_year: 2024
+  min_age: 18
+  max_age: 23
+  min_minutes: 300
+  min_matching_confidence: 0.85
+  max_age_diff: 1.5
+  min_market_value_eur: 500000

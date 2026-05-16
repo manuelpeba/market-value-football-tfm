@@ -1,12 +1,14 @@
-# 📘 Data Quality Report
+````md id="4k1vqp"
+# 🧪 Calidad de datos
 
 <div align="center">
 
+![Data Quality](https://img.shields.io/badge/Data%20Quality-Validated-success)
 ![Matching](https://img.shields.io/badge/Matching-88.36%25-brightgreen)
-![Dataset](https://img.shields.io/badge/Observations-3%2C297-blue)
-![Players](https://img.shields.io/badge/Players-1%2C847-orange)
-![Leagues](https://img.shields.io/badge/Leagues-7-green)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
+![Architecture](https://img.shields.io/badge/Architecture-Modular-blue)
+![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
+![Config](https://img.shields.io/badge/Configuration-YAML-purple)
 
 </div>
 
@@ -14,230 +16,235 @@
 
 # 📑 Tabla de contenidos
 
-- [🧠 Objetivo del informe](#-objetivo-del-informe)
-- [📊 Resumen general del dataset](#-resumen-general-del-dataset)
-- [🏗️ Calidad estructural del pipeline](#️-calidad-estructural-del-pipeline)
-- [⚠️ Problema crítico: integración de fuentes](#️-problema-crítico-integración-de-fuentes)
-- [🛠️ Calidad del matching](#️-calidad-del-matching)
-- [📈 Cobertura del dataset](#-cobertura-del-dataset)
-- [🌍 Calidad por liga](#-calidad-por-liga)
-- [👤 Calidad por posición](#-calidad-por-posición)
-- [📊 Calidad de las distribuciones](#-calidad-de-las-distribuciones)
-- [📉 Missing values y completitud](#-missing-values-y-completitud)
-- [⏳ Calidad temporal](#-calidad-temporal)
-- [🧪 Calidad del feature set actual](#-calidad-del-feature-set-actual)
-- [📈 Calidad de outputs y scoring](#-calidad-de-outputs-y-scoring)
-- [⚖️ Sesgos identificados](#️-sesgos-identificados)
-- [🚨 Riesgos y limitaciones](#-riesgos-y-limitaciones)
-- [🛡️ Estrategias de mitigación](#️-estrategias-de-mitigación)
-- [📌 Evaluación global de calidad](#-evaluación-global-de-calidad)
-- [🚀 Próximas mejoras de calidad](#-próximas-mejoras-de-calidad)
+- [🧠 Objetivo del documento](#-objetivo-del-documento)
+- [🏗️ Filosofía de calidad de datos](#️-filosofía-de-calidad-de-datos)
+- [📦 Fuentes analizadas](#-fuentes-analizadas)
+- [⚠️ Principales riesgos de calidad](#️-principales-riesgos-de-calidad)
+- [🔗 Calidad del matching](#-calidad-del-matching)
+- [📊 Resultados del matching](#-resultados-del-matching)
+- [🧪 Controles de validación implementados](#-controles-de-validación-implementados)
+- [📉 Calidad del dataset modelizable](#-calidad-del-dataset-modelizable)
+- [🛡️ Prevención de leakage](#️-prevención-de-leakage)
+- [📈 Calidad temporal](#-calidad-temporal)
+- [📂 Controles de esquema](#-controles-de-esquema)
+- [⚙️ Configuración centralizada de validaciones](#️-configuración-centralizada-de-validaciones)
+- [🧪 Tracking y auditoría experimental](#-tracking-y-auditoría-experimental)
+- [📝 Logging y trazabilidad](#-logging-y-trazabilidad)
+- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
+- [📉 Limitaciones actuales](#-limitaciones-actuales)
+- [🚀 Mejoras futuras previstas](#-mejoras-futuras-previstas)
 - [🧠 Conclusión](#-conclusión)
 
 ---
 
-# 🧠 Objetivo del informe
+# 🧠 Objetivo del documento
 
-Este documento evalúa la calidad del dataset utilizado para modelar el valor de mercado de futbolistas profesionales e identificar posibles ineficiencias en el mercado de fichajes europeo.
+Este documento describe los controles y decisiones relacionados con la calidad de datos dentro del sistema analítico.
 
-El análisis incluye:
+El objetivo es documentar:
 
-- calidad estructural
-- cobertura
-- robustez del matching
+- riesgos identificados
+- controles implementados
+- validaciones de integración
+- calidad del matching
 - consistencia temporal
-- sesgos
-- limitaciones
-- riesgos metodológicos
-- calidad del feature set actual
-- calidad de outputs generados por pipelines
+- prevención de leakage
+- trazabilidad experimental
+- controles de reproducibilidad
 
-La evaluación se realiza desde una perspectiva doble:
+La calidad de datos constituye un componente crítico del proyecto porque el sistema depende de:
 
-1. **Calidad de datos**, entendida como consistencia, completitud, trazabilidad y robustez.
-2. **Calidad analítica**, entendida como utilidad de las variables para explicar y predecir el valor de mercado.
-
----
-
-# 📊 Resumen general del dataset
-
-## Dataset panel completo
-
-| Métrica | Valor |
-|---|---:|
-| Observaciones | 23,580 |
-| Temporadas | 2019-2020 → 2024-2025 |
-| Ligas | 7 |
-| Match rate | 88.36% |
-
----
-
-## Dataset final modelizable
-
-| Métrica | Valor |
-|---|---:|
-| Observaciones | 3,297 |
-| Jugadores | 1,847 |
-| Edad objetivo | 18–23 |
-
----
-
-## Cobertura competitiva
-
-Ligas incluidas:
-
-- Premier League
-- LaLiga
-- Bundesliga
-- Serie A
-- Ligue 1
-- Eredivisie
-- Liga Portugal
-
----
-
-## Interpretación general
-
-El dataset final es suficientemente robusto para:
-
-- modelización econométrica
-- machine learning supervisado
-- validación temporal
-- generación de rankings
-- análisis de ineficiencias de mercado
-
-No obstante, la calidad analítica del sistema todavía está condicionada por la amplitud limitada del feature set deportivo actual.
-
----
-
-# 🏗️ Calidad estructural del pipeline
-
-## Fortalezas principales
-
-El pipeline presenta:
-
-- arquitectura modular
-- trazabilidad
-- reproducibilidad
-- separación clara de etapas
-- generación automática de outputs
-- control explícito de leakage
-
----
-
-## Componentes implementados
-
-```mermaid
-flowchart TD
-
-A[Raw Sources] --> B[Feature Engineering]
-
-B --> C[Matching]
-
-C --> D[Player-Season Panel]
-
-D --> E[Modeling Dataset]
-
-E --> F[Econometric Pipeline]
-E --> G[Machine Learning Pipeline]
-
-F --> H[Scoring Pipeline]
-G --> H
-
-H --> I[Rankings]
-H --> J[Predictions]
-H --> K[Diagnostics]
+```text
+integración multi-fuente sin identificador común
 ```
 
 ---
 
-## Validaciones implementadas
+# 🏗️ Filosofía de calidad de datos
 
-* normalización de nombres
-* validación por edad
-* validación por club
-* filtros temporales
-* filtros de minutos
-* controles de leakage
-* validación temporal out-of-sample
-* persistencia de outputs y artefactos
+La estrategia de calidad de datos se basa en cinco principios principales:
 
----
-
-## Calidad arquitectónica
-
-La evolución desde notebooks hacia pipelines modulares mejora significativamente:
-
-* reproducibilidad
-* mantenibilidad
-* auditoría metodológica
-* escalabilidad futura
-* consistencia entre ejecuciones
-
-Los notebooks quedan como soporte de exploración e interpretación, mientras que la ejecución principal del sistema reside en `src/`.
+| Principio              | Objetivo                         |
+| ---------------------- | -------------------------------- |
+| Validación incremental | Detectar errores tempranos       |
+| Reproducibilidad       | Evitar transformaciones manuales |
+| Auditabilidad          | Poder rastrear decisiones        |
+| Separación de capas    | Evitar contaminación             |
+| Consistencia temporal  | Evitar leakage                   |
 
 ---
 
-# ⚠️ Problema crítico: integración de fuentes
+## Principio metodológico central
 
-## Naturaleza del problema
+Se prioriza:
 
-FBref y Transfermarkt:
+```text id="5kgfgj"
+calidad y robustez del dataset
+```
 
-<pre>
-NO comparten identificador único
-</pre>
+frente a:
 
-Esto obliga a construir un proceso de integración propio.
+```text id="3vd8fs"
+maximizar artificialmente cobertura
+```
 
 ---
 
-## Problemas detectados
+## Implicación práctica
 
-* diferencias de nombres
+El sistema prefiere:
+
+* perder observaciones ambiguas
+* mantener mayor confianza
+* reducir false positives
+* preservar coherencia metodológica
+
+---
+
+# 📦 Fuentes analizadas
+
+## FBref
+
+### Tipo de información
+
+* rendimiento deportivo
+* métricas por 90
+* participación
+* estadísticas ofensivas y defensivas
+
+---
+
+## Transfermarkt
+
+### Tipo de información
+
+* valor de mercado
+* edad
+* club
+* posición
+* histórico temporal
+
+---
+
+## Problema principal
+
+Las fuentes:
+
+```text id="ghh0jx"
+NO comparten identificador universal
+```
+
+---
+
+# ⚠️ Principales riesgos de calidad
+
+## 1️⃣ Riesgo de matching incorrecto
+
+Problemas detectados:
+
 * transliteraciones
+* nombres inconsistentes
 * cambios de club
-* granularidad temporal distinta
-* edades no alineadas
-* variantes de nombres de clubes
-* posibles homónimos
+* variaciones ortográficas
+* granularidad distinta
 
 ---
 
-## Riesgos asociados
+## 2️⃣ Leakage temporal
 
-* false positives
-* false negatives
-* ruido estadístico
-* pérdida de observaciones
-* contaminación del target
-* rankings incorrectos
+Riesgo de incorporar:
 
----
-
-## Interpretación metodológica
-
-La integración de fuentes heterogéneas constituye uno de los principales retos técnicos del proyecto y uno de los principales factores de incertidumbre residual.
+* información futura
+* variables derivadas posteriores
+* outputs del modelo
 
 ---
 
-# 🛠️ Calidad del matching
+## 3️⃣ Inconsistencias contextuales
+
+Ejemplos:
+
+* ligas distintas
+* posiciones ambiguas
+* diferencias de calendario
+* cambios intra-temporada
+
+---
+
+## 4️⃣ Datos faltantes
+
+Riesgos:
+
+* baja cobertura
+* features incompletas
+* temporadas parciales
+
+---
+
+## 5️⃣ Ruido estructural
+
+Problemas derivados de:
+
+* variabilidad deportiva
+* mercado subjetivo
+* observaciones extremas
+* muestras reducidas por posición
+
+---
+
+# 🔗 Calidad del matching
+
+## Problema crítico del proyecto
+
+El matching FBref ↔ Transfermarkt representa el principal reto técnico del sistema.
+
+---
+
+## Objetivo
+
+Construir integración robusta manteniendo:
+
+* precisión
+* coherencia temporal
+* trazabilidad
+* auditabilidad
+
+---
 
 ## Estrategia implementada
 
-Matching jerárquico basado en:
+Pipeline jerárquico:
 
 1. normalización
-2. exact matching
+2. matching exacto
 3. validación por club
-4. fuzzy matching
+4. matching fuzzy
 5. validación por edad
 
 ---
 
-## Thresholds utilizados
+## Variables utilizadas
 
-```python
+| Variable               | Uso                   |
+| ---------------------- | --------------------- |
+| player_name_normalized | Matching principal    |
+| age                    | Validación            |
+| club                   | Validación contextual |
+| season                 | Restricción temporal  |
+
+---
+
+## Algoritmo fuzzy
+
+```text id="khpn5d"
+RapidFuzz
+```
+
+---
+
+## Thresholds actuales
+
+```python id="r0nt6g"
 MAX_AGE_DIFF = 1.5
 MIN_CLUB_SCORE = 70
 FUZZY_THRESHOLD = 92
@@ -245,324 +252,218 @@ FUZZY_THRESHOLD = 92
 
 ---
 
+## Justificación metodológica
+
+Los thresholds se diseñaron para:
+
+* minimizar false positives
+* restringir matching ambiguo
+* mantener trazabilidad
+* preservar coherencia futbolística
+
+---
+
+# 📊 Resultados del matching
+
 ## Resultados globales
 
 | Métrica                   | Resultado |
 | ------------------------- | --------: |
-| Match rate                |    88.36% |
-| Observaciones emparejadas |    20,836 |
 | Observaciones totales     |    23,580 |
+| Observaciones emparejadas |    20,836 |
+| Match rate                |    88.36% |
 
 ---
 
-## Distribución del matching
+## Distribución de métodos
 
-| Método                   | Resultado |
-| ------------------------ | --------: |
-| exact_age_validated      |    18,669 |
-| exact_age_club_validated |     2,146 |
-| fuzzy_age_club_validated |        21 |
-
----
-
-## 📌 Interpretación
-
-La mayoría de observaciones proceden de matching exacto o matching exacto validado por edad y club.
-
-El fuzzy matching queda restringido a casos ambiguos específicos, reduciendo el riesgo de errores críticos.
+| Método                   | Interpretación             |
+| ------------------------ | -------------------------- |
+| exact_age_validated      | Dominante                  |
+| exact_age_club_validated | Alta confianza             |
+| fuzzy_age_club_validated | Casos ambiguos controlados |
 
 ---
 
-## Calidad global del matching
+## Insight principal
 
-El matching puede considerarse robusto porque:
+El matching exacto domina claramente el dataset final.
 
-* alcanza alta cobertura
-* mantiene trazabilidad del método utilizado
-* limita fuzzy matching a casos residuales
-* incorpora validación por edad
-* incorpora validación contextual por club
-* conserva variables de calidad para análisis posteriores
+Esto reduce significativamente:
 
----
-
-# 📈 Cobertura del dataset
-
-## Cobertura temporal
-
-| Temporada |
-| --------- |
-| 2019-2020 |
-| 2020-2021 |
-| 2021-2022 |
-| 2022-2023 |
-| 2023-2024 |
-| 2024-2025 |
+* riesgo de false positives
+* contaminación del dataset
+* ruido en modelización
 
 ---
 
-## Cobertura competitiva
+## Decisión metodológica
 
-El dataset cubre:
+El sistema prefiere:
 
-* Big 5
-* Eredivisie
-* Liga Portugal
-
----
-
-## Justificación
-
-Eredivisie y Liga Portugal se mantienen porque:
-
-* son ligas exportadoras
-* presentan posibles ineficiencias
-* son relevantes para scouting
-* permiten detectar oportunidades fuera de los mercados más eficientes
-
----
-
-## Cobertura analítica
-
-La cobertura es adecuada para el objetivo del proyecto, aunque la muestra final queda reducida por los filtros necesarios para garantizar calidad:
-
-* edad 18–23
-* minutos mínimos
-* valor de mercado disponible
-* matching válido
-* posición válida
-
----
-
-# 🌍 Calidad por liga
-
-## Match rate por liga
-
-| Liga           | Match Rate |
-| -------------- | ---------: |
-| Bundesliga     |      93.2% |
-| Premier League |      92.8% |
-| Serie A        |      91.8% |
-| Ligue 1        |      90.7% |
-| Eredivisie     |      90.6% |
-| LaLiga         |      84.7% |
-| Liga Portugal  |      75.1% |
-
----
-
-## Interpretación
-
-### Bundesliga / Premier League
-
-Presentan mayor calidad de matching debido a:
-
-* naming más consistente
-* mayor estabilidad estructural
-* mayor cobertura y visibilidad
-
----
-
-### Liga Portugal
-
-Presenta menor match rate debido a:
-
-* mayor variabilidad lingüística
-* transliteraciones
-* menor consistencia entre fuentes
-* posibles diferencias en nombres de clubes y jugadores
-
----
-
-## Implicación metodológica
-
-La calidad por liga no es homogénea. Por tanto, los resultados deben interpretarse teniendo en cuenta:
-
-* sesgo de cobertura
-* diferencias estructurales entre mercados
-* distinta fiabilidad por competición
-
----
-
-# 👤 Calidad por posición
-
-## Distribución final
-
-| Posición | Observaciones |
-| -------- | ------------: |
-| MID      |         1,705 |
-| DEF      |         1,147 |
-| ATT      |           351 |
-| GK       |            94 |
-
----
-
-## Sesgos detectados
-
-### MID sobrerrepresentados
-
-Explicación:
-
-* mayor volumen de jugadores
-* mayor estabilidad de minutos
-* mayor presencia en plantillas
-
----
-
-### GK infrarepresentados
-
-Explicación:
-
-* menor rotación
-* menor volumen de mercado
-* menor número de observaciones
-* métricas menos comparables con jugadores de campo
-
----
-
-### ATT con muestra más reducida
-
-Explicación:
-
-* menor número relativo de atacantes jóvenes con minutos suficientes
-* mayor concentración de valor en pocos jugadores
-* mayor sensibilidad a outliers
-
----
-
-## Implicación metodológica
-
-La distribución posicional obliga a:
-
-* incorporar efectos fijos por posición
-* construir futuras normalizaciones por posición
-* evitar interpretar métricas ofensivas de forma homogénea para todos los roles
-
----
-
-# 📊 Calidad de las distribuciones
-
-## 💰 Valor de mercado
-
-### Características
-
-El valor de mercado presenta:
-
-* fuerte skewness positiva
-* colas largas
-* presencia de outliers
-* diferencias estructurales entre ligas
-
----
-
-## Decisión adoptada
-
-Se utiliza:
-
-```python
-log_market_value_eur
+```text id="3l3ffr"
+perder cobertura antes que introducir matching dudoso
 ```
 
 ---
 
+# 🧪 Controles de validación implementados
+
+## Validaciones de esquema
+
+### Controles
+
+* columnas críticas existentes
+* tipos válidos
+* nombres consistentes
+* unicidad esperada
+
+---
+
+## Validaciones de negocio
+
+### Controles
+
+* market value positivo
+* edad válida
+* minutos razonables
+* temporada válida
+* posición válida
+
+---
+
+## Validaciones temporales
+
+### Controles
+
+* coherencia cronológica
+* temporadas válidas
+* orden temporal consistente
+
+---
+
+## Validaciones de matching
+
+### Controles
+
+* diferencia máxima de edad
+* similitud de club
+* confidence score mínimo
+* trazabilidad del método
+
+---
+
+## Validaciones de modelización
+
+### Controles
+
+* features completas
+* target válido
+* categorías válidas
+* split temporal correcto
+
+---
+
+# 📉 Calidad del dataset modelizable
+
+## Dataset final
+
+| Métrica          | Valor |
+| ---------------- | ----: |
+| Observaciones    | 3,297 |
+| Jugadores únicos | 1,847 |
+| Edad             | 18–23 |
+| Ligas            |     7 |
+
+---
+
+## Filtros aplicados
+
+* matching válido
+* minutos mínimos
+* market value disponible
+* edad válida
+* posición válida
+
+---
+
 ## Justificación
 
-La transformación logarítmica:
+Los filtros buscan construir un dataset:
 
-* estabiliza varianza
-* mejora linealidad
-* reduce influencia de valores extremos
-* facilita interpretación relativa
-* mejora ajuste econométrico
+```text id="6n6d8j"
+más pequeño pero más fiable
+```
 
 ---
 
-## 👤 Edad
+## Beneficio
 
-Distribución:
+Esto mejora:
 
-<pre>
-18–23 años
-</pre>
-
----
-
-## Implicaciones
-
-El dataset se enfoca en:
-
-* jugadores jóvenes
-* scouting
-* potencial de revalorización
-* oportunidades de mercado
+* estabilidad del modelo
+* interpretabilidad
+* robustez
+* coherencia futbolística
 
 ---
 
-## ⏱️ Minutos jugados
+# 🛡️ Prevención de leakage
 
-Se aplican filtros mínimos para:
+## Principio fundamental
 
-* eliminar ruido
-* reducir muestras poco fiables
-* mejorar estabilidad del modelo
-* evitar valorar jugadores con exposición competitiva insuficiente
+Toda variable debe existir:
 
----
-
-# 📉 Missing values y completitud
-
-## Variables críticas
-
-Las variables principales presentan baja tasa de missing values tras los filtros finales:
-
-* market_value_eur
-* log_market_value_eur
-* age
-* minutes_played
-* goals_per90
-* assists_per90
-* league
-* season
-* position_group
+```text id="jcc9om"
+en el momento real de decisión
+```
 
 ---
 
-## Variables con mayor riesgo futuro
+## Variables explícitamente excluidas
 
-Las siguientes variables pueden presentar problemas de completitud cuando se incorporen:
-
-* xG
-* xA
-* métricas defensivas
-* métricas de progresión
-* rolling metrics
-* variables longitudinales
-
----
-
-## Estrategia aplicada
-
-* filtrado de observaciones críticas
-* exclusión controlada
-* reducción de dimensionalidad inicial
-* priorización de variables con alta disponibilidad
+| Variable                   | Motivo             |
+| -------------------------- | ------------------ |
+| market_value_next_eur      | Información futura |
+| delta_log_market_value_1y  | Leakage temporal   |
+| predicted_market_value_eur | Output derivado    |
+| inefficiency_score         | Output derivado    |
+| rankings                   | Output derivado    |
 
 ---
 
-## Estrategia futura
+## Tipos de leakage controlados
 
-Para nuevas features se evaluará:
-
-* tasa de missing values
-* cobertura por liga
-* cobertura por posición
-* estabilidad temporal
-* impacto en tamaño muestral
+* temporal leakage
+* target leakage
+* leakage entre train/test
+* leakage derivado de scoring
 
 ---
 
-# ⏳ Calidad temporal
+## Decisión metodológica
 
-## Validación temporal
+Las variables derivadas del modelo:
+
+```text id="6qohba"
+NO vuelven al dataset base
+```
+
+---
+
+# 📈 Calidad temporal
+
+## Estrategia de validación
+
+El sistema utiliza:
+
+```text id="10mbsn"
+temporal validation
+```
+
+---
+
+## Split actual
 
 | Split | Temporadas            |
 | ----- | --------------------- |
@@ -573,380 +474,392 @@ Para nuevas features se evaluará:
 
 ## Justificación
 
-Se evita:
+El random split:
 
-* leakage temporal
-* optimismo artificial
-* contaminación futura
-* sobreestimación del rendimiento predictivo
+* rompe coherencia temporal
+* introduce optimismo artificial
+* sobreestima generalización
 
 ---
 
-## Decisión metodológica crítica
+## Beneficio
+
+La validación temporal mejora:
+
+* realismo
+* robustez
+* credibilidad metodológica
+
+---
+
+# 📂 Controles de esquema
+
+## Separación entre capas
+
+El sistema separa:
+
+| Elemento       | Directorio        |
+| -------------- | ----------------- |
+| Raw data       | `data/raw/`       |
+| Processed data | `data/processed/` |
+| Outputs        | `reports/`        |
+| Artifacts      | `artifacts/`      |
+| Tracking       | `mlruns/`         |
+| Configuración  | `config/`         |
+| Logs           | `logs/`           |
+
+---
+
+## Objetivo
+
+Evitar:
+
+* contaminación
+* mezcla de responsabilidades
+* pérdida de trazabilidad
+* leakage accidental
+
+---
+
+## Decisión importante
+
+Los outputs del modelo:
+
+* no forman parte del dataset base
+* permanecen separados
+* son reproducibles
+
+---
+
+# ⚙️ Configuración centralizada de validaciones
+
+## Directorio
 
 <pre>
-NO utilizar random split
+config/
 </pre>
 
 ---
 
-## Interpretación
+## Archivos relevantes
 
-La validación temporal reproduce un escenario realista de scouting:
-
-* se entrena con información histórica
-* se evalúa en una temporada futura
-* se simula una decisión fuera de muestra
-
----
-
-# 🧪 Calidad del feature set actual
-
-## Features actualmente utilizadas
-
-El modelo actual se apoya principalmente en:
-
-* age
-* minutes_played
-* log_minutes_played
-* goals_per90
-* assists_per90
-* league
-* season
-* position_group
+| Archivo       | Función                  |
+| ------------- | ------------------------ |
+| matching.yaml | Thresholds matching      |
+| modeling.yaml | Split temporal y filtros |
+| features.yaml | Features utilizadas      |
+| paths.yaml    | Rutas del sistema        |
 
 ---
 
-## Fortalezas
+## Beneficios
 
-El feature set actual es:
+La configuración centralizada permite:
 
-* interpretable
-* estable
-* disponible
-* adecuado como baseline
-* coherente con una primera modelización econométrica
-
----
-
-## Limitaciones
-
-El feature set todavía es limitado porque:
-
-* concentra señal en variables ofensivas básicas
-* no incorpora métricas avanzadas de calidad
-* no incorpora métricas defensivas suficientemente ricas
-* no incorpora métricas de progresión
-* no incorpora trayectorias longitudinales
-* no incorpora variables contractuales ni salariales
+* evitar hardcoding
+* reproducir ejecuciones
+* versionar cambios
+* comparar experimentos
+* mantener coherencia entre pipelines
 
 ---
 
-## Implicación en resultados
+## Relación con calidad
 
-Los resultados actuales muestran que ML mejora solo moderadamente respecto a OLS.
+Los thresholds críticos quedan desacoplados del código.
 
-Esto sugiere que el principal cuello de botella del sistema es:
+Esto facilita:
 
-<pre>
-la señal predictiva disponible en las variables
-</pre>
-
-más que la elección del algoritmo.
+* auditoría
+* tuning controlado
+* análisis de sensibilidad
 
 ---
 
-## Conclusión sobre calidad de features
+# 🧪 Tracking y auditoría experimental
 
-El feature set actual es válido como baseline metodológico, pero la siguiente mejora sustancial del proyecto debe venir de:
+## Herramienta utilizada
 
-* feature engineering avanzado
-* normalización por liga
-* z-scores por posición
-* percentiles
-* métricas de progresión
-* age curves
-* market momentum
+```text id="mzuw0i"
+MLflow
+```
 
 ---
 
-# 📈 Calidad de outputs y scoring
+## Objetivo
 
-## Outputs generados
+Registrar:
 
-El sistema genera automáticamente:
+* métricas
+* parámetros
+* configuraciones
+* artefactos
+* outputs
 
-* predicciones out-of-sample
-* rankings de infravalorados
-* rankings de sobrevalorados
-* métricas econométricas
-* métricas ML
+---
+
+## Beneficios para calidad
+
+MLflow mejora:
+
+* trazabilidad
+* reproducibilidad
+* comparación entre ejecuciones
+* auditoría metodológica
+
+---
+
+## Información registrada
+
+### Parámetros
+
+* features
+* target
+* fixed effects
+* hiperparámetros
+* split temporal
+
+---
+
+### Métricas
+
+* RMSE
+* MAE
+* R²
+
+---
+
+### Artefactos
+
+* modelos
+* predicciones
+* rankings
 * feature importance
-* diagnósticos
-* artefactos persistidos
 
 ---
 
-## Calidad de outputs
+## Decisión metodológica
 
-Los outputs son adecuados porque:
+El tracking experimental permite:
 
-* se generan mediante pipelines reproducibles
-* están desacoplados del dataset base
-* pueden regenerarse tras cambios metodológicos
-* permiten trazabilidad entre modelo y ranking
-* facilitan interpretación de negocio
+```text id="pd1m8f"
+reconstruir qué configuración produjo cada resultado
+```
 
 ---
 
-## Riesgo principal
+# 📝 Logging y trazabilidad
 
-Los rankings dependen de:
+## Directorio
 
-* calidad del modelo
-* calidad del matching
-* calidad del feature set
-* calidad del target Transfermarkt
-
-Por tanto, no deben interpretarse como recomendaciones automáticas de fichaje, sino como herramientas de priorización para scouting experto.
+<pre>
+logs/
+</pre>
 
 ---
 
-# ⚖️ Sesgos identificados
+## Objetivo
 
-## 🌍 Sesgo por liga
-
-La Premier League domina estructuralmente los valores de mercado.
-
-Implicación:
-
-* necesidad de league fixed effects
-* necesidad de normalización contextual
-* riesgo de infravalorar ligas menos mediáticas
+Registrar información operativa de ejecución.
 
 ---
 
-## 👤 Sesgo por posición
+## Uso previsto
 
-El mercado valora posiciones de forma distinta.
+Los logs permiten almacenar:
 
-Implicación:
-
-* necesidad de position fixed effects
-* necesidad de z-scores por posición
-* riesgo de penalizar perfiles defensivos o porteros
-
----
-
-## 📺 Sesgo mediático
-
-Transfermarkt incorpora:
-
-* percepción pública
-* reputación
-* narrativa mediática
-* visibilidad internacional
+* errores controlados
+* filas procesadas
+* warnings
+* paths utilizados
+* duración de pipelines
 
 ---
 
-## 📈 Sesgo de supervivencia
+## Diferencia respecto a MLflow
 
-El dataset modelizable incluye:
-
-* jugadores con minutos suficientes
-* jugadores visibles competitivamente
-* jugadores con valor de mercado disponible
-
-Esto puede excluir jóvenes con potencial pero baja exposición.
+| Elemento | Función                |
+| -------- | ---------------------- |
+| logs     | Auditoría operativa    |
+| mlruns   | Auditoría experimental |
 
 ---
 
-## ⚽ Sesgo ofensivo
+## Beneficio
 
-El feature set actual está más concentrado en variables ofensivas que defensivas.
+La combinación de ambos sistemas mejora:
 
-Implicación:
-
-* posible sobrevaloración de atacantes
-* posible infravaloración de perfiles defensivos
-* necesidad de métricas específicas por rol
+* debugging
+* mantenimiento
+* trazabilidad
+* reproducibilidad
 
 ---
 
-# 🚨 Riesgos y limitaciones
+# ⚖️ Trade-offs metodológicos
+
+## Cobertura vs precisión
+
+Trade-off principal del matching.
+
+---
+
+## Decisión adoptada
+
+Priorizar:
+
+```text id="yj0tlg"
+precisión y confianza
+```
+
+frente a:
+
+```text id="okty6r"
+máxima cobertura posible
+```
+
+---
+
+## Coste
+
+Se pierden observaciones potencialmente válidas.
+
+---
+
+## Beneficio
+
+Se reduce:
+
+* ruido
+* false positives
+* contaminación del modelo
+* rankings erróneos
+
+---
+
+# 📉 Limitaciones actuales
+
+## Cobertura de features
+
+Todavía faltan:
+
+* xG
+* xA
+* métricas avanzadas defensivas
+* eventos tipo StatsBomb
+
+---
+
+## Dataset size
+
+El dataset modelizable sigue siendo relativamente pequeño para:
+
+* modelos altamente complejos
+* deep learning
+* segmentación extrema
+
+---
 
 ## Matching residual
 
-Puede persistir:
+Aunque el sistema es robusto, siempre existe:
 
-* ruido de matching
-* uniones imperfectas
-* pérdida de observaciones
-* sesgo por liga
-
----
-
-## Variables omitidas
-
-El modelo no incorpora aún:
-
-* salarios
-* duración contractual
-* lesiones
-* agentes
-* reputación
-* cláusulas
-* internacionalidades
-* historial médico
+```text id="5fwz5k"
+riesgo residual de matching imperfecto
+```
 
 ---
 
-## Métricas defensivas limitadas
+## Calidad de mercado
 
-Actualmente existe mayor peso ofensivo en el feature set inicial.
+Transfermarkt incorpora inevitablemente:
 
----
-
-## Dependencia de fuentes públicas
-
-Las fuentes utilizadas:
-
-* pueden contener errores
-* pueden presentar retrasos
-* no representan información privada de clubes
-* no incluyen todas las variables utilizadas realmente por departamentos deportivos
+* subjetividad
+* ruido contextual
+* componentes no observables
 
 ---
 
-## Target imperfecto
+# 🚀 Mejoras futuras previstas
 
-Transfermarkt no representa necesariamente:
+## Validación avanzada
 
-* precio real de transferencia
-* valor contractual
-* disponibilidad real del jugador
-* willingness to sell del club
+Pendiente incorporar:
 
----
-
-# 🛡️ Estrategias de mitigación
-
-## Para matching
-
-* confidence score
+* análisis de estabilidad
 * robustness checks
-* thresholds elevados
-* validación por edad
-* validación por club
+* validación cruzada temporal avanzada
 
 ---
 
-## Para sesgos estructurales
+## Quality scoring
 
-* league FE
-* season FE
-* position FE
-* futura normalización por liga
-* futuros z-scores por posición
+Posible evolución:
 
----
-
-## Para leakage
-
-* split temporal
-* exclusión de variables futuras
-* separación entre dataset base y outputs derivados
-* validación out-of-sample
+```python id="j0fg0g"
+confidence_score =
+matching_quality +
+feature_completeness +
+temporal_stability
+```
 
 ---
 
-## Para outliers
+## Feature engineering
 
-* transformación logarítmica
-* filtros mínimos
-* análisis descriptivo
-* control de valores extremos
+Próximas mejoras:
 
----
-
-## Para limitación de features
-
-* roadmap de feature engineering avanzado
-* integración futura de Understat
-* enriquecimiento con métricas de progresión
-* desarrollo de métricas longitudinales
+* z-scores posicionales
+* percentiles
+* progression metrics
+* rolling metrics
 
 ---
 
-# 📌 Evaluación global de calidad
+## Explainability
 
-| Dimensión                                   | Evaluación               |
-| ------------------------------------------- | ------------------------ |
-| Cobertura temporal                          | Alta                     |
-| Cobertura competitiva                       | Alta                     |
-| Calidad matching                            | Alta                     |
-| Robustez metodológica                       | Alta                     |
-| Riesgo leakage                              | Bajo                     |
-| Interpretabilidad                           | Alta                     |
-| Reproducibilidad                            | Alta                     |
-| Calidad arquitectónica                      | Alta                     |
-| Ruido residual                              | Moderado                 |
-| Sesgos estructurales                        | Controlados parcialmente |
-| Calidad del feature set actual              | Media                    |
-| Potencial de mejora vía feature engineering | Alto                     |
+Pendiente:
+
+* SHAP
+* explicaciones individuales
+* estabilidad de rankings
 
 ---
 
-# 🚀 Próximas mejoras de calidad
+## Automatización
 
-## Corto plazo
+Posibles evoluciones:
 
-* ampliar métricas deportivas desde FBref
-* revisar unmatched cases
-* separar features de calidad de matching del modelo final
-* documentar estabilidad de rankings
-
----
-
-## Medio plazo
-
-* integrar Understat
-* añadir xG y xA
-* construir z-scores por posición
-* construir percentiles por liga y posición
-* incorporar métricas de progresión
-
----
-
-## Largo plazo
-
-* incorporar Growth Score
-* crear Confidence Score
-* evaluar robustez longitudinal
-* analizar estabilidad de modelos por temporada
-* construir scouting reports automáticos
+* validaciones automáticas
+* data quality monitoring
+* alertas de anomalías
 
 ---
 
 # 🧠 Conclusión
 
-El dataset presenta un nivel de calidad adecuado para:
+La calidad de datos representa uno de los componentes más críticos del sistema analítico desarrollado.
 
-* econometría aplicada
-* machine learning supervisado
-* scouting cuantitativo
-* generación de rankings de ineficiencia
+El proyecto prioriza:
 
-La principal complejidad técnica del proyecto —la integración de fuentes sin identificador común— ha sido resuelta mediante un sistema de matching robusto con resultados sólidos.
-
-La evolución hacia una arquitectura modular reproducible mejora de forma relevante la calidad técnica del proyecto, al permitir:
-
+* robustez
+* consistencia temporal
 * trazabilidad
-* replicabilidad
-* mantenimiento
-* generación automática de outputs
-* separación entre datos, modelos y artefactos
+* auditabilidad
+* prevención de leakage
+* reproducibilidad experimental
 
-Aunque persisten limitaciones inherentes al uso de datos públicos y al mercado futbolístico, el sistema dispone de controles metodológicos suficientes para sustentar un Trabajo de Fin de Máster con rigor académico y aplicabilidad real al scouting profesional.
+La incorporación de:
 
-La prioridad actual no es rediseñar la arquitectura ni añadir modelos más complejos de forma prematura, sino mejorar la calidad de la señal predictiva mediante feature engineering avanzado.
+* matching validado
+* configuración centralizada
+* MLflow
+* logging estructurado
+
+permite construir un entorno mucho más sólido desde el punto de vista metodológico y cercano a prácticas profesionales de analytics engineering y sports analytics.
+
+El principal reto futuro no será únicamente aumentar volumen de datos, sino incrementar:
+
+```text id="2cl0y8"
+calidad de señal predictiva manteniendo robustez metodológica
+```

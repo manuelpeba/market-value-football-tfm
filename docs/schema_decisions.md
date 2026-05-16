@@ -6,6 +6,8 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Modeling](https://img.shields.io/badge/Modeling-Analytics%20Engineering-orange)
 ![Validation](https://img.shields.io/badge/Validation-Leakage%20Aware-important)
+![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
+![Config](https://img.shields.io/badge/Configuration-YAML-purple)
 
 </div>
 
@@ -28,10 +30,12 @@
 - [📊 Diseño del target](#-diseño-del-target)
 - [📂 Separación entre dataset y outputs](#-separación-entre-dataset-y-outputs)
 - [💡 Variables derivadas y scoring](#-variables-derivadas-y-scoring)
+- [🧪 Esquema de experiment tracking](#-esquema-de-experiment-tracking)
+- [⚙️ Esquema de configuración centralizada](#️-esquema-de-configuración-centralizada)
+- [📝 Esquema de logging](#-esquema-de-logging)
 - [🛡️ Prevención de leakage](#️-prevención-de-leakage)
 - [⏳ Diseño temporal](#-diseño-temporal)
 - [📦 Gestión de artefactos](#-gestión-de-artefactos)
-- [⚙️ Configuración centralizada](#️-configuración-centralizada)
 - [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
 - [🚀 Evolución prevista del esquema](#-evolución-prevista-del-esquema)
 - [🧠 Conclusión](#-conclusión)
@@ -55,6 +59,9 @@ El objetivo es documentar:
 - control de leakage
 - consistencia temporal
 - decisiones de analytics engineering
+- configuración centralizada
+- tracking experimental
+- gestión de artefactos y logs
 
 ---
 
@@ -68,6 +75,7 @@ El diseño del sistema sigue principios de:
 - desacoplamiento
 - mantenibilidad
 - escalabilidad futura
+- auditoría experimental
 
 ---
 
@@ -80,6 +88,9 @@ Separar explícitamente:
 - datasets modelizables
 - outputs derivados
 - artefactos de modelos
+- configuración
+- experimentos
+- logs operativos
 
 ---
 
@@ -91,6 +102,8 @@ Evitar:
 - leakage accidental
 - dependencia de notebooks
 - mezcla entre lógica y outputs
+- pérdida de trazabilidad experimental
+- hardcoding de parámetros críticos
 
 ---
 
@@ -113,6 +126,7 @@ Esta estructura permite:
 - modelización longitudinal
 - comparabilidad entre jugadores
 - validación temporal
+- construcción de rankings reproducibles
 
 ---
 
@@ -128,7 +142,7 @@ Cada fila representa:
 
 # 📊 Estructura conceptual del sistema
 
-```mermaid id="v8bgr5"
+```mermaid
 flowchart TD
 
 A[Raw Sources] --> B[Processed Features]
@@ -142,12 +156,19 @@ D --> E[Modeling Dataset]
 E --> F[Econometric Pipeline]
 E --> G[Machine Learning Pipeline]
 
-F --> H[Scoring Outputs]
+F --> H[Experiment Tracking - MLflow]
 G --> H
 
-H --> I[Rankings]
-H --> J[Predictions]
-H --> K[Diagnostics]
+F --> I[Scoring Outputs]
+G --> I
+
+I --> J[Rankings]
+I --> K[Predictions]
+I --> L[Diagnostics]
+
+H --> M[Metrics]
+H --> N[Parameters]
+H --> O[Artifacts]
 ```
 
 ---
@@ -180,13 +201,15 @@ data/
 
 La arquitectura separa explícitamente:
 
-| Elemento      | Directorio        |
-| ------------- | ----------------- |
-| Datasets      | `data/processed/` |
-| Outputs       | `reports/`        |
-| Artefactos    | `artifacts/`      |
-| Configuración | `config/`         |
-| Lógica        | `src/`            |
+| Elemento              | Directorio        |
+| --------------------- | ----------------- |
+| Datasets              | `data/processed/` |
+| Outputs               | `reports/`        |
+| Artefactos            | `artifacts/`      |
+| Configuración         | `config/`         |
+| Tracking experimental | `mlruns/`         |
+| Logs                  | `logs/`           |
+| Lógica                | `src/`            |
 
 ---
 
@@ -199,6 +222,7 @@ Esta separación mejora:
 * auditoría
 * reproducibilidad
 * control de leakage
+* comparación entre experimentos
 
 ---
 
@@ -233,6 +257,18 @@ data/raw/fbref/
 
 <pre>
 data/raw/transfermarkt/
+</pre>
+
+---
+
+## Decisión metodológica
+
+Los datos raw no deben modificarse manualmente.
+
+Cualquier transformación debe realizarse mediante pipelines versionables ubicados en:
+
+<pre>
+src/
 </pre>
 
 ---
@@ -277,6 +313,16 @@ Parquet mejora:
 
 ---
 
+## Decisión metodológica
+
+Los datasets procesados deben ser reproducibles a partir de:
+
+* datos raw
+* pipelines en `src/`
+* configuración en `config/`
+
+---
+
 # 🔗 Esquema de integración y matching
 
 ## Problema principal
@@ -318,12 +364,31 @@ Las variables de matching:
 * se preservan
 * permiten auditoría
 * facilitan robustness checks
+* pueden contribuir a Confidence Score
 
 pero:
 
 <pre>
 NO deben interpretarse como variables deportivas
 </pre>
+
+---
+
+## Configuración asociada
+
+Los parámetros de matching deben declararse en:
+
+<pre>
+config/matching.yaml
+</pre>
+
+Ejemplos:
+
+```yaml
+max_age_diff: 1.5
+min_club_score: 70
+fuzzy_threshold: 92
+```
 
 ---
 
@@ -346,6 +411,7 @@ El dataset modelizable incluye:
 * variables contextuales
 * variables derivadas
 * variables categóricas
+* variables de calidad del matching
 
 ---
 
@@ -355,6 +421,8 @@ El dataset modelizable incluye:
 * predicciones
 * variables futuras
 * artefactos derivados
+* métricas de evaluación
+* variables internas de MLflow
 
 ---
 
@@ -365,6 +433,7 @@ El dataset modelizable incluye:
 | Observaciones | 3,297 |
 | Jugadores     | 1,847 |
 | Edad          | 18–23 |
+| Ligas         |     7 |
 
 ---
 
@@ -402,6 +471,18 @@ Estas variables permiten modelar:
 
 ---
 
+## Uso en modelos
+
+En econometría se utilizan como:
+
+<pre>
+fixed effects
+</pre>
+
+En Machine Learning se transforman mediante encoding categórico dentro del preprocessing pipeline.
+
+---
+
 # 📈 Diseño de variables numéricas
 
 ## Variables principales
@@ -427,6 +508,12 @@ Las variables deben ser:
 
 ---
 
+## Decisión metodológica
+
+Se prioriza un set inicial compacto para establecer un baseline robusto antes de incorporar features avanzadas.
+
+---
+
 # 📊 Diseño del target
 
 ## Variable objetivo
@@ -439,7 +526,7 @@ market_value_eur
 
 ## Transformación utilizada
 
-```python id="rvlv5m"
+```python
 log_market_value_eur
 ```
 
@@ -493,6 +580,7 @@ Los siguientes elementos se generan posteriormente:
 * scores
 * métricas
 * feature importance
+* experimentos MLflow
 
 ---
 
@@ -503,6 +591,7 @@ Los siguientes elementos se generan posteriormente:
 | Dataset    | `data/processed/` |
 | Outputs    | `reports/`        |
 | Artefactos | `artifacts/`      |
+| Tracking   | `mlruns/`         |
 
 ---
 
@@ -513,6 +602,7 @@ Evita:
 * contaminación del dataset
 * leakage accidental
 * mezcla entre inputs y outputs
+* pérdida de trazabilidad entre modelo y ranking
 
 ---
 
@@ -532,12 +622,14 @@ Evita:
 
 Generadas posteriormente:
 
-| Variable                     | Descripción               |
-| ---------------------------- | ------------------------- |
-| `predicted_market_value_eur` | Valor estimado            |
-| `market_value_gap_eur`       | Gap observado vs esperado |
-| `inefficiency_score`         | Score de infravaloración  |
-| `inefficiency_score_z`       | Score normalizado         |
+| Variable                     | Descripción                  |
+| ---------------------------- | ---------------------------- |
+| `predicted_market_value_eur` | Valor estimado               |
+| `predicted_log_market_value` | Valor estimado en escala log |
+| `market_value_gap_eur`       | Gap observado vs esperado    |
+| `market_value_gap_pct`       | Gap porcentual               |
+| `inefficiency_score`         | Score de infravaloración     |
+| `inefficiency_score_z`       | Score normalizado            |
 
 ---
 
@@ -548,6 +640,174 @@ Las variables de scoring:
 <pre>
 NO forman parte del dataset base de modelización
 </pre>
+
+---
+
+## Uso correcto
+
+Estas variables pertenecen a:
+
+```text
+reports/
+artifacts/
+mlruns/
+```
+
+---
+
+# 🧪 Esquema de experiment tracking
+
+## Herramienta
+
+<pre>
+MLflow
+</pre>
+
+---
+
+## Directorio
+
+<pre>
+mlruns/
+</pre>
+
+---
+
+## Objetivo
+
+Registrar de forma estructurada:
+
+* experimentos
+* parámetros
+* métricas
+* artefactos
+* modelos
+* predicciones
+* rankings derivados
+
+---
+
+## Elementos registrados
+
+| Elemento      | Ejemplos                                         |
+| ------------- | ------------------------------------------------ |
+| Parámetros    | features, target, fixed effects, hiperparámetros |
+| Métricas      | MAE, RMSE, R²                                    |
+| Artefactos    | modelos, predicciones, feature importance        |
+| Configuración | YAML usado en la ejecución                       |
+| Outputs       | rankings, diagnósticos                           |
+
+---
+
+## Decisión metodológica
+
+MLflow no debe mezclarse con el dataset base.
+
+Los identificadores internos de MLflow, como `run_id` o `experiment_id`, pueden usarse para auditoría, pero no como features predictivas.
+
+---
+
+# ⚙️ Esquema de configuración centralizada
+
+## Directorio
+
+<pre>
+config/
+</pre>
+
+---
+
+## Archivos principales
+
+| Archivo         | Función                        |
+| --------------- | ------------------------------ |
+| `config.yaml`   | Configuración general agregada |
+| `paths.yaml`    | Rutas                          |
+| `project.yaml`  | Metadatos del proyecto         |
+| `matching.yaml` | Parámetros de matching         |
+| `features.yaml` | Configuración de features      |
+| `modeling.yaml` | Modelos, target, validación    |
+
+---
+
+## Principio
+
+La configuración declara:
+
+* rutas
+* filtros
+* thresholds
+* listas de features
+* modelos a ejecutar
+* split temporal
+* parámetros de scoring
+
+---
+
+## Lo que no debe contener
+
+La configuración no debe contener:
+
+* lógica compleja
+* transformaciones algorítmicas
+* reglas difíciles de testear
+* outputs derivados
+
+---
+
+## Beneficio
+
+La configuración centralizada permite:
+
+* reproducibilidad
+* mantenibilidad
+* comparación de experimentos
+* facilidad de cambio
+* integración con MLflow
+
+---
+
+# 📝 Esquema de logging
+
+## Directorio
+
+<pre>
+logs/
+</pre>
+
+---
+
+## Objetivo
+
+Registrar información operativa de ejecución.
+
+---
+
+## Contenido previsto
+
+* inicio y fin de pipelines
+* filas procesadas
+* errores controlados
+* rutas utilizadas
+* warnings
+* duración de procesos
+
+---
+
+## Diferencia con MLflow
+
+| Elemento  | Función                                            |
+| --------- | -------------------------------------------------- |
+| `logs/`   | Trazabilidad operativa y debugging                 |
+| `mlruns/` | Trazabilidad experimental y comparación de modelos |
+
+---
+
+## Decisión metodológica
+
+Los logs no se utilizan como datos analíticos.
+
+Su función es facilitar mantenimiento, debugging y auditoría operativa.
 
 ---
 
@@ -565,77 +825,80 @@ en el momento real de decisión
 
 ## Variables explícitamente excluidas
 
-| Variable                     | Motivo             |
-| ---------------------------- | ------------------ |
-| `market_value_next_eur`      | Información futura |
-| `future_minutes`             | Información futura |
-| `future_xG`                  | Información futura |
-| `delta_log_market_value_1y`  | Información futura |
-| `predicted_market_value_eur` | Output derivado    |
-| `inefficiency_score`         | Output derivado    |
-
----
-
-## Estrategia aplicada
-
-* separación temporal
-* separación entre datasets y outputs
-* exclusión explícita de variables futuras
-* validación temporal out-of-sample
-
----
-
-# ⏳ Diseño temporal
-
-## Cobertura temporal
-
-| Temporadas |
-| ---------- |
-| 2019-2020  |
-| 2020-2021  |
-| 2021-2022  |
-| 2022-2023  |
-| 2023-2024  |
-| 2024-2025  |
-
----
-
-## Split temporal
-
-| Split | Periodo     |
-| ----- | ----------- |
-| Train | ≤ 2023-2024 |
-| Test  | 2024-2025   |
-
----
-
-## Justificación
-
-Evitar:
-
-* leakage temporal
-* optimismo artificial
-* validación irrealista
+| Variable                     | Motivo                |
+| ---------------------------- | --------------------- |
+| `market_value_next_eur`      | Información futura    |
+| `future_minutes`             | Información futura    |
+| `future_xG`                  | Información futura    |
+| `delta_log_market_value_1y`  | Información futura    |
+| `predicted_market_value_eur` | Output derivado       |
+| `predicted_log_market_value` | Output derivado       |
+| `market_value_gap_eur`       | Output derivado       |
+| `inefficiency_score`         | Output derivado       |
+| `run_id`                     | Metadata experimental |
+| `experiment_id`              | Metadata experimental |
 
 ---
 
 ## Decisión metodológica
 
+Las variables futuras pueden usarse para:
+
+* análisis descriptivo
+* evaluación ex-post
+* construcción futura de Growth Score con diseño temporal adecuado
+
+pero no como inputs del modelo de valoración actual.
+
+---
+
+# ⏳ Diseño temporal
+
+## Variables temporales
+
+| Variable            | Función             |
+| ------------------- | ------------------- |
+| `season`            | Temporada deportiva |
+| `season_start_year` | Orden temporal      |
+| `valuation_date`    | Fecha de valoración |
+
+---
+
+## Split temporal
+
+| Split | Temporadas            |
+| ----- | --------------------- |
+| Train | 2019-2020 → 2023-2024 |
+| Test  | 2024-2025             |
+
+---
+
+## Justificación
+
+El diseño temporal evita:
+
+* leakage temporal
+* optimismo artificial
+* contaminación futura
+* sobreestimación de rendimiento
+
+---
+
+## Configuración asociada
+
+El split temporal se declara en:
+
 <pre>
-NO utilizar random split
+config/modeling.yaml
 </pre>
 
 ---
 
 # 📦 Gestión de artefactos
 
-## Objetivo
+## Artefactos del proyecto
 
-Persistir modelos y outputs reutilizables.
-
----
-
-## Directorio
+Directorio:
 
 <pre>
 artifacts/
@@ -645,171 +908,156 @@ artifacts/
 
 ## Contenido
 
-| Directorio            | Contenido                 |
-| --------------------- | ------------------------- |
-| `models/`             | Modelos entrenados        |
-| `predictions/`        | Predicciones              |
-| `feature_importance/` | Importancia variables     |
-| `encoders/`           | Encoders categóricos      |
-| `scalers/`            | Transformadores numéricos |
+* modelos entrenados
+* predicciones
+* feature importance
+* scalers
+* encoders
 
 ---
 
-## Beneficios
+## Artefactos experimentales
 
-* reproducibilidad
-* comparabilidad
-* scoring posterior
-* despliegue futuro
-
----
-
-# ⚙️ Configuración centralizada
-
-## Objetivo
-
-Separar configuración y lógica de negocio.
-
----
-
-## Directorio
+Directorio:
 
 <pre>
-config/
+mlruns/
 </pre>
 
 ---
 
-## Archivos principales
+## Contenido
 
-| Archivo         | Función               |
-| --------------- | --------------------- |
-| `matching.yaml` | Matching              |
-| `features.yaml` | Features              |
-| `modeling.yaml` | Modelización          |
-| `paths.yaml`    | Paths                 |
-| `project.yaml`  | Configuración general |
+* runs
+* métricas
+* parámetros
+* artefactos asociados
+* modelos registrados localmente
 
 ---
 
-## Beneficios
+## Decisión metodológica
 
-* desacoplamiento
-* mantenibilidad
-* flexibilidad
-* trazabilidad
+Se mantiene una separación entre:
+
+| Tipo                      | Directorio   | Uso                     |
+| ------------------------- | ------------ | ----------------------- |
+| Artefactos operativos     | `artifacts/` | Reutilización directa   |
+| Artefactos experimentales | `mlruns/`    | Auditoría y comparación |
+| Reports                   | `reports/`   | Outputs interpretables  |
 
 ---
 
 # ⚖️ Trade-offs metodológicos
 
-## Cobertura vs calidad
+## Simplicidad vs riqueza del esquema
 
-Se priorizó:
+Un esquema muy amplio puede aumentar la señal predictiva, pero también:
 
-<pre>
-matching robusto sobre cobertura máxima
-</pre>
-
----
-
-## Complejidad vs interpretabilidad
-
-Se priorizó inicialmente:
-
-* interpretabilidad
-* robustez
-* trazabilidad
-
-frente a complejidad excesiva.
+* incrementar missing values
+* introducir multicolinealidad
+* complicar interpretación
+* aumentar riesgo de leakage
 
 ---
 
-## Señal vs dimensionalidad
+## Decisión actual
 
-El feature set actual se mantiene relativamente compacto para:
+Mantener un esquema inicial:
 
-* evitar sobreingeniería prematura
-* reducir ruido
-* facilitar interpretación
+```text
+compacto + interpretable + temporalmente válido
+```
+
+---
+
+## Ventaja
+
+Permite construir:
+
+* baseline sólido
+* evaluación clara
+* scoring defendible
+* evolución controlada
+
+---
+
+## Coste
+
+Limita parcialmente la capacidad predictiva hasta incorporar feature engineering avanzado.
 
 ---
 
 # 🚀 Evolución prevista del esquema
 
-## Próximas ampliaciones
+## Nuevos bloques de variables
 
 ### Features avanzadas
 
-* progression metrics
-* percentiles
-* z-scores
+* z-scores por posición
+* percentiles por liga
+* métricas de progresión
+* métricas defensivas
 * rolling metrics
-* growth indicators
 
 ---
 
-### Nuevas fuentes
+### Growth features
+
+* delta_minutes_yoy
+* market_value_growth_prev
+* development acceleration
+* age curve indicators
+
+---
+
+### Explainability
+
+* SHAP global
+* SHAP individual
+* feature contributions por jugador
+
+---
+
+### Scoring avanzado
+
+* Growth Score
+* Confidence Score
+* Opportunity Score
+
+---
+
+## Nuevas fuentes
 
 * Understat
 * StatsBomb Open Data
 
 ---
 
-### Nuevos outputs
+## Nuevos artefactos
 
-* Growth Score
-* Confidence Score
-* scouting reports automáticos
-
----
-
-## Arquitectura futura prevista
-
-```mermaid id="ifpwbm"
-flowchart TD
-
-A[Base Features] --> B[Advanced Features]
-
-B --> C[League Normalization]
-
-C --> D[Position Z-Scores]
-
-D --> E[Trajectory Features]
-
-E --> F[Growth Features]
-
-F --> G[Advanced Scouting Outputs]
-```
+* dashboards
+* scouting reports
+* API scoring
+* modelos versionados
 
 ---
 
 # 🧠 Conclusión
 
-El diseño del esquema de datos sigue principios de:
+El diseño de esquema del proyecto está orientado a construir un sistema analítico reproducible, auditable y metodológicamente robusto.
 
-* analytics engineering
-* reproducibilidad
-* modularidad
-* trazabilidad
-* robustez metodológica
+La decisión central consiste en separar claramente:
 
-La arquitectura actual separa explícitamente:
-
-* fuentes
-* datasets
-* pipelines
-* outputs
+* datos fuente
+* datasets procesados
+* dataset de modelización
+* outputs derivados
 * artefactos
+* configuración
+* experimentos
+* logs
 
-permitiendo construir un sistema analítico mantenible y escalable.
+La incorporación de configuración centralizada y MLflow refuerza la trazabilidad del sistema, ya que permite reconstruir qué datos, parámetros, modelos y outputs participaron en cada ejecución.
 
-La transición desde notebooks exploratorios hacia pipelines modulares reproducibles representa una mejora estructural relevante tanto desde la perspectiva técnica como metodológica.
-
-El esquema actual constituye una base sólida para:
-
-* econometría aplicada
-* machine learning supervisado
-* scoring cuantitativo
-* scouting profesional
-* futuras extensiones analíticas avanzadas
+El esquema actual es suficientemente sólido para sostener la fase de modelización y evaluación, y está preparado para evolucionar hacia un sistema más avanzado con nuevas features, nuevos modelos, explainability y outputs de scouting profesional.

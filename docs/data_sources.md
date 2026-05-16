@@ -1,11 +1,14 @@
+````md id="1m5k2z"
 # 📚 Fuentes de datos
 
 <div align="center">
 
-![Sources](https://img.shields.io/badge/Sources-Multi--Source-blue)
-![Integration](https://img.shields.io/badge/Integration-Player%20Matching-success)
+![Data Sources](https://img.shields.io/badge/Data%20Sources-Multi--Source-blue)
+![Sports Analytics](https://img.shields.io/badge/Sports%20Analytics-Football-success)
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-orange)
-![Status](https://img.shields.io/badge/Status-Integrated-success)
+![Validation](https://img.shields.io/badge/Validation-Temporal-important)
+![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
+![Config](https://img.shields.io/badge/Configuration-YAML-purple)
 
 </div>
 
@@ -14,433 +17,511 @@
 # 📑 Tabla de contenidos
 
 - [🧠 Objetivo del documento](#-objetivo-del-documento)
-- [🏗️ Rol de las fuentes dentro de la arquitectura](#️-rol-de-las-fuentes-dentro-de-la-arquitectura)
-- [📊 Resumen general de fuentes](#-resumen-general-de-fuentes)
-- [⚽ Transfermarkt / Kaggle Player Scores](#-transfermarkt--kaggle-player-scores)
-- [📈 FBref](#-fbref)
-- [📊 Understat](#-understat)
-- [📡 StatsBomb Open Data](#-statsbomb-open-data)
-- [🔗 Integración multi-fuente y matching](#-integración-multi-fuente-y-matching)
-- [📂 Flujo de datos dentro del sistema](#-flujo-de-datos-dentro-del-sistema)
+- [⚙️ Filosofía de integración multi-fuente](#️-filosofía-de-integración-multi-fuente)
+- [📊 Resumen de fuentes](#-resumen-de-fuentes)
+- [🏗️ Arquitectura de ingestión](#️-arquitectura-de-ingestión)
+- [⚽ FBref](#-fbref)
+- [💰 Transfermarkt](#-transfermarkt)
+- [📈 Understat](#-understat)
+- [📊 StatsBomb Open Data](#-statsbomb-open-data)
+- [🔗 Problema de integración entre fuentes](#-problema-de-integración-entre-fuentes)
+- [🛠️ Estrategia de matching implementada](#️-estrategia-de-matching-implementada)
 - [📦 Arquitectura de almacenamiento](#-arquitectura-de-almacenamiento)
-- [📈 Uso de las fuentes en modelización](#-uso-de-las-fuentes-en-modelización)
-- [🚀 Relación con feature engineering avanzado](#-relación-con-feature-engineering-avanzado)
-- [⚠️ Limitaciones de las fuentes](#️-limitaciones-de-las-fuentes)
-- [🛡️ Estrategias de mitigación](#️-estrategias-de-mitigación)
-- [📌 Evaluación global de las fuentes](#-evaluación-global-de-las-fuentes)
+- [⚙️ Configuración centralizada](#️-configuración-centralizada)
+- [🧪 Tracking experimental y trazabilidad](#-tracking-experimental-y-trazabilidad)
+- [📝 Logging y auditoría](#-logging-y-auditoría)
+- [📊 Cobertura temporal y competitiva](#-cobertura-temporal-y-competitiva)
+- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
+- [📉 Limitaciones actuales](#-limitaciones-actuales)
+- [🚀 Evolución futura prevista](#-evolución-futura-prevista)
 - [🧠 Conclusión](#-conclusión)
 
 ---
 
 # 🧠 Objetivo del documento
 
-Este documento describe las fuentes de datos utilizadas en el sistema analítico desarrollado para identificar jugadores infravalorados en el mercado de fichajes europeo.
+Este documento describe las fuentes de datos utilizadas en el sistema analítico orientado a:
+
+```text id="z1g4jo"
+identificar jugadores infravalorados mediante estimación de valor de mercado esperado
+```
 
 El objetivo es documentar:
 
-- origen de los datos
-- función de cada fuente
-- calidad y limitaciones
-- decisiones metodológicas
-- integración multi-fuente
-- relación con la arquitectura modular del proyecto
+* fuentes utilizadas
+* rol de cada fuente
+* arquitectura de ingestión
+* integración multi-fuente
+* limitaciones
+* riesgos metodológicos
+* calidad de datos
+* trazabilidad experimental
 
 ---
 
-# 🏗️ Rol de las fuentes dentro de la arquitectura
+# ⚙️ Filosofía de integración multi-fuente
 
-Cada fuente cumple una función específica dentro del sistema.
+El sistema se basa en una arquitectura:
 
-| Fuente | Rol principal |
-|---|---|
-| Transfermarkt / Kaggle Player Scores | Target y contexto de mercado |
-| FBref | Variables deportivas y feature engineering |
-| Understat | Métricas avanzadas ofensivas |
-| StatsBomb Open Data | Eventos avanzados y enriquecimiento futuro |
+```text id="s4e1d4"
+multi-source football analytics
+```
 
 ---
 
-## 📌 Separación conceptual
+## Justificación
 
-La arquitectura del proyecto separa explícitamente:
+Ninguna fuente individual proporciona simultáneamente:
 
-- información de mercado
-- información deportiva
-- información contextual
-- outputs derivados
-- artefactos de modelización
+* rendimiento deportivo completo
+* contexto competitivo
+* valoración de mercado
+* evolución temporal
+* métricas avanzadas
 
 ---
 
-## 📌 Evolución arquitectónica
+## Estrategia adoptada
 
-Inicialmente las fuentes eran utilizadas principalmente desde notebooks exploratorios.
+Combinar:
 
-Actualmente:
+| Tipo de información   | Fuente        |
+| --------------------- | ------------- |
+| Rendimiento deportivo | FBref         |
+| Valor de mercado      | Transfermarkt |
+| xG / xA               | Understat     |
+| Eventos avanzados     | StatsBomb     |
 
-- alimentan pipelines reproducibles
-- generan datasets persistidos
-- forman parte de una arquitectura modular
-- se integran mediante pipelines desacoplados
+---
 
-La lógica principal reside en:
+## Beneficio
+
+La integración multi-fuente permite:
+
+* enriquecer señal predictiva
+* reducir sesgos parciales
+* construir modelos más robustos
+* aproximarse a entornos profesionales de scouting
+
+---
+
+# 📊 Resumen de fuentes
+
+| Fuente              | Tipo de información         | Estado    |
+| ------------------- | --------------------------- | --------- |
+| FBref               | Rendimiento deportivo       | Integrada |
+| Transfermarkt       | Valor de mercado y contexto | Integrada |
+| Understat           | xG y xA                     | Pendiente |
+| StatsBomb Open Data | Eventos avanzados           | Pendiente |
+
+---
+
+# 🏗️ Arquitectura de ingestión
+
+```mermaid
+flowchart TD
+
+A[FBref] --> E[Feature Engineering]
+
+B[Transfermarkt] --> E
+
+C[Understat] --> E
+
+D[StatsBomb] --> E
+
+E --> F[Player-Season Matching]
+
+F --> G[Player-Season Panel]
+
+G --> H[Modeling Dataset]
+
+H --> I[Econometric + ML Pipelines]
+
+I --> J[MLflow Tracking]
+```
+
+---
+
+# ⚽ FBref
+
+## Tipo de fuente
+
+```text id="th2dyj"
+Performance data source
+```
+
+---
+
+## Información utilizada
+
+### Rendimiento ofensivo
+
+* goals
+* assists
+* shots
+* shots_on_target
+
+---
+
+### Rendimiento defensivo
+
+* tackles
+* interceptions
+* blocks
+* aerial duels
+
+---
+
+### Volumen de juego
+
+* minutes_played
+* starts
+* nineties
+
+---
+
+### Progresión y posesión
+
+* progressive_passes
+* progressive_carries
+* carries_into_final_third
+
+---
+
+## Uso dentro del proyecto
+
+FBref constituye la principal fuente de:
+
+```text id="epx44x"
+variables explicativas del modelo
+```
+
+---
+
+## Justificación
+
+FBref ofrece:
+
+* cobertura amplia
+* métricas relativamente estandarizadas
+* granularidad por temporada
+* estadísticas avanzadas accesibles
+
+---
+
+## Limitaciones
+
+* ausencia de identificador universal
+* posibles inconsistencias de nombres
+* limitación táctica contextual
+* menor riqueza que datos event-based completos
+
+---
+
+## Pipeline asociado
 
 <pre>
-src/
+src/data/ingest_fbref.py
+src/data/build_fbref_features.py
 </pre>
 
 ---
 
-# 📊 Resumen general de fuentes
-
-| Fuente | Tipo de información | Uso principal | Estado |
-|---|---|---|---|
-| Transfermarkt / Kaggle Player Scores | Mercado, valor, clubes, edad | Target y contexto de mercado | ✅ Integrada |
-| FBref | Rendimiento deportivo | Variables explicativas | ✅ Integrada |
-| Understat | xG, xA y métricas avanzadas | Enriquecimiento futuro | ⏳ Pendiente |
-| StatsBomb Open Data | Eventos avanzados | Expansión opcional futura | ⏳ No integrada |
-
----
-
-# ⚽ Transfermarkt / Kaggle Player Scores
-
-## 📌 Descripción
-
-Transfermarkt constituye la principal fuente de información de mercado utilizada en el proyecto.
-
-La integración se realiza mediante datasets estructurados procedentes del proyecto público de Kaggle:
+## Output principal
 
 <pre>
-davidcariboo/player-scores
+data/processed/fbref_features.parquet
 </pre>
 
 ---
 
-## 📌 Información utilizada
+# 💰 Transfermarkt
+
+## Tipo de fuente
+
+```text id="v5x1rz"
+Market valuation source
+```
+
+---
+
+## Información utilizada
 
 ### Mercado
 
-- valor de mercado actual
-- histórico de valor
-- evolución temporal
+* market_value_eur
+* historical_market_value
+* transfer history
 
 ---
 
-### Contexto competitivo
+### Contexto
 
-- club
-- liga
-- posición
-- edad
-- nacionalidad
-
----
-
-### Historial profesional
-
-- traspasos
-- fechas de transferencia
-- clubes anteriores
+* age
+* club
+* nationality
+* position
 
 ---
 
-## 📌 Uso dentro del sistema
+### Información temporal
 
-Transfermarkt actúa como:
+* valuation dates
+* temporal evolution
 
-### Variable objetivo principal
+---
 
-```python
+## Uso dentro del proyecto
+
+Transfermarkt constituye la principal fuente de:
+
+```text id="pnf28m"
+variable objetivo del sistema
+```
+
+---
+
+## Variable objetivo principal
+
+```python id="mnizlq"
 market_value_eur
 ```
 
 ---
 
-### Fuente contextual
+## Transformación utilizada
 
-Permite incorporar:
-
-* contexto competitivo
-* liga
-* club
-* situación de mercado
+```python id="mjlwm0"
+log_market_value_eur
+```
 
 ---
 
-### Fuente para scoring
+## Justificación
 
-El sistema utiliza el valor observado para calcular:
+Transfermarkt es actualmente:
 
-* market value gap
-* inefficiency score
-* rankings de infravaloración
-
----
-
-## 📌 Justificación metodológica
-
-Aunque Transfermarkt no representa necesariamente el precio real de transferencia, constituye:
-
-* una referencia pública ampliamente utilizada
-* una proxy razonable de valoración de mercado
-* una estimación consistente longitudinalmente
+* referencia estándar de mercado
+* ampliamente utilizada en sports analytics
+* suficientemente granular
+* longitudinalmente consistente
 
 ---
 
-## 📌 Limitaciones
+## Limitaciones
 
-Transfermarkt puede incorporar:
+### Subjetividad
 
-* sesgo mediático
-* reputación
-* percepción pública
-* exposición internacional
-* narrativa de mercado
+El valor de mercado incorpora:
 
-Por tanto, el target no representa exclusivamente rendimiento deportivo puro.
-
----
-
-# 📈 FBref
-
-## 📌 Descripción
-
-FBref constituye la principal fuente de métricas deportivas del sistema.
+* percepción humana
+* contexto mediático
+* especulación
+* información no observable
 
 ---
 
-## 📌 Información utilizada
+### No representa
 
-### Rendimiento ofensivo
-
-* goles
-* asistencias
-* goles por 90
-* asistencias por 90
+* precio exacto de transferencia
+* valor contractual real
+* valor económico objetivo absoluto
 
 ---
 
-### Volumen competitivo
-
-* minutos jugados
-* titularidades
-* partidos disputados
-
----
-
-### Variables contextuales
-
-* posición
-* competición
-* temporada
-
----
-
-## 📌 Uso dentro del sistema
-
-FBref constituye:
+## Pipeline asociado
 
 <pre>
-la principal fuente de feature engineering deportivo
+src/data/ingest_transfermarkt.py
+src/data/build_transfermarkt_features.py
 </pre>
 
 ---
 
-## 📌 Estado actual de integración
-
-Actualmente se utilizan principalmente:
-
-* goals_per90
-* assists_per90
-* minutes_played
-* log_minutes_played
-
----
-
-## 📌 Próxima expansión
-
-FBref será la principal fuente para construir:
-
-* progression metrics
-* z-scores por posición
-* percentiles
-* rolling metrics
-* métricas progresivas
-* métricas defensivas
-* trajectory features
-
----
-
-## 📌 Justificación metodológica
-
-FBref proporciona:
-
-* granularidad adecuada
-* cobertura amplia
-* métricas estandarizadas
-* consistencia longitudinal razonable
-
----
-
-## 📌 Limitaciones
-
-Las principales limitaciones son:
-
-* cambios estructurales entre temporadas
-* cobertura desigual según competición
-* diferencias metodológicas históricas
-* ausencia de ciertos eventos avanzados
-
----
-
-# 📊 Understat
-
-## 📌 Descripción
-
-Understat proporciona métricas avanzadas ofensivas basadas en expected goals.
-
----
-
-## 📌 Variables previstas
-
-* xG
-* xA
-* np_xG
-* xGChain
-* xGBuildup
-
----
-
-## 📌 Estado actual
+## Output principal
 
 <pre>
+data/processed/transfermarkt_features.parquet
+</pre>
+
+---
+
+# 📈 Understat
+
+## Tipo de fuente
+
+```text id="i0y8l0"
+Advanced offensive analytics source
+```
+
+---
+
+## Estado actual
+
+```text id="n56qyv"
 Pendiente de integración
-</pre>
+```
 
 ---
 
-## 📌 Rol previsto
+## Variables previstas
 
-Understat permitirá enriquecer:
-
-* calidad ofensiva
-* calidad de finalización
-* creación de ocasiones
-* rendimiento ajustado por calidad de tiro
-
----
-
-## 📌 Justificación metodológica
-
-Las métricas xG y xA ayudan a distinguir entre:
-
-* output observado
-* calidad subyacente del rendimiento
-
-Esto resulta especialmente importante en scouting joven, donde:
-
-* pequeñas muestras generan ruido
-* la conversión puede ser muy volátil
+| Variable  | Descripción            |
+| --------- | ---------------------- |
+| xG        | Expected Goals         |
+| xA        | Expected Assists       |
+| xGChain   | Participación ofensiva |
+| xGBuildup | Construcción ofensiva  |
 
 ---
 
-## 📌 Limitaciones
+## Objetivo
 
-* cobertura pública limitada
-* dependencia de scraping
-* diferencias metodológicas frente a otras fuentes
+Incrementar señal predictiva ofensiva mediante métricas de calidad de ocasiones.
 
 ---
 
-# 📡 StatsBomb Open Data
+## Justificación
 
-## 📌 Descripción
+xG y xA permiten capturar:
 
-StatsBomb Open Data constituye una posible extensión futura del sistema.
-
----
-
-## 📌 Información potencial
-
-* eventos
-* presión
-* secuencias
-* recuperaciones
-* acciones defensivas avanzadas
+* calidad de ocasiones
+* producción subyacente
+* rendimiento más estable que goles brutos
 
 ---
 
-## 📌 Estado actual
+## Riesgos
+
+* integración compleja
+* cobertura parcial
+* matching adicional
+* consistencia temporal
+
+---
+
+## Integración prevista
 
 <pre>
-No integrada
+src/data/ingest_understat.py
 </pre>
 
 ---
 
-## 📌 Uso potencial
+# 📊 StatsBomb Open Data
 
-Podría permitir:
+## Tipo de fuente
 
-* modelización táctica
-* métricas defensivas avanzadas
-* análisis de presión
-* enriquecimiento contextual
-
----
-
-## 📌 Limitaciones
-
-La cobertura pública es limitada respecto a:
-
-* temporadas
-* ligas
-* jugadores
-
-Por tanto, actualmente no se considera prioritaria frente a la expansión de FBref y Understat.
+```text id="rxl4zn"
+Event-based football analytics source
+```
 
 ---
 
-# 🔗 Integración multi-fuente y matching
+## Estado actual
 
-## 📌 Problema estructural
-
-FBref y Transfermarkt:
-
-<pre>
-NO comparten identificador único
-</pre>
-
-Esto convierte la integración en uno de los principales retos técnicos del proyecto.
+```text id="1bzqiw"
+Pendiente / extensión futura
+```
 
 ---
 
-## 📌 Problemas detectados
+## Variables previstas
+
+| Variable                | Tipo             |
+| ----------------------- | ---------------- |
+| pressures               | Presión          |
+| recoveries              | Recuperación     |
+| carries                 | Conducción       |
+| passes into final third | Progresión       |
+| shot locations          | Calidad ofensiva |
+
+---
+
+## Objetivo
+
+Incorporar:
+
+* contexto táctico
+* métricas avanzadas
+* eventos espaciales
+* señales no disponibles en datasets agregados
+
+---
+
+## Limitaciones
+
+* cobertura incompleta
+* complejidad de integración
+* granularidad distinta
+* mayor coste computacional
+
+---
+
+# 🔗 Problema de integración entre fuentes
+
+## Problema principal
+
+Las fuentes:
+
+```text id="x9fck3"
+NO comparten identificador universal
+```
+
+---
+
+## Problemas derivados
 
 * transliteraciones
 * nombres inconsistentes
 * cambios de club
+* diferencias temporales
 * granularidad distinta
-* edades no alineadas
-* homónimos
 
 ---
 
-## 📌 Estrategia implementada
+## Riesgos
 
-Se desarrolló un pipeline jerárquico de matching basado en:
+* false positives
+* false negatives
+* contaminación del dataset
+* rankings erróneos
+
+---
+
+## Impacto técnico
+
+El matching representa aproximadamente:
+
+```text id="x6hzsh"
+40–50% del esfuerzo técnico total
+```
+
+---
+
+# 🛠️ Estrategia de matching implementada
+
+## Pipeline jerárquico
 
 1. normalización
 2. matching exacto
-3. validación por edad
-4. validación por club
-5. fuzzy matching residual
+3. validación club
+4. matching fuzzy
+5. validación edad
 
 ---
 
-## 📌 Thresholds utilizados
+## Algoritmo fuzzy
 
-```python
+```text id="v2r7vt"
+RapidFuzz
+```
+
+---
+
+## Thresholds actuales
+
+```python id="0w3iut"
 MAX_AGE_DIFF = 1.5
 MIN_CLUB_SCORE = 70
 FUZZY_THRESHOLD = 92
@@ -448,7 +529,18 @@ FUZZY_THRESHOLD = 92
 
 ---
 
-## 📌 Resultados actuales
+## Variables de auditoría
+
+| Variable            | Función            |
+| ------------------- | ------------------ |
+| matching_method     | Método utilizado   |
+| matching_confidence | Calidad estimada   |
+| age_diff            | Diferencia edad    |
+| club_score          | Similaridad clubes |
+
+---
+
+## Resultado actual
 
 | Métrica                   | Resultado |
 | ------------------------- | --------: |
@@ -457,276 +549,396 @@ FUZZY_THRESHOLD = 92
 
 ---
 
-## 📌 Interpretación
+## Decisión metodológica
 
-El matching exacto domina claramente la muestra final.
+Se prioriza:
 
-El fuzzy matching queda restringido a casos ambiguos específicos para minimizar:
+```text id="s2brj4"
+precisión y robustez
+```
 
-* false positives
-* contaminación del target
-* ruido analítico
+frente a:
 
----
-
-# 📂 Flujo de datos dentro del sistema
-
-```mermaid
-flowchart TD
-
-A[Transfermarkt] --> B[Market Features]
-
-C[FBref] --> D[Performance Features]
-
-B --> E[Matching Layer]
-D --> E
-
-E --> F[Player-Season Panel]
-
-F --> G[Modeling Dataset]
-
-G --> H[Econometric Pipeline]
-G --> I[Machine Learning Pipeline]
-
-H --> J[Scoring]
-I --> J
-
-J --> K[Rankings]
-J --> L[Predictions]
-J --> M[Diagnostics]
+```text id="nkj5jz"
+máxima cobertura posible
 ```
 
 ---
 
 # 📦 Arquitectura de almacenamiento
 
-La arquitectura separa explícitamente:
+## Directorios principales
 
-| Capa              | Directorio        |
-| ----------------- | ----------------- |
-| Raw data          | `data/raw/`       |
-| Datos intermedios | `data/interim/`   |
-| Datos procesados  | `data/processed/` |
-| Artefactos        | `artifacts/`      |
-| Outputs           | `reports/`        |
+```text
+data/
 
----
-
-## 📌 Beneficios
-
-Esta separación mejora:
-
-* trazabilidad
-* reproducibilidad
-* mantenibilidad
-* auditoría metodológica
-
----
-
-# 📈 Uso de las fuentes en modelización
-
-## Econometría
-
-### Transfermarkt
-
-* target
-* fixed effects contextuales
-
----
-
-### FBref
-
-* rendimiento deportivo
-* volumen competitivo
-* variables explicativas
-
----
-
-## Machine Learning
-
-Las fuentes permiten construir:
-
-* variables numéricas
-* variables categóricas
-* features derivadas
-* features longitudinales futuras
-
----
-
-## Scoring
-
-Las predicciones generadas se combinan con:
-
-```python
-market_value_eur
+├── raw/
+├── interim/
+├── processed/
+└── external/
 ```
 
-para construir:
+---
 
-* market value gap
-* inefficiency score
-* rankings scouting
+## Separación conceptual
+
+| Directorio | Función                |
+| ---------- | ---------------------- |
+| raw        | Datos originales       |
+| interim    | Datos intermedios      |
+| processed  | Datasets reutilizables |
+| external   | Datos auxiliares       |
 
 ---
 
-# 🚀 Relación con feature engineering avanzado
+## Outputs analíticos
 
-La siguiente fase del proyecto depende principalmente de ampliar la señal deportiva disponible.
-
----
-
-## FBref
-
-Será la principal fuente para:
-
-* progression metrics
-* z-scores por posición
-* percentiles
-* rolling metrics
-* métricas defensivas
-* métricas progresivas
+| Tipo      | Directorio   |
+| --------- | ------------ |
+| Reports   | `reports/`   |
+| Artifacts | `artifacts/` |
+| Tracking  | `mlruns/`    |
+| Logs      | `logs/`      |
 
 ---
 
-## Understat
+## Formato principal
 
-Permitirá incorporar:
+```text id="b9t4sl"
+Apache Parquet
+```
 
-* xG
-* xA
-* calidad ofensiva subyacente
+---
+
+## Justificación
+
+Parquet mejora:
+
+* velocidad
+* compresión
+* integración analítica
+* eficiencia computacional
+
+---
+
+# ⚙️ Configuración centralizada
+
+## Directorio
+
+<pre>
+config/
+</pre>
+
+---
+
+## Archivos relevantes
+
+| Archivo       | Función      |
+| ------------- | ------------ |
+| paths.yaml    | Rutas        |
+| matching.yaml | Matching     |
+| features.yaml | Features     |
+| modeling.yaml | Modelización |
+
+---
+
+## Beneficios
+
+La configuración centralizada permite:
+
+* evitar hardcoding
+* mantener coherencia
+* reproducir ejecuciones
+* comparar experimentos
+* facilitar mantenimiento
+
+---
+
+## Ejemplo conceptual
+
+```yaml id="6gq67f"
+matching:
+  max_age_diff: 1.5
+  fuzzy_threshold: 92
+```
+
+---
+
+# 🧪 Tracking experimental y trazabilidad
+
+## Herramienta utilizada
+
+```text id="lfrx4h"
+MLflow
+```
 
 ---
 
 ## Objetivo
 
-Mejorar:
+Registrar:
+
+* configuraciones
+* métricas
+* modelos
+* artefactos
+* outputs
+
+---
+
+## Información registrada
+
+### Parámetros
+
+* features utilizadas
+* target
+* hiperparámetros
+* split temporal
+
+---
+
+### Métricas
+
+* RMSE
+* MAE
+* R²
+
+---
+
+### Artefactos
+
+* modelos
+* rankings
+* predicciones
+* feature importance
+
+---
+
+## Beneficio metodológico
+
+MLflow permite:
+
+```text id="n2uzph"
+reconstruir exactamente qué datos y configuraciones produjeron cada resultado
+```
+
+---
+
+# 📝 Logging y auditoría
+
+## Directorio
 
 <pre>
-signal predictivo del sistema
+logs/
 </pre>
 
-más que añadir algoritmos más complejos prematuramente.
+---
+
+## Objetivo
+
+Registrar información operativa de pipelines.
 
 ---
 
-# ⚠️ Limitaciones de las fuentes
+## Contenido previsto
 
-## Transfermarkt
-
-### Riesgos
-
-* subjetividad parcial
-* sesgo reputacional
-* influencia mediática
-* efecto liga
+* filas procesadas
+* warnings
+* errores controlados
+* paths utilizados
+* duración pipelines
 
 ---
 
-## FBref
+## Diferencia respecto a MLflow
 
-### Riesgos
-
-* cambios estructurales
-* diferencias históricas
-* cobertura desigual
-* posibles inconsistencias menores
+| Elemento | Función                   |
+| -------- | ------------------------- |
+| logs     | Trazabilidad operativa    |
+| mlruns   | Trazabilidad experimental |
 
 ---
 
-## Understat
+# 📊 Cobertura temporal y competitiva
 
-### Riesgos
+## Cobertura temporal
 
-* cobertura parcial
-* dependencia de scraping
-* limitaciones públicas
-
----
-
-## StatsBomb
-
-### Riesgos
-
-* cobertura limitada
-* baja escalabilidad actual
-* escasa prioridad relativa
+| Periodo               | Estado    |
+| --------------------- | --------- |
+| 2019-2020 → 2024-2025 | Integrado |
 
 ---
 
-# 🛡️ Estrategias de mitigación
+## Cobertura competitiva
 
-## Matching robusto
-
-* validación por edad
-* validación por club
-* fuzzy matching residual
-* thresholds conservadores
-
----
-
-## Robustez econométrica
-
-* league FE
-* season FE
-* position FE
-* validación temporal
+| Liga           | Estado    |
+| -------------- | --------- |
+| Premier League | Integrada |
+| LaLiga         | Integrada |
+| Bundesliga     | Integrada |
+| Serie A        | Integrada |
+| Ligue 1        | Integrada |
+| Eredivisie     | Integrada |
+| Liga Portugal  | Integrada |
 
 ---
 
-## Control de leakage
+## Cobertura actual
 
-* separación temporal train/test
-* exclusión de variables futuras
-* separación entre dataset base y outputs derivados
-
----
-
-## Reproducibilidad
-
-* pipelines modulares
-* outputs persistidos
-* configuración centralizada
-* arquitectura desacoplada
+| Métrica             |  Valor |
+| ------------------- | -----: |
+| Observaciones panel | 23,580 |
+| Dataset modelizable |  3,297 |
+| Jugadores únicos    |  1,847 |
 
 ---
 
-# 📌 Evaluación global de las fuentes
+# ⚖️ Trade-offs metodológicos
 
-| Dimensión                    | Evaluación    |
-| ---------------------------- | ------------- |
-| Cobertura competitiva        | Alta          |
-| Cobertura temporal           | Alta          |
-| Calidad matching             | Alta          |
-| Robustez contextual          | Alta          |
-| Calidad target mercado       | Moderada-Alta |
-| Cobertura métricas avanzadas | Media         |
-| Escalabilidad futura         | Alta          |
+## Cobertura vs calidad
+
+Trade-off principal de integración.
+
+---
+
+## Decisión adoptada
+
+Priorizar:
+
+```text id="3xvc1x"
+robustez metodológica
+```
+
+frente a:
+
+```text id="r4rtgz"
+máxima cantidad posible de datos
+```
+
+---
+
+## Coste
+
+Se pierden observaciones ambiguas.
+
+---
+
+## Beneficio
+
+Se reduce:
+
+* ruido
+* contaminación
+* false positives
+* rankings incorrectos
+
+---
+
+# 📉 Limitaciones actuales
+
+## Cobertura avanzada
+
+Todavía faltan:
+
+* xG integrado
+* xA integrado
+* eventos avanzados
+* contexto táctico profundo
+
+---
+
+## Subjetividad de mercado
+
+Transfermarkt incorpora inevitablemente:
+
+* percepción humana
+* componentes mediáticos
+* información no observable
+
+---
+
+## Matching residual
+
+Siempre existe:
+
+```text id="pxcn34"
+riesgo residual de matching imperfecto
+```
+
+---
+
+## Dataset size
+
+El tamaño actual limita parcialmente:
+
+* modelos muy complejos
+* deep learning
+* segmentación extrema
+
+---
+
+# 🚀 Evolución futura prevista
+
+## Integraciones prioritarias
+
+### Understat
+
+* xG
+* xA
+* producción ofensiva subyacente
+
+---
+
+### StatsBomb
+
+* eventos avanzados
+* métricas espaciales
+* secuencias tácticas
+
+---
+
+## Evolución del feature set
+
+* z-scores posicionales
+* percentiles
+* progression metrics
+* rolling metrics
+
+---
+
+## Explainability
+
+* SHAP
+* explicación rankings
+* estabilidad variables
+
+---
+
+## Automatización futura
+
+* pipelines automáticos
+* actualización periódica
+* dashboards
+* scoring recurrente
 
 ---
 
 # 🧠 Conclusión
 
-El sistema se construye sobre una arquitectura multi-fuente donde:
+La arquitectura de fuentes de datos del proyecto está diseñada para construir un sistema analítico modular y reproducible orientado a scouting cuantitativo.
 
-* Transfermarkt aporta contexto y target de mercado
-* FBref aporta señal deportiva
-* Understat enriquecerá métricas avanzadas
-* StatsBomb constituye una posible extensión futura
+La combinación de:
 
-La principal complejidad técnica del proyecto ha sido la integración robusta entre fuentes sin identificador común.
+* FBref
+* Transfermarkt
+* matching validado
+* configuración centralizada
+* tracking experimental con MLflow
 
-La evolución desde notebooks exploratorios hacia pipelines modulares reproducibles mejora significativamente:
+permite construir una base metodológicamente robusta para modelización econométrica y Machine Learning aplicada al mercado de fichajes.
 
-* calidad metodológica
-* trazabilidad
-* mantenibilidad
-* replicabilidad
+El principal reto futuro no será únicamente incorporar más fuentes, sino integrarlas manteniendo:
 
-Aunque las fuentes públicas presentan limitaciones inherentes, el sistema actual proporciona una base suficientemente sólida para:
-
-* econometría aplicada
-* machine learning supervisado
-* scouting cuantitativo
-* análisis de ineficiencias de mercado
-* desarrollo futuro de herramientas analíticas profesionales
+```text id="scw9az"
+coherencia temporal, calidad de matching y robustez metodológica
+```

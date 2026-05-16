@@ -1,11 +1,14 @@
+````md id="0m9j4v"
 # 🧪 Plan de Feature Engineering
 
 <div align="center">
 
 ![Feature Engineering](https://img.shields.io/badge/Feature%20Engineering-Advanced-blue)
-![Sports Analytics](https://img.shields.io/badge/Sports%20Analytics-Scouting-success)
+![Sports Analytics](https://img.shields.io/badge/Sports%20Analytics-Football-success)
 ![Modeling](https://img.shields.io/badge/Modeling-Econometrics%20%2B%20ML-orange)
-![Validation](https://img.shields.io/badge/Validation-Leakage%20Aware-important)
+![Validation](https://img.shields.io/badge/Validation-Temporal-important)
+![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
+![Config](https://img.shields.io/badge/Configuration-YAML-purple)
 
 </div>
 
@@ -13,505 +16,751 @@
 
 # 📑 Tabla de contenidos
 
-- [🧠 Objetivo](#-objetivo)
-- [📊 Situación actual](#-situación-actual)
-- [⚠️ Problema actual del sistema](#️-problema-actual-del-sistema)
-- [🎯 Objetivos del feature engineering avanzado](#-objetivos-del-feature-engineering-avanzado)
-- [🏗️ Filosofía metodológica](#️-filosofía-metodológica)
-- [🧩 Arquitectura futura de features](#-arquitectura-futura-de-features)
-- [📈 Bloques de features prioritarios](#-bloques-de-features-prioritarios)
-- [⚽ Features de rendimiento ofensivo](#-features-de-rendimiento-ofensivo)
-- [🛡️ Features defensivas](#️-features-defensivas)
-- [📦 Features de volumen y uso](#-features-de-volumen-y-uso)
-- [📈 Features de progresión](#-features-de-progresión)
-- [📊 Features relativas y percentiles](#-features-relativas-y-percentiles)
-- [🌍 Normalización por liga](#-normalización-por-liga)
-- [👥 Z-scores por posición](#-z-scores-por-posición)
-- [📉 Rolling metrics](#-rolling-metrics)
-- [📈 Growth features](#-growth-features)
-- [📊 Market momentum](#-market-momentum)
-- [🧠 Age curves y development indicators](#-age-curves-y-development-indicators)
+- [🧠 Objetivo del documento](#-objetivo-del-documento)
+- [⚙️ Filosofía de feature engineering](#️-filosofía-de-feature-engineering)
+- [📊 Estado actual del feature set](#-estado-actual-del-feature-set)
+- [🏗️ Arquitectura de feature engineering](#️-arquitectura-de-feature-engineering)
+- [📦 Fuentes utilizadas](#-fuentes-utilizadas)
+- [⚽ Features ofensivas actuales](#-features-ofensivas-actuales)
+- [🛡️ Features defensivas actuales](#️-features-defensivas-actuales)
+- [⏱️ Features de volumen y contexto](#️-features-de-volumen-y-contexto)
+- [📈 Features derivadas actuales](#-features-derivadas-actuales)
+- [🎯 Objetivos de mejora del feature set](#-objetivos-de-mejora-del-feature-set)
+- [📊 Positional normalization](#-positional-normalization)
+- [📈 Percentiles y z-scores](#-percentiles-y-z-scores)
+- [🚀 Progression metrics](#-progression-metrics)
+- [📉 Growth features](#-growth-features)
+- [🛡️ Features defensivas avanzadas](#️-features-defensivas-avanzadas)
+- [⚡ Features de progresión y posesión](#-features-de-progresión-y-posesión)
+- [📈 Rolling features](#-rolling-features)
+- [🏟️ Features contextuales avanzadas](#️-features-contextuales-avanzadas)
+- [🧪 Relación con MLflow y tracking](#-relación-con-mlflow-y-tracking)
+- [⚙️ Configuración centralizada](#️-configuración-centralizada)
 - [🛡️ Prevención de leakage](#️-prevención-de-leakage)
 - [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
-- [📂 Arquitectura prevista](#-arquitectura-prevista)
-- [🚀 Roadmap de implementación](#-roadmap-de-implementación)
+- [🚀 Roadmap priorizado](#-roadmap-priorizado)
 - [🧠 Conclusión](#-conclusión)
 
 ---
 
-# 🧠 Objetivo
+# 🧠 Objetivo del documento
 
-Este documento define la estrategia de feature engineering avanzado del sistema analítico orientado a identificar jugadores infravalorados en el mercado de fichajes europeo.
+Este documento describe la estrategia de feature engineering utilizada y prevista dentro del sistema analítico.
 
-El objetivo principal es incrementar:
+El objetivo es:
 
-- señal predictiva
-- capacidad explicativa
-- valor scouting real
-- robustez econométrica
-- generalización temporal
-
----
-
-# 📊 Situación actual
-
-El sistema actual utiliza un conjunto relativamente reducido de variables.
-
-## Features actuales
-
-### Rendimiento ofensivo
-
-- goals_per90
-- assists_per90
+- documentar features actuales
+- justificar decisiones metodológicas
+- identificar limitaciones
+- priorizar mejoras
+- aumentar señal predictiva
+- mantener interpretabilidad
+- preservar consistencia temporal
+- garantizar reproducibilidad
 
 ---
 
-### Volumen de juego
+# ⚙️ Filosofía de feature engineering
 
-- minutes_played
-- log_minutes_played
-
----
-
-### Contexto
-
-- age
-- league
-- season
-- position_group
+La estrategia de feature engineering sigue un enfoque incremental.
 
 ---
 
-# ⚠️ Problema actual del sistema
+## Principio central
 
-Los resultados actuales muestran que:
+Priorizar inicialmente:
 
-| Modelo | R² |
-|---|---:|
-| OLS final | ~0.44 |
-| Gradient Boosting | ~0.48 |
-
-La mejora relativamente moderada de ML respecto a OLS indica que:
-
-<pre>
-el principal cuello de botella actual es el signal predictivo del dataset
-</pre>
-
-y no necesariamente el algoritmo utilizado.
-
----
-
-# 🎯 Objetivos del feature engineering avanzado
-
-La siguiente fase del proyecto busca:
-
-- capturar calidad deportiva real
-- modelar progresión y desarrollo
-- reducir ruido contextual
-- aumentar capacidad predictiva
-- mejorar utilidad scouting
-- construir señales más robustas
-
----
-
-# 🏗️ Filosofía metodológica
-
-El diseño de nuevas variables seguirá principios de:
-
-- interpretabilidad
-- coherencia futbolística
-- robustez estadística
-- prevención de leakage
-- generalización temporal
-
----
-
-## Principio fundamental
-
-Las variables deben representar:
-
-<pre>
-información disponible en el momento real de decisión
-</pre>
-
----
-
-# 🧩 Arquitectura futura de features
-
-```mermaid
-flowchart TD
-
-A[Raw Stats] --> B[Per90 Features]
-
-B --> C[Normalized Features]
-
-C --> D[Position Z-Scores]
-
-D --> E[League Adjustments]
-
-E --> F[Trajectory Features]
-
-F --> G[Growth Features]
-
-G --> H[Scouting Indicators]
+```text id="5s2o4q"
+baseline interpretable y robusto
 ```
 
----
+antes de introducir:
 
-# 📈 Bloques de features prioritarios
-
-| Bloque                     | Prioridad |
-| -------------------------- | --------- |
-| Progression metrics        | Alta      |
-| Percentiles                | Alta      |
-| Z-scores por posición      | Alta      |
-| League normalization       | Alta      |
-| Growth indicators          | Alta      |
-| Rolling metrics            | Media     |
-| Market momentum            | Media     |
-| Advanced defensive metrics | Media     |
-| Age curves                 | Alta      |
-
----
-
-# ⚽ Features de rendimiento ofensivo
-
-## Objetivo
-
-Capturar calidad ofensiva real más allá de goles brutos.
-
----
-
-## Features previstas
-
-### Producción ofensiva
-
-* shots_per90
-* shots_on_target_per90
-* non_penalty_goals_per90
-* goals_minus_pk_per90
-
----
-
-### Creación
-
-* key_passes_per90
-* shot_creating_actions_per90
-* goal_creating_actions_per90
-
----
-
-### Calidad ofensiva
-
-* xG_per90
-* xA_per90
-* np_xG_per90
-
----
-
-## Fuentes previstas
-
-| Fuente    | Estado     |
-| --------- | ---------- |
-| FBref     | Disponible |
-| Understat | Pendiente  |
-
----
-
-# 🛡️ Features defensivas
-
-## Objetivo
-
-Mejorar valoración de defensas y mediocampistas.
-
----
-
-## Features previstas
-
-* tackles_per90
-* interceptions_per90
-* blocks_per90
-* aerial_duels_won_pct
-* pressures_per90
-* recoveries_per90
-
----
-
-## Problema actual
-
-El sistema actual favorece excesivamente producción ofensiva.
+* features altamente complejas
+* transformaciones opacas
+* ingeniería excesiva
+* señales difíciles de justificar
 
 ---
 
 ## Objetivo metodológico
 
-Reducir sesgo ofensivo estructural del modelo.
+Construir features que sean:
+
+* coherentes futbolísticamente
+* interpretables
+* temporalmente válidas
+* robustas
+* reproducibles
+* escalables
 
 ---
 
-# 📦 Features de volumen y uso
+## Decisión estratégica
 
-## Objetivo
+Actualmente el principal cuello de botella del sistema es:
 
-Capturar confianza competitiva y relevancia contextual.
+```text id="vcx3ua"
+la calidad y riqueza del feature set
+```
 
----
-
-## Features previstas
-
-* starts_pct
-* minutes_share
-* team_minutes_share
-* nineties
-* availability_rate
+más que el algoritmo utilizado.
 
 ---
 
-## Interpretación scouting
+# 📊 Estado actual del feature set
 
-Estas variables permiten identificar:
+## Estado general
 
-* regularidad
-* consolidación
-* confianza táctica
-* exposición competitiva
+El sistema dispone actualmente de un baseline sólido de variables:
 
----
-
-# 📈 Features de progresión
-
-## Objetivo
-
-Capturar evolución deportiva longitudinal.
+* ofensivas
+* contextuales
+* demográficas
+* volumen de juego
 
 ---
 
-## Features previstas
+## Limitación principal
 
-### Year-over-year deltas
+Todavía faltan:
 
-* delta_minutes_yoy
-* delta_goals_per90_yoy
-* delta_assists_per90_yoy
-* delta_xG_yoy
-* delta_xA_yoy
-
----
-
-## Interpretación
-
-Estas variables ayudan a identificar:
-
-* breakout players
-* aceleración de desarrollo
-* crecimiento competitivo
+* señales longitudinales
+* normalización avanzada
+* métricas contextuales sofisticadas
+* métricas defensivas robustas
+* indicadores de progresión
 
 ---
 
-# 📊 Features relativas y percentiles
+## Resultado observado
 
-## Objetivo
+La mejora moderada de ML respecto a OLS sugiere que:
 
-Evaluar rendimiento relativo respecto al entorno competitivo.
+```text id="n6xgby"
+el signal actual todavía es limitado
+```
 
 ---
 
-## Features previstas
+# 🏗️ Arquitectura de feature engineering
 
-### Percentiles
+## Directorios principales
 
-* goals_per90_position_percentile
-* assists_per90_position_percentile
-* xG_per90_position_percentile
-* minutes_position_percentile
+### Pipelines
+
+<pre>
+src/data/
+src/features/
+</pre>
+
+---
+
+### Configuración
+
+<pre>
+config/features.yaml
+</pre>
+
+---
+
+### Outputs
+
+<pre>
+data/processed/
+</pre>
+
+---
+
+## Filosofía de arquitectura
+
+Separar:
+
+* extracción
+* transformación
+* normalización
+* modelización
+* scoring
+* tracking experimental
+
+---
+
+## Relación con MLflow
+
+Las features utilizadas en cada experimento deben registrarse automáticamente mediante:
+
+```text id="tcfumx"
+MLflow
+```
+
+---
+
+# 📦 Fuentes utilizadas
+
+## FBref
+
+### Información utilizada
+
+* goles
+* asistencias
+* minutos
+* métricas por 90
+* acciones ofensivas
+* acciones defensivas
+
+---
+
+## Transfermarkt
+
+### Información utilizada
+
+* valor de mercado
+* edad
+* club
+* posición
+* histórico temporal
+
+---
+
+## Fuentes previstas futuras
+
+| Fuente              | Estado    |
+| ------------------- | --------- |
+| Understat           | Pendiente |
+| StatsBomb Open Data | Pendiente |
+
+---
+
+# ⚽ Features ofensivas actuales
+
+## Features principales
+
+| Variable      | Tipo                |
+| ------------- | ------------------- |
+| goals_per90   | Producción ofensiva |
+| assists_per90 | Creación            |
+| g_a_per90     | Producción agregada |
+| shots_per90   | Volumen ofensivo    |
 
 ---
 
 ## Justificación
 
-Los percentiles:
+Estas métricas:
 
-* reducen dependencia de escala
-* facilitan interpretación scouting
-* mejoran comparación interliga
+* son interpretables
+* tienen señal futbolística clara
+* están relativamente estandarizadas
+* permiten baseline sólido
 
 ---
 
-# 🌍 Normalización por liga
+## Limitación
+
+No capturan completamente:
+
+* calidad de ocasiones
+* progresión
+* creación avanzada
+* contexto táctico
+
+---
+
+# 🛡️ Features defensivas actuales
+
+## Variables disponibles
+
+| Variable             | Tipo              |
+| -------------------- | ----------------- |
+| tackles_per90        | Recuperación      |
+| interceptions_per90  | Lectura defensiva |
+| blocks_per90         | Bloqueos          |
+| aerial_duels_won_pct | Juego aéreo       |
+
+---
+
+## Limitaciones actuales
+
+Las métricas defensivas:
+
+* presentan más ruido
+* dependen mucho del contexto táctico
+* son más difíciles de interpretar aisladamente
+
+---
+
+## Problema principal
+
+El sistema todavía tiene:
+
+```text id="33yt5n"
+infra-representación defensiva
+```
+
+respecto a perfiles ofensivos.
+
+---
+
+# ⏱️ Features de volumen y contexto
+
+## Variables actuales
+
+| Variable           | Función              |
+| ------------------ | -------------------- |
+| minutes_played     | Exposición           |
+| log_minutes_played | Robustez             |
+| starts             | Participación        |
+| nineties           | Normalización        |
+| age                | Desarrollo           |
+| league             | Contexto competitivo |
+| season             | Contexto temporal    |
+| position_group     | Contexto posicional  |
+
+---
+
+## Justificación
+
+Estas variables permiten controlar:
+
+* exposición competitiva
+* diferencias estructurales
+* contexto de rendimiento
+* edad y progresión
+
+---
+
+# 📈 Features derivadas actuales
+
+## Variables transformadas
+
+| Variable             | Transformación |
+| -------------------- | -------------- |
+| log_market_value_eur | Log target     |
+| log_minutes_played   | Log minutos    |
+| g_a_per90            | Suma ofensiva  |
+
+---
 
 ## Objetivo
 
-Reducir diferencias estructurales entre ligas.
+Reducir:
+
+* asimetría
+* ruido
+* heterocedasticidad
 
 ---
+
+## Estado actual
+
+Las transformaciones actuales siguen siendo relativamente simples y priorizan interpretabilidad.
+
+---
+
+# 🎯 Objetivos de mejora del feature set
+
+## Prioridad estratégica
+
+El principal objetivo futuro es:
+
+```text id="u81b0q"
+incrementar señal predictiva
+```
+
+manteniendo:
+
+* robustez
+* interpretabilidad
+* validez temporal
+
+---
+
+## Líneas prioritarias
+
+| Área                     | Prioridad |
+| ------------------------ | --------- |
+| Positional normalization | Alta      |
+| Progression metrics      | Alta      |
+| Growth features          | Alta      |
+| Defensive enrichment     | Alta      |
+| Rolling metrics          | Media     |
+| Tactical context         | Media     |
+| Event data               | Media     |
+| Deep representations     | Baja      |
+
+---
+
+# 📊 Positional normalization
 
 ## Problema actual
 
-El valor de mercado está fuertemente condicionado por:
+Comparar métricas absolutas entre posiciones introduce sesgos importantes.
 
-* exposición mediática
-* capacidad económica
-* visibilidad internacional
-* reputación competitiva
+Ejemplo:
 
----
-
-## Features previstas
-
-* league_adjusted_goals
-* league_adjusted_xG
-* league_strength_score
-* relative_league_performance
+* un central no debe evaluarse como un delantero
+* un mediocentro no produce igual que un extremo
 
 ---
 
-## Justificación
+## Solución prevista
 
-Permite comparar jugadores de:
+Normalización por:
 
-* Eredivisie
-* Liga Portugal
-* Ligue 1
-
-respecto a ligas premium.
+* posición
+* liga
+* temporada
 
 ---
 
-# 👥 Z-scores por posición
+## Variables previstas
 
-## Objetivo
-
-Comparar jugadores respecto a perfiles funcionales similares.
-
----
-
-## Features previstas
-
-* goals_per90_pos_z
-* assists_per90_pos_z
-* xG_per90_pos_z
-* progression_index_pos_z
-
----
-
-## Justificación
-
-No es metodológicamente correcto comparar:
-
-* centrales
-* pivotes
-* extremos
-* delanteros
-
-utilizando distribuciones globales idénticas.
-
----
-
-# 📉 Rolling metrics
-
-## Objetivo
-
-Capturar estabilidad y consistencia temporal.
-
----
-
-## Features previstas
-
-* rolling_xG
-* rolling_minutes
-* rolling_form_score
-* rolling_goal_contribution
+| Variable            | Descripción       |
+| ------------------- | ----------------- |
+| goals_per90_pos_z   | Z-score ofensivo  |
+| assists_per90_pos_z | Creación relativa |
+| shots_per90_pos_z   | Volumen relativo  |
+| tackles_per90_pos_z | Defensa relativa  |
 
 ---
 
 ## Beneficio
 
-Permite detectar:
+Permite capturar:
 
-* rachas sostenidas
-* consistencia
-* volatilidad
+```text id="1pltt5"
+rendimiento relativo dentro del contexto competitivo correcto
+```
 
 ---
 
-# 📈 Growth features
+# 📈 Percentiles y z-scores
 
 ## Objetivo
 
-Capturar potencial de revalorización futura.
+Reducir dependencia de métricas absolutas.
 
 ---
 
-## Features previstas
+## Estrategia
 
-* lag_market_value
-* market_value_growth_prev
-* market_value_acceleration
-* delta_market_value_yoy
+Calcular:
+
+* percentiles
+* z-scores
+* rankings relativos
+
+por:
+
+* posición
+* liga
+* temporada
 
 ---
 
-## Uso previsto
+## Beneficios
 
-Estas variables serán especialmente relevantes para:
+Estas transformaciones permiten:
+
+* comparabilidad
+* robustez contextual
+* mejor señal relativa
+* reducción de sesgos estructurales
+
+---
+
+## Variables previstas
+
+| Variable             | Tipo                |
+| -------------------- | ------------------- |
+| offensive_percentile | Percentil ofensivo  |
+| defensive_percentile | Percentil defensivo |
+| progression_z        | Progresión relativa |
+
+---
+
+# 🚀 Progression metrics
+
+## Objetivo
+
+Capturar evolución deportiva.
+
+---
+
+## Problema actual
+
+El sistema modela principalmente:
+
+```text id="7ul98l"
+estado actual del jugador
+```
+
+pero no suficientemente:
+
+```text id="sk0hgi"
+trayectoria de evolución
+```
+
+---
+
+## Variables previstas
+
+| Variable                 | Descripción         |
+| ------------------------ | ------------------- |
+| delta_minutes_yoy        | Evolución minutos   |
+| delta_goals_per90_yoy    | Evolución ofensiva  |
+| delta_assists_per90_yoy  | Evolución creativa  |
+| age_adjusted_progression | Progresión relativa |
+
+---
+
+## Beneficio
+
+Estas variables permitirán mejorar:
+
+* Growth Score
+* proyección futura
+* identificación temprana de talento
+
+---
+
+# 📉 Growth features
+
+## Objetivo
+
+Modelar potencial de revalorización.
+
+---
+
+## Variables previstas
+
+| Variable                 | Descripción             |
+| ------------------------ | ----------------------- |
+| market_value_growth_prev | Crecimiento histórico   |
+| valuation_acceleration   | Aceleración crecimiento |
+| growth_consistency       | Estabilidad progresión  |
+| breakout_indicator       | Explosión reciente      |
+
+---
+
+## Relación con scouting
+
+Estas features son especialmente relevantes para:
+
+```text id="7m5wfh"
+estrategias buy low → sell high
+```
+
+---
+
+# 🛡️ Features defensivas avanzadas
+
+## Problema actual
+
+Los perfiles defensivos están parcialmente inframodelados.
+
+---
+
+## Métricas previstas
+
+| Variable                | Descripción         |
+| ----------------------- | ------------------- |
+| pressures_per90         | Presión             |
+| defensive_actions_per90 | Actividad defensiva |
+| recoveries_per90        | Recuperaciones      |
+| duel_win_pct            | Dominio defensivo   |
+
+---
+
+## Fuentes potenciales
+
+| Fuente    | Estado  |
+| --------- | ------- |
+| FBref     | Parcial |
+| StatsBomb | Futuro  |
+| Understat | Parcial |
+
+---
+
+## Objetivo
+
+Reducir sesgo ofensivo del sistema.
+
+---
+
+# ⚡ Features de progresión y posesión
+
+## Variables previstas
+
+| Variable                  | Descripción           |
+| ------------------------- | --------------------- |
+| progressive_passes_per90  | Progresión pase       |
+| progressive_carries_per90 | Progresión conducción |
+| carries_into_final_third  | Avance territorial    |
+| passes_into_penalty_area  | Creación avanzada     |
+
+---
+
+## Beneficio
+
+Estas métricas permiten capturar:
+
+* progresión
+* influencia territorial
+* creación indirecta
+* impacto no reflejado en goles/asistencias
+
+---
+
+# 📈 Rolling features
+
+## Objetivo
+
+Capturar dinámica temporal reciente.
+
+---
+
+## Variables previstas
+
+| Variable              | Descripción        |
+| --------------------- | ------------------ |
+| rolling_goals_per90   | Tendencia ofensiva |
+| rolling_minutes       | Continuidad        |
+| rolling_market_growth | Momentum mercado   |
+
+---
+
+## Riesgo principal
+
+Las rolling features requieren especial control para evitar:
+
+```text id="1c4wsh"
+leakage temporal
+```
+
+---
+
+# 🏟️ Features contextuales avanzadas
+
+## Variables previstas
+
+| Variable             | Descripción              |
+| -------------------- | ------------------------ |
+| league_strength      | Nivel competitivo        |
+| club_strength        | Contexto colectivo       |
+| european_competition | Exposición internacional |
+| team_possession_pct  | Contexto táctico         |
+
+---
+
+## Beneficio
+
+Permiten contextualizar mejor:
+
+* rendimiento individual
+* entorno competitivo
+* dificultad contextual
+
+---
+
+# 🧪 Relación con MLflow y tracking
+
+## Objetivo
+
+Registrar automáticamente:
+
+* features utilizadas
+* transformaciones
+* grupos de variables
+* métricas asociadas
+* importancia de variables
+
+---
+
+## Herramienta
+
+```text id="vnzk5g"
+MLflow
+```
+
+---
+
+## Beneficios
+
+MLflow permite:
+
+* comparar feature sets
+* analizar impacto incremental
+* reconstruir experimentos
+* justificar decisiones metodológicas
+
+---
+
+## Información registrada
+
+### Parámetros
+
+* lista de features
+* grupos de features
+* normalizaciones activas
+* transformaciones utilizadas
+
+---
+
+### Artefactos
+
+* feature importance
+* rankings derivados
+* predicciones
+* diagnósticos
+
+---
+
+# ⚙️ Configuración centralizada
+
+## Directorio
 
 <pre>
-Growth Score
+config/features.yaml
 </pre>
 
 ---
 
-# 📊 Market momentum
-
 ## Objetivo
 
-Modelar dinámica reciente del mercado.
+Centralizar:
+
+* features activas
+* thresholds
+* grupos de variables
+* transformaciones
+* normalizaciones
 
 ---
 
-## Features previstas
+## Beneficios
 
-* transfer_activity_score
-* market_visibility_score
-* market_trend_signal
+La configuración centralizada permite:
 
----
-
-## Justificación
-
-El mercado incorpora componentes:
-
-* mediáticos
-* contextuales
-* reputacionales
-
-que no dependen exclusivamente del rendimiento.
+* evitar hardcoding
+* comparar configuraciones
+* reproducir experimentos
+* activar/desactivar bloques fácilmente
 
 ---
 
-# 🧠 Age curves y development indicators
+## Ejemplo conceptual
 
-## Objetivo
+```yaml id="6c6fdm"
+feature_groups:
+  offensive:
+    - goals_per90
+    - assists_per90
 
-Capturar fases de desarrollo deportivo.
-
----
-
-## Features previstas
-
-* age_relative_to_peak
-* early_breakout_flag
-* accelerated_development_flag
-* age_position_expected_value
-
----
-
-## Justificación
-
-El mismo rendimiento no implica el mismo valor esperado en:
-
-* un jugador de 18 años
-* un jugador de 24 años
+  progression:
+    - progressive_passes_per90
+    - progressive_carries_per90
+```
 
 ---
 
@@ -519,34 +768,33 @@ El mismo rendimiento no implica el mismo valor esperado en:
 
 ## Principio fundamental
 
-Toda variable debe existir en el momento temporal de decisión.
+Toda feature debe existir:
+
+```text id="10dxjw"
+en el momento real de decisión
+```
 
 ---
 
-# Variables explícitamente prohibidas
+## Variables excluidas
 
-## Leakage temporal
-
-* market_value_next_eur
-* future_minutes
-* future_xG
-
----
-
-## Leakage derivado
-
-* delta_log_market_value_1y
-* next_season_metrics
+| Variable                   | Motivo             |
+| -------------------------- | ------------------ |
+| market_value_next_eur      | Información futura |
+| future_minutes             | Información futura |
+| delta_log_market_value_1y  | Leakage temporal   |
+| predicted_market_value_eur | Output derivado    |
+| inefficiency_score         | Output derivado    |
 
 ---
 
-## Regla general
+## Riesgo especial
 
-No se utilizará información futura para predecir:
+Las variables longitudinales requieren especial cuidado para no introducir:
 
-<pre>
-valor de mercado actual
-</pre>
+* información futura
+* contaminación temporal
+* optimismo artificial
 
 ---
 
@@ -554,114 +802,129 @@ valor de mercado actual
 
 ## Complejidad vs interpretabilidad
 
-Se priorizarán features:
-
-* interpretables
-* futbolísticamente coherentes
-* robustas
+Trade-off principal del feature engineering.
 
 ---
 
-## Señal vs ruido
+## Riesgo de exceso de features
 
-No toda feature avanzada mejora capacidad predictiva.
+Demasiadas variables pueden generar:
 
-Se evitará:
-
-* sobreingeniería
-* dimensionalidad excesiva
-* ruido contextual innecesario
-
----
-
-## Cobertura vs calidad
-
-Algunas variables avanzadas reducirán cobertura muestral.
-
-Esto será evaluado cuidadosamente.
+* multicolinealidad
+* sobreajuste
+* pérdida de interpretabilidad
+* ruido adicional
 
 ---
 
-# 📂 Arquitectura prevista
+## Decisión actual
 
-## Directorio objetivo
+Priorizar:
 
-<pre>
-src/features/advanced/
-</pre>
-
----
-
-## Módulos previstos
-
-| Archivo                    | Objetivo                |
-| -------------------------- | ----------------------- |
-| normalization.py           | Normalización           |
-| percentiles.py             | Percentiles             |
-| zscores.py                 | Z-scores                |
-| trajectories.py            | Features longitudinales |
-| growth.py                  | Growth indicators       |
-| rolling.py                 | Rolling metrics         |
-| age_curves.py              | Curvas de desarrollo    |
-| build_advanced_features.py | Pipeline principal      |
+```text id="4s3oy8"
+features robustas y futbolísticamente coherentes
+```
 
 ---
 
-# 🚀 Roadmap de implementación
+## Estrategia incremental
 
-## Fase 1
+La complejidad se incrementará progresivamente según:
 
-### Features base ampliadas
-
-* shots
-* xG
-* xA
-* key passes
-* progressive actions
+* validación experimental
+* mejora real de métricas
+* estabilidad de rankings
+* coherencia metodológica
 
 ---
 
-## Fase 2
+# 🚀 Roadmap priorizado
 
-### Normalización contextual
+## Prioridad alta
 
-* league normalization
-* position z-scores
+### 1️⃣ Positional normalization
+
+* z-scores
 * percentiles
+* rankings relativos
 
 ---
 
-## Fase 3
+### 2️⃣ Progression metrics
 
-### Features longitudinales
-
-* rolling metrics
-* trajectories
-* growth indicators
+* métricas longitudinales
+* evolución interanual
+* aceleración de desarrollo
 
 ---
 
-## Fase 4
+### 3️⃣ Features defensivas
 
-### Growth Score
+* recuperación
+* presión
+* dominio defensivo
 
-Construcción de score de potencial futuro.
+---
+
+## Prioridad media
+
+### 4️⃣ Rolling metrics
+
+* tendencias recientes
+* momentum
+* estabilidad temporal
+
+---
+
+### 5️⃣ Tactical context
+
+* posesión
+* strength context
+* exposición internacional
+
+---
+
+## Prioridad futura
+
+### 6️⃣ Event-based modeling
+
+* eventos StatsBomb
+* secuencias
+* acciones avanzadas
+
+---
+
+### 7️⃣ Explainability avanzada
+
+* SHAP
+* contribución individual
+* explicación de rankings
 
 ---
 
 # 🧠 Conclusión
 
-El siguiente salto de calidad del sistema no depende principalmente de:
+El feature engineering representa actualmente el área con mayor potencial de mejora del sistema analítico.
 
-<pre>
-algoritmos más complejos
-</pre>
+La arquitectura ya permite:
 
-sino de:
+* integración modular
+* tracking experimental
+* configuración desacoplada
+* validación temporal
+* comparación rigurosa de experimentos
 
-* mejor señal predictiva
-* feature engineering avanzado
-* modelización contextual
-* representación más rica del rendimiento deportivo
+La incorporación de:
 
-La siguiente fase del proyecto busca evolucionar desde un baseline sólido hacia un sistema de scouting cuantitativo mucho más cercano a entornos reales de sports analytics profesional.
+* normalización contextual
+* métricas longitudinales
+* señales de progresión
+* features defensivas avanzadas
+
+será probablemente el principal factor que determine la evolución futura de la capacidad predictiva y utilidad práctica del sistema de scouting cuantitativo.
+
+La prioridad metodológica no debe centrarse únicamente en añadir más variables, sino en construir:
+
+```text id="d7i7ul"
+features con verdadera señal futbolística y validez temporal
+```

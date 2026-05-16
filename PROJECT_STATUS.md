@@ -1,3 +1,4 @@
+````md
 # 📌 Estado del proyecto
 
 <div align="center">
@@ -7,6 +8,8 @@
 ![Modeling](https://img.shields.io/badge/Modeling-OLS%20%2B%20ML-blue)
 ![Matching](https://img.shields.io/badge/Matching-88.36%25-brightgreen)
 ![Dataset](https://img.shields.io/badge/Dataset-3%2C297%20rows-orange)
+![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
+![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
 ![Status](https://img.shields.io/badge/Status-Advanced%20Phase-success)
 
 </div>
@@ -19,6 +22,8 @@
 - [📚 Estado CRISP-DM](#-estado-crisp-dm)
 - [🔄 Evolución de arquitectura](#-evolución-de-arquitectura)
 - [🏗️ Arquitectura actual del sistema](#️-arquitectura-actual-del-sistema)
+- [⚙️ Configuración centralizada](#️-configuración-centralizada)
+- [🧪 Experiment tracking con MLflow](#-experiment-tracking-con-mlflow)
 - [⚠️ Problema crítico del proyecto](#️-problema-crítico-del-proyecto)
 - [🛠️ Sistema de matching implementado](#️-sistema-de-matching-implementado)
 - [📈 Resultados del matching](#-resultados-del-matching)
@@ -47,6 +52,8 @@ El sistema se basa en:
 - validación temporal out-of-sample
 - analytics engineering
 - scouting cuantitativo
+- experiment tracking reproducible
+- configuración centralizada desacoplada
 
 ---
 
@@ -74,6 +81,9 @@ El sistema ya permite:
 - producir predicciones out-of-sample
 - persistir modelos entrenados
 - generar outputs reproducibles
+- registrar experimentos automáticamente con MLflow
+- versionar configuraciones de entrenamiento
+- desacoplar parámetros mediante configuración YAML
 
 ---
 
@@ -81,17 +91,19 @@ El sistema ya permite:
 
 El proyecto ya ha superado las fases técnicamente más complejas relacionadas con:
 
-```text id="4pabpb"
+```text
 integración de fuentes
 matching
 pipeline reproducible
 validación temporal
 modelización base
+tracking experimental
+configuración desacoplada
 ```
 
 Actualmente el principal cuello de botella ya no es arquitectónico, sino:
 
-```text id="2o7f8z"
+```text
 feature engineering y calidad de señal predictiva
 ```
 
@@ -101,7 +113,7 @@ feature engineering y calidad de señal predictiva
 
 ## Fase actual
 
-```text id="3f3o56"
+```text
 Modeling → Evaluation
 ```
 
@@ -146,6 +158,8 @@ Modeling → Evaluation
 * pipeline econométrico final
 * pipeline ML supervisado
 * scoring automático
+* tracking experimental
+* persistencia de artefactos
 
 ---
 
@@ -176,7 +190,7 @@ El proyecto comenzó como un entorno principalmente exploratorio basado en noteb
 
 Posteriormente evolucionó hacia:
 
-```text id="c7f9g5"
+```text
 pipeline modular reproducible
 ```
 
@@ -187,6 +201,7 @@ Actualmente:
 * los modelos y outputs se generan automáticamente
 * los artefactos se persisten
 * la configuración está centralizada
+* los experimentos quedan registrados automáticamente
 
 ---
 
@@ -194,7 +209,7 @@ Actualmente:
 
 ### Antes
 
-```text id="cajmvf"
+```text
 Notebook-centric workflow
 ```
 
@@ -202,7 +217,7 @@ Notebook-centric workflow
 
 ### Ahora
 
-```text id="0j7h0n"
+```text
 Modular analytics system
 ```
 
@@ -215,12 +230,14 @@ Separación clara entre:
 * scoring
 * evaluación
 * outputs
+* tracking experimental
+* configuración
 
 ---
 
 # 🏗️ Arquitectura actual del sistema
 
-```mermaid id="76t3cq"
+```mermaid
 flowchart TD
 
 A[Raw Sources] --> B[Feature Engineering]
@@ -235,27 +252,31 @@ E --> F[Econometric Pipeline]
 
 E --> G[Machine Learning Pipeline]
 
-F --> H[Scoring Pipeline]
+F --> H[MLflow Tracking]
 G --> H
 
-H --> I[Business Outputs]
+F --> I[Scoring Pipeline]
+G --> I
 
-I --> J[Rankings]
-I --> K[Predictions]
-I --> L[Diagnostics]
+I --> J[Business Outputs]
+
+J --> K[Rankings]
+J --> L[Predictions]
+J --> M[Diagnostics]
 ```
 
 ---
 
 ## 📂 Arquitectura física
 
-```text id="6d5ytr"
+```text
 market-value-football-tfm/
 
 ├── artifacts/
 ├── config/
 ├── data/
 ├── docs/
+├── mlruns/
 ├── notebooks/
 ├── reports/
 ├── src/
@@ -278,6 +299,189 @@ market-value-football-tfm/
 | Temporal validation | ✅      |
 | Model persistence   | ✅      |
 | Ranking generation  | ✅      |
+| MLflow tracking     | ✅      |
+| Configuración YAML  | ✅      |
+
+---
+
+# ⚙️ Configuración centralizada
+
+El sistema incorpora actualmente una arquitectura de configuración centralizada desacoplada del código de negocio.
+
+---
+
+## 📂 Directorio de configuración
+
+```text
+config/
+
+├── config.yaml
+├── modeling.yaml
+├── matching.yaml
+├── features.yaml
+├── paths.yaml
+└── project.yaml
+```
+
+---
+
+## 📌 Objetivos
+
+La configuración centralizada permite:
+
+* desacoplar parámetros del código
+* mejorar reproducibilidad
+* facilitar experimentación
+* evitar hardcoding
+* centralizar decisiones metodológicas
+* mejorar mantenibilidad
+
+---
+
+## 📌 Parámetros centralizados actuales
+
+### Matching
+
+```yaml
+MAX_AGE_DIFF
+MIN_CLUB_SCORE
+FUZZY_THRESHOLD
+```
+
+---
+
+### Modeling
+
+```yaml
+target
+features
+fixed_effects
+validation_split
+```
+
+---
+
+### Feature Engineering
+
+```yaml
+minutes_threshold
+age_filters
+league_filters
+feature_groups
+```
+
+---
+
+### Paths
+
+```yaml
+data_paths
+artifacts_paths
+reports_paths
+```
+
+---
+
+## 📌 Beneficios arquitectónicos
+
+La centralización de configuración facilita:
+
+* trazabilidad experimental
+* cambios rápidos de especificaciones
+* comparación entre ejecuciones
+* escalabilidad futura
+* despliegue reproducible
+
+---
+
+# 🧪 Experiment tracking con MLflow
+
+El proyecto incorpora actualmente tracking experimental mediante:
+
+```text
+MLflow
+```
+
+---
+
+## 📌 Objetivos
+
+MLflow permite registrar automáticamente:
+
+* métricas
+* hiperparámetros
+* configuraciones
+* artefactos
+* modelos
+* outputs experimentales
+
+---
+
+## 📂 Directorio principal
+
+```text
+mlruns/
+```
+
+---
+
+## 📌 Información registrada
+
+### Configuración experimental
+
+* variables utilizadas
+* target
+* fixed effects
+* split temporal
+* thresholds
+* hiperparámetros
+
+---
+
+### Métricas
+
+* RMSE
+* MAE
+* R²
+
+---
+
+### Artefactos
+
+* modelos serializados
+* feature importance
+* predicciones
+* outputs CSV
+* rankings
+
+---
+
+## 📌 Beneficios metodológicos
+
+El tracking experimental mejora significativamente:
+
+* reproducibilidad
+* trazabilidad
+* rigor metodológico
+* comparabilidad entre modelos
+* auditoría analítica
+* documentación del TFM
+
+---
+
+## 📌 Impacto arquitectónico
+
+La incorporación de MLflow transforma el sistema desde:
+
+```text
+pipeline reproducible
+```
+
+hacia:
+
+```text
+entorno experimental analítico profesional
+```
 
 ---
 
@@ -316,7 +520,7 @@ Sin matching robusto:
 
 Este problema consumió aproximadamente:
 
-```text id="jlwmxf"
+```text
 40-50% del trabajo técnico total
 ```
 
@@ -350,7 +554,7 @@ Variables utilizadas:
 
 Threshold:
 
-```python id="wm6z6g"
+```python
 MIN_CLUB_SCORE = 70
 ```
 
@@ -360,13 +564,13 @@ MIN_CLUB_SCORE = 70
 
 Algoritmo:
 
-```python id="jrn0ih"
+```python
 RapidFuzz
 ```
 
 Threshold:
 
-```python id="6eh8lh"
+```python
 FUZZY_THRESHOLD = 92
 ```
 
@@ -374,7 +578,7 @@ FUZZY_THRESHOLD = 92
 
 ## 5️⃣ Validación por edad
 
-```python id="y1x2ca"
+```python
 MAX_AGE_DIFF = 1.5
 ```
 
@@ -462,7 +666,7 @@ El fuzzy matching queda restringido a casos ambiguos específicos, reduciendo ri
 
 # 📈 Estado del pipeline econométrico
 
-```text id="9v4e7r"
+```text
 src/models/econometric/
 ```
 
@@ -489,12 +693,14 @@ src/models/econometric/
 * rankings automáticos
 * export CSV
 * evaluación temporal
+* tracking MLflow
+* logging de métricas
 
 ---
 
 ## Modelo final
 
-```python id="7zzw18"
+```python
 log_market_value_eur ~
 age +
 log_minutes_played +
@@ -541,7 +747,7 @@ position FE
 
 # 🤖 Estado del pipeline Machine Learning
 
-```text id="ivksml"
+```text
 src/models/machine_learning/
 ```
 
@@ -573,6 +779,8 @@ src/models/machine_learning/
 * feature importance
 * model persistence
 * export automático
+* tracking MLflow
+* logging de hiperparámetros
 
 ---
 
@@ -582,34 +790,28 @@ src/models/machine_learning/
 | -------------------- | ---------: | ---------: | ---------: |
 | OLS final            |     0.7907 |     0.9823 |     0.4439 |
 | Random Forest        |     0.7704 |     0.9691 |     0.4587 |
-| HistGradientBoosting |     0.7723 |     0.9680 |     0.4600 |
-| Gradient Boosting    | **0.7613** | **0.9493** | **0.4807** |
+| HistGradientBoosting |     0.7723 |     0.9642 |     0.4721 |
+| Gradient Boosting    | **0.7618** | **0.9515** | **0.4813** |
 
 ---
 
-## 📌 Conclusiones ML
+## 📌 Insight principal
 
-* ML mejora moderadamente el rendimiento predictivo
-* OLS mantiene mejor interpretabilidad
-* existe estabilidad razonable entre rankings
-* el principal cuello de botella es el feature engineering
+La mejora moderada de ML respecto a OLS sugiere que:
+
+```text
+el principal cuello de botella es el signal del dataset
+```
+
+y no necesariamente el algoritmo.
 
 ---
 
 # 💡 Estado del scoring pipeline
 
-```text id="e3xjk9"
+```text
 src/models/scoring/
 ```
-
----
-
-## Componentes implementados
-
-| Archivo         | Estado |
-| --------------- | ------ |
-| inefficiency.py | ✅      |
-| rankings.py     | ✅      |
 
 ---
 
@@ -618,236 +820,247 @@ src/models/scoring/
 * predicted market value
 * market value gap
 * inefficiency score
-* z-score normalization
-* undervalued rankings
-* overvalued rankings
+* rankings automáticos
+* export reproducible
 
 ---
 
-## Estado operativo
+## Fórmula conceptual
 
-```text id="oz5vrl"
-Scoring automático completamente operativo
+```python
+inefficiency_score =
+valor_estimado - valor_observado
 ```
+
+---
+
+## Outputs actuales
+
+* jugadores infravalorados
+* jugadores sobrevalorados
+* rankings por liga
+* rankings por posición
 
 ---
 
 # 📊 Estado del evaluation pipeline
 
-```text id="u5e4l0"
+```text
 src/models/evaluation/
 ```
 
 ---
 
-## Componentes implementados
+## Funcionalidades actuales
 
-| Archivo               | Estado |
-| --------------------- | ------ |
-| metrics.py            | ✅      |
-| feature_importance.py | ✅      |
-| model_comparison.py   | ✅      |
+* comparación OLS vs ML
+* métricas centralizadas
+* feature importance
+* reporting reproducible
+* tracking de experimentos
 
 ---
 
-## Funcionalidades actuales
+## Métricas utilizadas
 
-* regression metrics
-* model comparison
-* feature importance extraction
-* standardized reporting
+* RMSE
+* MAE
+* R²
 
 ---
 
 # 📤 Outputs generados
 
-El sistema ya genera automáticamente:
+## Reports
 
-* predicciones out-of-sample
-* rankings infravalorados
-* rankings sobrevalorados
-* métricas econométricas
-* métricas ML
-* tablas de coeficientes
-* feature importance
-* análisis por liga
-* análisis por posición
+```text
+reports/
+```
 
 ---
 
-## 📂 Directorios de outputs
+## Artifacts
 
-```text id="qlsv1r"
-reports/
+```text
 artifacts/
 ```
 
 ---
 
-## Outputs principales
+## MLflow Tracking
 
-### Reports
-
-```text id="6m4h5f"
-reports/rankings/
-reports/tables/
-reports/model_diagnostics/
-reports/scouting_reports/
+```text
+mlruns/
 ```
 
 ---
 
-### Artifacts
+## Outputs actuales
 
-```text id="yw7eg9"
-artifacts/models/
-artifacts/predictions/
-artifacts/feature_importance/
-```
+* rankings scouting
+* métricas OLS
+* métricas ML
+* feature importance
+* modelos persistidos
+* predicciones
+* diagnósticos
+* experimentos registrados
 
 ---
 
 # ⚖️ Trade-offs metodológicos
 
-## Cobertura vs precisión
+## Interpretabilidad vs capacidad predictiva
 
-Decisión adoptada:
+El proyecto prioriza inicialmente:
 
-```text id="9nvt8h"
-Priorizar cobertura muestral
+```text
+interpretabilidad + robustez
 ```
+
+frente a maximizar únicamente métricas predictivas.
 
 ---
 
-## Interpretabilidad vs complejidad
+## Justificación
 
-Decisión adoptada:
+En scouting profesional resulta crítico:
 
-```text id="5pb31f"
-OLS = núcleo principal
-ML = extensión predictiva
-```
+* explicar rankings
+* justificar decisiones
+* interpretar drivers del valor
+* mantener coherencia futbolística
 
 ---
 
-## Robustez vs coste computacional
+## Arquitectura híbrida
 
-Se optimizó:
+Por ello el sistema combina:
 
-* reducción espacio matching
-* filtrado jerárquico
-* búsqueda por temporada
+* econometría interpretable
+* ML predictivo
+* scoring cuantitativo
 
 ---
 
 # 🧱 Deuda técnica actual
 
-## ⚠️ Feature engineering limitado
+## Principales limitaciones pendientes
 
-El feature set actual sigue muy concentrado en:
-
-* minutos
-* goles
-* asistencias
-
-Esto limita:
-
-* capacidad predictiva
-* modelización defensiva
-* detección avanzada de talento
-
----
-
-## ⚠️ Variables contextuales pendientes
+### Feature engineering
 
 Pendiente incorporar:
 
-* xG
-* xA
-* métricas progresivas
+* z-scores posicionales
+* progression metrics
+* percentiles
 * métricas defensivas
-* métricas de desarrollo
-* trajectory features
+* rolling metrics
+* growth indicators
 
 ---
 
-## ⚠️ Growth Score pendiente
+### Explainability
 
-Todavía no implementado:
+Pendiente:
 
-```text id="ndg9jj"
-Growth Score pipeline
+* SHAP
+* explicaciones individuales
+* estabilidad rankings
+
+---
+
+### Dataset signal
+
+El principal cuello de botella actual es:
+
+```text
+calidad y riqueza del feature set
 ```
 
 ---
 
 # 🚀 Próximos pasos
 
-# 🔜 Prioridad inmediata
+## Prioridad alta
 
-## Feature engineering avanzado
-
-Diseñar e implementar:
+### Feature engineering avanzado
 
 * progression metrics
-* age curves
-* percentile features
-* league normalization
 * z-scores por posición
-* rolling metrics
-* growth indicators
-* trajectory features
-* market momentum
+* league normalization
+* growth features
 
 ---
 
-## Objetivo principal
+### Explainability
 
-Mejorar:
+* SHAP values
+* explicación de rankings
+* análisis por jugador
 
-```text id="0s2a6o"
-signal predictivo
+---
+
+### Nuevos modelos
+
+* CatBoost
+* TabPFN
+
+---
+
+### Opportunity Score
+
+Construcción de score combinado:
+
+```python
+Opportunity Score =
+inefficiency_score +
+growth_score +
+confidence_score
 ```
 
-del sistema.
+---
+
+## Prioridad media
+
+### Dashboard scouting
+
+* visualización interactiva
+* filtros
+* rankings dinámicos
 
 ---
 
-# 🔜 Fase posterior
+### API scoring
 
-* Growth Score
-* dashboard interactivo
-* visualizaciones finales
-* business insights
-* scouting reports automáticos
-* despliegue operativo
+* scoring automatizado
+* inferencia futura
 
 ---
 
 # 🧠 Conclusión
 
-El proyecto ha superado con éxito las fases técnicamente más complejas relacionadas con:
+El proyecto ya no representa únicamente un análisis exploratorio académico, sino un sistema analítico modular y reproducible orientado a scouting cuantitativo profesional.
 
-* integración de fuentes heterogéneas
-* matching robusto
-* arquitectura reproducible
-* validación temporal
-* modelización base
+Actualmente el sistema ya incorpora:
 
-Actualmente el sistema ya permite:
-
-* estimar valor esperado
-* detectar ineficiencias
-* generar rankings cuantitativos
-* comparar econometría y ML
-* producir outputs reproducibles
-
-El proyecto se encuentra en una fase avanzada y metodológicamente sólida para un Trabajo de Fin de Máster orientado a:
-
-* sports analytics
-* scouting cuantitativo
-* econometría aplicada
+* integración multi-fuente robusta
+* matching validado
+* modelización econométrica
 * machine learning supervisado
-* analytics engineering
+* validación temporal
+* scoring automático
+* tracking experimental con MLflow
+* configuración centralizada
+* persistencia de artefactos
+* outputs reproducibles
+
+La principal línea de evolución futura se centra ahora en:
+
+```text
+incrementar la señal predictiva mediante feature engineering avanzado
+```
+
+y transformar el sistema en una herramienta de scouting cuantitativo cada vez más cercana a entornos profesionales reales.
 
 

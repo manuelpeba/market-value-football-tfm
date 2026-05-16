@@ -1,0 +1,18 @@
+inefficiency:
+  score_column: inefficiency_score
+  normalized_score_column: inefficiency_score_z
+  market_value_gap_column: market_value_gap_eur
+  market_value_gap_pct_column: market_value_gap_pct
+
+opportunity_score:
+  enabled: true
+  weights:
+    inefficiency_score_z: 0.5
+    growth_score_z: 0.3
+    confidence_score: 0.2
+
+rankings:
+  top_n: 50
+  min_minutes: 900
+  min_matching_confidence: 0.85
+  min_market_value_eur: 500000

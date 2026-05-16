@@ -1,11 +1,13 @@
-# 📈 Decisiones de modelización
+# 📊 Decisiones de modelización
 
 <div align="center">
 
-![Modeling](https://img.shields.io/badge/Modeling-Econometrics%20%2B%20ML-blue)
+![Econometrics](https://img.shields.io/badge/Econometrics-OLS-green)
+![Machine Learning](https://img.shields.io/badge/ML-Supervised-blue)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
-![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
-![Scouting](https://img.shields.io/badge/Scouting-Quantitative-orange)
+![Interpretability](https://img.shields.io/badge/Interpretability-High-success)
+![Tracking](https://img.shields.io/badge/Tracking-MLflow-blue)
+![Configuration](https://img.shields.io/badge/Configuration-YAML-purple)
 
 </div>
 
@@ -14,148 +16,157 @@
 # 📑 Tabla de contenidos
 
 - [🧠 Objetivo del documento](#-objetivo-del-documento)
-- [🎯 Objetivo analítico del sistema](#-objetivo-analítico-del-sistema)
-- [⚙️ Unidad de análisis](#️-unidad-de-análisis)
-- [🏗️ Filosofía general de modelización](#️-filosofía-general-de-modelización)
-- [📊 Variable objetivo](#-variable-objetivo)
+- [🎯 Objetivo analítico del proyecto](#-objetivo-analítico-del-proyecto)
+- [⚙️ Filosofía de modelización](#️-filosofía-de-modelización)
+- [📊 Unidad de análisis](#-unidad-de-análisis)
+- [🎯 Variable objetivo](#-variable-objetivo)
+- [📚 Decisiones econométricas](#-decisiones-econométricas)
 - [📈 Transformación logarítmica](#-transformación-logarítmica)
-- [🌍 Variables contextuales](#-variables-contextuales)
-- [👥 Variables posicionales](#-variables-posicionales)
-- [📚 Features actuales utilizadas](#-features-actuales-utilizadas)
-- [📈 Arquitectura de modelización](#-arquitectura-de-modelización)
-- [📊 Pipeline econométrico](#-pipeline-econométrico)
-- [🤖 Pipeline Machine Learning](#-pipeline-machine-learning)
-- [💡 Pipeline de scoring](#-pipeline-de-scoring)
-- [📊 Pipeline de evaluación](#-pipeline-de-evaluación)
-- [⏳ Validación temporal](#-validación-temporal)
+- [🏗️ Selección de features](#️-selección-de-features)
+- [🏟️ Efectos fijos](#️-efectos-fijos)
+- [🛡️ Robust standard errors](#️-robust-standard-errors)
+- [🤖 Decisiones de Machine Learning](#-decisiones-de-machine-learning)
+- [⏳ Estrategia de validación temporal](#-estrategia-de-validación-temporal)
+- [🧪 Experiment tracking y reproducibilidad](#-experiment-tracking-y-reproducibilidad)
+- [⚙️ Configuración centralizada](#️-configuración-centralizada)
+- [📊 Métricas de evaluación](#-métricas-de-evaluación)
+- [💡 Decisiones sobre scoring](#-decisiones-sobre-scoring)
+- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
 - [🛡️ Prevención de leakage](#️-prevención-de-leakage)
-- [⚖️ Econometría vs Machine Learning](#️-econometría-vs-machine-learning)
-- [📈 Resultados actuales](#-resultados-actuales)
-- [🧠 Interpretación metodológica](#-interpretación-metodológica)
-- [⚠️ Limitaciones actuales](#️-limitaciones-actuales)
-- [🚀 Próximas mejoras previstas](#-próximas-mejoras-previstas)
+- [📉 Limitaciones actuales](#-limitaciones-actuales)
+- [🚀 Próximas decisiones previstas](#-próximas-decisiones-previstas)
 - [🧠 Conclusión](#-conclusión)
 
 ---
 
 # 🧠 Objetivo del documento
 
-Este documento describe las decisiones metodológicas y arquitectónicas adoptadas en la construcción del sistema de modelización orientado a:
+Este documento recoge las principales decisiones metodológicas y de modelización adoptadas durante el desarrollo del sistema analítico.
 
-<pre>
-estimar el valor de mercado esperado de futbolistas profesionales
-</pre>
+El objetivo es documentar:
 
-e identificar posibles ineficiencias en el mercado de fichajes europeo.
+- justificaciones técnicas
+- trade-offs metodológicos
+- decisiones econométricas
+- decisiones de Machine Learning
+- criterios de validación
+- configuración experimental
+- controles de reproducibilidad
+- limitaciones actuales
 
----
+La intención no es únicamente describir modelos utilizados, sino justificar por qué determinadas decisiones resultan coherentes desde la perspectiva de:
 
-# 🎯 Objetivo analítico del sistema
-
-El objetivo principal del sistema es construir modelos capaces de:
-
-- explicar el valor de mercado observado
-- estimar valor esperado
-- detectar infravaloraciones
-- generar rankings de scouting cuantitativo
-- comparar rendimiento entre jugadores y ligas
-
----
-
-## 📌 Enfoque general
-
-El sistema combina:
-
+- sports analytics
 - econometría aplicada
-- machine learning supervisado
-- feature engineering deportivo
-- scoring analítico
+- scouting cuantitativo
+- analytics engineering
+- reproducibilidad experimental
 
 ---
 
-# ⚙️ Unidad de análisis
+# 🎯 Objetivo analítico del proyecto
 
-La unidad de análisis del sistema es:
-
-<pre>
-Jugador – Temporada
-</pre>
-
-Cada observación representa:
+El proyecto busca estimar el valor de mercado esperado de futbolistas jóvenes utilizando:
 
 - rendimiento deportivo
 - contexto competitivo
 - características demográficas
-- valor de mercado
+- información de mercado
 
-para un jugador en una temporada específica.
-
----
-
-# 🏗️ Filosofía general de modelización
-
-La estrategia de modelización sigue varios principios fundamentales.
+A partir de dicha estimación se construyen métricas orientadas a detectar posibles ineficiencias de mercado.
 
 ---
 
-## 1️⃣ Interpretabilidad
+## Pregunta principal
 
-El proyecto prioriza modelos:
-
-- interpretables
-- explicables
-- económicamente coherentes
-
-especialmente en fases iniciales.
+```text
+¿Qué jugadores presentan un valor de mercado inferior al esperado según su rendimiento y contexto competitivo?
+```
 
 ---
 
-## 2️⃣ Robustez temporal
+# ⚙️ Filosofía de modelización
 
-La validación debe aproximarse a escenarios reales de scouting.
+La estrategia de modelización combina:
 
-Por ello:
-
-<pre>
-NO se utilizan random splits
-</pre>
-
----
-
-## 3️⃣ Modularidad
-
-La lógica del sistema se desacopla en pipelines independientes:
-
-- econometría
-- ML
-- scoring
-- evaluación
+* econometría interpretable
+* Machine Learning supervisado
+* validación temporal
+* scoring cuantitativo
+* experiment tracking
 
 ---
 
-## 4️⃣ Reproducibilidad
+## Decisión principal
 
-Todos los outputs relevantes deben ser:
+El sistema prioriza inicialmente:
 
-- regenerables
-- persistidos
-- trazables
+```text
+interpretabilidad + robustez
+```
 
----
+frente a:
 
-## 5️⃣ Coherencia futbolística
-
-Las decisiones metodológicas deben mantener sentido desde la perspectiva de:
-
-- scouting
-- mercado
-- desarrollo de jugadores
+```text
+maximización agresiva de métricas predictivas
+```
 
 ---
 
-# 📊 Variable objetivo
+## Justificación
 
-## Target principal
+En entornos reales de scouting resulta fundamental:
+
+* justificar rankings
+* explicar decisiones
+* interpretar drivers del valor
+* mantener coherencia futbolística
+* evitar modelos opacos difíciles de defender
+
+Por ello el proyecto utiliza:
+
+| Enfoque        | Función                       |
+| -------------- | ----------------------------- |
+| OLS            | Modelo interpretable baseline |
+| ML supervisado | Mejora predictiva             |
+| Scoring        | Outputs accionables           |
+
+---
+
+# 📊 Unidad de análisis
+
+La unidad de análisis utilizada es:
+
+```text
+Jugador – Temporada
+```
+
+---
+
+## Justificación
+
+El valor de mercado es una variable dinámica que evoluciona temporalmente en función de:
+
+* rendimiento reciente
+* progresión deportiva
+* contexto competitivo
+* edad
+* exposición mediática
+* situación contractual
+
+Trabajar a nivel jugador–temporada permite:
+
+* modelar evolución temporal
+* integrar múltiples fuentes
+* construir panel longitudinal
+* aplicar validación temporal
+* generar scoring reproducible
+
+---
+
+# 🎯 Variable objetivo
+
+## Variable principal
 
 ```python
 market_value_eur
@@ -163,7 +174,7 @@ market_value_eur
 
 ---
 
-## Transformación utilizada
+## Variable utilizada en modelización
 
 ```python
 log_market_value_eur
@@ -171,208 +182,282 @@ log_market_value_eur
 
 ---
 
-## Justificación
+## Justificación del target logarítmico
 
 El valor de mercado presenta:
 
-* skewness positiva
-* colas largas
+* fuerte asimetría
+* heavy tails
 * heterocedasticidad
-* outliers extremos
+* concentración extrema en élite
 
-La transformación logarítmica mejora:
+La transformación logarítmica permite:
 
-* linealidad
-* estabilidad
+* estabilizar varianza
+* reducir impacto de outliers
+* mejorar comportamiento estadístico
+* facilitar interpretación relativa
+* mejorar ajuste econométrico
+
+---
+
+# 📚 Decisiones econométricas
+
+## Modelo baseline seleccionado
+
+```text
+Ordinary Least Squares (OLS)
+```
+
+---
+
+## Justificación
+
+OLS constituye una decisión coherente debido a:
+
+* interpretabilidad
 * robustez
-* interpretabilidad relativa
+* facilidad de explicación
+* estándar académico
+* uso frecuente en sports analytics
+* capacidad para modelar relaciones marginales
+
+---
+
+## Rol dentro del sistema
+
+OLS actúa como:
+
+```text
+baseline interpretable del sistema
+```
+
+sobre el cual se comparan modelos más complejos.
+
+---
+
+## Decisión metodológica importante
+
+El objetivo inicial no era maximizar R², sino construir:
+
+* modelo defendible
+* relaciones económicamente coherentes
+* outputs interpretables
+* scoring estable
 
 ---
 
 # 📈 Transformación logarítmica
 
-## Fórmula aplicada
+## Variable transformada
 
-y = \log(\text{market_value_eur})
-
----
-
-## Beneficios metodológicos
-
-La transformación:
-
-* reduce influencia de outliers
-* estabiliza varianza
-* mejora ajuste econométrico
-* facilita interpretación porcentual aproximada
+```python
+log_market_value_eur
+```
 
 ---
 
-## Interpretación económica
+## Razones estadísticas
+
+La distribución original de mercado presenta:
+
+* alta asimetría
+* colas largas
+* outliers extremos
+
+---
+
+## Beneficios
+
+La transformación logarítmica mejora:
+
+* linealidad
+* estabilidad de residuos
+* interpretabilidad relativa
+* robustez del modelo
+* comparabilidad entre jugadores
+
+---
+
+## Interpretación
 
 Los coeficientes pueden interpretarse aproximadamente como:
 
-<pre>
-variaciones porcentuales esperadas del valor de mercado
-</pre>
+```text
+cambios porcentuales relativos
+```
+
+en valor de mercado.
 
 ---
 
-# 🌍 Variables contextuales
+# 🏗️ Selección de features
 
-## League Fixed Effects
+## Filosofía general
 
-El sistema incorpora efectos fijos por liga debido a que:
+El feature set inicial prioriza:
 
-* los mercados no son homogéneos
-* existe distinta exposición internacional
-* las ligas tienen distinta capacidad económica
-* existen primas estructurales de mercado
-
----
-
-## Season Fixed Effects
-
-Se incorporan efectos fijos temporales para controlar:
-
-* inflación de mercado
-* shocks macroeconómicos
-* cambios estructurales
-* dinámicas temporales
+* simplicidad
+* interpretabilidad
+* coherencia futbolística
+* estabilidad estadística
 
 ---
 
-# 👥 Variables posicionales
+## Variables actuales
 
-## Position Fixed Effects
+### Rendimiento ofensivo
 
-El mercado valora posiciones de manera distinta.
+* goals_per90
+* assists_per90
+* g_a_per90
 
-Ejemplos:
+---
 
-* delanteros premium
-* centrales menos visibles
-* porteros con dinámica propia
+### Volumen de juego
+
+* minutes_played
+* log_minutes_played
+* starts
+* nineties
+
+---
+
+### Contexto
+
+* league
+* season
+* position_group
+* age
+
+---
+
+## Decisión importante
+
+Se evitó inicialmente incluir:
+
+* demasiadas métricas correlacionadas
+* features altamente derivadas
+* variables con leakage temporal
+* features difíciles de interpretar
 
 ---
 
 ## Justificación
 
-No incorporar efectos posicionales generaría:
+El objetivo era construir primero:
 
-* sesgos estructurales
-* penalización injusta de perfiles defensivos
-* mala calibración del valor esperado
+```text
+baseline estable y defendible
+```
 
----
-
-# 📚 Features actuales utilizadas
-
-## Variables numéricas
-
-| Variable             | Función                |
-| -------------------- | ---------------------- |
-| `age`                | Control demográfico    |
-| `minutes_played`     | Volumen competitivo    |
-| `log_minutes_played` | Transformación robusta |
-| `goals_per90`        | Producción ofensiva    |
-| `assists_per90`      | Creación ofensiva      |
+antes de aumentar complejidad.
 
 ---
 
-## Variables categóricas
+# 🏟️ Efectos fijos
 
-| Variable         | Tipo        |
-| ---------------- | ----------- |
-| `league`         | League FE   |
-| `season`         | Season FE   |
-| `position_group` | Position FE |
+## Fixed effects utilizados
 
----
+### Liga
 
-# 📈 Arquitectura de modelización
-
-```mermaid
-flowchart TD
-
-A[Modeling Dataset] --> B[Econometric Pipeline]
-
-A --> C[Machine Learning Pipeline]
-
-B --> D[Scoring Pipeline]
-C --> D
-
-D --> E[Rankings]
-
-B --> F[Evaluation Pipeline]
-C --> F
+```text
+league FE
 ```
 
 ---
 
-# 📊 Pipeline econométrico
+### Temporada
 
-## Arquitectura
-
-<pre>
-src/models/econometric/
-</pre>
+```text
+season FE
+```
 
 ---
 
-## Componentes
+### Posición
 
-| Archivo               | Función                |
-| --------------------- | ---------------------- |
-| `specifications.py`   | Fórmulas centralizadas |
-| `train_ols.py`        | Entrenamiento          |
-| `run_ols_pipeline.py` | Pipeline end-to-end    |
+```text
+position FE
+```
 
 ---
 
-## Modelo final implementado
+## Justificación
 
-\log(\text{market_value}) = \beta_0 + \beta_1 age + \beta_2 \log(minutes) + \beta_3 goals_per90 + \beta_4 assists_per90 + League\ FE + Season\ FE + Position\ FE + \varepsilon
+Los efectos fijos permiten controlar heterogeneidad estructural derivada de:
+
+* diferencias económicas entre ligas
+* cambios de mercado entre temporadas
+* diferencias estructurales entre posiciones
 
 ---
 
-## Estimación
+## Ejemplos observados
 
-El modelo utiliza:
+### Premier League
 
-```python
+Se detecta prima estructural positiva significativa.
+
+---
+
+### Eredivisie / Liga Portugal
+
+Se observan descuentos estructurales consistentes.
+
+---
+
+## Beneficio metodológico
+
+Los fixed effects permiten que:
+
+```text
+las métricas deportivas no absorban diferencias contextuales estructurales
+```
+
+---
+
+# 🛡️ Robust standard errors
+
+## Método utilizado
+
+```text
 HC3 robust covariance
 ```
 
 ---
 
-## Justificación HC3
+## Justificación
 
-HC3 mejora robustez frente a:
+Los datos deportivos presentan frecuentemente:
 
 * heterocedasticidad
-* leverage points
-* tamaños muestrales desiguales
+* varianza no constante
+* ruido estructural
 
 ---
 
-## Rol del modelo econométrico
+## Beneficio
 
-El modelo OLS constituye:
+HC3 permite:
 
-<pre>
-el núcleo interpretable principal del sistema
-</pre>
+* inferencia más robusta
+* errores estándar más fiables
+* mayor rigor econométrico
 
 ---
 
-# 🤖 Pipeline Machine Learning
+## Decisión metodológica
 
-## Arquitectura
+Se priorizó robustez inferencial sobre simplicidad computacional.
 
-<pre>
-src/models/machine_learning/
-</pre>
+---
+
+# 🤖 Decisiones de Machine Learning
+
+## Objetivo
+
+Evaluar si modelos no lineales mejoran capacidad predictiva respecto a OLS.
 
 ---
 
@@ -384,94 +469,135 @@ src/models/machine_learning/
 
 ---
 
-## Objetivo
+## Justificación de selección
 
-Evaluar:
+Estos modelos son adecuados para:
 
-* capacidad predictiva adicional
+* datasets tabulares
 * relaciones no lineales
-* interacciones complejas
+* interacciones implícitas
+* tamaño medio de muestra
 
 ---
 
-## Funcionalidades
+## Decisión importante
 
-* preprocessing pipeline
-* one-hot encoding
-* temporal validation
-* model persistence
-* feature importance
+No se seleccionaron inicialmente modelos extremadamente complejos porque:
 
----
-
-## Interpretación metodológica
-
-ML actúa como:
-
-<pre>
-extensión predictiva complementaria
-</pre>
-
-y no como sustituto completo del enfoque econométrico.
+* el dataset todavía es relativamente pequeño
+* el principal cuello de botella parece ser el signal
+* se priorizó control metodológico
 
 ---
 
-# 💡 Pipeline de scoring
+## Resultado observado
 
-## Arquitectura
+ML mejora moderadamente respecto a OLS:
 
-<pre>
-src/models/scoring/
-</pre>
-
----
-
-## Objetivo
-
-Transformar predicciones en:
-
-* rankings
-* señales scouting
-* oportunidades de mercado
-
----
-
-## Fórmula conceptual
-
-\text{inefficiency_score} = \widehat{MV} - MV
+| Modelo            |   R² |
+| ----------------- | ---: |
+| OLS final         | 0.44 |
+| Gradient Boosting | 0.48 |
 
 ---
 
 ## Interpretación
 
-| Score    | Interpretación          |
-| -------- | ----------------------- |
-| Positivo | Posible infravaloración |
-| Negativo | Posible sobrevaloración |
+La mejora limitada sugiere que:
+
+```text
+la principal limitación actual es el feature set
+```
+
+más que el algoritmo.
 
 ---
 
-# 📊 Pipeline de evaluación
+# ⏳ Estrategia de validación temporal
 
-## Arquitectura
+## Decisión crítica
 
-<pre>
-src/models/evaluation/
-</pre>
+El sistema utiliza:
 
----
-
-## Componentes
-
-| Archivo                 | Función               |
-| ----------------------- | --------------------- |
-| `metrics.py`            | Métricas              |
-| `feature_importance.py` | Importancia variables |
-| `model_comparison.py`   | Comparación modelos   |
+```text
+temporal validation
+```
 
 ---
 
-## Métricas utilizadas
+## Split utilizado
+
+| Split | Temporadas            |
+| ----- | --------------------- |
+| Train | 2019-2020 → 2023-2024 |
+| Test  | 2024-2025             |
+
+---
+
+## Justificación
+
+El random split:
+
+* rompe coherencia temporal
+* introduce leakage
+* genera optimismo artificial
+* sobreestima capacidad predictiva
+
+---
+
+## Objetivo
+
+Simular escenarios reales de scouting futuro.
+
+---
+
+## Beneficio
+
+La validación temporal aumenta significativamente:
+
+* rigor metodológico
+* realismo operacional
+* credibilidad de resultados
+
+---
+
+# 🧪 Experiment tracking y reproducibilidad
+
+## Herramienta utilizada
+
+```text
+MLflow
+```
+
+---
+
+## Objetivo
+
+Registrar automáticamente:
+
+* métricas
+* hiperparámetros
+* configuraciones
+* artefactos
+* modelos
+* outputs
+
+---
+
+## Información registrada
+
+### Parámetros
+
+* features utilizadas
+* target
+* fixed effects
+* hiperparámetros
+* configuración experimental
+* split temporal
+
+---
+
+### Métricas
 
 * RMSE
 * MAE
@@ -479,278 +605,380 @@ src/models/evaluation/
 
 ---
 
-## Objetivo
+### Artefactos
 
-Centralizar:
-
-* evaluación
-* comparación
-* reporting
+* modelos
+* rankings
+* predicciones
+* feature importance
 * diagnósticos
 
 ---
 
-# ⏳ Validación temporal
+## Justificación metodológica
 
-## Estrategia
+MLflow mejora:
 
-| Split | Temporadas  |
-| ----- | ----------- |
-| Train | ≤ 2023-2024 |
-| Test  | 2024-2025   |
+* reproducibilidad
+* trazabilidad
+* comparación entre experimentos
+* auditoría metodológica
+* defensa académica
+
+---
+
+## Decisión importante
+
+El tracking experimental permite justificar:
+
+```text
+por qué un modelo o configuración fue seleccionado
+```
+
+frente a alternativas.
+
+---
+
+# ⚙️ Configuración centralizada
+
+## Objetivo
+
+Separar configuración y lógica funcional.
+
+---
+
+## Directorio
+
+<pre>
+config/
+</pre>
+
+---
+
+## Archivos principales
+
+| Archivo       | Función               |
+| ------------- | --------------------- |
+| modeling.yaml | Modelización          |
+| features.yaml | Features              |
+| matching.yaml | Matching              |
+| paths.yaml    | Paths                 |
+| project.yaml  | Configuración general |
+
+---
+
+## Beneficios
+
+La configuración centralizada permite:
+
+* evitar hardcoding
+* facilitar experimentación
+* mantener coherencia
+* versionar configuraciones
+* mejorar mantenibilidad
+
+---
+
+## Decisión metodológica
+
+La configuración declara parámetros.
+
+La lógica permanece en:
+
+<pre>
+src/
+</pre>
+
+---
+
+# 📊 Métricas de evaluación
+
+## Métricas utilizadas
+
+| Métrica | Objetivo                     |
+| ------- | ---------------------------- |
+| RMSE    | Penalización errores grandes |
+| MAE     | Error medio interpretable    |
+| R²      | Capacidad explicativa        |
 
 ---
 
 ## Justificación
 
-El mercado futbolístico es:
+Se combinan métricas complementarias para evitar:
 
-* dinámico
-* temporal
-* no estacionario
+* dependencia excesiva de una única métrica
+* interpretaciones parciales
+* optimización artificial
+
+---
+
+## Decisión importante
+
+No se priorizó únicamente maximizar R².
+
+También se evaluó:
+
+* estabilidad
+* interpretabilidad
+* coherencia futbolística
+* robustez temporal
 
 ---
 
-## Riesgo del random split
-
-Un random split produciría:
-
-* leakage temporal
-* optimismo artificial
-* sobreestimación del rendimiento
-
----
+# 💡 Decisiones sobre scoring
 
 ## Objetivo
 
-Simular un escenario real de scouting futuro.
+Transformar outputs de modelización en señales accionables para scouting.
+
+---
+
+# Métrica principal
+
+```python
+inefficiency_score =
+valor_estimado - valor_observado
+```
+
+---
+
+## Interpretación
+
+| Score    | Significado             |
+| -------- | ----------------------- |
+| Positivo | Posible infravaloración |
+| Negativo | Posible sobrevaloración |
+
+---
+
+## Justificación
+
+El scoring permite traducir outputs estadísticos en:
+
+* rankings
+* shortlists
+* señales scouting
+* oportunidades potenciales
+
+---
+
+## Decisión metodológica
+
+El scoring se construye sobre:
+
+```text
+predicciones out-of-sample
+```
+
+para evitar optimismo artificial.
+
+---
+
+# ⚖️ Trade-offs metodológicos
+
+## Interpretabilidad vs predicción
+
+Trade-off principal del proyecto.
+
+---
+
+## Decisión adoptada
+
+Priorizar inicialmente:
+
+```text
+interpretabilidad + robustez
+```
+
+frente a:
+
+```text
+modelos extremadamente complejos
+```
+
+---
+
+## Justificación
+
+En scouting profesional resulta más útil:
+
+* explicar rankings
+* entender drivers
+* justificar decisiones
+
+que ganar pequeñas mejoras marginales de R² con modelos opacos.
+
+---
+
+## Flexibilidad futura
+
+La arquitectura actual permite incorporar posteriormente:
+
+* CatBoost
+* TabPFN
+* SHAP
+* modelos específicos por posición
+
+sin rediseñar el sistema.
 
 ---
 
 # 🛡️ Prevención de leakage
 
-## Principio fundamental
+## Principio general
 
-Toda variable utilizada debe existir en el momento real de decisión.
+Todo feature debe existir en el momento temporal de decisión.
 
 ---
 
 ## Variables excluidas
 
-| Variable                    | Motivo             |
-| --------------------------- | ------------------ |
-| `market_value_next_eur`     | Información futura |
-| `delta_log_market_value_1y` | Información futura |
-| `future_minutes`            | Información futura |
-| `future_xG`                 | Información futura |
+Ejemplos:
+
+* market_value_next_eur
+* delta_log_market_value_1y
+* predicted_market_value_eur
+* rankings derivados
 
 ---
 
-## Outputs derivados excluidos
+## Tipos de leakage controlados
 
-También se excluyen como inputs:
-
-* predictions
-* inefficiency scores
-* ranking outputs
-
----
-
-# ⚖️ Econometría vs Machine Learning
-
-## Resultados observados
-
-| Modelo            | R² aproximado |
-| ----------------- | ------------: |
-| OLS final         |         ~0.44 |
-| Gradient Boosting |         ~0.48 |
+* leakage temporal
+* target leakage
+* leakage entre train/test
+* leakage derivado de scoring
 
 ---
 
-## Interpretación principal
+## Decisión importante
 
-La mejora relativamente moderada de ML respecto a OLS sugiere que:
+Los outputs del modelo:
 
-<pre>
-el principal cuello de botella actual es la calidad del feature set
-</pre>
-
-más que la complejidad algorítmica.
+* no vuelven al dataset base
+* no se utilizan como inputs
+* permanecen separados en reports/artifacts
 
 ---
 
-## Implicación metodológica
+# 📉 Limitaciones actuales
 
-La siguiente fase del proyecto debe centrarse principalmente en:
+## Feature engineering
 
-* feature engineering avanzado
-* enriquecimiento contextual
-* métricas longitudinales
+El feature set todavía es limitado respecto a sistemas profesionales.
+
+---
+
+## Métricas avanzadas pendientes
+
 * progression metrics
+* percentiles
+* z-scores por posición
+* métricas defensivas
+* rolling metrics
+* trajectory features
 
 ---
 
-# 📈 Resultados actuales
+## Dataset size
 
-## Econometría
-
-| Métrica | Resultado aproximado |
-| ------- | -------------------: |
-| MAE     |                 0.79 |
-| RMSE    |                 0.98 |
-| R²      |                 0.44 |
+El dataset modelizable sigue siendo relativamente pequeño para ML avanzado.
 
 ---
 
-## Machine Learning
+## Cobertura contextual
 
-| Modelo               | R² aproximado |
-| -------------------- | ------------: |
-| Random Forest        |         ~0.46 |
-| HistGradientBoosting |         ~0.46 |
-| Gradient Boosting    |         ~0.48 |
-
----
-
-## Conclusiones preliminares
-
-* OLS mantiene gran capacidad explicativa
-* ML aporta mejora predictiva moderada
-* existe señal estructural consistente
-* el mercado incorpora componentes no observables relevantes
-
----
-
-# 🧠 Interpretación metodológica
-
-## El mercado no depende solo del rendimiento
-
-El valor de mercado incorpora:
-
-* edad
-* potencial
-* exposición mediática
-* club
-* liga
-* reputación
-* contexto contractual
-
----
-
-## Implicación
-
-Incluso modelos técnicamente sólidos tendrán:
-
-<pre>
-capacidad explicativa limitada estructuralmente
-</pre>
-
----
-
-## Valor del sistema
-
-El objetivo no es predecir perfectamente el mercado, sino:
-
-* detectar ineficiencias
-* priorizar scouting
-* identificar oportunidades relativas
-
----
-
-# ⚠️ Limitaciones actuales
-
-## Feature set limitado
-
-Actualmente predominan:
-
-* minutos
-* goles
-* asistencias
-
----
-
-## Variables aún no incorporadas
+Todavía faltan:
 
 * xG
 * xA
-* métricas defensivas
-* progression metrics
-* rolling metrics
-* percentiles
-* z-scores por posición
+* métricas de posesión avanzadas
+* eventos tipo StatsBomb
 
 ---
 
-## Variables no observables
+# 🚀 Próximas decisiones previstas
 
-El sistema no incorpora aún:
+## Modelización
 
-* salarios
-* contratos
-* lesiones
-* agentes
-* narrativa mediática
-* información privada de clubes
+Posibles próximos modelos:
 
----
-
-# 🚀 Próximas mejoras previstas
-
-## Feature engineering avanzado
-
-Pendiente implementar:
-
-* progression metrics
-* age curves
-* percentiles
-* z-scores por posición
-* league normalization
-* rolling metrics
-* growth indicators
-* market momentum
+* CatBoost
+* TabPFN
+* modelos por posición
 
 ---
 
-## Nuevas fuentes
+## Explainability
 
-* Understat
-* StatsBomb Open Data
+Pendiente incorporar:
+
+* SHAP global
+* SHAP individual
+* explicación automática de rankings
 
 ---
 
-## Nuevos outputs
+## Feature engineering
 
-* Growth Score
-* Confidence Score
-* scouting reports automáticos
+Prioridad principal actual:
+
+```text
+incrementar señal predictiva
+```
+
+---
+
+## Opportunity Score
+
+Próxima evolución prevista:
+
+```python
+Opportunity Score =
+inefficiency_score +
+growth_score +
+confidence_score
+```
+
+---
+
+## Validación avanzada
+
+Pendiente:
+
+* robustness checks
+* estabilidad rankings
+* análisis longitudinal
+* sensibilidad por liga
 
 ---
 
 # 🧠 Conclusión
 
+La estrategia de modelización adoptada busca equilibrar:
+
+* rigor metodológico
+* interpretabilidad
+* capacidad predictiva
+* coherencia futbolística
+* reproducibilidad experimental
+
 El sistema actual combina:
 
-* econometría aplicada
-* machine learning supervisado
-* scoring cuantitativo
+* econometría interpretable
+* Machine Learning supervisado
 * validación temporal
-* pipelines modulares reproducibles
+* scoring cuantitativo
+* MLflow tracking
+* configuración centralizada
 
-La arquitectura prioriza:
+La incorporación de tracking experimental y configuración desacoplada supone un salto importante en madurez metodológica, ya que permite auditar decisiones, comparar ejecuciones y justificar configuraciones de manera reproducible.
 
-* interpretabilidad
-* robustez
-* trazabilidad
-* coherencia futbolística
+El siguiente gran salto de valor del proyecto dependerá principalmente de:
 
-El modelo econométrico actúa como núcleo principal del sistema, mientras que Machine Learning aporta capacidad predictiva complementaria.
+```text
+feature engineering avanzado y enriquecimiento del signal predictivo
+```
 
-Los resultados actuales muestran que el siguiente salto de calidad del proyecto depende principalmente de:
-
-* feature engineering avanzado
-* enriquecimiento contextual
-* mejor representación del rendimiento deportivo
-
-más que de algoritmos significativamente más complejos.
-
-El sistema constituye una base sólida tanto para el Trabajo Fin de Máster como para futuras evoluciones hacia herramientas reales de scouting cuantitativo profesional.
+más que de incrementar complejidad algorítmica de forma aislada.
