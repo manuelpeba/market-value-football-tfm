@@ -10,6 +10,8 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Status](https://img.shields.io/badge/Status-Advanced%20Modeling-success)
+![Version](https://img.shields.io/badge/version-v0.3.0-blue)
+![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
 
 </div>
 
