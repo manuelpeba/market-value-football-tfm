@@ -131,3 +131,6 @@ artifacts/predictions/*
 # Allow lightweight model diagnostics / feature importance if CSV
 !artifacts/feature_importance/*.csv
 !artifacts/predictions/*.csv
+
+# MLflow metadata
+artifacts/metadata/*.db
