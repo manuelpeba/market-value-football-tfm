@@ -1,22 +1,317 @@
+from pathlib import Path
+import logging
+
+import mlflow
+import numpy as np
+import pandas as pd
 import statsmodels.formula.api as smf
-from statsmodels.regression.linear_model import RegressionResultsWrapper
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score,
+)
 
-from src.models.econometric.specifications import build_ols_formula
+from src.models.econometric.specifications import (
+    BASE_OLS_FEATURES,
+    ADVANCED_OLS_FEATURES,
+    FIXED_EFFECTS,
+    ECONOMETRIC_TARGET,
+)
+
+# ==========================================================
+# CONFIG
+# ==========================================================
+
+INPUT_DATA = Path(
+    "data/processed/player_season_modeling_advanced.parquet"
+)
+
+MLFLOW_URI = (
+    "sqlite:///artifacts/metadata/mlflow.db"
+)
+
+EXPERIMENT_NAME = (
+    "market-value-model-comparison"
+)
 
 
-def train_ols_model(
-    df,
-    include_season_fe: bool = True,
-) -> RegressionResultsWrapper:
-    formula = build_ols_formula(
-        include_season_fe=include_season_fe,
+# ==========================================================
+# LOGGING
+# ==========================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
+
+# ==========================================================
+# HELPERS
+# ==========================================================
+
+def ensure_modeling_columns(
+    df: pd.DataFrame
+) -> pd.DataFrame:
+
+    df = df.copy()
+
+    if "log_minutes_played" not in df.columns:
+
+        if "minutes_played" not in df.columns:
+
+            raise KeyError(
+                "Neither 'log_minutes_played' "
+                "nor 'minutes_played' found."
+            )
+
+        logger.info(
+            "Creating log_minutes_played..."
+        )
+
+        df["log_minutes_played"] = np.log1p(
+            df["minutes_played"]
+        )
+
+    return df
+
+
+def build_formula(
+    features: list[str]
+) -> str:
+
+    numeric = " + ".join(
+        features
+    )
+
+    fixed = " + ".join(
+        [
+            f"C({col})"
+            for col in FIXED_EFFECTS
+        ]
+    )
+
+    formula = f"""
+    {ECONOMETRIC_TARGET}
+    ~
+    {numeric}
+    +
+    {fixed}
+    """
+
+    return formula
+
+
+def evaluate_regression(
+    y_true,
+    y_pred
+):
+
+    return {
+
+        "rmse":
+            np.sqrt(
+                mean_squared_error(
+                    y_true,
+                    y_pred
+                )
+            ),
+
+        "mae":
+            mean_absolute_error(
+                y_true,
+                y_pred
+            ),
+
+        "r2":
+            r2_score(
+                y_true,
+                y_pred
+            )
+
+    }
+
+
+# ==========================================================
+# MODEL RUN
+# ==========================================================
+
+def run_model(
+    name: str,
+    features: list[str],
+    df: pd.DataFrame
+):
+
+    logger.info(
+        f"Running: {name}"
+    )
+
+    cols = (
+        features
+        + FIXED_EFFECTS
+        + [ECONOMETRIC_TARGET]
+    )
+
+    model_df = (
+        df[cols]
+        .dropna()
+    )
+
+    logger.info(
+        f"Rows after NA removal: {len(model_df):,}"
+    )
+
+    formula = build_formula(
+        features
+    )
+
+    logger.info(
+        f"Formula:\n{formula}"
     )
 
     model = smf.ols(
         formula=formula,
-        data=df,
+        data=model_df
     ).fit(
-        cov_type="HC3",
+        cov_type="HC3"
     )
 
+    predictions = model.predict(
+        model_df
+    )
+
+    metrics = evaluate_regression(
+        model_df[ECONOMETRIC_TARGET],
+        predictions
+    )
+
+    with mlflow.start_run(
+        run_name=name
+    ):
+
+        mlflow.log_param(
+            "model_name",
+            name
+        )
+
+        mlflow.log_param(
+            "features",
+            ",".join(
+                features
+            )
+        )
+
+        mlflow.log_param(
+            "fixed_effects",
+            ",".join(
+                FIXED_EFFECTS
+            )
+        )
+
+        mlflow.log_metric(
+            "rows",
+            len(model_df)
+        )
+
+        for k, v in metrics.items():
+
+            mlflow.log_metric(
+                k,
+                v
+            )
+
+        summary_path = (
+            Path(
+                "artifacts/models"
+            )
+            /
+            f"{name}_summary.txt"
+        )
+
+        summary_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        with open(
+            summary_path,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(
+                model.summary().as_text()
+            )
+
+        mlflow.log_artifact(
+            str(summary_path)
+        )
+
+    print("\n")
+    print("=" * 60)
+    print(name)
+    print("=" * 60)
+
+    for k, v in metrics.items():
+
+        print(
+            f"{k}: {v:.4f}"
+        )
+
     return model
+
+
+# ==========================================================
+# MAIN
+# ==========================================================
+
+def main():
+
+    logger.info(
+        "Loading dataset..."
+    )
+
+    df = pd.read_parquet(
+        INPUT_DATA
+    )
+
+    logger.info(
+        f"Rows: {len(df):,}"
+    )
+
+    logger.info(
+        f"Columns: {len(df.columns)}"
+    )
+
+    df = ensure_modeling_columns(
+        df
+    )
+
+    mlflow.set_tracking_uri(
+        MLFLOW_URI
+    )
+
+    mlflow.set_experiment(
+        EXPERIMENT_NAME
+    )
+
+    run_model(
+        name="baseline_ols",
+        features=BASE_OLS_FEATURES,
+        df=df
+    )
+
+    run_model(
+        name="advanced_positional_ols",
+        features=ADVANCED_OLS_FEATURES,
+        df=df
+    )
+
+    logger.info(
+        "Training finished."
+    )
+
+
+if __name__ == "__main__":
+    main()

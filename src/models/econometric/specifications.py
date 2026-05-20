@@ -1,3 +1,17 @@
+"""
+Especificaciones econométricas del proyecto.
+
+Este módulo centraliza:
+- variable objetivo
+- features baseline
+- features avanzadas
+- fixed effects
+- columnas excluidas por leakage
+
+La lógica de entrenamiento debe importar estas listas para evitar
+hardcoding en los pipelines.
+"""
+
 ECONOMETRIC_TARGET = "log_market_value_eur"
 
 
@@ -9,43 +23,96 @@ BASE_OLS_FEATURES = [
 ]
 
 
-BASE_FIXED_EFFECTS = [
+ADVANCED_OLS_FEATURES = [
+    "age",
+    "log_minutes_played",
+    "goals_per90",
+    "assists_per90",
+    "goals_per90_pos_z",
+    "assists_per90_pos_z",
+    "goals_position_percentile",
+    "assists_position_percentile",
+]
+
+
+FIXED_EFFECTS = [
     "league",
+    "season",
     "position_group",
 ]
 
 
-SEASON_FIXED_EFFECT = "season"
+LEAKAGE_COLUMNS = [
+    "market_value_next_eur",
+    "delta_log_market_value_1y",
+    "predicted_log_market_value",
+    "predicted_market_value_eur",
+    "market_value_gap_eur",
+    "market_value_gap_pct",
+    "inefficiency_score",
+    "inefficiency_score_z",
+    "opportunity_score",
+    "growth_score",
+    "confidence_score",
+]
 
 
-def build_ols_formula(
-    include_season_fe: bool = True,
-) -> str:
+OLS_MODEL_SPECS = {
+    "baseline_ols": {
+        "target": ECONOMETRIC_TARGET,
+        "features": BASE_OLS_FEATURES,
+        "fixed_effects": FIXED_EFFECTS,
+        "description": "OLS baseline with core performance features and contextual fixed effects.",
+    },
+    "advanced_positional_ols": {
+        "target": ECONOMETRIC_TARGET,
+        "features": ADVANCED_OLS_FEATURES,
+        "fixed_effects": FIXED_EFFECTS,
+        "description": "OLS with positional and league-normalized performance features.",
+    },
+}
+
+
+def get_ols_features(model_name: str) -> list[str]:
     """
-    Build OLS formula for econometric market value model.
-
-    Notes
-    -----
-    - include_season_fe=True is useful for explanatory/in-sample models.
-    - include_season_fe=False is required for strict temporal validation
-      when predicting an unseen future season.
+    Return feature list for a registered OLS specification.
     """
 
-    numeric_terms = " + ".join(BASE_OLS_FEATURES)
+    if model_name not in OLS_MODEL_SPECS:
+        available = ", ".join(OLS_MODEL_SPECS.keys())
+        raise ValueError(
+            f"Unknown OLS model specification: {model_name}. "
+            f"Available specs: {available}"
+        )
 
-    fixed_effects = BASE_FIXED_EFFECTS.copy()
+    return OLS_MODEL_SPECS[model_name]["features"]
 
-    if include_season_fe:
-        fixed_effects.append(SEASON_FIXED_EFFECT)
 
-    fe_terms = " + ".join(
-        [f"C({feature})" for feature in fixed_effects]
-    )
+def get_ols_fixed_effects(model_name: str) -> list[str]:
+    """
+    Return fixed effects for a registered OLS specification.
+    """
 
-    formula = (
-        f"{ECONOMETRIC_TARGET} ~ "
-        f"{numeric_terms} + "
-        f"{fe_terms}"
-    )
+    if model_name not in OLS_MODEL_SPECS:
+        available = ", ".join(OLS_MODEL_SPECS.keys())
+        raise ValueError(
+            f"Unknown OLS model specification: {model_name}. "
+            f"Available specs: {available}"
+        )
 
-    return formula
+    return OLS_MODEL_SPECS[model_name]["fixed_effects"]
+
+
+def get_ols_target(model_name: str) -> str:
+    """
+    Return target variable for a registered OLS specification.
+    """
+
+    if model_name not in OLS_MODEL_SPECS:
+        available = ", ".join(OLS_MODEL_SPECS.keys())
+        raise ValueError(
+            f"Unknown OLS model specification: {model_name}. "
+            f"Available specs: {available}"
+        )
+
+    return OLS_MODEL_SPECS[model_name]["target"]
