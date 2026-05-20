@@ -395,6 +395,100 @@ El benchmark econométrico mantiene mejor rendimiento predictivo.
 
 ---
 
+## Sprint 4B — Improved ML Pipeline (Completed)
+
+Status: Completed
+
+### Objetivo
+
+Mejorar el pipeline de Machine Learning baseline mediante tuning de hiperparámetros, preprocesamiento robusto y tracking experimental completo.
+
+### Implementación
+
+Archivo principal:
+
+```text
+src/models/machine_learning/train_ml_tuned.py
+```
+
+### Mejoras introducidas
+
+* validación temporal `train < 2023 / test >= 2023`
+* preprocesamiento con `ColumnTransformer`
+* imputación con `SimpleImputer`
+* escalado con `StandardScaler`
+* codificación categórica con `OneHotEncoder`
+* tuning mediante `RandomizedSearchCV`
+* registro de experimentos con MLflow
+* exportación de feature importance
+
+### Modelos entrenados
+
+* Tuned Random Forest
+* Tuned XGBoost
+* Tuned LightGBM
+* HistGradientBoosting
+
+### Resultados
+
+| Modelo               |       RMSE |        MAE |         R² |
+| -------------------- | ---------: | ---------: | ---------: |
+| Growth OLS           |     0.9046 |     0.7278 |     0.5255 |
+| Tuned Random Forest  |     0.9076 |     0.7315 |     0.5200 |
+| Tuned XGBoost        | **0.8753** | **0.7004** | **0.5536** |
+| Tuned LightGBM       |     0.8864 |     0.7162 |     0.5421 |
+| HistGradientBoosting |     0.8825 |     0.7118 |     0.5462 |
+
+### Resultado principal
+
+El modelo con mejor rendimiento actual es:
+
+```text
+Tuned XGBoost
+```
+
+con:
+
+```text
+R² = 0.5536
+```
+
+### Decisión
+
+El Sprint 4B modifica la lectura metodológica del proyecto:
+
+```text
+ML tuned supera al benchmark econométrico Growth OLS
+```
+
+Por tanto:
+
+* OLS se mantiene como benchmark interpretable.
+* XGBoost tuned pasa a ser el mejor modelo predictivo actual.
+* La siguiente fase debe centrarse en explainability y feature importance.
+
+### Implicación metodológica
+
+El resultado valida la utilidad de modelos no lineales siempre que se combinen con:
+
+* tuning controlado
+* validación temporal
+* preprocesamiento reproducible
+* tracking experimental
+* control de artefactos
+
+### Próximo sprint
+
+```text
+Sprint 4C — Explainability + Feature Importance
+```
+
+Objetivo:
+
+Transformar el mejor modelo predictivo actual en un modelo explicable y defendible para scouting profesional.
+
+---
+
 # 🔄 Evolución de arquitectura
 
 El proyecto comenzó como un entorno principalmente exploratorio basado en notebooks.

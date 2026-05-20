@@ -348,6 +348,129 @@ Posibles causas:
 
 ---
 
+## Decisión: mejora del pipeline ML mediante tuning y preprocesamiento robusto
+
+Tras la evaluación inicial de modelos supervisados, se observó que Random Forest, XGBoost y LightGBM en configuración baseline no superaban al modelo econométrico Growth OLS.
+
+Esto no implicaba necesariamente que los modelos no lineales fueran inadecuados, sino que la primera iteración presentaba limitaciones metodológicas:
+
+- ausencia de tuning sistemático
+- preprocesamiento menos robusto
+- control limitado de hiperparámetros
+- menor trazabilidad experimental
+- posible infraoptimización de modelos de boosting
+
+Por ello se implementó una segunda iteración del pipeline ML.
+
+### Implementación
+
+Archivo:
+
+```text
+src/models/machine_learning/train_ml_tuned.py
+```
+
+### Decisiones técnicas
+
+Se incorporó un pipeline de preprocesamiento basado en:
+
+* `ColumnTransformer`
+* `SimpleImputer`
+* `StandardScaler`
+* `OneHotEncoder`
+
+Esta decisión permite tratar adecuadamente variables numéricas y categóricas dentro de un flujo reproducible, reduciendo riesgo de inconsistencias entre entrenamiento y evaluación.
+
+### Estrategia de tuning
+
+Se utilizó:
+
+```text
+RandomizedSearchCV
+n_iter = 12
+```
+
+La elección de búsqueda aleatoria responde a un trade-off entre:
+
+* exploración razonable del espacio de hiperparámetros
+* coste computacional controlado
+* reproducibilidad
+* suficiencia metodológica para una iteración de TFM
+
+No se optó por una búsqueda exhaustiva porque el objetivo del sprint era validar si el bajo rendimiento inicial de ML se debía a infraoptimización, no maximizar agresivamente la métrica.
+
+### Validación temporal
+
+Se mantuvo la división:
+
+```text
+Train: temporadas < 2023
+Test: temporadas >= 2023
+```
+
+Esta decisión preserva la coherencia metodológica del proyecto y evita leakage temporal.
+
+### Modelos evaluados
+
+* Tuned Random Forest
+* Tuned XGBoost
+* Tuned LightGBM
+* HistGradientBoosting
+
+### Resultados
+
+| Modelo               |       RMSE |        MAE |         R² |
+| -------------------- | ---------: | ---------: | ---------: |
+| Growth OLS           |     0.9046 |     0.7278 |     0.5255 |
+| Tuned Random Forest  |     0.9076 |     0.7315 |     0.5200 |
+| Tuned XGBoost        | **0.8753** | **0.7004** | **0.5536** |
+| Tuned LightGBM       |     0.8864 |     0.7162 |     0.5421 |
+| HistGradientBoosting |     0.8825 |     0.7118 |     0.5462 |
+
+### Interpretación
+
+El ajuste de hiperparámetros y la mejora del pipeline permiten que los modelos supervisados superen al benchmark econométrico.
+
+El mejor resultado corresponde a:
+
+```text
+Tuned XGBoost
+```
+
+con:
+
+```text
+R² = 0.5536
+```
+
+Esto supone una mejora relativa aproximada del 5.3% frente al Growth OLS.
+
+### Decisión metodológica
+
+A partir de este sprint, el sistema adopta una arquitectura híbrida:
+
+| Componente                | Rol                              |
+| ------------------------- | -------------------------------- |
+| Growth OLS                | Benchmark interpretable          |
+| Tuned XGBoost             | Mejor modelo predictivo actual   |
+| Feature importance / SHAP | Capa de explicabilidad           |
+| Scoring pipeline          | Traducción a outputs de scouting |
+
+### Implicación
+
+El resultado justifica avanzar hacia modelos supervisados más complejos, siempre que se acompañen de mecanismos de interpretabilidad.
+
+Por ello, la siguiente decisión metodológica será incorporar explainability mediante:
+
+* feature importance global
+* SHAP values
+* interpretaciones locales por jugador
+* análisis de dependencia de variables
+
+El objetivo no es únicamente mejorar métricas, sino transformar el modelo en una herramienta defendible para scouting profesional.
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado

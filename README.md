@@ -1118,6 +1118,122 @@ Los modelos ML baseline no superaron al modelo econométrico actual.
 
 ---
 
+## Sprint 4B — Improved Machine Learning Pipeline
+
+Tras comprobar que los modelos supervisados baseline no superaban al benchmark econométrico, se implementó una segunda iteración del pipeline de Machine Learning orientada a mejorar la capacidad predictiva mediante preprocesamiento robusto, ajuste de hiperparámetros y trazabilidad experimental.
+
+### Objetivo
+
+Mejorar el rendimiento de los modelos supervisados frente al modelo Growth OLS mediante:
+
+- validación temporal estricta
+- pipeline de preprocesamiento reproducible
+- búsqueda aleatoria de hiperparámetros
+- registro experimental con MLflow
+- exportación de importancia de variables
+
+### Implementación
+
+Archivo principal:
+
+```text
+src/models/machine_learning/train_ml_tuned.py
+```
+
+### Estrategia de validación
+
+Se mantiene la división temporal:
+
+```text
+Train: temporadas < 2023
+Test: temporadas >= 2023
+```
+
+Esta decisión evita leakage temporal y reproduce un escenario realista de scouting, donde el modelo se entrena con información histórica y se evalúa sobre temporadas posteriores.
+
+### Pipeline de preprocesamiento
+
+Se implementó un pipeline basado en:
+
+* `ColumnTransformer`
+* `SimpleImputer`
+* `StandardScaler`
+* `OneHotEncoder`
+
+Esto permite tratar de forma separada variables numéricas y categóricas, reduciendo errores manuales y mejorando la reproducibilidad del entrenamiento.
+
+### Modelos evaluados
+
+* Tuned Random Forest
+* Tuned XGBoost
+* Tuned LightGBM
+* HistGradientBoosting
+
+### Tuning
+
+Se utilizó:
+
+```text
+RandomizedSearchCV
+n_iter = 12
+```
+
+El objetivo no fue realizar una búsqueda exhaustiva, sino obtener una mejora razonable del rendimiento manteniendo control computacional y trazabilidad metodológica.
+
+### MLflow
+
+Cada experimento registra:
+
+* hiperparámetros
+* métricas
+* artefactos
+* modelos entrenados
+* feature importance
+
+### Feature importance
+
+Las importancias de variables se exportan en:
+
+```text
+artifacts/feature_importance/
+```
+
+### Resultados
+
+| Modelo               |     RMSE ↓ |      MAE ↓ |       R² ↑ |
+| -------------------- | ---------: | ---------: | ---------: |
+| Growth OLS           |     0.9046 |     0.7278 |     0.5255 |
+| Tuned Random Forest  |     0.9076 |     0.7315 |     0.5200 |
+| Tuned XGBoost        | **0.8753** | **0.7004** | **0.5536** |
+| Tuned LightGBM       |     0.8864 |     0.7162 |     0.5421 |
+| HistGradientBoosting |     0.8825 |     0.7118 |     0.5462 |
+
+### Conclusión
+
+El pipeline mejorado de Machine Learning supera por primera vez al modelo econométrico Growth OLS.
+
+El mejor modelo actual es:
+
+```text
+Tuned XGBoost
+```
+
+con:
+
+```text
+R² = 0.5536
+RMSE = 0.8753
+MAE = 0.7004
+```
+
+La mejora relativa respecto a Growth OLS es aproximadamente del 5.3% en R².
+
+Este resultado justifica metodológicamente la transición desde un enfoque puramente econométrico hacia modelos supervisados más complejos, manteniendo la econometría como benchmark interpretable y utilizando Machine Learning como capa predictiva adicional.
+
+No obstante, la mejora sigue siendo moderada, por lo que la siguiente fase debe centrarse en explicabilidad, feature importance y análisis SHAP para convertir el modelo en una herramienta interpretable de scouting cuantitativo.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión
