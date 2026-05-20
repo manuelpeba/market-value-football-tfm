@@ -1234,6 +1234,145 @@ No obstante, la mejora sigue siendo moderada, por lo que la siguiente fase debe 
 
 ---
 
+## Sprint 4C — Explainability + Player-Level SHAP Analysis
+
+Tras obtener un modelo supervisado con mejor rendimiento predictivo que el benchmark econométrico, el siguiente paso consistió en incorporar mecanismos de explicabilidad que permitieran interpretar las predicciones y convertir el sistema en una herramienta útil para scouting profesional.
+
+### Objetivo
+
+Transformar el mejor modelo predictivo actual en un sistema explicable mediante:
+
+- feature importance comparativa
+- SHAP global
+- SHAP local por jugador
+- informes automáticos de scouting
+
+### Implementación
+
+Nuevos módulos:
+
+```text
+src/models/explainability/
+
+├── build_feature_importance_comparison.py
+├── build_shap_analysis.py
+├── build_player_shap_report.py
+```
+
+### Outputs generados
+
+```text
+reports/tables/explainability/
+
+├── feature_importance_comparison_top10.csv
+├── shap_global_importance.csv
+
+reports/figures/explainability/
+
+├── feature_importance_comparison_top10.png
+├── shap_summary.png
+
+reports/scouting_reports/
+
+├── player_shap_report.csv
+```
+
+### Feature importance comparativa
+
+Se construyó una comparación agregada entre:
+
+* Random Forest
+* Tuned Random Forest
+* Tuned XGBoost
+* Tuned LightGBM
+* Gradient Boosting
+
+El objetivo fue identificar qué variables muestran una señal consistente independientemente del algoritmo utilizado.
+
+Resultados destacados:
+
+* experience_index
+* goals_position_percentile
+* log_minutes_played
+* finishing_index
+* playmaking_index
+
+### SHAP Global Importance
+
+La explicación basada en SHAP permitió estimar la contribución real de cada variable sobre las predicciones individuales.
+
+Top variables observadas:
+
+| Variable       | Importancia |
+| -------------- | ----------: |
+| matches_played |       1.199 |
+| age_fbref      |       0.697 |
+| minutes_played |       0.682 |
+| starts         |       0.676 |
+| goals          |       0.344 |
+
+### Diferencias entre Feature Importance y SHAP
+
+Se observaron diferencias relevantes:
+
+Feature importance clásica:
+
+* experience_index
+* finishing_index
+* playmaking_index
+
+SHAP:
+
+* matches_played
+* minutes_played
+* starts
+* goals
+
+Interpretación:
+
+La importancia clásica refleja cuánto utiliza el modelo una variable durante la construcción de árboles, mientras que SHAP refleja el impacto efectivo sobre las predicciones.
+
+### SHAP por jugador
+
+Se implementó un reporte individual que genera automáticamente:
+
+* factores positivos
+* factores negativos
+* valor esperado estimado
+* gap de mercado
+* inefficiency score
+
+Ejemplo:
+
+```text
+Jugador: Yan Diomandé
+
+Factores positivos:
+
++ goals_per90
++ league_LaLiga
++ assists_per90
+
+Factores negativos:
+
+− log_minutes_played
+− league_PremierLeague
+```
+
+### Conclusión
+
+Sprint 4C transforma el sistema desde un modelo predictivo hacia una herramienta de scouting cuantitativo interpretable.
+
+La combinación:
+
+```text
+Machine Learning + SHAP + scoring
+```
+
+permite explicar no únicamente qué jugador aparece como infravalorado, sino también por qué.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión

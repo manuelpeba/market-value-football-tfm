@@ -495,6 +495,73 @@ Explainability + Feature Importance
 
 ---
 
+# Sprint 4C — Explainability + SHAP Analysis
+
+## Hipótesis
+
+Los modelos predictivos con mayor capacidad de ajuste pueden generar mejores predicciones, pero presentan menor interpretabilidad.
+
+La hipótesis fue:
+
+```text
+Es posible incorporar mecanismos de explicabilidad que permitan interpretar el comportamiento del modelo sin degradar capacidad predictiva.
+```
+
+---
+
+## Implementación
+
+Se desarrollaron tres módulos:
+
+* comparación de importancia de variables
+* análisis SHAP global
+* análisis SHAP por jugador
+
+---
+
+## SHAP global
+
+El análisis SHAP mostró:
+
+| Variable       | Importancia |
+| -------------- | ----------: |
+| matches_played |       1.199 |
+| age_fbref      |       0.697 |
+| minutes_played |       0.682 |
+| starts         |       0.676 |
+| goals          |       0.344 |
+
+---
+
+## SHAP local
+
+Se desarrolló un sistema de informes automáticos por jugador que identifica:
+
+* factores positivos
+* factores negativos
+* valor esperado
+* gap de mercado
+* inefficiency score
+
+---
+
+## Interpretación desde scouting
+
+El sistema puede justificar por qué un jugador aparece como oportunidad potencial de mercado.
+
+Esto permite aumentar confianza y utilidad práctica para procesos de scouting.
+
+---
+
+## Conclusión
+
+La hipótesis queda aceptada.
+
+El sistema incorpora capacidad explicativa manteniendo rendimiento predictivo y aumenta significativamente su utilidad operativa.
+
+
+---
+
 # 7. Preguntas esperables en defensa
 
 ¿Por qué no comparar métricas absolutas?

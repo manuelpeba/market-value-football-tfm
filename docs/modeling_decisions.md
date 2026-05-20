@@ -471,6 +471,73 @@ El objetivo no es únicamente mejorar métricas, sino transformar el modelo en u
 
 ---
 
+## Decisión: incorporación de Explainability mediante SHAP
+
+Tras obtener mejoras predictivas mediante modelos supervisados ajustados, se consideró necesario incorporar mecanismos de interpretabilidad.
+
+Objetivo:
+
+- explicar rankings
+- interpretar decisiones
+- identificar drivers del valor
+- construir un sistema defendible para scouting
+
+### Métodos implementados
+
+Global explainability:
+
+- feature importance
+- SHAP global
+
+Local explainability:
+
+- SHAP individual por jugador
+
+### Resultados observados
+
+Se detectaron diferencias entre:
+
+Feature importance clásica:
+
+- experience_index
+- finishing_index
+- playmaking_index
+
+SHAP:
+
+- matches_played
+- minutes_played
+- starts
+- goals
+
+### Interpretación
+
+La importancia clásica refleja cuánto utiliza el algoritmo una variable durante entrenamiento.
+
+SHAP refleja cuánto modifica realmente la predicción final.
+
+### Decisión metodológica
+
+Se adopta SHAP como mecanismo principal de interpretación.
+
+Feature importance clásica permanece como apoyo descriptivo.
+
+### Implicación
+
+El sistema evoluciona desde:
+
+```text
+modelo predictivo
+```
+
+hacia:
+
+```text
+herramienta interpretable de scouting cuantitativo
+```
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado

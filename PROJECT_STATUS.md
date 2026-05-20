@@ -489,6 +489,63 @@ Transformar el mejor modelo predictivo actual en un modelo explicable y defendib
 
 ---
 
+## Sprint 4C — Explainability + Player-Level SHAP (Completed)
+
+Status: Completed
+
+### Objetivo
+
+Incorporar explicabilidad al mejor modelo predictivo y generar informes interpretables a nivel jugador.
+
+### Implementación
+
+Scripts añadidos:
+
+```text
+src/models/explainability/
+
+build_feature_importance_comparison.py
+build_shap_analysis.py
+build_player_shap_report.py
+```
+
+### Funcionalidades implementadas
+
+* comparación de feature importance
+* SHAP global
+* SHAP summary plots
+* explicación local por jugador
+* generación automática de informes scouting
+
+### Outputs
+
+```text
+reports/tables/explainability/
+reports/figures/explainability/
+reports/scouting_reports/
+```
+
+### Resultado principal
+
+El sistema ya permite identificar:
+
+* jugadores infravalorados
+* factores explicativos positivos
+* factores explicativos negativos
+* drivers principales del modelo
+
+### Implicación metodológica
+
+El sistema deja de ser únicamente predictivo y pasa a incorporar interpretabilidad accionable.
+
+### Próximo sprint
+
+```text
+Sprint 5 — Final Scoring System + Undervalued Player Ranking
+```
+
+---
+
 # 🔄 Evolución de arquitectura
 
 El proyecto comenzó como un entorno principalmente exploratorio basado en notebooks.
