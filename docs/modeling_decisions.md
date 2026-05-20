@@ -311,6 +311,43 @@ No obstante, permanecerán implementados para tareas de:
 
 ---
 
+## Decisión: evaluación inicial de modelos supervisados
+
+Se evaluaron modelos supervisados de tipo ensemble y boosting.
+
+Modelos:
+
+- Random Forest
+- XGBoost
+- LightGBM
+
+Objetivo:
+
+Determinar si relaciones no lineales mejoran la predicción del valor de mercado.
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Random Forest | 1.0481 | 0.8527 | 0.3599 |
+| XGBoost | 1.0943 | 0.8801 | 0.3022 |
+| LightGBM | 1.1078 | 0.8936 | 0.2848 |
+
+Conclusión:
+
+No se observó mejora respecto al benchmark econométrico.
+
+Posibles causas:
+
+- ausencia de tuning
+- conjunto reducido de variables
+- baja dimensionalidad
+- ausencia de variables categóricas codificadas
+- tamaño limitado del dataset
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado

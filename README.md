@@ -1080,6 +1080,44 @@ Sin embargo, proporcionan una representación más interpretable del rendimiento
 
 ---
 
+## Sprint 4 — Machine Learning Baseline
+
+Se implementó una primera línea base de modelos supervisados para comparar el rendimiento predictivo frente al modelo econométrico.
+
+El objetivo fue evaluar si modelos no lineales podían capturar relaciones complejas entre rendimiento deportivo y valor de mercado.
+
+### Modelos evaluados
+
+- Random Forest
+- XGBoost
+- LightGBM
+
+### Estrategia de validación
+
+Se utilizó división temporal:
+
+```text
+Train: temporadas < 2023
+Test: temporadas ≥ 2023
+```
+
+Esta decisión evita leakage temporal y simula un escenario real de predicción futura.
+
+### Resultados
+
+| Modelo | RMSE ↓ | MAE ↓ | R² ↑ |
+|---|---:|---:|---:|
+| Growth OLS | **0.9046** | **0.7278** | **0.5255** |
+| Random Forest | 1.0481 | 0.8527 | 0.3599 |
+| XGBoost | 1.0943 | 0.8801 | 0.3022 |
+| LightGBM | 1.1078 | 0.8936 | 0.2848 |
+
+Conclusión:
+
+Los modelos ML baseline no superaron al modelo econométrico actual.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión

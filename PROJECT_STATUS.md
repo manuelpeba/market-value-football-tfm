@@ -357,6 +357,44 @@ Los índices se mantienen para interpretabilidad y análisis de scouting.
 
 ---
 
+## Sprint 4 — Machine Learning Baseline (Completed)
+
+### Sprint 4A
+
+Status: Completed
+
+Objetivo:
+
+Comparar modelos supervisados con el benchmark econométrico.
+
+Modelos:
+
+- Random Forest
+- XGBoost
+- LightGBM
+
+Split:
+
+```text
+Train: temporadas <2023
+Test: temporadas >=2023
+```
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Random Forest | 1.0481 | 0.8527 | 0.3599 |
+| XGBoost | 1.0943 | 0.8801 | 0.3022 |
+| LightGBM | 1.1078 | 0.8936 | 0.2848 |
+
+Conclusión:
+
+El benchmark econométrico mantiene mejor rendimiento predictivo.
+
+---
+
 # 🔄 Evolución de arquitectura
 
 El proyecto comenzó como un entorno principalmente exploratorio basado en notebooks.

@@ -321,6 +321,31 @@ La utilidad principal de estos índices se encuentra en la explicabilidad y sopo
 
 ---
 
+# Sprint 4 — Resultados experimentales
+
+Hipótesis:
+
+Los modelos no lineales pueden mejorar la predicción del valor de mercado.
+
+Resultado:
+
+Hipótesis rechazada para la versión baseline.
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Random Forest | 1.0481 | 0.8527 | 0.3599 |
+| XGBoost | 1.0943 | 0.8801 | 0.3022 |
+| LightGBM | 1.1078 | 0.8936 | 0.2848 |
+
+Interpretación:
+
+La mayor complejidad algorítmica no implica necesariamente mejor capacidad predictiva.
+
+---
+
 # 7. Preguntas esperables en defensa
 
 ¿Por qué no comparar métricas absolutas?
