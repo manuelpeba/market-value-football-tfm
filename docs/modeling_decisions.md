@@ -237,6 +237,37 @@ Las variables no serán utilizadas en el modelo econométrico final, aunque perm
 
 ---
 
+## Decisión: adopción de variables temporales y de crecimiento
+
+Se evaluó la incorporación de variables relacionadas con dinámica temporal.
+
+Variables:
+
+- age_squared
+- career_year
+- breakout_indicator
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline | 1.0035 | 0.8130 | 0.4160 |
+| Growth | 0.9046 | 0.7278 | 0.5255 |
+
+Observaciones:
+
+Se observa una mejora consistente en todas las métricas.
+
+Interpretación:
+
+El valor de mercado parece depender no solo del rendimiento deportivo actual sino también de factores relacionados con evolución y potencial futuro.
+
+Decisión:
+
+Growth OLS pasa a ser el modelo econométrico preferente para siguientes iteraciones.
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado

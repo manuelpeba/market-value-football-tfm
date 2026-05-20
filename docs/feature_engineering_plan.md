@@ -817,6 +817,75 @@ Las variables permanecen disponibles para futuros modelos ML o análisis explora
 
 ---
 
+## Temporal dynamics and growth features
+
+### Objetivo
+
+Capturar señales relacionadas con:
+
+- trayectoria profesional
+- crecimiento reciente
+- experiencia
+- potencial de desarrollo
+
+---
+
+### Variables generadas
+
+#### Market dynamics
+
+Variables:
+
+- market_value_growth_prev
+- delta_log_market_value_prev
+
+---
+
+#### Career evolution
+
+Variables:
+
+- career_year
+- age_squared
+
+---
+
+#### Breakout detection
+
+Variable:
+
+- breakout_indicator
+
+Definición:
+
+```text
+career_year <= 2
+AND
+minutes_played >= 900
+AND
+market_value_growth_prev > 0.25
+```
+
+---
+
+### Resultado experimental
+
+Las variables temporales aportaron mejoras significativas respecto al baseline:
+
+R²:
+
+```text
+0.4160 → 0.5255
+```
+
+RMSE:
+
+```text
+1.0035 → 0.9046
+```
+
+---
+
 # 🛡️ Prevención de leakage
 
 ## Principio fundamental

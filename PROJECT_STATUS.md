@@ -242,6 +242,64 @@ Las nuevas variables no serán incorporadas al modelo econométrico final debido
 
 ---
 
+## Sprint 2 — Temporal Dynamics (Completed)
+
+### Sprint 2A
+
+Status: Completed
+
+Objetivo:
+
+Introducir variables que capturen trayectoria y crecimiento profesional.
+
+Variables implementadas:
+
+- market_value_growth_prev
+- delta_log_market_value_prev
+- age_squared
+- career_year
+- breakout_indicator
+
+Implementaciones:
+
+- pipeline desacoplado
+- logging
+- MLflow tracking
+- generación automática de dataset enriquecido
+
+Output:
+
+```text
+data/processed/player_season_modeling_growth.parquet
+```
+
+---
+
+### Sprint 2B
+
+Status: Completed
+
+Objetivo:
+
+Evaluar impacto de las variables temporales sobre el modelo OLS.
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+
+Resultado:
+
+Incremento significativo del rendimiento predictivo.
+
+Decisión:
+
+Growth OLS se adopta como nueva especificación econométrica candidata.
+
+---
+
 # 🔄 Evolución de arquitectura
 
 El proyecto comenzó como un entorno principalmente exploratorio basado en notebooks.

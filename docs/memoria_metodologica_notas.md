@@ -263,6 +263,35 @@ El proceso CRISP-DM permitió validar y descartar una hipótesis de ingeniería 
 
 ---
 
+# Sprint 2 — Resultados experimentales
+
+Hipótesis:
+
+La incorporación de variables temporales y de progresión profesional mejora la capacidad predictiva del modelo.
+
+Resultado:
+
+Hipótesis aceptada.
+
+Comparación:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline | 1.0035 | 0.8130 | 0.4160 |
+| Growth | 0.9046 | 0.7278 | 0.5255 |
+
+Interpretación:
+
+Las variables relacionadas con crecimiento y trayectoria aportan información complementaria no capturada por el rendimiento instantáneo.
+
+Conclusión:
+
+El mercado incorpora expectativas futuras y señales de progresión profesional.
+
+El proceso CRISP-DM permitió identificar una mejora significativa mediante ingeniería de variables basada en conocimiento del dominio.
+
+---
+
 # 7. Preguntas esperables en defensa
 
 ¿Por qué no comparar métricas absolutas?

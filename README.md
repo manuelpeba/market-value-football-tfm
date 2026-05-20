@@ -1003,6 +1003,46 @@ Las variables se mantienen implementadas y registradas mediante MLflow, pero no 
 
 ---
 
+## Sprint 2 — Temporal Dynamics & Growth Features
+
+Se implementó un segundo bloque de ingeniería de variables centrado en dinámica temporal y progresión del jugador.
+
+La motivación es que el mercado de fichajes no valora únicamente el rendimiento actual, sino también señales de crecimiento y trayectoria profesional.
+
+### Variables añadidas
+
+```text
+market_value_growth_prev
+delta_log_market_value_prev
+age_squared
+career_year
+breakout_indicator
+```
+
+Descripción:
+
+- market_value_growth_prev → tendencia reciente de valoración
+- delta_log_market_value_prev → velocidad de crecimiento
+- age_squared → relación no lineal entre edad y valor
+- career_year → experiencia acumulada
+- breakout_indicator → identificación de jóvenes en explosión
+
+### Resultados experimentales
+
+| Modelo | RMSE ↓ | MAE ↓ | R² ↑ |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Positional OLS | 1.0065 | 0.8166 | 0.4148 |
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+
+Conclusión:
+
+Las variables temporales mejoraron significativamente la capacidad predictiva del modelo.
+
+El modelo Growth OLS pasa a ser el modelo econométrico preferente para siguientes iteraciones.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión
