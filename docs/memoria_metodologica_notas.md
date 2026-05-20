@@ -292,6 +292,35 @@ El proceso CRISP-DM permitió identificar una mejora significativa mediante inge
 
 ---
 
+# Sprint 3 — Resultados experimentales
+
+Hipótesis:
+
+La agregación de métricas futbolísticas en índices compuestos puede mejorar la capacidad predictiva del modelo.
+
+Resultado:
+
+Hipótesis parcialmente aceptada.
+
+Comparación:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Growth OLS + Indices | 0.9046 | 0.7278 | 0.5255 |
+
+Interpretación:
+
+Los índices no aportan señal predictiva adicional.
+
+Sin embargo, proporcionan una representación más interpretable del rendimiento futbolístico.
+
+Conclusión:
+
+La utilidad principal de estos índices se encuentra en la explicabilidad y soporte a decisiones de scouting más que en la mejora del rendimiento estadístico.
+
+---
+
 # 7. Preguntas esperables en defensa
 
 ¿Por qué no comparar métricas absolutas?

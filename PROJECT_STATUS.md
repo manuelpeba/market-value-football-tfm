@@ -300,6 +300,63 @@ Growth OLS se adopta como nueva especificación econométrica candidata.
 
 ---
 
+## Sprint 3 — Composite Football Indices (Completed)
+
+### Sprint 3A
+
+Status: Completed
+
+Objetivo:
+
+Crear indicadores agregados de rendimiento futbolístico.
+
+Variables implementadas:
+
+- finishing_index
+- playmaking_index
+- growth_index
+- experience_index
+
+Implementaciones:
+
+- pipeline desacoplado
+- logging
+- MLflow tracking
+- generación automática de dataset enriquecido
+
+Output:
+
+```text
+data/processed/player_season_modeling_indices.parquet
+```
+
+---
+
+### Sprint 3B
+
+Status: Completed
+
+Objetivo:
+
+Evaluar el impacto de los índices agregados sobre el modelo econométrico.
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Growth OLS + Indices | 0.9046 | 0.7278 | 0.5255 |
+
+Resultado:
+
+No se observó mejora predictiva.
+
+Decisión:
+
+Los índices se mantienen para interpretabilidad y análisis de scouting.
+
+---
+
 # 🔄 Evolución de arquitectura
 
 El proyecto comenzó como un entorno principalmente exploratorio basado en notebooks.

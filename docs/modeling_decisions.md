@@ -268,6 +268,49 @@ Growth OLS pasa a ser el modelo econométrico preferente para siguientes iteraci
 
 ---
 
+## Decisión: uso de índices compuestos para explicabilidad
+
+Se evaluó la incorporación de índices agregados construidos mediante combinación de variables futbolísticas.
+
+Índices:
+
+- finishing_index
+- playmaking_index
+- growth_index
+- experience_index
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Growth OLS + Indices | 0.9046 | 0.7278 | 0.5255 |
+
+Observaciones:
+
+No se observó mejora cuantitativa.
+
+Posible explicación:
+
+Los índices agregan información ya presente en:
+
+- goals_per90
+- assists_per90
+- age
+- career_year
+
+Decisión:
+
+Los índices no serán incorporados al modelo econométrico final como variables predictoras.
+
+No obstante, permanecerán implementados para tareas de:
+
+- scouting
+- interpretación de rankings
+- reporting
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado

@@ -1043,6 +1043,43 @@ El modelo Growth OLS pasa a ser el modelo econométrico preferente para siguient
 
 ---
 
+## Sprint 3 — Composite Football Indices
+
+Se implementó un bloque adicional de ingeniería de variables orientado a construir indicadores agregados de rendimiento futbolístico.
+
+El objetivo no era únicamente mejorar capacidad predictiva sino aumentar la interpretabilidad del sistema desde una perspectiva de scouting y toma de decisiones.
+
+### Índices creados
+
+```text
+finishing_index
+playmaking_index
+growth_index
+experience_index
+```
+
+Descripción:
+
+- finishing_index → capacidad ofensiva y finalización
+- playmaking_index → generación ofensiva y creación
+- growth_index → señales de crecimiento reciente
+- experience_index → madurez y experiencia acumulada
+
+### Resultados experimentales
+
+| Modelo | RMSE ↓ | MAE ↓ | R² ↑ |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Growth OLS + Composite Indices | 0.9046 | 0.7278 | 0.5255 |
+
+Conclusión:
+
+Los índices compuestos no aportaron mejora predictiva adicional.
+
+Sin embargo, proporcionan una representación más interpretable del rendimiento deportivo y se mantienen para tareas de scouting y análisis descriptivo.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión

@@ -886,6 +886,69 @@ RMSE:
 
 ---
 
+## Composite football indices
+
+### Objetivo
+
+Construir variables agregadas que representen dimensiones latentes del rendimiento deportivo.
+
+---
+
+### Índices generados
+
+#### Finishing Index
+
+Variables:
+
+- goals_per90
+- goals_position_percentile
+
+---
+
+#### Playmaking Index
+
+Variables:
+
+- assists_per90
+- assists_position_percentile
+
+---
+
+#### Growth Index
+
+Variables:
+
+- market_value_growth_prev
+- delta_log_market_value_prev
+- breakout_indicator
+
+---
+
+#### Experience Index
+
+Variables:
+
+- age
+- career_year
+
+---
+
+### Resultado experimental
+
+Los índices agregados no mejoraron las métricas predictivas del modelo OLS.
+
+Interpretación:
+
+La información aportada por los índices ya estaba parcialmente representada por variables individuales presentes en el modelo.
+
+Uso previsto:
+
+- rankings scouting
+- análisis descriptivo
+- explicabilidad
+
+---
+
 # 🛡️ Prevención de leakage
 
 ## Principio fundamental
