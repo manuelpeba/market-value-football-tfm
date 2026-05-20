@@ -23,7 +23,7 @@ from src.models.econometric.specifications import (
 # ==========================================================
 
 INPUT_DATA = Path(
-    "data/processed/player_season_modeling_growth.parquet"
+    "data/processed/player_season_modeling_indices.parquet"
 )
 
 MLFLOW_URI = (

@@ -59,6 +59,9 @@ GROWTH_OLS_FEATURES = [
     "goals_per90",
     "assists_per90",
     "breakout_indicator",
+    "finishing_index",
+    "playmaking_index",
+    "experience_index",
 ]
 
 
