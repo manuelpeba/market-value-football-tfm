@@ -182,6 +182,64 @@ Pendiente:
 * API scoring
 * scouting reports automáticos
 
+## Sprint 1 — Positional Normalization (Completed)
+
+### Sprint 1A
+
+Status: Completed
+
+Objetivo:
+
+Implementar normalización contextual por posición y liga.
+
+Variables creadas:
+
+- goals_per90_pos_z
+- assists_per90_pos_z
+- shots_per90_pos_z
+- goals_position_percentile
+- assists_position_percentile
+
+Agrupación:
+
+```text
+[position_group, league]
+```
+
+Implementaciones:
+
+- pipeline desacoplado
+- logging
+- MLflow tracking
+- generación automática de dataset avanzado
+
+Output:
+
+```text
+data/processed/player_season_modeling_advanced.parquet
+```
+
+---
+
+### Sprint 1B
+
+Status: Completed
+
+Objetivo:
+
+Evaluar impacto predictivo sobre el modelo OLS.
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Advanced Positional OLS | 1.0065 | 0.8166 | 0.4148 |
+
+Decisión:
+
+Las nuevas variables no serán incorporadas al modelo econométrico final debido a ausencia de mejora predictiva.
+
 ---
 
 # 🔄 Evolución de arquitectura

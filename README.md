@@ -962,6 +962,47 @@ Esto refuerza la importancia futura de:
 
 ---
 
+## Sprint 1 — Positional Normalization Experiment
+
+Se implementó un pipeline adicional de ingeniería de variables para evaluar si una normalización contextual por posición y competición podía mejorar la capacidad predictiva del modelo econométrico.
+
+### Features añadidas
+
+```text
+goals_per90_pos_z
+assists_per90_pos_z
+shots_per90_pos_z
+goals_position_percentile
+assists_position_percentile
+```
+
+Agrupación utilizada:
+
+```text
+[position_group, league]
+```
+
+Motivación:
+
+- reducir sesgo ofensivo
+- mejorar comparabilidad entre jugadores
+- capturar diferencias estructurales entre ligas
+
+### Resultados experimentales
+
+| Model | RMSE ↓ | MAE ↓ | R² ↑ |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Advanced Positional OLS | 1.0065 | 0.8166 | 0.4148 |
+
+Conclusión:
+
+Las nuevas variables no produjeron mejoras significativas y mostraron una ligera degradación del rendimiento.
+
+Las variables se mantienen implementadas y registradas mediante MLflow, pero no serán incorporadas al modelo econométrico final.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión

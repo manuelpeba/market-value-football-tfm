@@ -764,6 +764,59 @@ feature_groups:
 
 ---
 
+## Positional normalization experiment
+
+### Objetivo
+
+Evaluar si la normalización relativa por contexto competitivo mejora el rendimiento predictivo.
+
+---
+
+### Variables generadas
+
+#### Z-score contextual
+
+Variables:
+
+- goals_per90_pos_z
+- assists_per90_pos_z
+- shots_per90_pos_z
+
+Fórmula:
+
+z=(x−μ)/σ
+
+donde:
+
+- x = valor individual
+- μ = media del grupo
+- σ = desviación estándar del grupo
+
+---
+
+#### Percentiles relativos
+
+Variables:
+
+- goals_position_percentile
+- assists_position_percentile
+
+Agrupación utilizada:
+
+```text
+[position_group, league]
+```
+
+---
+
+### Resultado experimental
+
+No se observaron mejoras predictivas relevantes tras incorporar estas variables.
+
+Las variables permanecen disponibles para futuros modelos ML o análisis exploratorios.
+
+---
+
 # 🛡️ Prevención de leakage
 
 ## Principio fundamental

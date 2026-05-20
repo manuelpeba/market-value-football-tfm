@@ -201,6 +201,42 @@ La transformación logarítmica permite:
 
 ---
 
+## Decisión: exclusión de variables de normalización contextual en modelo final
+
+Se evaluó la incorporación de variables derivadas de normalización contextual por posición y competición:
+
+Variables:
+
+- goals_per90_pos_z
+- assists_per90_pos_z
+- goals_position_percentile
+- assists_position_percentile
+
+Resultados:
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Advanced OLS | 1.0065 | 0.8166 | 0.4148 |
+
+Observaciones:
+
+Se detectó una ligera degradación del rendimiento.
+
+Posible explicación:
+
+Las nuevas variables presentan redundancia informativa con:
+
+- league fixed effects
+- season fixed effects
+- position fixed effects
+
+Decisión:
+
+Las variables no serán utilizadas en el modelo econométrico final, aunque permanecerán implementadas para futuras iteraciones y modelos supervisados.
+
+---
+
 # 📚 Decisiones econométricas
 
 ## Modelo baseline seleccionado
