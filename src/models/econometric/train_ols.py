@@ -12,18 +12,18 @@ from sklearn.metrics import (
 )
 
 from src.models.econometric.specifications import (
-    BASE_OLS_FEATURES,
-    ADVANCED_OLS_FEATURES,
+    OLS_MODEL_SPECS,
     FIXED_EFFECTS,
     ECONOMETRIC_TARGET,
 )
+
 
 # ==========================================================
 # CONFIG
 # ==========================================================
 
 INPUT_DATA = Path(
-    "data/processed/player_season_modeling_advanced.parquet"
+    "data/processed/player_season_modeling_growth.parquet"
 )
 
 MLFLOW_URI = (
@@ -79,7 +79,7 @@ def ensure_modeling_columns(
 
 def build_formula(
     features: list[str]
-) -> str:
+):
 
     numeric = " + ".join(
         features
@@ -87,8 +87,8 @@ def build_formula(
 
     fixed = " + ".join(
         [
-            f"C({col})"
-            for col in FIXED_EFFECTS
+            f"C({f})"
+            for f in FIXED_EFFECTS
         ]
     )
 
@@ -103,7 +103,7 @@ def build_formula(
     return formula
 
 
-def evaluate_regression(
+def evaluate(
     y_true,
     y_pred
 ):
@@ -111,30 +111,29 @@ def evaluate_regression(
     return {
 
         "rmse":
-            np.sqrt(
-                mean_squared_error(
-                    y_true,
-                    y_pred
-                )
-            ),
-
-        "mae":
-            mean_absolute_error(
-                y_true,
-                y_pred
-            ),
-
-        "r2":
-            r2_score(
+        np.sqrt(
+            mean_squared_error(
                 y_true,
                 y_pred
             )
+        ),
 
+        "mae":
+        mean_absolute_error(
+            y_true,
+            y_pred
+        ),
+
+        "r2":
+        r2_score(
+            y_true,
+            y_pred
+        )
     }
 
 
 # ==========================================================
-# MODEL RUN
+# MODEL EXECUTION
 # ==========================================================
 
 def run_model(
@@ -149,13 +148,20 @@ def run_model(
 
     cols = (
         features
-        + FIXED_EFFECTS
-        + [ECONOMETRIC_TARGET]
+        +
+        FIXED_EFFECTS
+        +
+        [ECONOMETRIC_TARGET]
     )
 
     model_df = (
-        df[cols]
+
+        df[
+            cols
+        ]
+
         .dropna()
+
     )
 
     logger.info(
@@ -177,13 +183,15 @@ def run_model(
         cov_type="HC3"
     )
 
-    predictions = model.predict(
+    pred = model.predict(
         model_df
     )
 
-    metrics = evaluate_regression(
-        model_df[ECONOMETRIC_TARGET],
-        predictions
+    metrics = evaluate(
+        model_df[
+            ECONOMETRIC_TARGET
+        ],
+        pred
     )
 
     with mlflow.start_run(
@@ -191,7 +199,7 @@ def run_model(
     ):
 
         mlflow.log_param(
-            "model_name",
+            "model",
             name
         )
 
@@ -199,13 +207,6 @@ def run_model(
             "features",
             ",".join(
                 features
-            )
-        )
-
-        mlflow.log_param(
-            "fixed_effects",
-            ",".join(
-                FIXED_EFFECTS
             )
         )
 
@@ -259,14 +260,20 @@ def run_model(
             f"{k}: {v:.4f}"
         )
 
-    return model
-
 
 # ==========================================================
 # MAIN
 # ==========================================================
 
 def main():
+
+    mlflow.set_tracking_uri(
+        MLFLOW_URI
+    )
+
+    mlflow.set_experiment(
+        EXPERIMENT_NAME
+    )
 
     logger.info(
         "Loading dataset..."
@@ -288,25 +295,15 @@ def main():
         df
     )
 
-    mlflow.set_tracking_uri(
-        MLFLOW_URI
-    )
+    for model_name, spec in OLS_MODEL_SPECS.items():
 
-    mlflow.set_experiment(
-        EXPERIMENT_NAME
-    )
-
-    run_model(
-        name="baseline_ols",
-        features=BASE_OLS_FEATURES,
-        df=df
-    )
-
-    run_model(
-        name="advanced_positional_ols",
-        features=ADVANCED_OLS_FEATURES,
-        df=df
-    )
+        run_model(
+            name=model_name,
+            features=spec[
+                "features"
+            ],
+            df=df
+        )
 
     logger.info(
         "Training finished."
