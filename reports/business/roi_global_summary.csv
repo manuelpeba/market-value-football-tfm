@@ -1,0 +1,2 @@
+players,total_market_value_eur,total_predicted_value_eur,total_expected_profit_eur,avg_expected_profit_eur,median_expected_profit_eur,avg_expected_roi_pct,median_expected_roi_pct,positive_roi_rate,total_risk_adjusted_profit_eur,avg_risk_adjusted_roi_pct,avg_opportunity_score,avg_confidence_score,avg_growth_score
+1138,13487050000.0,10261766437.596523,-1612641781.2017388,-1417084.1662581186,-23269.109913744498,20.30374281952742,-0.9587856631016121,0.4938488576449912,-1376259247.0140162,16.213149609363743,52.447550959852755,80.46896113677346,20.834483016216055
