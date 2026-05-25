@@ -1,6 +1,5 @@
 # 📌 Estado del proyecto
 
-::: {align="center"}
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Modeling](https://img.shields.io/badge/Modeling-OLS%20%2B%20ML-blue)
@@ -9,9 +8,10 @@
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
 ![Status](https://img.shields.io/badge/Status-Scoring%20Engine-success)
-:::
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📑 Tabla de contenidos
 
@@ -41,7 +41,9 @@
 -   [🚀 Próximos pasos](#-próximos-pasos)
 -   [🧠 Conclusión](#-conclusión)
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🧠 Resumen ejecutivo
 
@@ -61,20 +63,24 @@ El sistema se basa en:
 -   experiment tracking reproducible
 -   configuración centralizada desacoplada
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📊 Estado actual del sistema
 
-  Métrica                                 Valor
-  --------------------- -----------------------
-  Observaciones panel                    23,580
-  Dataset modelizable                     3,297
-  Jugadores únicos                        1,847
-  Cobertura temporal      2019-2020 → 2024-2025
-  Ligas                                       7
-  Match rate                             88.36%
+| Métrica | Valor |
+|---|---:|
+| Observaciones panel | 23,580 |
+| Dataset modelizable | 3,297 |
+| Jugadores únicos | 1,847 |
+| Cobertura temporal | 2019-2020 → 2024-2025 |
+| Ligas | 7 |
+| Match rate | 88.36% |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## ✅ Capacidades actuales
 
@@ -92,7 +98,9 @@ El sistema ya permite:
 -   versionar configuraciones de entrenamiento
 -   desacoplar parámetros mediante configuración YAML
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Estado global
 
@@ -116,7 +124,9 @@ sino:
 feature engineering y calidad de señal predictiva
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📚 Estado CRISP-DM
 
@@ -126,7 +136,9 @@ feature engineering y calidad de señal predictiva
 Modeling → Evaluation
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## ✅ Fases completadas
 
@@ -137,7 +149,9 @@ Modeling → Evaluation
 -   framing econométrico
 -   definición de outputs de negocio
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Data Understanding
 
@@ -147,7 +161,9 @@ Modeling → Evaluation
 -   evaluación de calidad
 -   análisis de cobertura
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Data Preparation
 
@@ -158,7 +174,9 @@ Modeling → Evaluation
 -   dataset modelizable
 -   control de leakage
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 🔄 Fases en curso
 
@@ -170,7 +188,9 @@ Modeling → Evaluation
 -   tracking experimental
 -   persistencia de artefactos
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Evaluation
 
@@ -179,7 +199,9 @@ Modeling → Evaluation
 -   estabilidad de rankings
 -   análisis comparativo OLS vs ML
 
-------------------------------------------------------------------------
+
+---
+
 
 ## ⏳ Próximas fases
 
@@ -228,7 +250,9 @@ Output:
 data/processed/player_season_modeling_advanced.parquet
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Sprint 1B
 
@@ -240,17 +264,19 @@ Evaluar impacto predictivo sobre el modelo OLS.
 
 Resultados:
 
-  Modelo                        RMSE      MAE       R²
-  ------------------------- -------- -------- --------
-  Baseline OLS                1.0035   0.8130   0.4160
-  Advanced Positional OLS     1.0065   0.8166   0.4148
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Advanced Positional OLS | 1.0065 | 0.8166 | 0.4148 |
 
 Decisión:
 
 Las nuevas variables no serán incorporadas al modelo econométrico final
 debido a ausencia de mejora predictiva.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 2 --- Temporal Dynamics (Completed)
 
@@ -283,7 +309,9 @@ Output:
 data/processed/player_season_modeling_growth.parquet
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Sprint 2B
 
@@ -295,10 +323,10 @@ Evaluar impacto de las variables temporales sobre el modelo OLS.
 
 Resultados:
 
-  Modelo             RMSE      MAE       R²
-  -------------- -------- -------- --------
-  Baseline OLS     1.0035   0.8130   0.4160
-  Growth OLS       0.9046   0.7278   0.5255
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS | 1.0035 | 0.8130 | 0.4160 |
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
 
 Resultado:
 
@@ -308,7 +336,9 @@ Decisión:
 
 Growth OLS se adopta como nueva especificación econométrica candidata.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 3 --- Composite Football Indices (Completed)
 
@@ -340,7 +370,9 @@ Output:
 data/processed/player_season_modeling_indices.parquet
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Sprint 3B
 
@@ -353,10 +385,10 @@ econométrico.
 
 Resultados:
 
-  Modelo                     RMSE      MAE       R²
-  ---------------------- -------- -------- --------
-  Growth OLS               0.9046   0.7278   0.5255
-  Growth OLS + Indices     0.9046   0.7278   0.5255
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Growth OLS + Indices | 0.9046 | 0.7278 | 0.5255 |
 
 Resultado:
 
@@ -366,7 +398,9 @@ Decisión:
 
 Los índices se mantienen para interpretabilidad y análisis de scouting.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 4 --- Machine Learning Baseline (Completed)
 
@@ -393,18 +427,20 @@ Test: temporadas >=2023
 
 Resultados:
 
-  Modelo              RMSE      MAE       R²
-  --------------- -------- -------- --------
-  Growth OLS        0.9046   0.7278   0.5255
-  Random Forest     1.0481   0.8527   0.3599
-  XGBoost           1.0943   0.8801   0.3022
-  LightGBM          1.1078   0.8936   0.2848
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Random Forest | 1.0481 | 0.8527 | 0.3599 |
+| XGBoost | 1.0943 | 0.8801 | 0.3022 |
+| LightGBM | 1.1078 | 0.8936 | 0.2848 |
 
 Conclusión:
 
 El benchmark econométrico mantiene mejor rendimiento predictivo.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 4B --- Improved ML Pipeline (Completed)
 
@@ -444,13 +480,13 @@ src/models/machine_learning/train_ml_tuned.py
 
 ### Resultados
 
-  Modelo                         RMSE          MAE           R²
-  ---------------------- ------------ ------------ ------------
-  Growth OLS                   0.9046       0.7278       0.5255
-  Tuned Random Forest          0.9076       0.7315       0.5200
-  Tuned XGBoost            **0.8753**   **0.7004**   **0.5536**
-  Tuned LightGBM               0.8864       0.7162       0.5421
-  HistGradientBoosting         0.8825       0.7118       0.5462
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
+| Tuned Random Forest | 0.9076 | 0.7315 | 0.5200 |
+| Tuned XGBoost | **0.8753** | **0.7004** | **0.5536** |
+| Tuned LightGBM | 0.8864 | 0.7162 | 0.5421 |
+| HistGradientBoosting | 0.8825 | 0.7118 | 0.5462 |
 
 ### Resultado principal
 
@@ -503,7 +539,9 @@ Objetivo:
 Transformar el mejor modelo predictivo actual en un modelo explicable y
 defendible para scouting profesional.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 4C --- Explainability + Player-Level SHAP (Completed)
 
@@ -561,7 +599,9 @@ interpretabilidad accionable.
 ``` text
 Sprint 5 — Final Scoring System + Undervalued Player Ranking
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 5 --- Final Scoring System + Automated Rankings (Completed)
 
@@ -627,7 +667,9 @@ predicted_market_value - observed_market_value
 
 El sistema deja de producir únicamente predicciones y pasa a generar recomendaciones priorizadas orientadas a soporte de decisiones.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Sprint 6 --- Ranking Validation & Business Evaluation (Completed)
 
@@ -651,10 +693,10 @@ build_precision_at_k.py
 
 | K | Precision@K |
 |---:|---:|
-|10|0.90|
-|20|0.90|
-|50|0.90|
-|100|0.85|
+| 10 | 0.90 |
+| 20 | 0.90 |
+| 50 | 0.90 |
+| 100 | 0.85 |
 
 ### Implicación metodológica
 
@@ -678,7 +720,9 @@ Business Layer
 
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🔄 Evolución de arquitectura
 
@@ -700,7 +744,9 @@ Actualmente:
 -   la configuración está centralizada
 -   los experimentos quedan registrados automáticamente
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Cambio arquitectónico principal
 
@@ -710,7 +756,9 @@ Actualmente:
 Notebook-centric workflow
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Ahora
 
@@ -730,7 +778,9 @@ Separación clara entre:
 -   tracking experimental
 -   configuración
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🏗️ Arquitectura actual del sistema
 
@@ -762,7 +812,9 @@ J --> L[Predictions]
 J --> M[Diagnostics]
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📂 Arquitectura física
 
@@ -780,33 +832,39 @@ market-value-football-tfm/
 ├── tests/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 🧩 Componentes principales
 
-  Componente            Estado
-  --------------------- --------
-  Data pipelines        ✅
-  Matching pipeline     ✅
-  Modeling dataset      ✅
-  OLS pipeline          ✅
-  ML pipeline           ✅
-  Scoring pipeline      ✅
-  Evaluation pipeline   ✅
-  Temporal validation   ✅
-  Model persistence     ✅
-  Ranking generation    ✅
-  MLflow tracking       ✅
-  Configuración YAML    ✅
+| Componente | Estado |
+|---|---|
+| Data pipelines | ✅ |
+| Matching pipeline | ✅ |
+| Modeling dataset | ✅ |
+| OLS pipeline | ✅ |
+| ML pipeline | ✅ |
+| Scoring pipeline | ✅ |
+| Evaluation pipeline | ✅ |
+| Temporal validation | ✅ |
+| Model persistence | ✅ |
+| Ranking generation | ✅ |
+| MLflow tracking | ✅ |
+| Configuración YAML | ✅ |
 
-------------------------------------------------------------------------
+
+---
+
 
 # ⚙️ Configuración centralizada
 
 El sistema incorpora actualmente una arquitectura de configuración
 centralizada desacoplada del código de negocio.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📂 Directorio de configuración
 
@@ -821,7 +879,9 @@ config/
 └── project.yaml
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Objetivos
 
@@ -834,7 +894,9 @@ La configuración centralizada permite:
 -   centralizar decisiones metodológicas
 -   mejorar mantenibilidad
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Parámetros centralizados actuales
 
@@ -846,7 +908,9 @@ MIN_CLUB_SCORE
 FUZZY_THRESHOLD
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Modeling
 
@@ -857,7 +921,9 @@ fixed_effects
 validation_split
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Feature Engineering
 
@@ -868,7 +934,9 @@ league_filters
 feature_groups
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Paths
 
@@ -878,7 +946,9 @@ artifacts_paths
 reports_paths
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Beneficios arquitectónicos
 
@@ -890,7 +960,9 @@ La centralización de configuración facilita:
 -   escalabilidad futura
 -   despliegue reproducible
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🧪 Experiment tracking con MLflow
 
@@ -900,7 +972,9 @@ El proyecto incorpora actualmente tracking experimental mediante:
 MLflow
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Objetivos
 
@@ -913,7 +987,9 @@ MLflow permite registrar automáticamente:
 -   modelos
 -   outputs experimentales
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📂 Directorio principal
 
@@ -921,7 +997,9 @@ MLflow permite registrar automáticamente:
 mlruns/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Información registrada
 
@@ -934,7 +1012,9 @@ mlruns/
 -   thresholds
 -   hiperparámetros
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Métricas
 
@@ -942,7 +1022,9 @@ mlruns/
 -   MAE
 -   R²
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Artefactos
 
@@ -952,7 +1034,9 @@ mlruns/
 -   outputs CSV
 -   rankings
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Beneficios metodológicos
 
@@ -965,7 +1049,9 @@ El tracking experimental mejora significativamente:
 -   auditoría analítica
 -   documentación del TFM
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Impacto arquitectónico
 
@@ -981,7 +1067,9 @@ hacia:
 entorno experimental analítico profesional
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # ⚠️ Problema crítico del proyecto
 
@@ -990,7 +1078,9 @@ entorno experimental analítico profesional
 El principal reto técnico del proyecto ha sido la integración entre
 FBref y Transfermarkt.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 🚧 Problemas estructurales
 
@@ -1001,7 +1091,9 @@ FBref y Transfermarkt.
 -   ❌ granularidad temporal distinta
 -   ❌ cambios intra-temporada
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📉 Riesgos derivados
 
@@ -1013,7 +1105,9 @@ Sin matching robusto:
 -   rankings incorrectos
 -   pérdida de validez del scoring
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Impacto técnico
 
@@ -1023,13 +1117,17 @@ Este problema consumió aproximadamente:
 40-50% del trabajo técnico total
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🛠️ Sistema de matching implementado
 
 Se desarrolló un pipeline jerárquico multi-validación.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 1️⃣ Normalización de nombres
 
@@ -1037,7 +1135,9 @@ Se desarrolló un pipeline jerárquico multi-validación.
 -   eliminación de acentos
 -   limpieza de strings
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 2️⃣ Matching exacto
 
@@ -1047,7 +1147,9 @@ Variables utilizadas:
 -   temporada
 -   edad aproximada
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 3️⃣ Validación por club
 
@@ -1057,7 +1159,9 @@ Threshold:
 MIN_CLUB_SCORE = 70
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 4️⃣ Matching fuzzy
 
@@ -1073,7 +1177,9 @@ Threshold:
 FUZZY_THRESHOLD = 92
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 5️⃣ Validación por edad
 
@@ -1081,29 +1187,35 @@ FUZZY_THRESHOLD = 92
 MAX_AGE_DIFF = 1.5
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📈 Resultados del matching
 
 ## 📊 Resultados globales
 
-  Métrica                       Resultado
-  --------------------------- -----------
-  Match rate                       88.36%
-  Observaciones emparejadas        20,836
-  Observaciones totales            23,580
+| Métrica | Resultado |
+|---|---:|
+| Match rate | 88.36% |
+| Observaciones emparejadas | 20,836 |
+| Observaciones totales | 23,580 |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Distribución final
 
-  Método                       Resultado
-  -------------------------- -----------
-  exact_age_validated          dominante
-  exact_age_club_validated     relevante
-  fuzzy_age_club_validated      residual
+| Método | Resultado |
+|---|---|
+| exact_age_validated | dominante |
+| exact_age_club_validated | relevante |
+| fuzzy_age_club_validated | residual |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Interpretación
 
@@ -1114,20 +1226,24 @@ reduciendo riesgo de false positives.
 
 👉 El sistema prioriza cobertura manteniendo control de calidad.
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📊 Dataset final de modelización
 
 ## Resultado tras filtros
 
-  Métrica            Valor
-  --------------- --------
-  Observaciones      3,297
-  Jugadores          1,847
-  Ligas                  7
-  Edad              18--23
+| Métrica | Valor |
+|---|---:|
+| Observaciones | 3,297 |
+| Jugadores | 1,847 |
+| Ligas | 7 |
+| Edad | 18–23 |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Filtros aplicados
 
@@ -1137,32 +1253,38 @@ reduciendo riesgo de false positives.
 -   valor de mercado disponible
 -   posición válida
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Distribución por posición
 
-  Posición     Observaciones
-  ---------- ---------------
-  MID                  1,705
-  DEF                  1,147
-  ATT                    351
-  GK                      94
+| Posición | Observaciones |
+|---|---:|
+| MID | 1,705 |
+| DEF | 1,147 |
+| ATT | 351 |
+| GK | 94 |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Distribución por liga
 
-  Liga               Observaciones
-  ---------------- ---------------
-  Ligue 1                      627
-  Eredivisie                   557
-  Serie A                      494
-  Premier League               466
-  Bundesliga                   438
-  LaLiga                       373
-  Liga Portugal                342
+| Liga | Observaciones |
+|---|---:|
+| Ligue 1 | 627 |
+| Eredivisie | 557 |
+| Serie A | 494 |
+| Premier League | 466 |
+| Bundesliga | 438 |
+| LaLiga | 373 |
+| Liga Portugal | 342 |
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📈 Estado del pipeline econométrico
 
@@ -1170,17 +1292,21 @@ reduciendo riesgo de false positives.
 src/models/econometric/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Componentes implementados
 
-  Archivo               Estado
-  --------------------- --------
-  specifications.py     ✅
-  train_ols.py          ✅
-  run_ols_pipeline.py   ✅
+| Archivo | Estado |
+|---|---|
+| specifications.py | ✅ |
+| train_ols.py | ✅ |
+| run_ols_pipeline.py | ✅ |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Funcionalidades actuales
 
@@ -1196,7 +1322,9 @@ src/models/econometric/
 -   tracking MLflow
 -   logging de métricas
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Modelo final
 
@@ -1211,17 +1339,21 @@ season FE +
 position FE
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📊 Resultados out-of-sample
 
-  Modelo                     MAE         RMSE           R²
-  ----------------- ------------ ------------ ------------
-  OLS simple              1.0036       1.2165       0.1472
-  OLS + League FE         0.7954       0.9896       0.4356
-  OLS final FE        **0.7907**   **0.9823**   **0.4439**
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS simple | 1.0036 | 1.2165 | 0.1472 |
+| OLS + League FE | 0.7954 | 0.9896 | 0.4356 |
+| OLS final FE | **0.7907** | **0.9823** | **0.4439** |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Hallazgos principales
 
@@ -1229,13 +1361,17 @@ position FE
 
 -   prima estructural positiva significativa
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Eredivisie / Liga Portugal
 
 -   descuentos estructurales relevantes
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Variables más relevantes
 
@@ -1243,7 +1379,9 @@ position FE
 -   goles por 90
 -   asistencias por 90
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🤖 Estado del pipeline Machine Learning
 
@@ -1251,17 +1389,21 @@ position FE
 src/models/machine_learning/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Componentes implementados
 
-  Archivo              Estado
-  -------------------- --------
-  pipelines.py         ✅
-  train_ml.py          ✅
-  run_ml_pipeline.py   ✅
+| Archivo | Estado |
+|---|---|
+| pipelines.py | ✅ |
+| train_ml.py | ✅ |
+| run_ml_pipeline.py | ✅ |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Modelos implementados
 
@@ -1269,7 +1411,9 @@ src/models/machine_learning/
 -   HistGradientBoosting
 -   GradientBoostingRegressor
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Funcionalidades actuales
 
@@ -1282,18 +1426,22 @@ src/models/machine_learning/
 -   tracking MLflow
 -   logging de hiperparámetros
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📊 Resultados ML
 
-  Modelo                          MAE         RMSE           R²
-  ---------------------- ------------ ------------ ------------
-  OLS final                    0.7907       0.9823       0.4439
-  Random Forest                0.7704       0.9691       0.4587
-  HistGradientBoosting         0.7723       0.9642       0.4721
-  Gradient Boosting        **0.7618**   **0.9515**   **0.4813**
+| Modelo | MAE | RMSE | R² |
+|---|---:|---:|---:|
+| OLS final | 0.7907 | 0.9823 | 0.4439 |
+| Random Forest | 0.7704 | 0.9691 | 0.4587 |
+| HistGradientBoosting | 0.7723 | 0.9642 | 0.4721 |
+| Gradient Boosting | **0.7618** | **0.9515** | **0.4813** |
 
-------------------------------------------------------------------------
+
+---
+
 
 ## 📌 Insight principal
 
@@ -1305,7 +1453,9 @@ el principal cuello de botella es el signal del dataset
 
 y no necesariamente el algoritmo.
 
-------------------------------------------------------------------------
+
+---
+
 
 # 💡 Estado del scoring pipeline
 
@@ -1315,13 +1465,13 @@ src/models/scoring/
 
 ## Componentes implementados
 
-  Archivo                       Estado
-  ----------------------------- --------
-  build_inefficiency_score.py   ✅
-  build_growth_score.py         ✅
-  build_confidence_score.py     ✅
-  build_opportunity_score.py    ✅
-  generate_rankings.py          ✅
+| Archivo | Estado |
+|---|---|
+| build_inefficiency_score.py | ✅ |
+| build_growth_score.py | ✅ |
+| build_confidence_score.py | ✅ |
+| build_opportunity_score.py | ✅ |
+| generate_rankings.py | ✅ |
 
 ## Señales implementadas
 
@@ -1359,11 +1509,11 @@ Basado en:
 
 ## Resultados actuales
 
-  Métrica                     Valor
-  ------------------------- -------
-  Observaciones scoreadas     1,138
-  Scouting targets               53
-  High priority + targets       376
+| Métrica | Valor |
+|---|---:|
+| Observaciones scoreadas | 1,138 |
+| Scouting targets | 53 |
+| High priority + targets | 376 |
 
 ## Rankings automáticos
 
@@ -1380,7 +1530,9 @@ Basado en:
 src/models/evaluation/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Funcionalidades actuales
 
@@ -1390,7 +1542,9 @@ src/models/evaluation/
 -   reporting reproducible
 -   tracking de experimentos
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Métricas utilizadas
 
@@ -1398,7 +1552,9 @@ src/models/evaluation/
 -   MAE
 -   R²
 
-------------------------------------------------------------------------
+
+---
+
 
 # 📤 Outputs generados
 
@@ -1408,7 +1564,9 @@ src/models/evaluation/
 reports/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Artifacts
 
@@ -1416,7 +1574,9 @@ reports/
 artifacts/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## MLflow Tracking
 
@@ -1424,7 +1584,9 @@ artifacts/
 mlruns/
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Outputs actuales
 
@@ -1437,7 +1599,9 @@ mlruns/
 -   diagnósticos
 -   experimentos registrados
 
-------------------------------------------------------------------------
+
+---
+
 
 # ⚖️ Trade-offs metodológicos
 
@@ -1451,7 +1615,9 @@ interpretabilidad + robustez
 
 frente a maximizar únicamente métricas predictivas.
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Justificación
 
@@ -1462,7 +1628,9 @@ En scouting profesional resulta crítico:
 -   interpretar drivers del valor
 -   mantener coherencia futbolística
 
-------------------------------------------------------------------------
+
+---
+
 
 ## Arquitectura híbrida
 
@@ -1472,7 +1640,9 @@ Por ello el sistema combina:
 -   ML predictivo
 -   scoring cuantitativo
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🧱 Deuda técnica actual
 
@@ -1489,7 +1659,9 @@ Pendiente incorporar:
 -   rolling metrics
 -   growth indicators
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Explainability
 
@@ -1499,7 +1671,9 @@ Pendiente:
 -   explicaciones individuales
 -   estabilidad rankings
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Dataset signal
 
@@ -1509,7 +1683,9 @@ El principal cuello de botella actual es:
 calidad y riqueza del feature set
 ```
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🚀 Próximos pasos
 
@@ -1522,7 +1698,9 @@ calidad y riqueza del feature set
 -   league normalization
 -   growth features
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Explainability
 
@@ -1530,16 +1708,22 @@ calidad y riqueza del feature set
 -   explicación de rankings
 -   análisis por jugador
 
-------------------------------------------------------------------------
+
+---
+
 
 ### Nuevos modelos
 
 -   CatBoost
 -   TabPFN
 
-------------------------------------------------------------------------
 
-------------------------------------------------------------------------
+---
+
+
+
+---
+
 
 ## Prioridad media
 
@@ -1549,14 +1733,18 @@ calidad y riqueza del feature set
 -   filtros
 -   rankings dinámicos
 
-------------------------------------------------------------------------
+
+---
+
 
 ### API scoring
 
 -   scoring automatizado
 -   inferencia futura
 
-------------------------------------------------------------------------
+
+---
+
 
 # 🧠 Conclusión
 
@@ -1595,5 +1783,7 @@ incrementar la señal predictiva mediante feature engineering avanzado
 y transformar el sistema en una herramienta de scouting cuantitativo
 cada vez más cercana a entornos profesionales reales.
 
-------------------------------------------------------------------------
+
+---
+
 
