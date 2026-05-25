@@ -9,9 +9,11 @@
 ![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-yellow)
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
-![Status](https://img.shields.io/badge/Status-Advanced%20Modeling-success)
-![Version](https://img.shields.io/badge/version-v0.3.0-blue)
+![Status](https://img.shields.io/badge/Status-Scoring%20Engine-success)
+![Version](https://img.shields.io/badge/version-v0.5.0-blue)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
+![Scouting](https://img.shields.io/badge/Scouting-Ranking%20Engine-success)
+![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
 
 </div>
 
@@ -56,6 +58,8 @@ El sistema combina:
 * [📊 Dataset final](#-dataset-final)
 * [📈 Pipeline econométrico](#-pipeline-econométrico)
 * [🤖 Pipeline Machine Learning](#-pipeline-machine-learning)
+* [🎯 Scouting Scoring Engine](#-scouting-scoring-engine)
+* [📋 Automated Ranking Engine](#-automated-ranking-engine)
 * [💡 Inefficiency Score](#-inefficiency-score)
 * [📤 Business Outputs](#-business-outputs)
 * [📂 Estructura del proyecto](#-estructura-del-proyecto)
@@ -721,6 +725,60 @@ Outputs:
 * modelos persistidos
 
 ---
+
+
+# 🎯 Scouting Scoring Engine
+
+Sprint 5 introduce una capa analítica orientada a convertir las predicciones del modelo en una herramienta de apoyo real para scouting profesional.
+
+## Arquitectura del scoring
+
+```text
+Predictions
+↓
+Inefficiency Score
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Automated Rankings
+```
+
+## Opportunity Score
+
+```python
+opportunity_score =
+0.55 × inefficiency_score_z
++ 0.25 × growth_score_z
++ 0.20 × confidence_score_z
+```
+
+Resultados actuales:
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones | 1,138 |
+| Scouting targets | 53 |
+| Alta prioridad + targets | 376 |
+
+---
+
+# 📋 Automated Ranking Engine
+
+Outputs generados:
+
+```text
+top_undervalued_global.csv
+top_undervalued_by_league.csv
+top_undervalued_by_position.csv
+top_high_potential.csv
+top_low_risk.csv
+scouting_shortlist.csv
+```
+
 
 # 💡 Inefficiency Score
 
@@ -1410,23 +1468,21 @@ Se optimizó:
 
 ## Prioridad inmediata
 
-* feature engineering avanzado
-* índices deportivos por posición
 * integración Understat
-* limpieza de features de matching en ML
+* incorporación de xG y xA
+* métricas defensivas avanzadas
+* optimización de matching residual
+* análisis SHAP avanzado por perfiles
 
 ---
 
 ## Fase posterior
 
-* Growth Score
 * dashboard interactivo
-* scouting reports automáticos
-* visualizaciones finales
-* business insights
-* despliegue operativo
+* scouting reports automáticos PDF
+* simulación ROI de fichajes
+* despliegue analítico
 
----
 
 # 🧠 Valor del proyecto
 
@@ -1440,6 +1496,8 @@ El proyecto aporta:
 * aplicación directa a scouting profesional
 * detección de ineficiencias de mercado
 * experiment tracking reproducible
+* scoring multicriterio para scouting
+* generación automática de rankings accionables
 * dataset versioning
 * analytics engineering aplicado
 * trazabilidad experimental completa

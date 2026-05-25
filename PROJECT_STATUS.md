@@ -1,4 +1,3 @@
-````md
 # 📌 Estado del proyecto
 
 <div align="center">
@@ -7,10 +6,10 @@
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Modeling](https://img.shields.io/badge/Modeling-OLS%20%2B%20ML-blue)
 ![Matching](https://img.shields.io/badge/Matching-88.36%25-brightgreen)
-![Dataset](https://img.shields.io/badge/Dataset-3%2C297%20rows-orange)
+![Dataset](https://img.shields.io/badge/Dataset-1%2C138%20scored-orange)
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
-![Status](https://img.shields.io/badge/Status-Advanced%20Phase-success)
+![Status](https://img.shields.io/badge/Status-Scoring%20Engine-success)
 
 </div>
 
@@ -77,6 +76,7 @@ El sistema ya permite:
 - estimar valor de mercado esperado
 - calcular Inefficiency Score
 - generar rankings de scouting
+- generar Opportunity Score multicriterio
 - comparar OLS vs Machine Learning
 - producir predicciones out-of-sample
 - persistir modelos entrenados
@@ -1175,35 +1175,66 @@ y no necesariamente el algoritmo.
 src/models/scoring/
 ```
 
----
+## Componentes implementados
 
-## Funcionalidades actuales
+| Archivo | Estado |
+|---|---|
+| build_inefficiency_score.py | ✅ |
+| build_growth_score.py | ✅ |
+| build_confidence_score.py | ✅ |
+| build_opportunity_score.py | ✅ |
+| generate_rankings.py | ✅ |
 
-* predicted market value
-* market value gap
-* inefficiency score
-* rankings automáticos
-* export reproducible
+## Señales implementadas
 
----
-
-## Fórmula conceptual
+### Inefficiency Score
 
 ```python
-inefficiency_score =
-valor_estimado - valor_observado
+predicted_value - observed_value
 ```
 
----
+### Growth Score
 
-## Outputs actuales
+Basado en:
 
-* jugadores infravalorados
-* jugadores sobrevalorados
-* rankings por liga
-* rankings por posición
+* growth_index
+* market_value_growth_prev
+* delta_log_market_value_prev
+* breakout_indicator
 
----
+### Confidence Score
+
+```python
+0.35 × matching_confidence
++ 0.35 × minutes_reliability
++ 0.20 × feature_completeness
++ 0.10 × temporal_stability
+```
+
+### Opportunity Score
+
+```python
+0.55 × inefficiency_score_z
++ 0.25 × growth_score_z
++ 0.20 × confidence_score_z
+```
+
+## Resultados actuales
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones scoreadas | 1,138 |
+| Scouting targets | 53 |
+| High priority + targets | 376 |
+
+## Rankings automáticos
+
+* top_undervalued_global.csv
+* top_undervalued_by_league.csv
+* top_undervalued_by_position.csv
+* top_high_potential.csv
+* top_low_risk.csv
+* scouting_shortlist.csv
 
 # 📊 Estado del evaluation pipeline
 
@@ -1369,17 +1400,6 @@ calidad y riqueza del feature set
 * TabPFN
 
 ---
-
-### Opportunity Score
-
-Construcción de score combinado:
-
-```python
-Opportunity Score =
-inefficiency_score +
-growth_score +
-confidence_score
-```
 
 ---
 

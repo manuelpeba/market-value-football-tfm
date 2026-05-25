@@ -8,7 +8,7 @@
 ![Analytics](https://img.shields.io/badge/Analytics%20Engineering-Enabled-orange)
 ![MLflow](https://img.shields.io/badge/Tracking-MLflow-blue)
 ![Config](https://img.shields.io/badge/Configuration-YAML-purple)
-![Status](https://img.shields.io/badge/Status-Advanced%20Phase-success)
+![Status](https://img.shields.io/badge/Status-Scoring%20Engine-success)
 
 </div>
 
@@ -901,18 +901,41 @@ src/models/scoring/
 
 ## Componentes
 
-| Archivo         | Función            |
-| --------------- | ------------------ |
-| inefficiency.py | Inefficiency Score |
-| rankings.py     | Rankings scouting  |
+| Archivo | Función |
+|----------|----------|
+| build_inefficiency_score.py | Inefficiency Score |
+| build_growth_score.py | Growth Score |
+| build_confidence_score.py | Confidence Score |
+| build_opportunity_score.py | Opportunity Score |
+| generate_rankings.py | Automated Rankings |
 
 ---
 
-## Fórmula conceptual
+## Arquitectura del scoring
+
+```text
+Predictions
+      ↓
+Inefficiency Score
+      ↓
+Growth Score
+      ↓
+Confidence Score
+      ↓
+Opportunity Score
+      ↓
+Automated Rankings
+```
+
+---
+
+## Fórmula Opportunity Score
 
 ```python
-inefficiency_score =
-valor_estimado - valor_observado
+opportunity_score =
+0.55 × inefficiency_score_z
++ 0.25 × growth_score_z
++ 0.20 × confidence_score_z
 ```
 
 ---
@@ -923,6 +946,9 @@ valor_estimado - valor_observado
 * sobrevalorados
 * rankings por liga
 * rankings por posición
+* top_high_potential
+* top_low_risk
+* scouting_shortlist
 
 ---
 
@@ -1459,8 +1485,8 @@ La arquitectura actual permite incorporar fácilmente:
 
 * scouting reports automáticos
 * dashboard interactivo
-* Growth Score
-* Opportunity Score
+* dashboard de scouting interactivo
+* simulación ROI de fichajes
 
 ---
 
