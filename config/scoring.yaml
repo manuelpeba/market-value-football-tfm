@@ -43,3 +43,42 @@ growth_score:
   normalization:
     winsorize_lower: 0.01
     winsorize_upper: 0.99
+
+confidence_score:
+  input_path: reports/rankings/scoring_dataset_growth.csv
+  output_path: reports/rankings/scoring_dataset_confidence.csv
+
+  weights:
+    matching_confidence: 0.35
+    minutes_reliability: 0.35
+    feature_completeness: 0.20
+    temporal_stability: 0.10
+
+  minutes:
+    full_reliability_minutes: 1800
+
+  required_features:
+    - age
+    - minutes_played
+    - log_minutes_played
+    - goals_per90
+    - assists_per90
+    - market_value_growth_prev
+    - delta_log_market_value_prev
+    - growth_index
+    - breakout_indicator
+  
+opportunity_score:
+  input_path: reports/rankings/scoring_dataset_confidence.csv
+  output_path: reports/rankings/scoring_dataset_opportunity.csv
+
+  weights:
+    inefficiency_score_z: 0.55
+    growth_score_z: 0.25
+    confidence_score_z: 0.20
+
+  tiers:
+    low: 20
+    interesting: 40
+    monitoring: 60
+    high_priority: 80
