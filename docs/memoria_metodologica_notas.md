@@ -1,593 +1,292 @@
+
 # Notas metodológicas para memoria TFM
 
-Este documento centraliza decisiones metodológicas, justificaciones técnicas y consideraciones académicas derivadas del desarrollo del proyecto.
+## Objetivo del documento
 
-No constituye la versión final de la memoria, sino una recopilación estructurada para facilitar la posterior redacción.
+Este documento centraliza decisiones metodológicas, justificaciones técnicas, resultados experimentales y conclusiones derivadas del desarrollo del sistema analítico para la identificación de jugadores infravalorados en el mercado de fichajes europeo.
 
----
-
-# 1. Ingeniería de variables: normalización contextual por posición y liga
-
-## Contexto
-
-Las métricas de rendimiento futbolístico presentan distribuciones distintas según:
-
-- posición
-- competición
-- estilo de juego de la liga
-
-Por ejemplo, un delantero de Eredivisie suele presentar distribuciones ofensivas distintas respecto a un delantero de Premier League o Serie A.
-
-La comparación directa mediante valores absolutos puede introducir sesgos estructurales.
+Su propósito es servir como base para la redacción final de la memoria académica, manteniendo trazabilidad entre hipótesis, implementación, evaluación y decisiones adoptadas.
 
 ---
 
-## Problema detectado
+# Metodología general
 
-Utilizar variables ofensivas brutas:
+El proyecto sigue una adaptación de CRISP‑DM:
 
-- goals_per90
-- assists_per90
-- shots_per90
+1. Comprensión de negocio
+2. Comprensión de datos
+3. Preparación de datos
+4. Modelización
+5. Evaluación
+6. Despliegue
 
-puede generar:
+La ejecución fue iterativa:
 
-- sobrevaloración de jugadores ofensivos
-- diferencias artificiales entre ligas
-- menor comparabilidad entre perfiles
+```text
+Hipótesis
+↓
+Implementación
+↓
+Evaluación experimental
+↓
+Aceptación / rechazo
+↓
+Aprendizaje
+↓
+Nueva iteración
+```
 
 ---
 
-## Solución implementada
+# Sprint 1 — Normalización contextual
 
-Se implementó un bloque de normalización contextual basado en agrupaciones:
+## Hipótesis
+
+La normalización por posición y competición podría mejorar la capacidad predictiva.
+
+## Variables añadidas
+
+- goals_per90_pos_z
+- assists_per90_pos_z
+- goals_position_percentile
+- assists_position_percentile
+
+Agrupación:
 
 ```text
 [position_group, league]
 ```
 
-Las variables se transformaron mediante:
-
-### Z-score contextual
-
-Fórmula:
-
-z=(x−μ)/σ
-
-donde:
-
-- x = valor individual
-- μ = media del grupo
-- σ = desviación estándar del grupo
-
-Variables generadas:
-
-- goals_per90_pos_z
-- assists_per90_pos_z
-- shots_per90_pos_z
-
----
-
-### Percentiles relativos
-
-Variables generadas:
-
-- goals_position_percentile
-- assists_position_percentile
-
-Los percentiles permiten interpretar el posicionamiento relativo del jugador dentro de su contexto competitivo.
-
-Ejemplo:
-
-Un percentile 0.90 indica que el jugador supera al 90% de jugadores equivalentes dentro de su grupo.
-
----
-
-## Objetivos esperados
-
-La incorporación de estas variables persigue:
-
-- reducir sesgo ofensivo
-- mejorar comparabilidad
-- capturar contexto competitivo
-- incrementar señal predictiva
-- mejorar rendimiento de OLS y modelos ML
-
----
-
-# 2. Justificación metodológica
-
-La utilización de normalización contextual responde a prácticas habituales en Sports Analytics y Scouting cuantitativo.
-
-Los departamentos de análisis rara vez comparan estadísticas absolutas entre ligas debido a diferencias estructurales:
-
-- intensidad competitiva
-- ritmo de juego
-- estilos tácticos
-- nivel medio de rivales
-
-La normalización relativa aproxima mejor el proceso real de scouting profesional.
-
----
-
-# 3. Arquitectura reproducible
-
-La implementación se realizó mediante un pipeline desacoplado:
-
-```text
-src/features/build_advanced_features.py
-```
-
-Inputs:
-
-```text
-data/processed/player_season_modeling.parquet
-```
-
-Outputs:
-
-```text
-data/processed/player_season_modeling_advanced.parquet
-```
-
-Logs:
-
-```text
-logs/build_advanced_features.log
-```
-
----
-
-# 4. Trazabilidad experimental
-
-El pipeline incorpora seguimiento mediante MLflow.
-
-Para cada ejecución se registran:
-
-## Parámetros
-
-- input_path
-- output_path
-- variables utilizadas
-- agrupaciones
-
-## Métricas
-
-- número de observaciones
-- número de variables
-- variables creadas
-- tasas de valores faltantes
-
-## Artefactos
-
-- dataset generado
-- logs
-
----
-
-# 5. Resultados obtenidos en Sprint 1
-
-Dataset inicial:
-
-```text
-Filas: 3297
-Variables: 54
-```
-
-Dataset transformado:
-
-```text
-Filas: 3297
-Variables: 59
-```
-
-Variables añadidas:
-
-- goals_per90_pos_z
-- assists_per90_pos_z
-- shots_per90_pos_z
-- goals_position_percentile
-- assists_position_percentile
-
----
-
-## Observaciones
-
-La variable:
-
-```text
-shots_per90_pos_z
-```
-
-presentó:
-
-```text
-missing_rate = 100%
-```
-
-La causa no corresponde a un error de implementación sino a la ausencia de la variable original:
-
-```text
-shots_per90
-```
-
-en el dataset modelizable actual.
-
-Por tanto:
-
-La variable no será incorporada a modelos econométricos ni de Machine Learning hasta disponer de datos válidos.
-
----
-
-# 6. Riesgos y limitaciones
-
-La normalización por grupos puede presentar limitaciones:
-
-- grupos con pocos jugadores
-- distribuciones muy asimétricas
-- sensibilidad a outliers
-
-Posibles mejoras futuras:
-
-- winsorization
-- robust scaling
-- percentiles suavizados
-- rolling normalization temporal
-
----
-
-# Sprint 1 — Resultados experimentales
-
-Hipótesis:
-
-La normalización contextual por posición y liga podría mejorar la capacidad predictiva del modelo.
-
-Resultado:
-
-Hipótesis rechazada.
-
-Comparación:
-
-| Modelo | RMSE | MAE | R² |
-|---|---:|---:|---:|
-| Baseline | 1.0035 | 0.8130 | 0.4160 |
-| Advanced | 1.0065 | 0.8166 | 0.4148 |
-
-Interpretación:
-
-La información adicional generada parece estar parcialmente capturada por los efectos fijos incluidos en el modelo.
-
-Conclusión:
-
-El proceso CRISP-DM permitió validar y descartar una hipótesis de ingeniería de variables sin evidencia de mejora predictiva.
-
----
-
-# Sprint 2 — Resultados experimentales
-
-Hipótesis:
-
-La incorporación de variables temporales y de progresión profesional mejora la capacidad predictiva del modelo.
-
-Resultado:
-
-Hipótesis aceptada.
-
-Comparación:
-
-| Modelo | RMSE | MAE | R² |
-|---|---:|---:|---:|
-| Baseline | 1.0035 | 0.8130 | 0.4160 |
-| Growth | 0.9046 | 0.7278 | 0.5255 |
-
-Interpretación:
-
-Las variables relacionadas con crecimiento y trayectoria aportan información complementaria no capturada por el rendimiento instantáneo.
-
-Conclusión:
-
-El mercado incorpora expectativas futuras y señales de progresión profesional.
-
-El proceso CRISP-DM permitió identificar una mejora significativa mediante ingeniería de variables basada en conocimiento del dominio.
-
----
-
-# Sprint 3 — Resultados experimentales
-
-Hipótesis:
-
-La agregación de métricas futbolísticas en índices compuestos puede mejorar la capacidad predictiva del modelo.
-
-Resultado:
-
-Hipótesis parcialmente aceptada.
-
-Comparación:
-
-| Modelo | RMSE | MAE | R² |
-|---|---:|---:|---:|
-| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
-| Growth OLS + Indices | 0.9046 | 0.7278 | 0.5255 |
-
-Interpretación:
-
-Los índices no aportan señal predictiva adicional.
-
-Sin embargo, proporcionan una representación más interpretable del rendimiento futbolístico.
-
-Conclusión:
-
-La utilidad principal de estos índices se encuentra en la explicabilidad y soporte a decisiones de scouting más que en la mejora del rendimiento estadístico.
-
----
-
-# Sprint 4 — Resultados experimentales
-
-Hipótesis:
-
-Los modelos no lineales pueden mejorar la predicción del valor de mercado.
-
-Resultado:
-
-Hipótesis rechazada para la versión baseline.
-
-Resultados:
-
-| Modelo | RMSE | MAE | R² |
-|---|---:|---:|---:|
-| Growth OLS | 0.9046 | 0.7278 | 0.5255 |
-| Random Forest | 1.0481 | 0.8527 | 0.3599 |
-| XGBoost | 1.0943 | 0.8801 | 0.3022 |
-| LightGBM | 1.1078 | 0.8936 | 0.2848 |
-
-Interpretación:
-
-La mayor complejidad algorítmica no implica necesariamente mejor capacidad predictiva.
-
----
-
-# Sprint 4B — Improved ML Pipeline
-
-## Hipótesis
-
-La primera iteración de modelos supervisados no superó al modelo econométrico Growth OLS. Sin embargo, dicho resultado podía estar condicionado por una configuración baseline sin ajuste sistemático de hiperparámetros.
-
-La hipótesis del Sprint 4B fue:
-
-```text
-Un pipeline de Machine Learning mejorado, con preprocesamiento robusto y tuning controlado, puede capturar relaciones no lineales entre rendimiento, contexto y valor de mercado que el modelo econométrico no representa completamente.
-```
-
----
-
-## Implementación
-
-Se desarrolló el script:
-
-```text
-src/models/machine_learning/train_ml_tuned.py
-```
-
-El pipeline incorpora:
-
-* validación temporal
-* preprocesamiento separado para variables numéricas y categóricas
-* imputación de valores faltantes
-* escalado de variables numéricas
-* codificación one-hot de variables categóricas
-* tuning de hiperparámetros
-* logging experimental
-* exportación de feature importance
-
----
-
-## Validación temporal
-
-Se mantuvo una estrategia out-of-sample estrictamente temporal:
-
-```text
-Train: temporadas < 2023
-Test: temporadas >= 2023
-```
-
-Esta decisión es especialmente relevante en fútbol, ya que el objetivo real del sistema consiste en generalizar hacia temporadas futuras y no simplemente interpolar jugadores dentro del mismo periodo histórico.
-
----
-
-## Modelos entrenados
-
-Los modelos evaluados fueron:
-
-* Tuned Random Forest
-* Tuned XGBoost
-* Tuned LightGBM
-* HistGradientBoosting
-
----
-
-## Tuning
-
-Se utilizó:
-
-```text
-RandomizedSearchCV
-n_iter = 12
-```
-
-La elección de `RandomizedSearchCV` se justifica porque permite explorar distintas configuraciones de hiperparámetros con un coste computacional razonable.
-
----
-
 ## Resultados
 
-| Modelo               |       RMSE |        MAE |         R² |
-| -------------------- | ---------: | ---------: | ---------: |
-| Growth OLS           |     0.9046 |     0.7278 |     0.5255 |
-| Tuned Random Forest  |     0.9076 |     0.7315 |     0.5200 |
-| Tuned XGBoost        | **0.8753** | **0.7004** | **0.5536** |
-| Tuned LightGBM       |     0.8864 |     0.7162 |     0.5421 |
-| HistGradientBoosting |     0.8825 |     0.7118 |     0.5462 |
-
----
-
-## Resultado principal
-
-El mejor modelo obtenido fue:
-
-```text
-Tuned XGBoost
-```
-
-con:
-
-```text
-RMSE = 0.8753
-MAE = 0.7004
-R² = 0.5536
-```
-
----
-
-## Interpretación académica
-
-El resultado muestra que, una vez introducido un pipeline de entrenamiento más robusto, los modelos supervisados sí son capaces de superar al benchmark econométrico.
-
-Esto sugiere que el valor de mercado no depende únicamente de relaciones lineales entre edad, minutos y producción ofensiva, sino también de interacciones y no linealidades que pueden ser parcialmente capturadas por modelos de boosting.
-
-No obstante, la mejora es moderada. Por tanto, el resultado no invalida el enfoque econométrico, sino que refuerza una arquitectura híbrida:
-
-* econometría para interpretación y control estructural
-* Machine Learning para mejora predictiva
-* explainability para traducción a negocio
-
----
-
-## Interpretación desde scouting
-
-Desde una perspectiva de scouting cuantitativo, el Sprint 4B representa un avance importante porque permite estimar con mayor precisión el valor esperado de mercado.
-
-Una mejor estimación reduce el ruido del Inefficiency Score y mejora la calidad potencial de los rankings de jugadores infravalorados.
-
-Sin embargo, para que el modelo sea utilizable en un contexto profesional, no basta con mejorar la métrica predictiva. Es necesario explicar por qué un jugador aparece como infravalorado.
-
-Por ello, el siguiente sprint debe centrarse en:
-
-* importancia global de variables
-* explicación local por jugador
-* SHAP values
-* análisis de perfiles favorecidos o penalizados por el modelo
-
----
-
-## Conclusión metodológica
-
-La hipótesis del Sprint 4B queda aceptada.
-
-El pipeline ML mejorado supera al modelo Growth OLS y establece a XGBoost tuned como mejor modelo predictivo actual.
-
-La principal implicación metodológica es que el proyecto pasa de una fase de comparación baseline a una fase de explicabilidad y validación de negocio.
-
-El siguiente paso natural es Sprint 4C:
-
-```text
-Explainability + Feature Importance
-```
-
----
-
-# Sprint 4C — Explainability + SHAP Analysis
-
-## Hipótesis
-
-Los modelos predictivos con mayor capacidad de ajuste pueden generar mejores predicciones, pero presentan menor interpretabilidad.
-
-La hipótesis fue:
-
-```text
-Es posible incorporar mecanismos de explicabilidad que permitan interpretar el comportamiento del modelo sin degradar capacidad predictiva.
-```
-
----
-
-## Implementación
-
-Se desarrollaron tres módulos:
-
-* comparación de importancia de variables
-* análisis SHAP global
-* análisis SHAP por jugador
-
----
-
-## SHAP global
-
-El análisis SHAP mostró:
-
-| Variable       | Importancia |
-| -------------- | ----------: |
-| matches_played |       1.199 |
-| age_fbref      |       0.697 |
-| minutes_played |       0.682 |
-| starts         |       0.676 |
-| goals          |       0.344 |
-
----
-
-## SHAP local
-
-Se desarrolló un sistema de informes automáticos por jugador que identifica:
-
-* factores positivos
-* factores negativos
-* valor esperado
-* gap de mercado
-* inefficiency score
-
----
-
-## Interpretación desde scouting
-
-El sistema puede justificar por qué un jugador aparece como oportunidad potencial de mercado.
-
-Esto permite aumentar confianza y utilidad práctica para procesos de scouting.
-
----
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS |1.0035|0.8130|0.4160|
+| Advanced OLS |1.0065|0.8166|0.4148|
 
 ## Conclusión
 
-La hipótesis queda aceptada.
+Hipótesis rechazada.
 
-El sistema incorpora capacidad explicativa manteniendo rendimiento predictivo y aumenta significativamente su utilidad operativa.
-
-
----
-
-# 7. Preguntas esperables en defensa
-
-¿Por qué no comparar métricas absolutas?
-
-Porque distintas ligas presentan distribuciones estructurales diferentes.
+La señal ya parecía parcialmente capturada por efectos fijos.
 
 ---
 
-¿Por qué agrupar por posición y liga?
+# Sprint 2 — Growth Features
 
-Porque ambas variables afectan significativamente al comportamiento estadístico del jugador.
+## Hipótesis
+
+El mercado incorpora señales de trayectoria y crecimiento futuro.
+
+## Variables
+
+- market_value_growth_prev
+- delta_log_market_value_prev
+- age_squared
+- career_year
+- breakout_indicator
+
+## Resultados
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Baseline OLS |1.0035|0.8130|0.4160|
+| Growth OLS |0.9046|0.7278|0.5255|
+
+## Conclusión
+
+Hipótesis aceptada.
+
+El mercado no valora únicamente rendimiento actual.
 
 ---
 
-¿Por qué utilizar z-score?
+# Sprint 3 — Índices compuestos
 
-Porque permite expresar rendimiento relativo respecto a un grupo comparable.
+## Hipótesis
+
+La agregación de métricas futbolísticas podría mejorar rendimiento predictivo.
+
+## Índices
+
+- finishing_index
+- playmaking_index
+- progression_index
+- defensive_index
+
+## Resultados
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS |0.9046|0.7278|0.5255|
+| Growth + índices |0.9046|0.7278|0.5255|
+
+## Conclusión
+
+Hipótesis parcialmente aceptada.
+
+Mayor utilidad interpretativa que predictiva.
 
 ---
 
-¿Por qué percentiles además de z-score?
+# Sprint 4 — Machine Learning
 
-Porque facilitan interpretación para perfiles no técnicos y scouting.
+## Hipótesis
+
+Modelos no lineales podrían superar OLS.
+
+## Resultados baseline
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Random Forest |1.0481|0.8527|0.3599|
+| XGBoost |1.0943|0.8801|0.3022|
+| LightGBM |1.1078|0.8936|0.2848|
+
+Conclusión:
+
+Hipótesis rechazada para configuración baseline.
 
 ---
 
-¿Por qué no incluir shots_per90_pos_z?
+# Sprint 4B — ML Pipeline mejorado
 
-Porque actualmente la variable base presenta valores faltantes completos.
+## Mejoras introducidas
+
+- validación temporal
+- preprocessing robusto
+- imputación
+- One‑Hot Encoding
+- RandomizedSearchCV
+- MLflow
+
+## Resultados
+
+| Modelo | RMSE | MAE | R² |
+|---|---:|---:|---:|
+| Growth OLS |0.9046|0.7278|0.5255|
+| Tuned XGBoost |0.8753|0.7004|0.5536|
+
+## Conclusión
+
+Hipótesis aceptada.
+
+La mejora existe, aunque moderada.
+
+---
+
+# Sprint 4C — Explainability
+
+## Implementación
+
+- SHAP global
+- SHAP local
+- importancia de variables
+- reportes por jugador
+
+## Conclusión
+
+El sistema deja de responder:
+
+```text
+¿Qué jugador aparece infravalorado?
+```
+
+para responder:
+
+```text
+¿Por qué aparece infravalorado?
+```
+
+---
+
+# Sprint 5 — Scoring multicriterio
+
+Arquitectura:
+
+```text
+Predicción
+↓
+Inefficiency Score
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Rankings
+```
+
+## Fórmula
+
+```python
+opportunity_score=(
+0.55*inefficiency_score_z+
+0.25*growth_score_z+
+0.20*confidence_score_z
+)
+```
+
+Resultados:
+
+| Métrica | Valor |
+|---|---:|
+| Observaciones scoreadas |1138|
+| Targets prioritarios |53|
+| Alta prioridad |376|
+
+---
+
+# Sprint 6 — Validación de negocio
+
+## Precision@K
+
+|K|Precision@K|
+|---:|---:|
+|10|0.90|
+|20|0.90|
+|50|0.90|
+|100|0.85|
+
+## Evaluación añadida
+
+- ranking diagnostics
+- ROI simulation
+- análisis por liga
+- análisis por posición
+
+---
+
+# Conclusión metodológica global
+
+La evolución del proyecto muestra una transición progresiva desde:
+
+```text
+Predicción de valor de mercado
+```
+
+hacia:
+
+```text
+Sistema analítico reproducible para soporte a decisiones de scouting
+```
+
+Contribuciones principales:
+
+- integración multi‑fuente
+- matching jerárquico
+- panel longitudinal jugador‑temporada
+- arquitectura modular reproducible
+- comparación econometría vs ML
+- explainability mediante SHAP
+- scoring multicriterio
+- evaluación estadística y de negocio
+
+La principal conclusión metodológica es que la mejora incremental no provino únicamente de algoritmos más complejos, sino de una combinación de:
+
+- conocimiento del dominio
+- ingeniería de variables
+- validación temporal
+- interpretabilidad
+- traducción a negocio
