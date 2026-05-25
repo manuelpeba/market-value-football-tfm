@@ -151,35 +151,7 @@ def build_inefficiency_score(
 
 
 def select_output_columns(df: pd.DataFrame) -> pd.DataFrame:
-    scoring_columns = [
-        "predicted_market_value_eur",
-        "residual_observed_minus_predicted_log",
-        "inefficiency_score_log",
-        "inefficiency_score_log_winsorized",
-        "inefficiency_score_z",
-        "market_value_gap_eur",
-        "market_value_gap_pct",
-        "market_value_gap_pct_winsorized",
-        "market_value_gap_pct_z",
-        "is_undervalued",
-        "is_overvalued",
-        "inefficiency_rank",
-    ]
-
-    available_id_columns = [col for col in ID_COLUMNS if col in df.columns]
-    available_scoring_columns = [col for col in scoring_columns if col in df.columns]
-
-    base_columns = [
-        col
-        for col in [
-            "market_value_eur",
-            "log_market_value_eur",
-            "predicted_log_market_value",
-        ]
-        if col in df.columns
-    ]
-
-    return df[available_id_columns + base_columns + available_scoring_columns].copy()
+    return df.copy()
 
 
 def main() -> None:

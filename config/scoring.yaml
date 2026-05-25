@@ -18,3 +18,28 @@ scoring:
 
   export:
     top_n_preview: 50
+
+growth_score:
+  input_path: reports/rankings/scoring_dataset.csv
+  output_path: reports/rankings/scoring_dataset_growth.csv
+
+  variables:
+    positive:
+      - market_value_growth_prev
+      - delta_log_market_value_prev
+      - growth_index
+      - breakout_indicator
+
+    negative:
+      - career_year
+
+  weights:
+    market_value_growth_prev: 0.30
+    delta_log_market_value_prev: 0.30
+    growth_index: 0.25
+    breakout_indicator: 0.10
+    career_year: 0.05
+
+  normalization:
+    winsorize_lower: 0.01
+    winsorize_upper: 0.99
