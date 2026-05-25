@@ -1,18 +1,20 @@
-inefficiency:
-  score_column: inefficiency_score
-  normalized_score_column: inefficiency_score_z
-  market_value_gap_column: market_value_gap_eur
-  market_value_gap_pct_column: market_value_gap_pct
+scoring:
+  input_predictions_path: artifacts/predictions/tuned_xgboost_predictions.csv
+  output_path: reports/rankings/scoring_dataset.csv
 
-opportunity_score:
-  enabled: true
-  weights:
-    inefficiency_score_z: 0.5
-    growth_score_z: 0.3
-    confidence_score: 0.2
+  columns:
+    observed_market_value: market_value_eur
+    observed_log_market_value: log_market_value_eur
+    predicted_log_market_value: predicted_log_market_value
 
-rankings:
-  top_n: 50
-  min_minutes: 900
-  min_matching_confidence: 0.85
-  min_market_value_eur: 500000
+  clipping:
+    min_predicted_market_value_eur: 100000
+    max_market_value_gap_pct: 5.0
+
+  normalization:
+    method: zscore
+    winsorize_lower: 0.01
+    winsorize_upper: 0.99
+
+  export:
+    top_n_preview: 50
