@@ -61,12 +61,14 @@ def build_temporal_stability(df: pd.DataFrame) -> pd.Series:
 
     if "career_year" in df.columns:
         career_year = pd.to_numeric(df["career_year"], errors="coerce").fillna(0)
-        components.append(np.minimum(career_year / 3, 1))
+        career_component = (career_year / 3).clip(lower=0, upper=1)
+        components.append(career_component)
 
     if "market_value_growth_prev" in df.columns:
         growth = pd.to_numeric(df["market_value_growth_prev"], errors="coerce")
-        growth_stability = 1 - np.minimum(growth.abs(), 1)
-        components.append(growth_stability.fillna(0.5))
+        growth_stability = 1 - growth.abs().clip(lower=0, upper=1)
+        growth_stability = growth_stability.fillna(0.5)
+        components.append(growth_stability)
 
     if not components:
         return pd.Series(0.5, index=df.index)

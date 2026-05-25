@@ -82,3 +82,38 @@ opportunity_score:
     interesting: 40
     monitoring: 60
     high_priority: 80
+
+rankings:
+  input_path: reports/rankings/scoring_dataset_opportunity.csv
+  output_dir: reports/rankings
+
+  top_n:
+    global: 50
+    by_group: 20
+    shortlist: 100
+
+  filters:
+    min_minutes_played: 300
+    min_confidence_score: 50
+    min_opportunity_score: 60
+
+  columns:
+    - player_name_fbref
+    - player_name_tm
+    - club
+    - league
+    - season
+    - position_group
+    - age
+    - minutes_played
+    - market_value_eur
+    - predicted_market_value_eur
+    - market_value_gap_eur
+    - market_value_gap_pct
+    - inefficiency_score_z
+    - growth_score
+    - confidence_score
+    - opportunity_score
+    - opportunity_tier
+    - matching_confidence
+    - matching_method
