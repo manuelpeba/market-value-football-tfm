@@ -7,7 +7,9 @@
 ![Dataset](https://img.shields.io/badge/Dataset-1%2C138%20scored-orange)
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
-![Status](https://img.shields.io/badge/Status-Scoring%20Engine-success)
+![Status](https://img.shields.io/badge/Status-Scouting%20Dashboard-success)
+![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
+![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
 
 
 ---
@@ -41,9 +43,7 @@
 -   [🚀 Próximos pasos](#-próximos-pasos)
 -   [🧠 Conclusión](#-conclusión)
 
-
 ---
-
 
 # 🧠 Resumen ejecutivo
 
@@ -63,9 +63,7 @@ El sistema se basa en:
 -   experiment tracking reproducible
 -   configuración centralizada desacoplada
 
-
 ---
-
 
 ## 📊 Estado actual del sistema
 
@@ -78,9 +76,7 @@ El sistema se basa en:
 | Ligas | 7 |
 | Match rate | 88.36% |
 
-
 ---
-
 
 ## ✅ Capacidades actuales
 
@@ -98,9 +94,7 @@ El sistema ya permite:
 -   versionar configuraciones de entrenamiento
 -   desacoplar parámetros mediante configuración YAML
 
-
 ---
-
 
 ## 📌 Estado global
 
@@ -124,21 +118,17 @@ sino:
 feature engineering y calidad de señal predictiva
 ```
 
-
 ---
-
 
 # 📚 Estado CRISP-DM
 
 ## Fase actual
 
 ``` text
-Modeling → Evaluation
+Modeling → Evaluation → Decision Support
 ```
 
-
 ---
-
 
 ## ✅ Fases completadas
 
@@ -149,9 +139,7 @@ Modeling → Evaluation
 -   framing econométrico
 -   definición de outputs de negocio
 
-
 ---
-
 
 ### Data Understanding
 
@@ -161,9 +149,7 @@ Modeling → Evaluation
 -   evaluación de calidad
 -   análisis de cobertura
 
-
 ---
-
 
 ### Data Preparation
 
@@ -174,9 +160,7 @@ Modeling → Evaluation
 -   dataset modelizable
 -   control de leakage
 
-
 ---
-
 
 ## 🔄 Fases en curso
 
@@ -188,9 +172,7 @@ Modeling → Evaluation
 -   tracking experimental
 -   persistencia de artefactos
 
-
 ---
-
 
 ### Evaluation
 
@@ -199,9 +181,7 @@ Modeling → Evaluation
 -   estabilidad de rankings
 -   análisis comparativo OLS vs ML
 
-
 ---
-
 
 ## ⏳ Próximas fases
 
@@ -250,9 +230,7 @@ Output:
 data/processed/player_season_modeling_advanced.parquet
 ```
 
-
 ---
-
 
 ### Sprint 1B
 
@@ -274,9 +252,7 @@ Decisión:
 Las nuevas variables no serán incorporadas al modelo econométrico final
 debido a ausencia de mejora predictiva.
 
-
 ---
-
 
 ## Sprint 2 --- Temporal Dynamics (Completed)
 
@@ -309,9 +285,7 @@ Output:
 data/processed/player_season_modeling_growth.parquet
 ```
 
-
 ---
-
 
 ### Sprint 2B
 
@@ -336,9 +310,7 @@ Decisión:
 
 Growth OLS se adopta como nueva especificación econométrica candidata.
 
-
 ---
-
 
 ## Sprint 3 --- Composite Football Indices (Completed)
 
@@ -370,9 +342,7 @@ Output:
 data/processed/player_season_modeling_indices.parquet
 ```
 
-
 ---
-
 
 ### Sprint 3B
 
@@ -398,9 +368,7 @@ Decisión:
 
 Los índices se mantienen para interpretabilidad y análisis de scouting.
 
-
 ---
-
 
 ## Sprint 4 --- Machine Learning Baseline (Completed)
 
@@ -438,9 +406,7 @@ Conclusión:
 
 El benchmark econométrico mantiene mejor rendimiento predictivo.
 
-
 ---
-
 
 ## Sprint 4B --- Improved ML Pipeline (Completed)
 
@@ -539,9 +505,7 @@ Objetivo:
 Transformar el mejor modelo predictivo actual en un modelo explicable y
 defendible para scouting profesional.
 
-
 ---
-
 
 ## Sprint 4C --- Explainability + Player-Level SHAP (Completed)
 
@@ -598,10 +562,9 @@ interpretabilidad accionable.
 
 ``` text
 Sprint 5 — Final Scoring System + Undervalued Player Ranking
-
+```
 
 ---
-
 
 ## Sprint 5 --- Final Scoring System + Automated Rankings (Completed)
 
@@ -667,9 +630,7 @@ predicted_market_value - observed_market_value
 
 El sistema deja de producir únicamente predicciones y pasa a generar recomendaciones priorizadas orientadas a soporte de decisiones.
 
-
 ---
-
 
 ## Sprint 6 --- Ranking Validation & Business Evaluation (Completed)
 
@@ -718,10 +679,94 @@ Evaluación
 Business Layer
 ```
 
+---
+
+## Sprint 7 --- Scouting Dashboard & Decision Support Layer (Completed)
+
+Status: Completed
+
+### Objetivo
+
+Transformar los resultados analíticos del sistema en una herramienta operativa de apoyo a decisiones de scouting profesional.
+
+### Implementación
+
+```text
+dashboard/
+streamlit_app.py
 ```
 
+### Funcionalidades implementadas
 
----
+#### Executive KPIs
+
+- Precision@K
+- % oportunidades rentables
+- tamaño de shortlist
+- cobertura analítica
+
+#### Bubble Chart Coste vs Upside
+
+- Opportunity Score visual
+- tiers de oportunidad
+- top oportunidades destacadas
+- filtros interactivos
+
+#### Ranking interactivo
+
+- paginación
+- filtros dinámicos
+- segmentación por liga
+- posición
+- club
+- temporada
+
+#### Informe individual
+
+- valor mercado
+- valor estimado
+- gap de mercado
+- Opportunity Score
+- Growth Score
+- Confidence Score
+- recomendación analítica
+
+#### Explainability integrada
+
+- SHAP individual
+- drivers positivos
+- drivers negativos
+- interpretación de predicciones
+
+### Resultado principal
+
+La arquitectura evoluciona desde:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+```
+
+hacia:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Dashboard
+↓
+Decisión deportiva
+```
+
+### Implicación metodológica
+
+El proyecto deja de ser únicamente un sistema predictivo y pasa a convertirse en una plataforma de Football Analytics orientada a soporte de decisiones.
 
 
 # 🔄 Evolución de arquitectura
@@ -788,28 +833,20 @@ Separación clara entre:
 flowchart TD
 
 A[Raw Sources] --> B[Feature Engineering]
-
 B --> C[Player-Season Matching]
-
 C --> D[Player-Season Panel]
-
 D --> E[Modeling Dataset]
 
 E --> F[Econometric Pipeline]
-
 E --> G[Machine Learning Pipeline]
 
-F --> H[MLflow Tracking]
+F --> H[Scoring Engine]
 G --> H
 
-F --> I[Scoring Pipeline]
-G --> I
-
-I --> J[Business Outputs]
-
-J --> K[Rankings]
-J --> L[Predictions]
-J --> M[Diagnostics]
+H --> I[Ranking Engine]
+I --> J[Explainability]
+J --> K[Scouting Dashboard]
+K --> L[Toma de decisión deportiva]
 ```
 
 
@@ -850,6 +887,8 @@ market-value-football-tfm/
 | Temporal validation | ✅ |
 | Model persistence | ✅ |
 | Ranking generation | ✅ |
+| Explainability | ✅ |
+| Scouting Dashboard | ✅ |
 | MLflow tracking | ✅ |
 | Configuración YAML | ✅ |
 
@@ -1159,7 +1198,6 @@ Threshold:
 MIN_CLUB_SCORE = 70
 ```
 
-
 ---
 
 
@@ -1177,7 +1215,6 @@ Threshold:
 FUZZY_THRESHOLD = 92
 ```
 
-
 ---
 
 
@@ -1186,7 +1223,6 @@ FUZZY_THRESHOLD = 92
 ``` python
 MAX_AGE_DIFF = 1.5
 ```
-
 
 ---
 
@@ -1598,6 +1634,9 @@ mlruns/
 -   predicciones
 -   diagnósticos
 -   experimentos registrados
+-   dashboard interactivo
+-   informes individuales
+-   visual analytics de scouting
 
 
 ---
@@ -1727,11 +1766,13 @@ calidad y riqueza del feature set
 
 ## Prioridad media
 
-### Dashboard scouting
+### Sprint 8 — Advanced Scouting Layer
 
--   visualización interactiva
--   filtros
--   rankings dinámicos
+-   radar de jugador
+-   comparador de jugadores
+-   risk score
+-   exportación de shortlists
+-   business validation panel
 
 
 ---

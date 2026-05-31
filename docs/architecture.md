@@ -14,7 +14,7 @@ Arquitectura modular basada en CRISP-DM adaptado con:
 -   Evaluation layer
 -   Business layer
 
-------------------------------------------------------------------------
+---
 
 ## Actualización Sprint 5--6
 
@@ -46,7 +46,7 @@ Outputs:
 -   top_low_risk.csv
 -   scouting_shortlist.csv
 
-------------------------------------------------------------------------
+---
 
 ### Sprint 6 --- Validation & Business Evaluation
 
@@ -81,7 +81,76 @@ reports/evaluation/
 
 -   precision_at_k.csv
 
-------------------------------------------------------------------------
+---
+
+### Sprint 7 --- Scouting Dashboard & Decision Support Layer
+
+Nueva capa:
+
+`dashboard/`
+
+Componente principal:
+
+`streamlit_app.py`
+
+Objetivo:
+
+Transformar rankings, métricas y predicciones en una herramienta operativa para departamentos de scouting y dirección deportiva.
+
+Capacidades incorporadas:
+
+#### Executive KPIs
+
+- Precision@K
+- % oportunidades rentables
+- cobertura analítica
+- tamaño de shortlist
+
+#### Bubble Chart Coste vs Upside
+
+- Opportunity Score visual
+- tiers de oportunidad
+- top oportunidades destacadas
+- filtros interactivos
+
+#### Ranking interactivo
+
+- paginación
+- filtros por liga
+- posición
+- club
+- temporada
+
+#### Informe individual
+
+- valor mercado actual
+- valor estimado
+- gap de mercado
+- Opportunity Score
+- Growth Score
+- Confidence Score
+
+#### Explainability integrada
+
+- SHAP local
+- drivers positivos
+- drivers negativos
+- explicación de predicciones
+
+Resultado arquitectónico:
+
+Predictions
+↓
+Scoring Engine
+↓
+Ranking Engine
+↓
+Explainability
+↓
+Scouting Dashboard
+↓
+Decision Support
+
 
 ## Métricas de negocio
 
@@ -101,17 +170,33 @@ Indicadores:
 -   risk_adjusted_profit
 -   positive_roi_rate
 
-------------------------------------------------------------------------
+---
 
 ## Arquitectura final
 
-Raw Data → Feature Engineering → Matching → Modeling Dataset → OLS / ML
-→ Scoring Engine → Automated Rankings → Evaluation → Business Outputs
+Raw Data
+→ Feature Engineering
+→ Matching
+→ Modeling Dataset
+→ OLS / ML
+→ Scoring Engine
+→ Ranking Engine
+→ Explainability
+→ Scouting Dashboard
+→ Decision Support
 
-------------------------------------------------------------------------
+---
 
 ## Conclusión
 
-La arquitectura actual ya incorpora una capa de decisión de scouting y
-una capa de validación de negocio, acercando el proyecto a un entorno de
-Football Analytics profesional.
+La arquitectura actual incorpora una cadena completa de valor analítico:
+
+Datos
+→ Modelización
+→ Scoring
+→ Ranking
+→ Explainability
+→ Dashboard
+→ Decisión deportiva
+
+La incorporación del Dashboard Scouting durante Sprint 7 transforma el proyecto desde una plataforma analítica hacia un sistema de soporte a decisiones de Football Analytics profesional.

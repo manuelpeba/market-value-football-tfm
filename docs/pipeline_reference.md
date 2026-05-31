@@ -6,10 +6,12 @@
 ![Tracking](https://img.shields.io/badge/Tracking-MLflow-orange)
 ![Scouting](https://img.shields.io/badge/Scouting-Scoring%20Engine-success)
 ![Business](https://img.shields.io/badge/Business-Evaluation-purple)
-![Status](https://img.shields.io/badge/Status-v0.7.0--Business--Validation-brightgreen)
+![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
+![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
+![Status](https://img.shields.io/badge/Status-v0.7.0--Dashboard-brightgreen)
 :::
 
-------------------------------------------------------------------------
+---
 
 # 🧠 Objetivo
 
@@ -19,7 +21,7 @@ responsabilidades, inputs, outputs y relaciones entre componentes.
 Su objetivo es garantizar reproducibilidad experimental y trazabilidad
 completa del sistema analítico.
 
-------------------------------------------------------------------------
+---
 
 # 📊 Estado actual
 
@@ -35,8 +37,10 @@ completa del sistema analítico.
   Scoring Engine                      ✅
   Ranking Engine                      ✅
   Evaluation & Business Layer         ✅
+Dashboard Scouting                  ✅
+Decision Support Layer              ✅
 
-------------------------------------------------------------------------
+---
 
 # 🏗️ Pipeline global
 
@@ -61,15 +65,17 @@ G --> H
 
 H --> I[Ranking Engine]
 
-I --> J[Evaluation]
+I --> J[Explainability]
 
-J --> K[Business Outputs]
+J --> K[Scouting Dashboard]
 
-F --> L[MLflow]
-G --> L
+K --> L[Decision Support]
+
+F --> M[MLflow]
+G --> M
 ```
 
-------------------------------------------------------------------------
+---
 
 # 🤖 Machine Learning Pipeline
 
@@ -95,7 +101,7 @@ RMSE = 0.8753
 MAE = 0.7004
 ```
 
-------------------------------------------------------------------------
+---
 
 # 🎯 Scoring Pipeline
 
@@ -126,7 +132,7 @@ top_high_potential.csv
 top_low_risk.csv
 ```
 
-------------------------------------------------------------------------
+---
 
 # 📈 Evaluation Pipeline
 
@@ -162,12 +168,84 @@ Resultados actuales:
   50             0.90
   100            0.85
 
-------------------------------------------------------------------------
+---
+
+# 🖥️ Dashboard Pipeline
+
+Pipeline principal:
+
+```text
+dashboard/
+streamlit_app.py
+```
+
+Objetivo:
+
+Transformar rankings, métricas y predicciones en una herramienta operativa de scouting.
+
+Componentes:
+
+### Executive KPIs
+
+- Precision@K
+- % oportunidades rentables
+- cobertura analítica
+- tamaño de shortlist
+
+### Bubble Chart
+
+```text
+Valor mercado
+↓
+Gap de mercado
+↓
+Opportunity Score
+↓
+Visualización interactiva
+```
+
+### Ranking interactivo
+
+- filtros dinámicos
+- paginación
+- segmentación contextual
+
+### Informe individual
+
+- Opportunity Score
+- Growth Score
+- Confidence Score
+- recomendación analítica
+
+### Explainability
+
+- SHAP individual
+- drivers positivos
+- drivers negativos
+
+Resultado:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Dashboard
+↓
+Decisión deportiva
+```
+
+---
 
 # 🚀 Evolución futura
 
--   Dashboard Streamlit
+-   Radar de jugador
+-   Comparador de jugadores
+-   Risk Score
+-   Exportación de shortlists
+-   Business Validation Panel
 -   API scoring
 -   Understat integration
--   Auto scouting reports
 -   Continuous retraining

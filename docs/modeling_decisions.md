@@ -24,6 +24,7 @@
 - [💡 Decisiones sobre scoring](#-decisiones-sobre-scoring)
 - [📊 Ranking Engine](#-ranking-engine)
 - [📈 Decisiones de evaluación y negocio](#-decisiones-de-evaluación-y-negocio)
+- [🖥️ Dashboard & Decision Support](#️-dashboard--decision-support)
 - [🎯 Precision@K](#-precisionk)
 - [💰 ROI Simulation](#-roi-simulation)
 - [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
@@ -65,6 +66,7 @@ El sistema adopta una arquitectura híbrida:
 | Ranking Engine | Generación automática de shortlists y rankings |
 | Evaluation Layer | Validación estadística y de negocio |
 | Business Layer | Simulación ROI y análisis de estrategia |
+| Dashboard Layer | Visual analytics y soporte a decisiones |
 
 Principio metodológico:
 
@@ -496,6 +498,89 @@ La simulación ROI no busca predecir beneficios reales exactos, sino evaluar sen
 
 ---
 
+# 🖥️ Dashboard & Decision Support
+
+## Contexto
+
+Sprint 7 introduce una nueva decisión metodológica: transformar los resultados analíticos en una herramienta operativa de scouting.
+
+La arquitectura deja de finalizar en rankings y métricas de negocio para incorporar una capa explícita de toma de decisiones.
+
+## Principio
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Explainability
+↓
+Dashboard
+↓
+Decisión deportiva
+```
+
+## Implementación
+
+```text
+dashboard/
+streamlit_app.py
+```
+
+## Componentes incorporados
+
+### Executive KPIs
+
+- Precision@K
+- % oportunidades rentables
+- tamaño de shortlist
+- cobertura analítica
+
+### Bubble Chart
+
+Visualización interactiva basada en:
+
+- valor de mercado
+- gap de mercado
+- Opportunity Score
+- tier de oportunidad
+
+### Ranking interactivo
+
+- filtros dinámicos
+- paginación
+- segmentación contextual
+
+### Informe individual
+
+- valor actual
+- valor estimado
+- Opportunity Score
+- Growth Score
+- Confidence Score
+
+### Explainability integrada
+
+- SHAP local
+- drivers positivos
+- drivers negativos
+- interpretación ejecutiva
+
+## Justificación metodológica
+
+La decisión responde a una premisa fundamental de Football Analytics:
+
+```text
+Un modelo útil no es el que predice mejor,
+sino el que ayuda a tomar mejores decisiones.
+```
+
+Por ello, el Dashboard se considera parte integrante de la arquitectura analítica y no únicamente una capa de visualización.
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
 | Trade-off | Decisión |
@@ -578,11 +663,14 @@ Las variables futuras pueden utilizarse para evaluación posterior, como Precisi
 
 ## Prioridad alta
 
-- dashboard interactivo para exploración de rankings
+- radar de jugador
+- comparador de jugadores
+- Risk Score
+- exportación de shortlists
+- Business Validation Panel
 - validación de rankings por ventanas temporales móviles
 - análisis de estabilidad longitudinal del ranking
 - calibración alternativa de pesos del Opportunity Score
-- comparación de escenarios ROI conservador/base/optimista
 
 ## Prioridad media
 
@@ -634,4 +722,13 @@ Sprint 5 convierte el modelo en motor de scoring.
 
 Sprint 6 convierte el scoring en una capa evaluable desde negocio.
 
-El sistema queda así preparado para evolucionar hacia una capa de producto analítico mediante dashboard, automatización e inferencia periódica.
+Sprint 7 incorpora la capa Dashboard & Decision Support, completando el flujo:
+
+Predicción
+→ Scoring
+→ Ranking
+→ Explainability
+→ Dashboard
+→ Decisión deportiva
+
+El sistema evoluciona así desde un proyecto de modelización hacia una plataforma integral de Football Analytics aplicada al scouting profesional.

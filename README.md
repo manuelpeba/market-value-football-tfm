@@ -9,7 +9,9 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Status](https://img.shields.io/badge/Status-Scouting%20Platform-success)
-![Version](https://img.shields.io/badge/version-v0.7.0--Business--Validation-blue)
+![Version](https://img.shields.io/badge/version-v0.7.0--Dashboard-blue)
+![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
+![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
 ![Scouting](https://img.shields.io/badge/Scouting-Ranking%20Engine-success)
 ![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
@@ -332,7 +334,7 @@ CRISP-DM
 ## Estado actual
 
 ``` text
-Modeling → Evaluation
+Modeling → Evaluation → Decision Support
 ```
 
 ---
@@ -513,23 +515,20 @@ proyecto.
 flowchart TD
 
 A[Raw Sources] --> B[Feature Engineering]
-
 B --> C[Player-Season Matching]
-
 C --> D[Player-Season Panel]
-
 D --> E[Modeling Dataset]
 
 E --> F[Econometric Pipeline]
-
 E --> G[Machine Learning Pipeline]
 
-F --> H[Inefficiency Score]
+F --> H[Scoring Engine]
 G --> H
 
-H --> I[Scouting Rankings]
-
-I --> J[Business Outputs]
+H --> I[Ranking Engine]
+I --> J[Explainability]
+J --> K[Scouting Dashboard]
+K --> L[Toma de decisión deportiva]
 ```
 
 ---
@@ -835,6 +834,59 @@ El sistema genera automáticamente:
 -   predicciones
 
 ---
+
+# 🖥️ Dashboard de scouting
+
+Sprint 7 incorpora una capa completa de visual analytics y soporte a la decisión construida sobre Streamlit.
+
+## Objetivo
+
+Transformar predicciones, rankings y métricas de negocio en una herramienta operativa utilizable por departamentos de scouting y dirección deportiva.
+
+## Funcionalidades principales
+
+### 📊 Executive KPIs
+
+- Jugadores en shortlist
+- Precision@K
+- % oportunidades rentables
+- Ligas representadas
+
+### 💎 Coste actual vs Upside estimado
+
+Bubble chart interactivo:
+
+- Eje X: valor de mercado actual
+- Eje Y: gap de mercado estimado
+- Tamaño: Opportunity Score
+- Color: tier de oportunidad
+- Top oportunidades destacadas
+
+### 📋 Ranking interactivo
+
+- Paginación
+- Filtros dinámicos
+- Segmentación por liga
+- Segmentación por posición
+- Segmentación por club
+- Segmentación por temporada
+
+### 👤 Informe individual
+
+- Valor actual
+- Valor estimado
+- Gap de mercado
+- Opportunity Score
+- Growth Score
+- Confidence Score
+- Recomendación analítica
+
+### 🔍 Explainability
+
+- SHAP local
+- Drivers positivos y negativos
+- Interpretación ejecutiva
+
 
 # 📂 Estructura del proyecto
 
@@ -1572,6 +1624,35 @@ roi_scouting_shortlist_summary.csv
 Convertir el sistema en una herramienta de decisión cuantitativa para
 priorización de fichajes.
 
+---
+
+## Sprint 7 --- Scouting Dashboard & Decision Support Layer
+
+### Objetivo
+
+Convertir el sistema desde un proyecto de modelización hacia una plataforma operativa de Football Analytics.
+
+### Arquitectura funcional
+
+```text
+Modelos predictivos
+↓
+Scoring Engine
+↓
+Ranking Engine
+↓
+Explainability
+↓
+Dashboard Scouting
+↓
+Toma de decisión deportiva
+```
+
+### Contribución
+
+El dashboard constituye la primera interfaz integrada del proyecto y conecta la capa analítica con la toma de decisiones de scouting.
+
+
 # ⚖️ Trade-offs metodológicos
 
 ## Cobertura vs precisión
@@ -1609,11 +1690,14 @@ Se optimizó:
 
 ## Prioridad inmediata
 
--   integración Understat
--   incorporación de xG y xA
--   métricas defensivas avanzadas
--   optimización de matching residual
--   análisis SHAP avanzado por perfiles
+- integración Understat
+- incorporación de xG y xA
+- métricas defensivas avanzadas
+- Radar de jugador
+- Comparador de jugadores
+- Exportación de shortlists
+- Risk Score
+- Business Validation Panel
 
 ---
 
@@ -1652,9 +1736,6 @@ El sistema ya constituye una base sólida para:
 
 ---
 
-
----
-
 # 🎯 Contribución académica y técnica
 
 La aportación del proyecto no se limita a la construcción de un modelo predictivo.
@@ -1682,6 +1763,34 @@ Evaluación
 ↓
 Decisión deportiva
 ```
+
+---
+
+# ⚽ Aplicación profesional
+
+La solución reproduce un flujo de trabajo habitual en departamentos de Football Analytics:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Dashboard
+↓
+Decisión deportiva
+```
+
+Aplicaciones:
+
+- Recruitment Analytics
+- Market Intelligence
+- Scouting cuantitativo
+- Player Trading Strategies
+- Identificación de ineficiencias de mercado
+
+---
 
 # 👤 Autores
 
