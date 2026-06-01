@@ -1,7 +1,6 @@
 from pathlib import Path
 from math import ceil
 import html
-import textwrap
 
 import numpy as np
 import pandas as pd
@@ -14,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 RANKINGS_PATH = ROOT / "reports" / "rankings"
 BUSINESS_PATH = ROOT / "reports" / "business"
 EVALUATION_PATH = ROOT / "reports" / "evaluation"
+
+SCORED_UNIVERSE_SIZE = 1_138
 
 st.set_page_config(
     page_title="Mercado Ineficiente - Scouting Dashboard",
@@ -30,7 +31,7 @@ st.markdown(
     """
 <style>
 .block-container {
-    padding-top: 1.15rem;
+    padding-top: 1.1rem;
     padding-bottom: 2rem;
     max-width: 1540px;
 }
@@ -43,26 +44,43 @@ st.markdown(
     color: white;
 }
 
+/* =========================
+   Executive metric cards
+   ========================= */
+
 .metric-card {
     background: #ffffff;
     border: 1px solid #e6eaf0;
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
-    min-height: 86px;
+    min-height: 74px;
 }
 
 .metric-label {
     color: #64748b;
-    font-size: 0.84rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.80rem;
+    margin-bottom: 0.22rem;
 }
 
 .metric-value {
-    font-size: 1.75rem;
+    font-size: 1.55rem;
     font-weight: 850;
     color: #0f172a;
+    line-height: 1.15;
 }
+
+.helper-caption {
+    color: #64748b;
+    font-size: 0.76rem;
+    margin-top: 4px;
+    margin-bottom: 0;
+    line-height: 1.2;
+}
+
+/* =========================
+   Info elements
+   ========================= */
 
 .info-icon {
     display: inline-flex;
@@ -86,21 +104,23 @@ st.markdown(
     padding: 12px 16px;
     color: #0f4fa8;
     font-weight: 600;
-    font-size: 0.92rem;
+    font-size: 0.90rem;
     margin-bottom: 0.5rem;
 }
 
-.helper-caption {
-    color: #64748b;
-    font-size: 0.80rem;
-    margin-top: 5px;
-    margin-bottom: 2px;
+/* separa los popovers de ayuda de la tarjeta superior */
+div[data-testid="stPopover"] {
+    margin-top: 8px;
 }
+
+/* =========================
+   Player table
+   ========================= */
 
 .player-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
+    font-size: 0.80rem;
     background: white;
     border: 1px solid #e6eaf0;
     border-radius: 12px;
@@ -111,17 +131,21 @@ st.markdown(
     background: #f8fafc;
     color: #334155;
     font-weight: 800;
-    padding: 11px 10px;
+    padding: 9px 8px;
     border-bottom: 1px solid #e6eaf0;
     text-align: left;
 }
 
 .player-table td {
-    padding: 10px;
+    padding: 8px;
     border-bottom: 1px solid #edf2f7;
     color: #0f172a;
     vertical-align: middle;
 }
+
+/* =========================
+   Badges
+   ========================= */
 
 .badge-red {
     background: #ef4444;
@@ -129,7 +153,7 @@ st.markdown(
     padding: 5px 9px;
     border-radius: 6px;
     font-weight: 800;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     display: inline-block;
 }
 
@@ -139,7 +163,7 @@ st.markdown(
     padding: 5px 9px;
     border-radius: 6px;
     font-weight: 800;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     display: inline-block;
 }
 
@@ -149,7 +173,7 @@ st.markdown(
     padding: 5px 9px;
     border-radius: 6px;
     font-weight: 800;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     display: inline-block;
 }
 
@@ -162,128 +186,89 @@ st.markdown(
     display: inline-block;
 }
 
+/* =========================
+   Player profile
+   ========================= */
+
 .profile-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 8px;
 }
+
 .profile-table td {
     padding: 5px 4px;
     vertical-align: top;
-    font-size: 0.92rem;
+    font-size: 0.90rem;
 }
+
 .profile-table td:first-child {
     color: #334155;
     font-weight: 800;
     width: 155px;
 }
 
+/* =========================
+   SHAP block
+   ========================= */
+
 .shap-executive-box {
     border: 1px solid #e6eaf0;
     border-radius: 12px;
-    padding: 14px 18px;
+    padding: 12px 16px;
     background: #f8fafc;
     margin-bottom: 12px;
     color: #334155;
+    font-size: 0.90rem;
 }
 
-/* separa los popovers de ayuda de la tarjeta superior */
-div[data-testid="stPopover"] {
+/* =========================
+   Plot / legend spacing
+   ========================= */
+
+div[data-testid="stVerticalBlock"] {
+    gap: 0.85rem;
+}
+
+.compact-legend-card {
+    background: #ffffff;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    min-height: 64px;
+    font-size: 0.82rem;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+    white-space: nowrap;
+}
+
+.compact-top5-card {
+    background: #ffffff;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    min-height: 64px;
+    font-size: 0.86rem;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+}
+
+.compact-top5-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
     margin-top: 8px;
 }
 
-.bubble-side-card {
-    margin-top: 44px;
-    padding: 16px 16px 14px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    background: #ffffff;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
-    font-size: 0.84rem;
-    color: #0f172a;
+.compact-top5-grid div {
+    line-height: 1.2;
 }
-.bubble-side-title {
-    font-weight: 900;
-    color: #0f172a;
-    margin-bottom: 10px;
-    font-size: 0.86rem;
-}
-.bubble-legend-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 9px 0;
-    white-space: nowrap;
-}
-.legend-dot {
-    display: inline-block;
-    border-radius: 50%;
-    border: 1px solid rgba(15, 23, 42, 0.22);
-    flex: 0 0 auto;
-}
-.legend-red { background: #ef4444; width: 14px; height: 14px; }
-.legend-yellow { background: #facc15; width: 14px; height: 14px; }
-.legend-gray { background: #9ca3af; width: 14px; height: 14px; }
-.legend-size-row {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 8px;
-    margin: 10px 0 6px 0;
-}
-.legend-size-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    color: #334155;
+
+.compact-top5-grid span {
+    display: block;
+    color: #94a3b8;
     font-size: 0.74rem;
-}
-.legend-size-dot {
-    display: inline-block;
-    border-radius: 50%;
-    background: rgba(156, 163, 175, 0.58);
-    border: 1px solid rgba(15, 23, 42, 0.22);
-}
-.legend-size-70 { width: 16px; height: 16px; }
-.legend-size-85 { width: 27px; height: 27px; }
-.legend-size-100 { width: 42px; height: 42px; }
-.legend-divider {
-    height: 1px;
-    background: #e5e7eb;
-    margin: 14px 0 14px 0;
-}
-.top5-player-row {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    grid-template-rows: auto auto;
-    column-gap: 8px;
-    align-items: center;
-    line-height: 1.12;
-    margin: 8px 0;
-}
-.top5-rank {
-    grid-row: 1 / span 2;
-    width: 21px;
-    height: 21px;
-    border-radius: 50%;
-    background: #ef4444;
-    color: white;
-    font-weight: 900;
-    font-size: 0.74rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
-}
-.top5-player-name {
-    color: #0f172a;
-    font-weight: 850;
-    font-size: 0.80rem;
-}
-.top5-player-club {
-    color: #64748b;
-    font-size: 0.70rem;
+    margin-top: 4px;
 }
 
 </style>
@@ -362,27 +347,6 @@ def format_money_readable(value):
         return "N/A"
 
 
-def build_money_slider_options(min_value, max_value, n=72):
-    min_value = float(min_value)
-    max_value = float(max_value)
-
-    if min_value <= 0 or max_value <= 0 or min_value >= max_value:
-        return [min_value, max_value]
-
-    values = np.geomspace(min_value, max_value, n)
-    rounded = []
-    for value in values:
-        if value < 1_000_000:
-            rounded.append(round(value / 50_000) * 50_000)
-        elif value < 10_000_000:
-            rounded.append(round(value / 100_000) * 100_000)
-        else:
-            rounded.append(round(value / 500_000) * 500_000)
-
-    options = sorted(set([min_value, max_value] + rounded))
-    return [v for v in options if min_value <= v <= max_value]
-
-
 def format_score(value):
     try:
         return f"{float(value):.1f}"
@@ -407,6 +371,26 @@ def render_metric_card(label, value, show_info_icon=False):
         <div class="metric-card">
             <div class="metric-label">{html.escape(str(label))}{info_icon}</div>
             <div class="metric-value">{html.escape(str(value))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_metric_card_with_caption(label, value, caption=None, show_info_icon=False):
+    info_icon = " <span class='info-icon'>i</span>" if show_info_icon else ""
+    caption_html = (
+        f"<div class='helper-caption'>{html.escape(str(caption))}</div>"
+        if caption
+        else ""
+    )
+
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">{html.escape(str(label))}{info_icon}</div>
+            <div class="metric-value">{html.escape(str(value))}</div>
+            {caption_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -505,22 +489,6 @@ def build_html_table(page_df: pd.DataFrame):
     """
 
 
-def size_series_from_scores(scores: pd.Series) -> pd.Series:
-    """Escala visual diferencial basada en Opportunity Score para el gráfico principal."""
-    scores = pd.to_numeric(scores, errors="coerce").fillna(60).clip(60, 100)
-    min_s, max_s = float(scores.min()), float(scores.max())
-
-    if max_s - min_s < 3:
-        # Si el Top 15 está muy concentrado, mantenemos jerarquía visual por score
-        # sin romper el significado: mayor score sigue siendo mayor burbuja.
-        ranks = scores.rank(method="first", ascending=True)
-        norm = (ranks - ranks.min()) / max((ranks.max() - ranks.min()), 1)
-    else:
-        norm = (scores - min_s) / (max_s - min_s)
-
-    return 20 + (norm ** 1.65) * 52
-
-
 def make_shap_proxy(player_df: pd.Series) -> pd.DataFrame:
     minutes = float(safe_get(player_df, "minutes_played", 0))
     growth = float(safe_get(player_df, "growth_score", 50))
@@ -555,50 +523,50 @@ def make_shap_proxy(player_df: pd.Series) -> pd.DataFrame:
     return shap_values.sort_values("impact")
 
 
-
 def render_bubble_legend(top5_players: pd.DataFrame | None = None):
-    """Leyenda horizontal compacta debajo del gráfico."""
+    """Leyenda compacta debajo de la matriz Coste vs Upside."""
 
-    col_tier, col_size, col_top5 = st.columns([1.1, 1.1, 2.4], gap="large")
+    col_tier, col_top5 = st.columns([1.05, 2.45], gap="large")
 
     with col_tier:
-        with st.container(border=True):
-            st.markdown("**Tier de oportunidad**")
-            st.markdown("🔴 Alta prioridad")
-            st.markdown("🟡 Objetivo scouting")
-            st.markdown("⚪ Exploratorio")
-
-    with col_size:
-        with st.container(border=True):
-            st.markdown("**Opportunity Score**")
-            st.markdown("● 70 &nbsp;&nbsp; ⬤ 85 &nbsp;&nbsp; ⬤ 100", unsafe_allow_html=True)
-            st.caption("A mayor score, mayor tamaño de burbuja.")
+        st.markdown(
+            """
+            <div class="compact-legend-card">
+                <b>Tier de oportunidad</b><br>
+                🔴 Alta prioridad &nbsp;&nbsp; 🟡 Objetivo scouting &nbsp;&nbsp; ⚪ Exploratorio
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with col_top5:
-        with st.container(border=True):
-            st.markdown("**🎯 Top 5 destacados**")
+        if top5_players is not None and not top5_players.empty:
+            items = []
 
-            if top5_players is not None and not top5_players.empty:
-                cols = st.columns(5)
+            for idx, row in top5_players.reset_index(drop=True).iterrows():
+                items.append(
+                    f"<b>{idx + 1}. {html.escape(str(get_player_name(row)))}</b>"
+                    f"<span>{html.escape(str(safe_get(row, 'club', '')))}</span>"
+                )
 
-                for idx, row in top5_players.reset_index(drop=True).iterrows():
-                    with cols[idx]:
-                        st.markdown(f"**{idx + 1}. {get_player_name(row)}**")
-                        st.caption(str(safe_get(row, "club", "")))
-            else:
-                st.caption("No hay jugadores destacados con los filtros actuales.")
+            st.markdown(
+                f"""
+                <div class="compact-top5-card">
+                    <b>🎯 Top 5 destacados</b>
+                    <div class="compact-top5-grid">
+                        {"".join(f"<div>{item}</div>" for item in items)}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.caption("No hay jugadores destacados con los filtros actuales.")
 
 
 def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
-    """
-    Executive bubble chart for the scouting shortlist.
+    """Executive Cost vs Upside matrix."""
 
-    Design decisions:
-    - Only Top 15 filtered players to reduce visual noise.
-    - Top 5 are forced to Alta prioridad, highlighted in red.
-    - Top 5 have both a number inside the bubble and a boxed callout with arrow.
-    - Bubble size is intentionally non-linear to make Opportunity Score visually meaningful.
-    """
     required = {"market_value_eur", "market_value_gap_eur", "opportunity_score"}
     if not required.issubset(chart_source.columns):
         return None
@@ -607,23 +575,26 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
     chart_df = chart_df[
         (chart_df["market_value_eur"] > 0)
         & (chart_df["market_value_gap_eur"] > 0)
+        & (chart_df["opportunity_score"] > 0)
     ].copy()
 
     if chart_df.empty:
         return None
 
-    chart_df = chart_df.sort_values("opportunity_score", ascending=False).head(12).copy()
+    chart_df = chart_df.sort_values("opportunity_score", ascending=False).head(20).copy()
     chart_df["dashboard_tier"] = chart_df.get("opportunity_tier_label", "Exploratorio")
 
-    top5_idx_chart = chart_df.sort_values("opportunity_score", ascending=False).head(5).index
-    chart_df.loc[top5_idx_chart, "dashboard_tier"] = "Alta prioridad"
+    top5_idx = chart_df.sort_values("opportunity_score", ascending=False).head(5).index
+    chart_df.loc[top5_idx, "dashboard_tier"] = "Alta prioridad"
 
-    # Stronger non-linear sizing: clearer differentiation than proportional raw score.
+    cost_ref = float(chart_df["market_value_eur"].median())
+    upside_ref = float(chart_df["market_value_gap_eur"].median())
+
     min_score = float(chart_df["opportunity_score"].min())
     max_score = float(chart_df["opportunity_score"].max())
     score_span = max(max_score - min_score, 1.0)
     scaled = ((chart_df["opportunity_score"] - min_score) / score_span).clip(0, 1)
-    chart_df["bubble_size"] = 18 + (scaled ** 1.7) * 54
+    chart_df["bubble_size"] = 16 + (scaled ** 1.45) * 44
 
     color_map = {
         "Alta prioridad": "#ef4444",
@@ -634,10 +605,21 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
 
     fig = go.Figure()
 
-    non_top5 = chart_df.drop(index=top5_idx_chart, errors="ignore")
-    top5 = chart_df.loc[top5_idx_chart].sort_values("opportunity_score", ascending=False).reset_index(drop=True)
+    x_min = max(float(chart_df["market_value_eur"].min()) * 0.65, 50_000)
+    x_max = float(chart_df["market_value_eur"].max()) * 1.95
+    y_min = max(float(chart_df["market_value_gap_eur"].min()) * 0.60, 50_000)
+    y_max = float(chart_df["market_value_gap_eur"].max()) * 1.75
 
-    # Non-top-5: draw first, softer opacity.
+    quadrant_shapes = [
+        dict(type="rect", xref="x", yref="y", x0=x_min, x1=cost_ref, y0=upside_ref, y1=y_max, fillcolor="rgba(34, 197, 94, 0.18)", line=dict(width=0), layer="below"),
+        dict(type="rect", xref="x", yref="y", x0=cost_ref, x1=x_max, y0=upside_ref, y1=y_max, fillcolor="rgba(59, 130, 246, 0.13)", line=dict(width=0), layer="below"),
+        dict(type="rect", xref="x", yref="y", x0=x_min, x1=cost_ref, y0=y_min, y1=upside_ref, fillcolor="rgba(250, 204, 21, 0.13)", line=dict(width=0), layer="below"),
+        dict(type="rect", xref="x", yref="y", x0=cost_ref, x1=x_max, y0=y_min, y1=upside_ref, fillcolor="rgba(239, 68, 68, 0.10)", line=dict(width=0), layer="below"),
+    ]
+    fig.update_layout(shapes=quadrant_shapes)
+
+    non_top5 = chart_df.drop(index=top5_idx, errors="ignore")
+
     for tier_name in ["Exploratorio", "Objetivo scouting", "Bajo riesgo"]:
         tier_df = non_top5[non_top5["dashboard_tier"] == tier_name]
         if tier_df.empty:
@@ -647,6 +629,8 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
             f"<b>{get_player_name(row)}</b><br>"
             f"Club: {safe_get(row, 'club')}<br>"
             f"Liga: {safe_get(row, 'league')}<br>"
+            f"Posición: {safe_get(row, 'position_group')}<br>"
+            f"Edad: {format_score(safe_get(row, 'age'))}<br>"
             f"Valor mercado: {format_money_readable(safe_get(row, 'market_value_eur'))}<br>"
             f"Valor estimado: {format_money_readable(safe_get(row, 'predicted_market_value_eur'))}<br>"
             f"Gap estimado: {format_money_readable(safe_get(row, 'market_value_gap_eur'))}<br>"
@@ -665,18 +649,19 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
                 marker=dict(
                     size=tier_df["bubble_size"],
                     color=color_map.get(tier_name, "#9ca3af"),
-                    opacity=0.70,
-                    line=dict(width=1.1, color="rgba(15, 23, 42, 0.22)"),
+                    opacity=0.72,
+                    line=dict(width=1.0, color="rgba(15, 23, 42, 0.22)"),
                 ),
-                showlegend=False,
             )
         )
 
-    # Top 5: draw above the rest with stronger border.
+    top5 = chart_df.loc[top5_idx].sort_values("opportunity_score", ascending=False).reset_index(drop=True)
     hover_text_top5 = [
         f"<b>{i + 1}. {get_player_name(row)}</b><br>"
         f"Club: {safe_get(row, 'club')}<br>"
         f"Liga: {safe_get(row, 'league')}<br>"
+        f"Posición: {safe_get(row, 'position_group')}<br>"
+        f"Edad: {format_score(safe_get(row, 'age'))}<br>"
         f"Valor mercado: {format_money_readable(safe_get(row, 'market_value_eur'))}<br>"
         f"Valor estimado: {format_money_readable(safe_get(row, 'predicted_market_value_eur'))}<br>"
         f"Gap estimado: {format_money_readable(safe_get(row, 'market_value_gap_eur'))}<br>"
@@ -689,21 +674,19 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
             x=top5["market_value_eur"],
             y=top5["market_value_gap_eur"],
             mode="markers",
-            name="Alta prioridad",
+            name="Top 5 prioridad",
             hovertext=hover_text_top5,
             hoverinfo="text",
             cliponaxis=False,
             marker=dict(
-                size=np.maximum(top5["bubble_size"].to_numpy(), 54),
+                size=np.maximum(top5["bubble_size"].to_numpy(), 44),
                 color="#ef4444",
-                opacity=0.88,
-                line=dict(width=2.4, color="rgba(15, 23, 42, 0.55)"),
+                opacity=0.90,
+                line=dict(width=2.4, color="rgba(15, 23, 42, 0.58)"),
             ),
-            showlegend=False,
         )
     )
 
-    # Rank numbers inside Top 5 bubbles: unambiguous association even in dense areas.
     fig.add_trace(
         go.Scatter(
             x=top5["market_value_eur"],
@@ -718,52 +701,38 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         )
     )
 
-    # Boxed callouts with leader lines. Offsets are rank-specific to avoid overlap.
-    label_offsets = [
-        (88, -36),    # 1
-        (96, -72),    # 2
-        (90, 24),     # 3
-        (118, 74),    # 4
-        (132, 116),   # 5
-    ]
+    fig.add_vline(x=cost_ref, line_dash="dash", line_color="rgba(15, 23, 42, 0.45)", line_width=1.2, annotation_text="Coste mediano", annotation_position="top")
+    fig.add_hline(y=upside_ref, line_dash="dash", line_color="rgba(15, 23, 42, 0.45)", line_width=1.2, annotation_text="Upside mediano", annotation_position="right")
 
-    for i, row in top5.iterrows():
-        ax, ay = label_offsets[i] if i < len(label_offsets) else (90, -40)
+    quadrant_annotations = [
+        (0.18, 0.90, "<b>🟢 Comprar / priorizar</b>", "#22c55e", "#166534"),
+        (0.78, 0.90, "<b>🔵 Oportunidades premium</b>", "#3b82f6", "#1d4ed8"),
+        (0.18, 0.18, "<b>🟡 Seguimiento</b>", "#facc15", "#854d0e"),
+        (0.78, 0.18, "<b>🔴 Menor prioridad</b>", "#ef4444", "#991b1b"),
+    ]
+    for x, y, text, border, color in quadrant_annotations:
         fig.add_annotation(
-            x=row["market_value_eur"],
-            y=row["market_value_gap_eur"],
-            text=f"<b>{i + 1}. {get_player_name(row)}</b>",
-            showarrow=True,
-            arrowhead=2,
-            arrowsize=1,
-            arrowwidth=1.8,
-            arrowcolor="#64748b",
-            ax=ax,
-            ay=ay,
-            xanchor="left",
-            yanchor="middle",
-            bgcolor="rgba(255,255,255,0.98)",
-            bordercolor="#cbd5e1",
-            borderwidth=1.2,
+            xref="paper",
+            yref="paper",
+            x=x,
+            y=y,
+            text=text,
+            showarrow=False,
+            bgcolor="rgba(255,255,255,0.90)",
+            bordercolor=border,
+            borderwidth=1,
             borderpad=5,
-            opacity=0.98,
-            font=dict(size=11, color="#0f172a"),
+            font=dict(size=13, color=color),
         )
 
-    # Axis padding leaves room for callout boxes while keeping the plot compact.
-    x_min = max(float(chart_df["market_value_eur"].min()) * 0.70, 50_000)
-    x_max = float(chart_df["market_value_eur"].max()) * 1.90
-    y_min = max(float(chart_df["market_value_gap_eur"].min()) * 0.62, 50_000)
-    y_max = float(chart_df["market_value_gap_eur"].max()) * 1.55
-
     fig.update_layout(
-        height=520,
-        margin=dict(l=10, r=16, t=10, b=10),
-        showlegend=False,
+        height=620,
+        margin=dict(l=20, r=30, t=20, b=20),
         plot_bgcolor="white",
         paper_bgcolor="white",
+        showlegend=False,
         xaxis_title="Valor de mercado actual (€) — escala log",
-        yaxis_title="Gap de mercado estimado (€)",
+        yaxis_title="Gap de mercado estimado (€) — escala log",
     )
 
     fig.update_xaxes(
@@ -779,11 +748,98 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         range=[np.log10(y_min), np.log10(y_max)],
         showgrid=True,
         gridcolor="#e5e7eb",
-        tickvals=[50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
-        ticktext=["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M"],
+        tickvals=[50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000],
+        ticktext=["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M"],
     )
 
     return fig
+
+
+def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
+    """Render executive KPI-style summary for the Cost vs Upside matrix."""
+
+    required = {"market_value_eur", "market_value_gap_eur", "opportunity_score"}
+
+    if chart_source.empty or not required.issubset(chart_source.columns):
+        return
+
+    chart_df = chart_source.dropna(subset=list(required)).copy()
+    chart_df = chart_df[
+        (chart_df["market_value_eur"] > 0)
+        & (chart_df["market_value_gap_eur"] > 0)
+        & (chart_df["opportunity_score"] > 0)
+    ].copy()
+
+    if chart_df.empty:
+        return
+
+    chart_df = (
+        chart_df
+        .sort_values("opportunity_score", ascending=False)
+        .head(20)
+        .copy()
+    )
+
+    cost_ref = chart_df["market_value_eur"].median()
+    upside_ref = chart_df["market_value_gap_eur"].median()
+
+    priority_zone = chart_df[
+        (chart_df["market_value_eur"] <= cost_ref)
+        & (chart_df["market_value_gap_eur"] >= upside_ref)
+    ]
+
+    premium_zone = chart_df[
+        (chart_df["market_value_eur"] > cost_ref)
+        & (chart_df["market_value_gap_eur"] >= upside_ref)
+    ]
+
+    avg_opportunity = chart_df["opportunity_score"].mean()
+    total_gap = chart_df["market_value_gap_eur"].sum()
+
+    top_league = (
+        chart_df["league"].mode().iloc[0]
+        if "league" in chart_df.columns and not chart_df["league"].dropna().empty
+        else "N/D"
+    )
+
+    st.markdown("### 🎯 Hallazgos clave del Top 20 filtrado")
+
+    h1, h2, h3, h4, h5 = st.columns(5)
+
+    with h1:
+        render_metric_card_with_caption(
+            "Comprar / priorizar",
+            f"{len(priority_zone)}",
+            "candidatos",
+        )
+
+    with h2:
+        render_metric_card_with_caption(
+            "Oportunidades premium",
+            f"{len(premium_zone)}",
+            "candidatos",
+        )
+
+    with h3:
+        render_metric_card_with_caption(
+            "Score oportunidad",
+            f"{avg_opportunity:.1f}",
+            "Top 20 filtrado",
+        )
+
+    with h4:
+        render_metric_card_with_caption(
+            "Upside agregado",
+            format_money_short(total_gap),
+            "valor potencial identificado",
+        )
+
+    with h5:
+        render_metric_card_with_caption(
+            "Liga dominante",
+            str(top_league),
+            "liga más representada",
+        )
 
 
 # =============================================================================
@@ -845,7 +901,7 @@ Plataforma analítica para identificación de jugadores infravalorados mediante:
 )
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ESTADO DEL PROYECTO")
-st.sidebar.success("Sprint 7 — Dashboard")
+st.sidebar.success("Sprint 9 — Dashboard productizado")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### FILTROS RÁPIDOS")
 st.sidebar.caption("El filtro principal de perfiles accionables está disponible al inicio del dashboard.")
@@ -865,229 +921,231 @@ Perfil interesante para seguimiento.
 Requiere revisión adicional.
 """
 )
-st.sidebar.markdown("<br><br><span style='color:#94a3b8;font-size:0.8rem;'>v0.7.0</span>", unsafe_allow_html=True)
+st.sidebar.markdown("<br><br><span style='color:#94a3b8;font-size:0.8rem;'>v0.9.0-dashboard-product</span>", unsafe_allow_html=True)
 
 
 # =============================================================================
-# Header + actionable filter
+# Header + executive filters
 # =============================================================================
 
 st.title("🎯 Mercado Ineficiente - Scouting Dashboard")
 st.markdown(
     """
 Sistema analítico para identificar jugadores infravalorados en el mercado de fichajes europeo mediante
-modelos predictivos, scoring multicriterio y validación de negocio.
+modelos predictivos, scoring multicriterio, explainability y validación de negocio.
 """
 )
 st.markdown(
     """
 <div class="info-box">
-<span class="info-icon">i</span> Modo scouting operativo: filtra jugadores con edad ≤ 23, minutos ≥ 900 y Confidence Score ≥ 70.
+<span class="info-icon">i</span> Modo ejecutivo: primero acota el universo de scouting; después interpreta KPIs, coste vs upside y ranking.
 </div>
 """,
     unsafe_allow_html=True,
 )
 
-top_actionable_filter = st.checkbox(
-    "Mostrar solo perfiles accionables",
-    value=True,
-    help="Aplica filtros mínimos de edad, exposición competitiva y fiabilidad analítica.",
+base_df = df.copy()
+st.header("🔎 Filtros ejecutivos de scouting")
+
+PRESETS = {
+    "Exploración completa": {
+        "max_age": 30,
+        "min_minutes": 0,
+        "min_confidence": 0,
+        "min_opportunity": float(np.floor(base_df["opportunity_score"].min())),
+        "description": "Visualiza toda la shortlist ejecutiva sin restricciones operativas adicionales.",
+    },
+    "Perfiles accionables": {
+        "max_age": 23,
+        "min_minutes": 900,
+        "min_confidence": 70,
+        "min_opportunity": float(np.floor(base_df["opportunity_score"].min())),
+        "description": "Filtro operativo recomendado: jóvenes con minutos suficientes y señal fiable.",
+    },
+    "Jóvenes élite": {
+        "max_age": 21,
+        "min_minutes": 900,
+        "min_confidence": 70,
+        "min_opportunity": float(np.floor(base_df["opportunity_score"].quantile(0.75))),
+        "description": "Jugadores muy jóvenes con alta señal de oportunidad.",
+    },
+    "Alto upside": {
+        "max_age": 23,
+        "min_minutes": 500,
+        "min_confidence": 60,
+        "min_opportunity": float(np.floor(base_df["opportunity_score"].quantile(0.85))),
+        "description": "Perfiles con mayor potencial relativo, aceptando algo más de riesgo.",
+    },
+}
+
+preset_name = st.radio("Preset de scouting", options=list(PRESETS.keys()), index=1, horizontal=True, key="scouting_preset")
+preset = PRESETS[preset_name]
+st.caption(f"Preset seleccionado: {preset['description']}")
+
+filter_row_1 = st.columns([1, 1, 1], gap="large")
+filter_row_2 = st.columns([1, 1, 1.4, 1.4], gap="large")
+
+with filter_row_1[0]:
+    max_age = st.slider("Edad máxima", min_value=18, max_value=30, value=int(preset["max_age"]), step=1, key=f"max_age_{preset_name}")
+with filter_row_1[1]:
+    min_minutes = st.slider("Minutos mínimos", min_value=0, max_value=3000, value=int(preset["min_minutes"]), step=100, key=f"min_minutes_{preset_name}")
+with filter_row_1[2]:
+    min_confidence = st.slider("Confidence Score mínimo", min_value=0, max_value=100, value=int(preset["min_confidence"]), step=5, key=f"min_confidence_{preset_name}")
+
+with filter_row_2[0]:
+    league_options = ["Todas"] + sorted(base_df["league"].dropna().astype(str).unique().tolist())
+    selected_league = st.selectbox("Liga", league_options, key=f"league_{preset_name}")
+with filter_row_2[1]:
+    position_options = ["Todas"] + sorted(base_df["position_group"].dropna().astype(str).unique().tolist())
+    selected_position = st.selectbox("Posición", position_options, key=f"position_{preset_name}")
+with filter_row_2[2]:
+    tier_options = ["Todos"] + sorted(base_df["opportunity_tier_label"].dropna().astype(str).unique().tolist())
+    selected_tier = st.selectbox("Tier de oportunidad", tier_options, key=f"tier_{preset_name}")
+with filter_row_2[3]:
+    global_min_os = float(np.floor(base_df["opportunity_score"].min()))
+    global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
+    os_range = st.slider("Rango de Opportunity Score", min_value=global_min_os, max_value=global_max_os, value=(float(preset["min_opportunity"]), global_max_os), key=f"opportunity_range_{preset_name}")
+
+filtered_df = base_df.copy()
+filtered_df = filtered_df[
+    (filtered_df["age"] <= max_age)
+    & (filtered_df["minutes_played"] >= min_minutes)
+    & (filtered_df["confidence_score"] >= min_confidence)
+    & (filtered_df["opportunity_score"].between(os_range[0], os_range[1]))
+].copy()
+
+if selected_league != "Todas":
+    filtered_df = filtered_df[filtered_df["league"].astype(str) == selected_league]
+if selected_position != "Todas":
+    filtered_df = filtered_df[filtered_df["position_group"].astype(str) == selected_position]
+if selected_tier != "Todos":
+    filtered_df = filtered_df[filtered_df["opportunity_tier_label"].astype(str) == selected_tier]
+
+filtered_df = filtered_df.sort_values("opportunity_score", ascending=False).reset_index(drop=True)
+
+shortlist_universe = len(base_df)
+filtered_universe = len(filtered_df)
+filtered_pct_shortlist = filtered_universe / shortlist_universe if shortlist_universe > 0 else 0
+
+active_filters = [
+    f"Edad ≤ {max_age}",
+    f"Minutos ≥ {min_minutes:,}",
+    f"Confidence ≥ {min_confidence}",
+    f"Opportunity {os_range[0]:.0f}–{os_range[1]:.0f}",
+]
+if selected_league != "Todas":
+    active_filters.append(f"Liga: {selected_league}")
+if selected_position != "Todas":
+    active_filters.append(f"Posición: {selected_position}")
+if selected_tier != "Todos":
+    active_filters.append(f"Tier: {selected_tier}")
+
+st.markdown(
+    f"""
+<div class="info-box">
+<b>📊 Contexto del análisis</b><br><br>
+<b>Universo modelado:</b> {SCORED_UNIVERSE_SIZE:,} jugadores
+&nbsp;&nbsp;|&nbsp;&nbsp;
+<b>Shortlist ejecutiva:</b> {shortlist_universe:,} jugadores
+<hr style="margin:10px 0; opacity:0.25;">
+<b>Filtros activos:</b><br>
+{" · ".join(active_filters)}
+</div>
+""",
+    unsafe_allow_html=True,
 )
-
-if top_actionable_filter and {"age", "minutes_played", "confidence_score"}.issubset(df.columns):
-    df = df[
-        (df["age"] <= 23)
-        & (df["minutes_played"] >= 900)
-        & (df["confidence_score"] >= 70)
-    ].copy()
-
 
 # =============================================================================
 # KPIs
 # =============================================================================
 
-k1, k2, k3, k4 = st.columns(4)
+st.markdown("---")
+k1, k2, k3, k4, k5 = st.columns(5)
 
 with k1:
-    render_metric_card("Jugadores en shortlist", f"{len(df):,}")
-
+    render_metric_card_with_caption("Candidatos actuales", f"{len(filtered_df):,}", f"{filtered_pct_shortlist:.0%} de la shortlist")
 with k2:
-    leagues = df["league"].nunique() if "league" in df.columns else "N/A"
-    render_metric_card("Ligas representadas", leagues)
-
+    render_metric_card_with_caption("Shortlist ejecutiva", f"{shortlist_universe:,}", "jugadores precandidatos")
 with k3:
+    leagues = filtered_df["league"].nunique() if "league" in filtered_df.columns else "N/A"
+    render_metric_card_with_caption("Ligas representadas", leagues, "cobertura competitiva")
+with k4:
     if not precision.empty and "precision_at_k" in precision.columns:
-        precision_value = f"{precision['precision_at_k'].max():.2f}"
+        precision_value = f"{precision['precision_at_k'].max():.0%}"
     else:
         precision_value = "N/A"
-    render_metric_card("Precisión del ranking", precision_value, show_info_icon=True)
-    with st.popover("ℹ️ Precisión del ranking"):
+    render_metric_card_with_caption("Precision@K", precision_value, "calidad del ranking", show_info_icon=True)
+    with st.popover("ℹ️ Precision@K"):
         st.markdown(
             """
 **Qué mide**  
-Proporción de aciertos entre los primeros puestos del ranking.
+Proporción de aciertos dentro de los primeros puestos del ranking.
 
 **Lectura de negocio**  
-Responde a: *si revisamos el Top K, ¿qué proporción muestra una señal positiva posterior?*
+Responde a: *si revisamos el Top K, ¿qué proporción muestra señal positiva posterior?*
 
-**Uso recomendado**  
-Sirve para validar si el ranking concentra buenos candidatos al inicio, que es donde mira primero un equipo de scouting.
+**Importante**  
+Es una métrica de ranking, no una métrica de error predictivo como RMSE o MAE.
 """
         )
-
-with k4:
+with k5:
     if not roi.empty and "positive_roi_rate" in roi.columns:
         roi_value = f"{roi['positive_roi_rate'].iloc[0]:.0%}"
     else:
         roi_value = "N/A"
-    render_metric_card("% oportunidades rentables", roi_value, show_info_icon=True)
-    with st.popover("ℹ️ % oportunidades rentables"):
+    render_metric_card_with_caption("Positive ROI Rate", roi_value, "simulación conservadora", show_info_icon=True)
+    with st.popover("ℹ️ Positive ROI Rate"):
         st.markdown(
             """
 **Qué mide**  
-Proporción de perfiles de la shortlist con ROI positivo en la simulación de negocio.
+Porcentaje de perfiles con retorno positivo en la simulación económica.
 
 **Lectura de negocio**  
-Indica qué parte del universo filtrado tendría retorno económico positivo bajo las hipótesis del modelo.
+Ayuda a valorar si la shortlist tiene sentido como cartera potencial de inversión.
 
-**Uso recomendado**  
-Debe interpretarse como una aproximación de valor esperado, no como garantía de rentabilidad real.
+**Importante**  
+No representa rentabilidad garantizada; es una simulación conservadora basada en las hipótesis del modelo.
 """
         )
 
 
 # =============================================================================
-# Main visual block + horizontal scouting filters
+# Main visual block
 # =============================================================================
 
-# The chart container is declared before the filters container so the visual block
-# remains above the filters, while the chart is still built with the filtered data.
-chart_section = st.container()
-filters_section = st.container()
-filtered_df = df.copy()
-
-with filters_section:
-    st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
-    st.header("🔎 Filtros de scouting")
-
-    filter_row_1 = st.columns(3, gap="large")
-    filter_row_2 = st.columns([1.05, 1.05, 1.35, 1.35], gap="large")
-
-    with filter_row_1[0]:
-        if "league" in filtered_df.columns:
-            leagues = ["Todas"] + sorted(filtered_df["league"].dropna().unique().tolist())
-            selected_league = st.selectbox("Liga", leagues)
-            if selected_league != "Todas":
-                filtered_df = filtered_df[filtered_df["league"] == selected_league]
-
-    with filter_row_1[1]:
-        if "position_group" in filtered_df.columns:
-            positions = ["Todas"] + sorted(filtered_df["position_group"].dropna().unique().tolist())
-            selected_position = st.selectbox("Posición", positions)
-            if selected_position != "Todas":
-                filtered_df = filtered_df[filtered_df["position_group"] == selected_position]
-
-    with filter_row_1[2]:
-        if "opportunity_tier_label" in filtered_df.columns:
-            tiers = ["Todos"] + sorted(filtered_df["opportunity_tier_label"].dropna().unique().tolist())
-            selected_tier = st.selectbox("Tier de oportunidad", tiers)
-            if selected_tier != "Todos":
-                filtered_df = filtered_df[filtered_df["opportunity_tier_label"] == selected_tier]
-
-    with filter_row_2[0]:
-        if "club" in filtered_df.columns:
-            clubs = ["Todos"] + sorted(filtered_df["club"].dropna().unique().tolist())
-            selected_club = st.selectbox("Club / equipo", clubs)
-            if selected_club != "Todos":
-                filtered_df = filtered_df[filtered_df["club"] == selected_club]
-
-    with filter_row_2[1]:
-        if "season" in filtered_df.columns:
-            seasons = ["Todas"] + sorted(filtered_df["season"].dropna().unique().tolist())
-            selected_season = st.selectbox("Temporada analizada", seasons)
-            if selected_season != "Todas":
-                filtered_df = filtered_df[filtered_df["season"] == selected_season]
-
-    with filter_row_2[2]:
-        if "market_value_eur" in filtered_df.columns and not filtered_df.empty:
-            min_mv = float(filtered_df["market_value_eur"].min())
-            max_mv = float(filtered_df["market_value_eur"].max())
-            if min_mv < max_mv:
-                mv_options = build_money_slider_options(min_mv, max_mv)
-                mv_range = st.select_slider(
-                    "Rango de valor de mercado actual (€)",
-                    options=mv_options,
-                    value=(mv_options[0], mv_options[-1]),
-                    format_func=format_money_readable,
-                )
-            else:
-                mv_range = (min_mv, max_mv)
-                st.caption(f"Rango de valor de mercado actual: {format_money_readable(min_mv)}")
-
-            st.caption(
-                f"Rango seleccionado: {format_money_readable(mv_range[0])} — "
-                f"{format_money_readable(mv_range[1])}"
-            )
-            filtered_df = filtered_df[filtered_df["market_value_eur"].between(mv_range[0], mv_range[1])]
-
-    with filter_row_2[3]:
-        if "opportunity_score" in filtered_df.columns and not filtered_df.empty:
-            min_os = float(np.floor(filtered_df["opportunity_score"].min()))
-            max_os = float(np.ceil(filtered_df["opportunity_score"].max()))
-            os_range = st.slider(
-                "Rango de Opportunity Score",
-                min_value=min_os,
-                max_value=max_os,
-                value=(min_os, max_os),
-            )
-            filtered_df = filtered_df[filtered_df["opportunity_score"].between(os_range[0], os_range[1])]
-
-with chart_section:
-    st.markdown(
-        "## 💎 Coste actual vs upside estimado <span class='info-icon'>i</span>",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-Cada burbuja representa un jugador del **Top 12 filtrado**. El tamaño indica el **Opportunity Score**.  
-Los **5 mejores jugadores** están destacados en rojo y numerados.
+st.markdown("---")
+st.markdown("## 💎 Coste actual vs upside estimado", unsafe_allow_html=True)
+st.markdown(
+    """
+Cada burbuja representa un jugador del **Top 20 filtrado**.  
+La matriz divide el mercado en cuatro zonas estratégicas según **coste actual** y **upside estimado**.  
+El tamaño representa el **Opportunity Score** y los números identifican el **Top 5** del ranking actual.
 """
+)
+
+fig = build_opportunity_chart(filtered_df)
+if fig is None:
+    st.info("No hay datos suficientes para generar el gráfico con los filtros actuales.")
+else:
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            "displaylogo": False,
+            "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"],
+        },
     )
 
-    fig = build_opportunity_chart(filtered_df)
+    top5_legend_df = filtered_df.sort_values("opportunity_score", ascending=False).head(5).reset_index(drop=True)
+    render_bubble_legend(top5_legend_df)
+    render_chart_executive_summary(filtered_df)
 
-    if fig is None:
-        st.info("No hay datos suficientes para generar el gráfico.")
-    else:
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={
-                "displaylogo": False,
-                "modeBarButtonsToRemove": [
-                    "zoom",
-                    "pan",
-                    "select",
-                    "lasso2d",
-                    "autoScale",
-                    "resetScale",
-                ],
-            },
-        )
-
-        top5_legend_df = (
-            filtered_df
-            .sort_values("opportunity_score", ascending=False)
-            .head(5)
-            .reset_index(drop=True)
-        )
-
-        render_bubble_legend(top5_legend_df)
 
 # =============================================================================
 # Paginated table
 # =============================================================================
+
+st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
 
 st.header("📋 Tabla de jugadores priorizados")
 
@@ -1107,7 +1165,6 @@ if "players_page" not in st.session_state:
     st.session_state.players_page = 1
 
 st.session_state.players_page = min(st.session_state.players_page, total_pages)
-
 start = (st.session_state.players_page - 1) * PAGE_SIZE
 end = start + PAGE_SIZE
 page_df = table_df.iloc[start:end].copy()
@@ -1158,14 +1215,7 @@ with m5:
     rank = int(table_df.index[table_df["player_name_fbref"] == selected_player][0]) + 1
     render_metric_card("Ranking", f"#{rank} / {len(table_df)}")
 
-# Espacio visual entre las tarjetas superiores y los bloques de análisis
-st.markdown(
-    """
-    <div style="height:28px;"></div>
-    """,
-    unsafe_allow_html=True,
-)
-
+st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
 profile_col, reading_col = st.columns([1, 1])
 
 with profile_col:
@@ -1208,15 +1258,7 @@ with reading_col:
             "Este jugador aparece en la shortlist porque combina una señal de infravaloración "
             "con potencial de crecimiento y una fiabilidad analítica suficiente."
         )
-
-        # Espacio interno para que las métricas no queden pegadas al texto
-        st.markdown(
-            """
-            <div style="height:24px;"></div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+        st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
         gap_rel = calculate_gap_relative(player_df)
         gap_text = f"{gap_rel:.1%}" if gap_rel is not None else "N/A"
         s1, s2, s3 = st.columns(3)
@@ -1226,14 +1268,7 @@ with reading_col:
             render_metric_card("Growth Score", f"{format_score(safe_get(player_df, 'growth_score'))} / 100")
         with s3:
             render_metric_card("Confidence Score", f"{format_score(safe_get(player_df, 'confidence_score'))} / 100")
-
-        # Aire inferior controlado dentro de la caja de lectura analítica
-        st.markdown(
-            """
-            <div style="height:18px; clear: both;"></div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("<div style='height:18px; clear: both;'></div>", unsafe_allow_html=True)
 
 
 # =============================================================================
@@ -1270,7 +1305,6 @@ la recomendación ante dirección deportiva o scouting.
 )
 
 shap_values = make_shap_proxy(player_df)
-
 fig_shap = go.Figure(
     go.Bar(
         x=shap_values["impact"],
