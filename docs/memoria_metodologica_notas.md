@@ -258,6 +258,157 @@ Resultados:
 
 ---
 
+# Sprint 8 — Reserved
+
+## Contexto
+
+Durante la revisión académica intermedia se redefinió la hoja de ruta del proyecto.
+
+Las funcionalidades inicialmente previstas para Sprint 8 fueron absorbidas posteriormente dentro de Sprint 9 con el objetivo de construir una capa única y coherente de soporte a decisiones.
+
+Esto evitó duplicidades entre componentes de visualización, ranking y validación de negocio.
+
+## Decisión metodológica
+
+Se optó por consolidar todos los desarrollos relacionados con consumo de resultados, priorización y apoyo a decisiones dentro de un único sprint de Decision Support.
+
+## Conclusión
+
+Sprint reservado y no ejecutado como fase independiente.
+
+---
+
+# Sprint 9.1 — Executive Scouting Layer
+
+## Objetivo
+
+Transformar el ranking analítico en una herramienta operativa de scouting mediante filtros ejecutivos y segmentación dinámica del universo de jugadores.
+
+## Implementación
+
+Se desarrolló una nueva capa de exploración compuesta por:
+
+- filtros ejecutivos de scouting
+- presets de búsqueda
+- segmentación por edad
+- segmentación por minutos
+- segmentación por liga
+- segmentación por posición
+- segmentación por Opportunity Score
+- segmentación por Confidence Score
+
+## Presets implementados
+
+### Exploración completa
+
+Permite analizar la totalidad del universo modelado.
+
+### Perfiles accionables
+
+Filtra jugadores jóvenes con suficiente volumen competitivo y señal estadística robusta.
+
+### Jóvenes élite
+
+Orienta la búsqueda hacia perfiles de máximo potencial futuro.
+
+### Alto upside
+
+Prioriza jugadores con mayor diferencial estimado respecto a su valor actual.
+
+## Resultado
+
+La capa analítica deja de producir únicamente rankings estáticos y permite construir shortlists dinámicas adaptadas a distintos contextos deportivos.
+
+## Conclusión
+
+Sprint 9.1 constituye la transición desde un sistema de scoring hacia una herramienta interactiva de scouting.
+
+---
+
+# Sprint 9.2 — Executive Dashboard & Decision Support Layer
+
+## Objetivo
+
+Construir una capa de Visual Analytics orientada a departamentos de scouting y dirección deportiva.
+
+La finalidad es transformar los resultados analíticos en información accionable para la toma de decisiones.
+
+## Implementación
+
+Se rediseñó completamente la experiencia visual del sistema incorporando:
+
+- matriz Coste vs Upside
+- segmentación estratégica de oportunidades
+- indicadores ejecutivos
+- síntesis automática de hallazgos
+- priorización visual de candidatos
+
+## Matriz estratégica Coste vs Upside
+
+Cada jugador se representa mediante una burbuja donde:
+
+```text
+Eje X → valor de mercado actual
+Eje Y → upside estimado
+Tamaño → Opportunity Score
+Color → prioridad scouting
+```
+
+## Segmentación estratégica
+
+La matriz divide automáticamente el mercado en cuatro zonas:
+
+| Zona                  | Interpretación                            |
+| --------------------- | ----------------------------------------- |
+| Comprar / priorizar   | Bajo coste y alto upside                  |
+| Oportunidades premium | Alto upside con mayor coste               |
+| Seguimiento           | Perfiles interesantes para monitorización |
+| Menor prioridad       | Menor relación coste-potencial            |
+
+## Hallazgos ejecutivos
+
+Se incorporó una capa de síntesis automática basada en:
+
+* candidatos prioritarios
+* oportunidades premium
+* Opportunity Score medio
+* upside agregado identificado
+* liga dominante
+
+## Resultado
+
+La arquitectura evoluciona desde:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+```
+
+hacia:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting
+```
+
+## Conclusión
+
+Sprint 9.2 representa la primera implementación completa de un sistema DSS (Decision Support System) aplicado al mercado de fichajes.
+
+---
+
 # Conclusión metodológica global
 
 La evolución del proyecto muestra una transición progresiva desde:
@@ -269,24 +420,27 @@ Predicción de valor de mercado
 hacia:
 
 ```text
-Sistema analítico reproducible para soporte a decisiones de scouting
+Sistema DSS (Decision Support System) para identificación de talento infravalorado.
 ```
+
+La evolución metodológica siguió cinco etapas principales:
+
+1. Integración y normalización de datos
+2. Modelización econométrica
+3. Modelización mediante Machine Learning
+4. Construcción de un sistema multicriterio de scoring
+5. Desarrollo de una capa de soporte a decisiones
 
 Contribuciones principales:
 
-- integración multi‑fuente
-- matching jerárquico
-- panel longitudinal jugador‑temporada
-- arquitectura modular reproducible
-- comparación econometría vs ML
+- integración multi-fuente FBref + Transfermarkt
+- matching jerárquico reproducible
+- panel longitudinal jugador-temporada
+- comparación econometría vs Machine Learning
 - explainability mediante SHAP
 - scoring multicriterio
-- evaluación estadística y de negocio
+- validación de negocio mediante Precision@K
+- dashboard ejecutivo para scouting
+- sistema DSS aplicado al mercado de fichajes
 
-La principal conclusión metodológica es que la mejora incremental no provino únicamente de algoritmos más complejos, sino de una combinación de:
-
-- conocimiento del dominio
-- ingeniería de variables
-- validación temporal
-- interpretabilidad
-- traducción a negocio
+La principal conclusión metodológica es que el valor generado no proviene únicamente de la capacidad predictiva del modelo, sino de la combinación entre conocimiento de dominio, ingeniería de variables, interpretabilidad y traducción de resultados analíticos a decisiones deportivas accionables.

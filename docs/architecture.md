@@ -12,11 +12,14 @@ Arquitectura modular basada en CRISP-DM adaptado con:
 -   Machine Learning layer
 -   Scoring layer
 -   Evaluation layer
+-   Explainability layer
+-   Visual Analytics layer
+-   Decision Support layer
 -   Business layer
 
 ---
 
-## Actualización Sprint 5--6
+## Evolución arquitectónica por sprints
 
 ### Sprint 5 --- Scoring Engine
 
@@ -151,6 +154,111 @@ Scouting Dashboard
 ↓
 Decision Support
 
+---
+
+### Sprint 9 --- Executive Dashboard & Decision Support System
+
+Nueva evolución de la capa:
+
+`dashboard/`
+
+Componente principal:
+
+`streamlit_app.py`
+
+Objetivo:
+
+Transformar el dashboard inicial en una herramienta de soporte a decisiones orientada a scouting profesional.
+
+---
+
+#### Sprint 9.1 --- Executive Scouting Filters
+
+Capacidades incorporadas:
+
+* presets de scouting
+* filtros ejecutivos automáticos
+* universo modelado visible
+* shortlist dinámica
+* filtros activos visibles
+* segmentación avanzada
+
+Variables de segmentación:
+
+* Liga
+* Posición
+* Edad
+* Opportunity Score
+* Confidence Score
+
+Resultado:
+
+El dashboard evoluciona desde una visualización estática hacia una herramienta interactiva de exploración del mercado.
+
+---
+
+#### Sprint 9.2 --- Visual Analytics & Opportunity Matrix
+
+Nuevos componentes:
+
+##### Coste actual vs Upside estimado
+
+Matriz estratégica basada en:
+
+* valor de mercado actual
+* gap de mercado estimado
+* Opportunity Score
+* tier de oportunidad
+
+Representación:
+
+```text
+Eje X → Coste actual
+Eje Y → Upside estimado
+Tamaño → Opportunity Score
+Color → Prioridad scouting
+```
+
+##### Segmentación estratégica
+
+Zonas automáticas:
+
+* Comprar / priorizar
+* Oportunidades premium
+* Seguimiento
+* Menor prioridad
+
+##### Executive Insights
+
+Nueva capa de síntesis:
+
+* candidatos prioritarios
+* oportunidades premium
+* score oportunidad medio
+* upside agregado
+* liga dominante
+
+##### Top 5 destacados
+
+Identificación automática de las mejores oportunidades dentro de los filtros activos.
+
+Resultado arquitectónico:
+
+```text
+Predictions
+↓
+Scoring Engine
+↓
+Ranking Engine
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting Intelligence
+```
+
+---
 
 ## Métricas de negocio
 
@@ -178,25 +286,44 @@ Raw Data
 → Feature Engineering
 → Matching
 → Modeling Dataset
-→ OLS / ML
+→ Econometric Layer
+→ Machine Learning Layer
 → Scoring Engine
 → Ranking Engine
 → Explainability
-→ Scouting Dashboard
+→ Visual Analytics
 → Decision Support
+→ Scouting Intelligence
 
 ---
 
 ## Conclusión
 
-La arquitectura actual incorpora una cadena completa de valor analítico:
+## Conclusión
 
+La arquitectura actual implementa una cadena completa de valor analítico aplicada al mercado de fichajes:
+
+```text
 Datos
-→ Modelización
-→ Scoring
-→ Ranking
-→ Explainability
-→ Dashboard
-→ Decisión deportiva
+↓
+Feature Engineering
+↓
+Modelización
+↓
+Scoring
+↓
+Ranking
+↓
+Explainability
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting Intelligence
+```
 
-La incorporación del Dashboard Scouting durante Sprint 7 transforma el proyecto desde una plataforma analítica hacia un sistema de soporte a decisiones de Football Analytics profesional.
+La evolución arquitectónica desarrollada entre los Sprints 5 y 9 transforma el proyecto desde un sistema de predicción de valor de mercado hacia una plataforma de Football Analytics orientada a identificación, priorización y justificación de oportunidades de mercado.
+
+La incorporación de la capa de Visual Analytics y Decision Support constituye la principal evolución funcional del proyecto, permitiendo convertir predicciones y rankings en recomendaciones accionables para procesos reales de scouting profesional.
+

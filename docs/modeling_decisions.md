@@ -24,7 +24,8 @@
 - [💡 Decisiones sobre scoring](#-decisiones-sobre-scoring)
 - [📊 Ranking Engine](#-ranking-engine)
 - [📈 Decisiones de evaluación y negocio](#-decisiones-de-evaluación-y-negocio)
-- [🖥️ Dashboard & Decision Support](#️-dashboard--decision-support)
+- [🎛️ Sprint 9.1 — Executive Scouting Layer](#️-sprint-91--executive-scouting-layer)
+- [💎 Sprint 9.2 — Executive Dashboard & Visual Analytics](#-sprint-92--executive-dashboard--visual-analytics)
 - [🎯 Precision@K](#-precisionk)
 - [💰 ROI Simulation](#-roi-simulation)
 - [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
@@ -498,15 +499,162 @@ La simulación ROI no busca predecir beneficios reales exactos, sino evaluar sen
 
 ---
 
-# 🖥️ Dashboard & Decision Support
+
+# 🎛️ Sprint 9.1 — Executive Scouting Layer
 
 ## Contexto
 
-Sprint 7 introduce una nueva decisión metodológica: transformar los resultados analíticos en una herramienta operativa de scouting.
+Tras completar las capas de modelización, scoring y validación de negocio, surgió una necesidad operativa:
 
-La arquitectura deja de finalizar en rankings y métricas de negocio para incorporar una capa explícita de toma de decisiones.
+```text
+Los rankings siguen siendo demasiado extensos
+para un proceso real de scouting.
+```
 
-## Principio
+Un departamento deportivo no evalúa simultáneamente más de mil jugadores.
+
+Necesita construir shortlists dinámicas según contexto deportivo, presupuesto y estrategia de captación.
+
+---
+
+## Objetivo
+
+Transformar el ranking analítico en una herramienta de scouting interactiva.
+
+---
+
+## Implementación
+
+Se desarrolló una capa ejecutiva basada en filtros dinámicos.
+
+### Presets de scouting
+
+* Exploración completa
+* Perfiles accionables
+* Jóvenes élite
+* Alto upside
+
+### Filtros ejecutivos
+
+* Liga
+* Posición
+* Edad máxima
+* Minutos mínimos
+* Opportunity Score
+* Confidence Score
+* Tier de oportunidad
+
+---
+
+## Resultado
+
+La arquitectura evoluciona desde:
+
+```text
+Ranking
+↓
+Exportación CSV
+```
+
+hacia:
+
+```text
+Ranking
+↓
+Scouting Layer
+↓
+Shortlist dinámica
+```
+
+---
+
+## Justificación metodológica
+
+El objetivo no es únicamente identificar jugadores infravalorados.
+
+El objetivo es permitir que diferentes perfiles deportivos puedan construir universos de scouting adaptados a sus necesidades.
+
+---
+
+# 💎 Sprint 9.2 — Executive Dashboard & Visual Analytics
+
+## Contexto
+
+Una vez resuelto el problema de segmentación del universo de jugadores, se abordó la visualización ejecutiva de resultados.
+
+---
+
+## Objetivo
+
+Convertir los rankings y scores en información accionable para dirección deportiva.
+
+---
+
+## Implementación
+
+### Matriz Coste vs Upside
+
+Cada jugador se representa mediante:
+
+```text
+Eje X → valor actual
+Eje Y → upside estimado
+Tamaño → Opportunity Score
+Color → prioridad scouting
+```
+
+---
+
+### Segmentación estratégica
+
+La matriz divide automáticamente el mercado en:
+
+| Zona                  | Interpretación                 |
+| --------------------- | ------------------------------ |
+| Comprar / priorizar   | Bajo coste y alto upside       |
+| Oportunidades premium | Alto upside con mayor coste    |
+| Seguimiento           | Potencial interesante          |
+| Menor prioridad       | Menor relación coste-potencial |
+
+---
+
+### Top 5 destacados
+
+Identificación automática de los cinco perfiles más interesantes bajo los filtros activos.
+
+---
+
+### Hallazgos ejecutivos
+
+Síntesis automática basada en:
+
+* candidatos prioritarios
+* oportunidades premium
+* Opportunity Score medio
+* upside agregado identificado
+* liga dominante
+
+---
+
+### Tabla priorizada
+
+Visualización ordenada mediante Opportunity Score.
+
+---
+
+## Arquitectura DSS
+
+La arquitectura final evoluciona desde:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+```
+
+hacia:
 
 ```text
 Predicción
@@ -515,69 +663,31 @@ Scoring
 ↓
 Ranking
 ↓
-Explainability
+Scouting Layer
 ↓
-Dashboard
+Visual Analytics
 ↓
-Decisión deportiva
+Decision Support
+↓
+Scouting
 ```
 
-## Implementación
-
-```text
-dashboard/
-streamlit_app.py
-```
-
-## Componentes incorporados
-
-### Executive KPIs
-
-- Precision@K
-- % oportunidades rentables
-- tamaño de shortlist
-- cobertura analítica
-
-### Bubble Chart
-
-Visualización interactiva basada en:
-
-- valor de mercado
-- gap de mercado
-- Opportunity Score
-- tier de oportunidad
-
-### Ranking interactivo
-
-- filtros dinámicos
-- paginación
-- segmentación contextual
-
-### Informe individual
-
-- valor actual
-- valor estimado
-- Opportunity Score
-- Growth Score
-- Confidence Score
-
-### Explainability integrada
-
-- SHAP local
-- drivers positivos
-- drivers negativos
-- interpretación ejecutiva
+---
 
 ## Justificación metodológica
 
-La decisión responde a una premisa fundamental de Football Analytics:
+La filosofía del proyecto pasa de maximizar precisión predictiva a maximizar utilidad para la toma de decisiones.
+
+Por ello:
 
 ```text
-Un modelo útil no es el que predice mejor,
-sino el que ayuda a tomar mejores decisiones.
+Un modelo útil no es el que predice mejor.
+
+Es el que ayuda a tomar mejores decisiones.
 ```
 
-Por ello, el Dashboard se considera parte integrante de la arquitectura analítica y no únicamente una capa de visualización.
+Sprint 9.2 constituye la primera implementación completa de un DSS (Decision Support System) aplicado al mercado de fichajes europeo.
+
 
 ---
 
@@ -663,30 +773,66 @@ Las variables futuras pueden utilizarse para evaluación posterior, como Precisi
 
 ## Prioridad alta
 
-- radar de jugador
-- comparador de jugadores
-- Risk Score
-- exportación de shortlists
-- Business Validation Panel
-- validación de rankings por ventanas temporales móviles
-- análisis de estabilidad longitudinal del ranking
-- calibración alternativa de pesos del Opportunity Score
+### Explainability avanzada
+
+- integración SHAP en dashboard
+- explicación visual de rankings
+- drivers positivos y negativos
+- interpretación ejecutiva por jugador
+
+---
+
+### Nuevos modelos
+
+- CatBoost
+- TabPFN
+- comparación con XGBoost
+
+---
+
+### Validación avanzada
+
+- backtesting temporal móvil
+- estabilidad longitudinal del ranking
+- robustness analysis
+- calibración de Opportunity Score
+
+---
 
 ## Prioridad media
 
-- integración de Understat
-- incorporación de xG/xA
-- enriquecimiento defensivo
-- modelos específicos por posición
-- sensibilidad por liga y mercado
+### Enriquecimiento de datos
+
+- integración Understat
+- xG
+- xA
+- métricas defensivas avanzadas
+- métricas de posesión
+
+---
+
+### Modelización específica
+
+- modelos por posición
+- modelos por liga
+- calibración contextual
+
+---
 
 ## Prioridad futura
 
-- API scoring
-- actualización periódica de predicciones
-- sistema de monitorización de drift
-- integración de nuevas temporadas
-- reporting automático por jugador
+### API Scoring
+
+- scoring automatizado
+- inferencia futura
+- actualización periódica
+
+### Monitoring
+
+- data drift
+- model drift
+- performance tracking
+
 
 ---
 
@@ -695,40 +841,65 @@ Las variables futuras pueden utilizarse para evaluación posterior, como Precisi
 El proyecto ha evolucionado desde:
 
 ```text
-modelo predictivo
+modelo predictivo de valor de mercado
 ```
 
 hacia:
 
 ```text
-sistema cuantitativo completo de scouting
+sistema cuantitativo integral de scouting
 ```
 
-La arquitectura actual integra:
+La arquitectura actual integra de forma coherente múltiples capas analíticas:
 
-- modelo econométrico interpretable
-- modelo ML predictivo
-- explainability
-- scoring multicriterio
-- ranking automático
-- validación de ranking
-- evaluación de negocio
-- simulación ROI
-- métricas Precision@K
+* integración multi-fuente FBref + Transfermarkt
+* matching reproducible y trazable
+* modelización econométrica
+* modelización Machine Learning
+* explainability mediante SHAP
+* scoring multicriterio
+* generación automática de rankings
+* validación estadística y de negocio
+* simulación ROI
+* Executive Scouting Layer
+* Visual Analytics
+* Decision Support System (DSS)
 
-La decisión metodológica central es que un buen sistema de scouting no debe limitarse a predecir valores de mercado. Debe transformar esas predicciones en recomendaciones accionables, medir su fiabilidad y evaluar su utilidad económica potencial.
+La decisión metodológica central del proyecto consiste en considerar que el valor generado no depende exclusivamente de la capacidad predictiva de un modelo.
 
-Sprint 5 convierte el modelo en motor de scoring.
+En entornos reales de Football Analytics, una predicción aislada tiene utilidad limitada si no puede transformarse en una recomendación interpretable, priorizable y accionable para la toma de decisiones deportivas.
 
-Sprint 6 convierte el scoring en una capa evaluable desde negocio.
+Por ello, la arquitectura fue evolucionando progresivamente:
+```text
+Sprint 5 convierte el modelo predictivo en un motor de scoring.
 
-Sprint 7 incorpora la capa Dashboard & Decision Support, completando el flujo:
+Sprint 6 introduce mecanismos de validación estadística y económica orientados a negocio.
 
+Sprint 8 queda reservado tras la redefinición metodológica derivada de la tutoría académica, integrándose posteriormente sus objetivos dentro de una capa más amplia de soporte a decisiones.
+
+Sprint 9.1 transforma el ranking estático en una herramienta interactiva de scouting mediante filtros ejecutivos y construcción dinámica de shortlists.
+
+Sprint 9.2 incorpora una capa completa de Visual Analytics y Decision Support, permitiendo interpretar el mercado de fichajes desde una perspectiva estratégica basada en coste, upside y priorización de oportunidades.
+```
+
+La evolución completa del sistema puede resumirse como:
+
+```text
 Predicción
-→ Scoring
-→ Ranking
-→ Explainability
-→ Dashboard
-→ Decisión deportiva
+↓
+Scoring
+↓
+Ranking
+↓
+Executive Scouting Layer
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting
+```
 
-El sistema evoluciona así desde un proyecto de modelización hacia una plataforma integral de Football Analytics aplicada al scouting profesional.
+El resultado final es una plataforma de Football Analytics orientada a la identificación de jugadores potencialmente infravalorados, capaz de combinar rigor metodológico, interpretabilidad y utilidad práctica para departamentos de scouting y dirección deportiva.
+
+Más allá de la precisión predictiva obtenida por los modelos, la principal contribución del proyecto consiste en demostrar cómo técnicas de econometría, Machine Learning, explainability y analítica deportiva pueden integrarse dentro de un sistema DSS capaz de apoyar procesos reales de captación y evaluación de talento en el mercado de fichajes europeo.

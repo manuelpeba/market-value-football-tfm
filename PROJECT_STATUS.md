@@ -9,6 +9,9 @@
 ![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
 ![Status](https://img.shields.io/badge/Status-Scouting%20Dashboard-success)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
+![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
+![VisualAnalytics](https://img.shields.io/badge/Visual%20Analytics-Executive-success)
+![Version](https://img.shields.io/badge/version-v0.8.0--Executive--Dashboard-blue)
 ![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
 
 
@@ -125,7 +128,7 @@ feature engineering y calidad de señal predictiva
 ## Fase actual
 
 ``` text
-Modeling → Evaluation → Decision Support
+Evaluation → Decision Support → Visual Analytics
 ```
 
 ---
@@ -187,11 +190,17 @@ Modeling → Evaluation → Decision Support
 
 ### Deployment
 
+Completado parcialmente:
+
+- dashboard interactivo
+- visual analytics de scouting
+- decision support system
+
 Pendiente:
 
--   dashboard
--   API scoring
--   scouting reports automáticos
+- API scoring
+- scouting reports automáticos
+- despliegue productivo
 
 ## Sprint 1 --- Positional Normalization (Completed)
 
@@ -768,6 +777,166 @@ Decisión deportiva
 
 El proyecto deja de ser únicamente un sistema predictivo y pasa a convertirse en una plataforma de Football Analytics orientada a soporte de decisiones.
 
+## Sprint 8 — Reserved
+
+Status: Reserved
+
+### Contexto
+
+Tras la tutoría académica y la redefinición de la hoja de ruta del proyecto, las funcionalidades inicialmente previstas para este sprint fueron absorbidas posteriormente dentro del Sprint 9.
+
+Se decidió no ejecutarlo como sprint independiente para evitar fragmentar artificialmente la evolución de la capa de soporte a decisiones.
+
+### Resultado
+
+El Sprint 8 queda reservado en la numeración histórica del proyecto.
+
+Las funcionalidades inicialmente previstas se integraron posteriormente en:
+
+```text
+Sprint 9 — Executive Dashboard & Decision Support Layer
+```
+
+---
+
+## Sprint 9 — Executive Dashboard & Decision Support Layer (Completed)
+
+Status: Completed
+
+### Objetivo
+
+Transformar el sistema desde un entorno centrado en predicción y ranking hacia una plataforma de Football Analytics orientada a soporte de decisiones de scouting.
+
+### Alcance
+
+Sprint 9 constituye la primera implementación completa de la capa de:
+
+```text
+Decision Support System (DSS)
+```
+
+integrando visual analytics, priorización de oportunidades e interpretación ejecutiva de resultados.
+
+---
+
+### Sprint 9.1 — Executive Scouting Filters
+
+#### Objetivo
+
+Incorporar una capa de segmentación avanzada que permita explorar el mercado de jugadores desde una perspectiva operativa de scouting.
+
+#### Funcionalidades implementadas
+
+* presets de scouting
+* actualización automática de filtros
+* eliminación de acciones manuales de refresco
+* universo modelado visible
+* shortlist ejecutiva
+* métricas de cobertura
+* filtros activos visibles
+
+#### Variables de segmentación
+
+* Liga
+* Posición
+* Edad
+* Opportunity Score
+* Confidence Score
+
+#### Resultado
+
+El dashboard evoluciona desde un ranking estático hacia una herramienta interactiva de exploración y priorización.
+
+---
+
+### Sprint 9.2 — Visual Analytics & Opportunity Matrix
+
+#### Objetivo
+
+Incorporar visualizaciones orientadas a decisión para facilitar la identificación de oportunidades de mercado.
+
+#### Funcionalidades implementadas
+
+##### 💎 Coste actual vs Upside estimado
+
+Nueva matriz estratégica basada en:
+
+* Valor de mercado actual
+* Gap de mercado estimado
+* Opportunity Score
+* Tier de oportunidad
+
+Cada burbuja representa un jugador donde:
+
+```text
+X → coste actual
+Y → upside estimado
+Tamaño → Opportunity Score
+Color → prioridad scouting
+```
+
+##### 🎯 Segmentación estratégica
+
+El mercado se divide automáticamente en:
+
+| Zona                  | Interpretación                 |
+| --------------------- | ------------------------------ |
+| Comprar / priorizar   | Bajo coste y alto upside       |
+| Oportunidades premium | Alto upside y mayor coste      |
+| Seguimiento           | Monitorización futura          |
+| Menor prioridad       | Menor relación coste-potencial |
+
+##### 🏅 Top 5 destacados
+
+Identificación automática de los cinco jugadores con mayor Opportunity Score dentro de los filtros activos.
+
+##### 📊 Hallazgos ejecutivos
+
+Nueva capa de síntesis orientada a dirección deportiva:
+
+* candidatos prioritarios
+* oportunidades premium
+* score oportunidad medio
+* upside agregado identificado
+* liga dominante
+
+#### Resultado
+
+La arquitectura evoluciona desde:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Dashboard
+```
+
+hacia:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting
+```
+
+### Impacto metodológico
+
+Sprint 9 representa la transición definitiva desde un sistema predictivo hacia una plataforma de Football Analytics orientada a toma de decisiones.
+
+El proyecto incorpora por primera vez una capa DSS (Decision Support System) capaz de transformar predicciones en recomendaciones accionables para scouting profesional.
+
+
 
 # 🔄 Evolución de arquitectura
 
@@ -891,6 +1060,8 @@ market-value-football-tfm/
 | Scouting Dashboard | ✅ |
 | MLflow tracking | ✅ |
 | Configuración YAML | ✅ |
+| Visual Analytics | ✅ |
+| Decision Support Layer | ✅ |
 
 
 ---
@@ -1620,9 +1791,7 @@ artifacts/
 mlruns/
 ```
 
-
 ---
-
 
 ## Outputs actuales
 
@@ -1637,6 +1806,11 @@ mlruns/
 -   dashboard interactivo
 -   informes individuales
 -   visual analytics de scouting
+-   executive dashboard
+-   bubble chart Coste vs Upside
+-   scouting matrix
+-   top 5 automático
+-   executive insights
 
 
 ---
@@ -1730,58 +1904,189 @@ calidad y riqueza del feature set
 
 ## Prioridad alta
 
-### Feature engineering avanzado
+### Sprint 10 — Advanced Player Intelligence
 
--   progression metrics
--   z-scores por posición
--   league normalization
--   growth features
+Objetivo:
 
+Evolucionar el dashboard desde una herramienta de priorización hacia una plataforma de análisis individual de talento.
 
----
+Funcionalidades previstas:
 
+* radar avanzado de jugador
+* comparador jugador vs jugador
+* comparador jugador vs percentil de liga
+* fortalezas y debilidades automáticas
+* exportación PDF de perfiles
+* scouting cards descargables
 
-### Explainability
+Resultado esperado:
 
--   SHAP values
--   explicación de rankings
--   análisis por jugador
-
-
----
-
-
-### Nuevos modelos
-
--   CatBoost
--   TabPFN
-
+```text
+Shortlist
+↓
+Análisis individual
+↓
+Scouting report
+```
 
 ---
 
+### Sprint 11 — Advanced Explainability
 
+Objetivo:
+
+Incrementar la interpretabilidad del sistema para facilitar la defensa metodológica y la adopción por parte de departamentos deportivos.
+
+Funcionalidades previstas:
+
+* SHAP global avanzado
+* SHAP por liga
+* SHAP por posición
+* explicación individual de rankings
+* explicación del Opportunity Score
+* análisis de estabilidad del ranking
+
+Resultado esperado:
+
+```text
+Predicción
+↓
+Explicación
+↓
+Justificación deportiva
+```
 
 ---
 
+### Sprint 12 — Feature Engineering Avanzado
+
+Objetivo:
+
+Incrementar la señal predictiva del dataset mediante variables más cercanas al rendimiento futbolístico real.
+
+Líneas de trabajo:
+
+* progression metrics
+* carrying metrics
+* passing value metrics
+* métricas defensivas avanzadas
+* percentiles por posición
+* normalización por liga
+* rolling performance indicators
+* indicadores de consistencia
+
+Resultado esperado:
+
+Incremento de capacidad predictiva tanto en OLS como en Machine Learning.
+
+---
+
+### Sprint 13 — Model Benchmark Expansion
+
+Objetivo:
+
+Evaluar arquitecturas adicionales para validar la robustez del modelo actual.
+
+Modelos candidatos:
+
+* CatBoost
+* TabPFN
+* XGBoost avanzado
+* LightGBM avanzado
+* Ensemble Models
+
+Resultado esperado:
+
+Determinar si existen mejoras predictivas significativas sobre el benchmark actual.
+
+---
 
 ## Prioridad media
 
-### Sprint 8 — Advanced Scouting Layer
+### Exportación profesional de resultados
 
--   radar de jugador
--   comparador de jugadores
--   risk score
--   exportación de shortlists
--   business validation panel
+Objetivo:
 
+Facilitar el uso operativo por parte de analistas y scouts.
+
+Funcionalidades previstas:
+
+* exportación PDF de shortlists
+* exportación Excel
+* informes automáticos por jugador
+* informes automáticos por liga
+* snapshots ejecutivos
 
 ---
 
+### Business Validation Layer
 
-### API scoring
+Objetivo:
 
--   scoring automatizado
--   inferencia futura
+Acercar el sistema a escenarios reales de scouting profesional.
+
+Análisis previstos:
+
+* simulación de fichajes históricos
+* evaluación ex-post de rankings
+* análisis ROI ampliado
+* comparación con decisiones reales de mercado
+* validación de señales de oportunidad
+
+---
+
+### API de Scoring
+
+Objetivo:
+
+Preparar la arquitectura para despliegues futuros.
+
+Funcionalidades previstas:
+
+* scoring automatizado
+* inferencia sobre nuevos jugadores
+* actualización periódica de rankings
+* integración con fuentes externas
+
+---
+
+## Horizonte de cierre del TFM
+
+Antes de la entrega final se considera prioritario completar:
+
+* Dashboard Ejecutivo (✅)
+* Visual Analytics (✅)
+* Decision Support Layer (✅)
+* Explainability avanzada
+* Feature Engineering avanzado
+* Business Validation
+* Memoria final
+
+---
+
+## Visión final del proyecto
+
+La arquitectura objetivo es:
+
+```text
+Fuentes de datos
+↓
+Feature Engineering
+↓
+Machine Learning
+↓
+Scoring
+↓
+Ranking
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting Intelligence Platform
+```
+
+El objetivo final es disponer de una plataforma de Football Analytics capaz de identificar, priorizar y justificar oportunidades de mercado de forma reproducible y defendible desde una perspectiva deportiva y de negocio.
 
 
 ---
@@ -1805,6 +2110,9 @@ Actualmente el sistema ya incorpora:
 -   configuración centralizada
 -   persistencia de artefactos
 -   outputs reproducibles
+-   visual analytics ejecutivo
+-   dashboard de scouting profesional
+-   decision support system
 
 Principales conclusiones derivadas del proyecto:
 

@@ -8,7 +8,9 @@
 ![Business](https://img.shields.io/badge/Business-Evaluation-purple)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
-![Status](https://img.shields.io/badge/Status-v0.7.0--Dashboard-brightgreen)
+![Status](https://img.shields.io/badge/Status-v0.8.0--Executive--Dashboard-brightgreen)
+![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
+![VisualAnalytics](https://img.shields.io/badge/Visual%20Analytics-Executive-success)
 :::
 
 ---
@@ -25,20 +27,21 @@ completa del sistema analítico.
 
 # 📊 Estado actual
 
-  Pipeline                        Estado
-  ----------------------------- --------
-  Data ingestion                      ✅
-  Feature engineering                 ✅
-  Matching                            ✅
-  Modeling dataset                    ✅
-  Econometric modeling                ✅
-  Machine Learning                    ✅
-  Explainability                      ✅
-  Scoring Engine                      ✅
-  Ranking Engine                      ✅
-  Evaluation & Business Layer         ✅
-Dashboard Scouting                  ✅
-Decision Support Layer              ✅
+| Pipeline | Estado |
+|----------|----------|
+| Data ingestion | ✅ |
+| Feature engineering | ✅ |
+| Matching | ✅ |
+| Modeling dataset | ✅ |
+| Econometric modeling | ✅ |
+| Machine Learning | ✅ |
+| Explainability | ✅ |
+| Scoring Engine | ✅ |
+| Ranking Engine | ✅ |
+| Evaluation & Business Layer | ✅ |
+| Dashboard Scouting | ✅ |
+| Visual Analytics | ✅ |
+| Decision Support Layer | ✅ |
 
 ---
 
@@ -57,7 +60,6 @@ C --> D[Player Season Panel]
 D --> E[Modeling Dataset]
 
 E --> F[Econometric Pipeline]
-
 E --> G[Machine Learning Pipeline]
 
 F --> H[Scoring Engine]
@@ -67,12 +69,16 @@ H --> I[Ranking Engine]
 
 I --> J[Explainability]
 
-J --> K[Scouting Dashboard]
+J --> K[Executive Dashboard]
 
-K --> L[Decision Support]
+K --> L[Visual Analytics]
 
-F --> M[MLflow]
-G --> M
+L --> M[Decision Support]
+
+M --> N[Scouting Intelligence]
+
+F --> O[MLflow]
+G --> O
 ```
 
 ---
@@ -170,7 +176,7 @@ Resultados actuales:
 
 ---
 
-# 🖥️ Dashboard Pipeline
+# 🖥️ Executive Dashboard Pipeline
 
 Pipeline principal:
 
@@ -181,47 +187,89 @@ streamlit_app.py
 
 Objetivo:
 
-Transformar rankings, métricas y predicciones en una herramienta operativa de scouting.
+Transformar predicciones, rankings y señales de scouting en una herramienta de apoyo a decisiones para departamentos deportivos.
 
-Componentes:
+---
 
-### Executive KPIs
+## Sprint 9.1 — Executive Scouting Filters
 
-- Precision@K
-- % oportunidades rentables
-- cobertura analítica
-- tamaño de shortlist
+Capacidades:
 
-### Bubble Chart
+* presets de scouting
+* filtros ejecutivos
+* shortlist dinámica
+* universo modelado visible
+* métricas de cobertura
+* filtros activos visibles
+
+Variables:
+
+* Liga
+* Posición
+* Edad
+* Opportunity Score
+* Confidence Score
+
+---
+
+## Sprint 9.2 — Visual Analytics
+
+### Coste actual vs Upside estimado
+
+Matriz estratégica basada en:
+
+* valor de mercado actual
+* gap de mercado estimado
+* Opportunity Score
+* tier de oportunidad
+
+Representación:
 
 ```text
-Valor mercado
-↓
-Gap de mercado
-↓
-Opportunity Score
-↓
-Visualización interactiva
+Eje X → Coste actual
+Eje Y → Upside estimado
+Tamaño → Opportunity Score
+Color → Prioridad scouting
 ```
 
-### Ranking interactivo
+### Segmentación estratégica
 
-- filtros dinámicos
-- paginación
-- segmentación contextual
+* Comprar / priorizar
+* Oportunidades premium
+* Seguimiento
+* Menor prioridad
 
-### Informe individual
+### Hallazgos ejecutivos
 
-- Opportunity Score
-- Growth Score
-- Confidence Score
-- recomendación analítica
+* candidatos prioritarios
+* oportunidades premium
+* score oportunidad medio
+* upside agregado
+* liga dominante
 
-### Explainability
+### Top 5 destacados
 
-- SHAP individual
-- drivers positivos
-- drivers negativos
+Identificación automática de oportunidades prioritarias.
+
+---
+
+## Informe individual
+
+* Opportunity Score
+* Growth Score
+* Confidence Score
+* Valor estimado
+* Gap de mercado
+* Recomendación analítica
+
+---
+
+## Explainability
+
+* SHAP local
+* drivers positivos
+* drivers negativos
+* explicación ejecutiva
 
 Resultado:
 
@@ -232,20 +280,70 @@ Scoring
 ↓
 Ranking
 ↓
-Dashboard
+Visual Analytics
 ↓
-Decisión deportiva
+Decision Support
+↓
+Scouting Intelligence
 ```
 
 ---
 
-# 🚀 Evolución futura
+### Sprint 10 — Advanced Player Intelligence
 
--   Radar de jugador
--   Comparador de jugadores
--   Risk Score
--   Exportación de shortlists
--   Business Validation Panel
--   API scoring
--   Understat integration
--   Continuous retraining
+- radar avanzado de jugador
+- comparador jugador vs jugador
+- comparador jugador vs percentil de liga
+- scouting cards descargables
+- exportación PDF de perfiles
+
+### Sprint 11 — Advanced Explainability
+
+- SHAP por posición
+- SHAP por liga
+- explicación avanzada de rankings
+- estabilidad de rankings
+
+### Sprint 12 — Advanced Feature Engineering
+
+- progression metrics
+- carrying metrics
+- passing value metrics
+- percentiles avanzados
+- normalización por liga
+
+### Roadmap técnico
+
+- API scoring
+- Understat integration
+- Continuous retraining
+- Business Validation Layer
+
+## Conclusión
+
+La arquitectura de pipelines implementada permite recorrer de forma reproducible todo el ciclo analítico:
+
+```text
+Raw Data
+↓
+Feature Engineering
+↓
+Matching
+↓
+Modeling
+↓
+Scoring
+↓
+Ranking
+↓
+Explainability
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting Intelligence
+```
+
+Tras la incorporación del Executive Dashboard (Sprint 9), el sistema deja de ser únicamente un conjunto de pipelines de modelización para convertirse en una plataforma integrada de Football Analytics orientada a identificación, priorización y justificación de oportunidades de mercado.
+

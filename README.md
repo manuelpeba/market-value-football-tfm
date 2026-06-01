@@ -9,7 +9,7 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Status](https://img.shields.io/badge/Status-Scouting%20Platform-success)
-![Version](https://img.shields.io/badge/version-v0.7.0--Dashboard-blue)
+![Version](https://img.shields.io/badge/version-v0.8.0--Executive--Dashboard-blue)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
@@ -334,7 +334,7 @@ CRISP-DM
 ## Estado actual
 
 ``` text
-Modeling → Evaluation → Decision Support
+Evaluation → Decision Support → Visual Analytics
 ```
 
 ---
@@ -886,6 +886,110 @@ Bubble chart interactivo:
 - SHAP local
 - Drivers positivos y negativos
 - Interpretación ejecutiva
+
+## Sprint 9 — Executive Dashboard & Decision Support Layer
+
+Sprint 9 consolida la evolución del proyecto desde un sistema de modelización y ranking hacia una plataforma de Football Analytics orientada a soporte de decisiones para scouting profesional.
+
+### Objetivo
+
+Reducir la distancia entre los resultados de los modelos y la toma de decisiones deportivas mediante visual analytics, segmentación avanzada y síntesis ejecutiva.
+
+---
+
+### Sprint 9.1 — Executive Scouting Filters
+
+Se incorpora una capa de exploración dinámica del mercado basada en filtros ejecutivos y presets de scouting.
+
+#### Funcionalidades implementadas
+
+* presets de scouting
+* filtros automáticos sin refresco manual
+* universo modelado visible
+* shortlist ejecutiva
+* métricas de cobertura
+* filtros activos visibles
+
+#### Variables de segmentación
+
+* Liga
+* Posición
+* Edad
+* Opportunity Score
+* Confidence Score
+
+Resultado:
+
+El dashboard evoluciona desde un ranking estático hacia una herramienta interactiva de exploración y priorización.
+
+---
+
+### Sprint 9.2 — Visual Analytics & Opportunity Matrix
+
+#### 💎 Coste actual vs Upside estimado
+
+Nueva matriz estratégica basada en:
+
+* Valor de mercado actual
+* Gap de mercado estimado
+* Opportunity Score
+* Tier de oportunidad
+
+Cada jugador se representa mediante una burbuja donde:
+
+* Eje X → coste actual de adquisición
+* Eje Y → upside estimado
+* Tamaño → Opportunity Score
+* Color → prioridad de scouting
+
+#### 📌 Segmentación estratégica
+
+| Zona                  | Interpretación                       |
+| --------------------- | ------------------------------------ |
+| Comprar / priorizar   | Bajo coste y alto upside             |
+| Oportunidades premium | Alto upside con mayor coste          |
+| Seguimiento           | Interés moderado para monitorización |
+| Menor prioridad       | Menor relación coste-potencial       |
+
+#### 🏅 Top 5 destacados
+
+Identificación automática de los cinco jugadores con mayor Opportunity Score dentro de los filtros activos.
+
+#### 📈 Hallazgos ejecutivos
+
+Indicadores incorporados:
+
+* candidatos prioritarios
+* oportunidades premium
+* score oportunidad medio
+* upside agregado identificado
+* liga dominante
+
+### Contribución metodológica
+
+Sprint 9 representa la primera implementación completa de una capa DSS (Decision Support System) aplicada al mercado de fichajes.
+
+El flujo operativo queda definido como:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Ranking
+↓
+Visual Analytics
+↓
+Decision Support
+↓
+Scouting
+↓
+Decisión deportiva
+```
+
+### Impacto sobre el proyecto
+
+La plataforma deja de ser únicamente un sistema predictivo para convertirse en una herramienta de priorización de talento y soporte cuantitativo a decisiones deportivas.
 
 
 # 📂 Estructura del proyecto
@@ -1693,10 +1797,12 @@ Se optimizó:
 - integración Understat
 - incorporación de xG y xA
 - métricas defensivas avanzadas
-- Radar de jugador
-- Comparador de jugadores
-- Exportación de shortlists
+- Perfil individual avanzado de jugador
+- Radar comparativo de rendimiento
+- Comparador entre jugadores
+- Exportación PDF de shortlists
 - Risk Score
+- Simulación de escenarios de fichaje
 - Business Validation Panel
 
 ---
@@ -1725,6 +1831,10 @@ El proyecto aporta:
 -   dataset versioning
 -   analytics engineering aplicado
 -   trazabilidad experimental completa
+-   dashboard ejecutivo para scouting profesional
+-   sistema visual de priorización de fichajes
+-   decision support system aplicado al mercado de transferencias
+-   visual analytics para departamentos deportivos
 
 El sistema ya constituye una base sólida para:
 
@@ -1759,9 +1869,11 @@ Scoring
 ↓
 Ranking
 ↓
-Evaluación
+Visual Analytics
 ↓
-Decisión deportiva
+Decision Support
+↓
+Scouting Intelligence
 ```
 
 ---
