@@ -9,7 +9,7 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Status](https://img.shields.io/badge/Status-Scouting%20Platform-success)
-![Version](https://img.shields.io/badge/version-v0.8.0--Executive--Dashboard-blue)
+![Version](https://img.shields.io/badge/version-v0.9.0--Decision--Support--Layer-blue)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
@@ -511,7 +511,7 @@ proyecto.
 
 # 🏗️ Arquitectura del pipeline
 
-``` mermaid
+```mermaid
 flowchart TD
 
 A[Raw Sources] --> B[Feature Engineering]
@@ -527,8 +527,11 @@ G --> H
 
 H --> I[Ranking Engine]
 I --> J[Explainability]
-J --> K[Scouting Dashboard]
-K --> L[Toma de decisión deportiva]
+J --> K[Executive Dashboard]
+K --> L[Visual Analytics]
+L --> M[Decision Support]
+M --> N[Scouting Intelligence]
+N --> O[Toma de decisión deportiva]
 ```
 
 ---
@@ -837,55 +840,86 @@ El sistema genera automáticamente:
 
 # 🖥️ Dashboard de scouting
 
-Sprint 7 incorpora una capa completa de visual analytics y soporte a la decisión construida sobre Streamlit.
+Sprint 7 introduce la primera interfaz interactiva del proyecto desarrollada mediante Streamlit.
 
 ## Objetivo
 
-Transformar predicciones, rankings y métricas de negocio en una herramienta operativa utilizable por departamentos de scouting y dirección deportiva.
+Transformar los outputs analíticos generados por los modelos, rankings y métricas de evaluación en una herramienta visual accesible para procesos de scouting cuantitativo.
 
 ## Funcionalidades principales
 
 ### 📊 Executive KPIs
 
-- Jugadores en shortlist
-- Precision@K
-- % oportunidades rentables
-- Ligas representadas
+Visualización integrada de indicadores clave:
 
-### 💎 Coste actual vs Upside estimado
-
-Bubble chart interactivo:
-
-- Eje X: valor de mercado actual
-- Eje Y: gap de mercado estimado
-- Tamaño: Opportunity Score
-- Color: tier de oportunidad
-- Top oportunidades destacadas
+* Jugadores en shortlist
+* Precision@K
+* Positive ROI Rate
+* Ligas representadas
 
 ### 📋 Ranking interactivo
 
-- Paginación
-- Filtros dinámicos
-- Segmentación por liga
-- Segmentación por posición
-- Segmentación por club
-- Segmentación por temporada
+Exploración dinámica de jugadores mediante:
 
-### 👤 Informe individual
+* Paginación
+* Ordenación por Opportunity Score
+* Segmentación por liga
+* Segmentación por posición
+* Segmentación por club
+* Segmentación por temporada
 
-- Valor actual
-- Valor estimado
-- Gap de mercado
-- Opportunity Score
-- Growth Score
-- Confidence Score
-- Recomendación analítica
+### 👤 Informe individual de jugador
+
+Visualización detallada de cada perfil:
+
+* Valor de mercado actual
+* Valor estimado por el modelo
+* Gap de mercado
+* Opportunity Score
+* Growth Score
+* Confidence Score
+* Ranking dentro de la shortlist
+* Recomendación analítica
 
 ### 🔍 Explainability
 
-- SHAP local
-- Drivers positivos y negativos
-- Interpretación ejecutiva
+Integración de mecanismos de interpretabilidad:
+
+* SHAP local
+* Drivers positivos
+* Drivers negativos
+* Interpretación ejecutiva de predicciones
+
+## Arquitectura funcional
+
+```text
+Modelos predictivos
+↓
+Scoring Engine
+↓
+Ranking Engine
+↓
+Explainability
+↓
+Dashboard Scouting
+```
+
+## Contribución
+
+Sprint 7 constituye la primera capa de consumo de resultados del proyecto y conecta el sistema analítico con una interfaz interactiva orientada a usuarios de negocio.
+
+Las capacidades avanzadas de Visual Analytics, segmentación estratégica y soporte a decisiones fueron desarrolladas posteriormente dentro del Sprint 9 — Executive Dashboard & Decision Support Layer.
+
+
+## Sprint 8 — Reserved
+
+Tras la revisión académica del proyecto, el Sprint 8 fue reservado y no se ejecutó como fase independiente.
+
+Las funcionalidades inicialmente previstas evolucionaron hacia una capa completa de soporte a decisiones integrada posteriormente dentro del Sprint 9.
+
+Esta decisión permitió evitar duplicidades funcionales y mantener una hoja de ruta más coherente para la evolución de la plataforma de scouting.
+
+**Status:** Reserved.
 
 ## Sprint 9 — Executive Dashboard & Decision Support Layer
 
@@ -997,6 +1031,13 @@ La plataforma deja de ser únicamente un sistema predictivo para convertirse en 
 ``` bash
 market-value-football-tfm/
 
+├── app/                                   # Aplicación interactiva y capa Decision Support
+│   ├── streamlit_app.py                   # Executive Dashboard
+│   └── utils/                             # Utilidades específicas del dashboard
+│       ├── charts.py                      # Visualizaciones y gráficos interactivos
+│       ├── formatters.py                  # Formateo de KPIs, métricas y valores monetarios
+│       └── loaders.py                     # Carga de datos y outputs analíticos
+│
 ├── artifacts/                             # Artefactos persistidos de modelos y predicciones
 │   ├── encoders/                          # Encoders categóricos serializados
 │   ├── feature_importance/                # Importancia de variables exportada
@@ -1730,32 +1771,6 @@ priorización de fichajes.
 
 ---
 
-## Sprint 7 --- Scouting Dashboard & Decision Support Layer
-
-### Objetivo
-
-Convertir el sistema desde un proyecto de modelización hacia una plataforma operativa de Football Analytics.
-
-### Arquitectura funcional
-
-```text
-Modelos predictivos
-↓
-Scoring Engine
-↓
-Ranking Engine
-↓
-Explainability
-↓
-Dashboard Scouting
-↓
-Toma de decisión deportiva
-```
-
-### Contribución
-
-El dashboard constituye la primera interfaz integrada del proyecto y conecta la capa analítica con la toma de decisiones de scouting.
-
 
 # ⚖️ Trade-offs metodológicos
 
@@ -1792,27 +1807,68 @@ Se optimizó:
 
 # 🚀 Próximos pasos
 
-## Prioridad inmediata
+## Sprint 10 — Advanced Scouting Intelligence
 
-- integración Understat
-- incorporación de xG y xA
-- métricas defensivas avanzadas
-- Perfil individual avanzado de jugador
-- Radar comparativo de rendimiento
-- Comparador entre jugadores
-- Exportación PDF de shortlists
-- Risk Score
-- Simulación de escenarios de fichaje
-- Business Validation Panel
+### Objetivo
+
+Ampliar la capacidad analítica del dashboard incorporando herramientas avanzadas de evaluación individual y comparación de talento.
+
+### Funcionalidades previstas
+
+* Radar individual de jugador
+* Comparador entre jugadores
+* Risk Score
+* Exportación PDF de shortlists
+* Simulación de escenarios de fichaje
+* Business Validation Panel
 
 ---
 
-## Fase posterior
+## Sprint 11 — Data Enrichment
 
--   dashboard interactivo
--   scouting reports automáticos PDF
--   simulación ROI de fichajes
--   despliegue analítico
+### Objetivo
+
+Incrementar la calidad de señal predictiva mediante nuevas fuentes de datos y métricas avanzadas.
+
+### Funcionalidades previstas
+
+* Integración Understat
+* xG
+* xA
+* Métricas defensivas avanzadas
+* Métricas de progresión
+* Normalización avanzada por competición
+
+---
+
+## Sprint 12 — Advanced Modeling
+
+### Objetivo
+
+Evaluar algoritmos de nueva generación orientados a datasets tabulares.
+
+### Funcionalidades previstas
+
+* CatBoost
+* TabPFN
+* Ensemble Models
+* Comparación econometría vs ML avanzado
+
+---
+
+## Sprint 13 — Production Layer
+
+### Objetivo
+
+Preparar el sistema para inferencia automatizada y despliegue.
+
+### Funcionalidades previstas
+
+* API de scoring
+* Automatización de inferencia
+* Actualización periódica de rankings
+* Arquitectura de despliegue
+
 
 # 🧠 Valor del proyecto
 
@@ -1874,6 +1930,8 @@ Visual Analytics
 Decision Support
 ↓
 Scouting Intelligence
+↓
+Decisión deportiva
 ```
 
 ---
