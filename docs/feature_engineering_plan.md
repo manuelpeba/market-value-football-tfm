@@ -1,575 +1,667 @@
-# 🧪 Plan de Feature Engineering
+# 🧪 Feature Engineering
 
-<div align="center">
+## Objetivo
 
-![Feature Engineering](https://img.shields.io/badge/Feature%20Engineering-Advanced-blue)
-![Sports Analytics](https://img.shields.io/badge/Sports%20Analytics-Football-success)
-![Modeling](https://img.shields.io/badge/Modeling-Econometrics%20%2B%20ML-orange)
-![Scoring](https://img.shields.io/badge/Scoring-Engine-success)
-![Evaluation](https://img.shields.io/badge/Evaluation-Business%20Validation-purple)
-![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
+Este documento describe la estrategia de Feature Engineering implementada en la release v1.0.0 — Scouting Intelligence Platform.
 
-</div>
+Su finalidad es documentar:
 
----
-
-# 📑 Tabla de contenidos
-
-- [🧠 Objetivo](#-objetivo)
-- [⚙️ Filosofía](#️-filosofía)
-- [📊 Estado actual](#-estado-actual)
-- [⚽ Features actuales](#-features-actuales)
-- [📈 Features derivadas](#-features-derivadas)
-- [🚀 Growth features](#-growth-features)
-- [🧩 Composite football indices](#-composite-football-indices)
-- [🎯 Variables derivadas para scoring — Sprint 5](#-variables-derivadas-para-scoring--sprint-5)
-- [📊 Variables de evaluación y negocio — Sprint 6](#-variables-de-evaluación-y-negocio--sprint-6)
-- [🔄 Feature tracking](#-feature-tracking)
-- [🛡️ Prevención de leakage](#️-prevención-de-leakage)
-- [⚖️ Trade-offs](#️-trade-offs)
-- [🚀 Roadmap](#-roadmap)
-- [🧠 Conclusión](#-conclusión)
+- variables utilizadas
+- transformaciones aplicadas
+- decisiones metodológicas
+- evolución por sprints
+- prevención de leakage
+- roadmap futuro
 
 ---
 
-# 🧠 Objetivo
-
-Este documento describe la estrategia de feature engineering implementada y futura dentro del sistema analítico de identificación de jugadores infravalorados en el mercado de fichajes europeo.
-
-El objetivo no es únicamente aumentar el rendimiento predictivo de los modelos, sino construir una capa de variables coherente con el dominio futbolístico, trazable metodológicamente y útil para la toma de decisiones de scouting.
-
-Objetivos principales:
-
-- aumentar señal predictiva
-- mantener interpretabilidad
-- garantizar validez temporal
-- evitar leakage
-- soportar scoring cuantitativo
-- facilitar rankings accionables
-- conectar predicción, evaluación y negocio
-
----
-
-# ⚙️ Filosofía
+# Filosofía
 
 Principio central:
 
 ```text
-incrementar señal
-sin aumentar complejidad innecesaria
+Incrementar señal predictiva
+sin incrementar complejidad innecesaria.
 ```
 
-Decisión metodológica:
+La estrategia de Feature Engineering se orienta a construir variables que capturen:
 
-Priorizar:
-
-- robustez
-- interpretabilidad
-- coherencia futbolística
-- reproducibilidad
-- trazabilidad experimental
-- utilidad real para scouting
-
-El feature engineering se concibe como una capa de traducción entre el rendimiento deportivo observado y la señal económica que el modelo intenta capturar.
-
----
-
-# 📊 Estado actual
-
-El sistema dispone actualmente de:
-
-- features ofensivas
+- rendimiento deportivo
 - contexto competitivo
-- volumen de juego
-- variables temporales
-- variables longitudinales
-- índices compuestos
-- variables derivadas para scoring
-- variables de ranking
-- métricas de validación de negocio
-- outputs de simulación ROI
+- trayectoria profesional
+- potencial de crecimiento
+- robustez analítica
 
-Resultado observado:
+El objetivo no es únicamente mejorar R² o RMSE, sino alimentar correctamente:
 
 ```text
-el principal cuello de botella ya no es el modelo,
-sino la riqueza y estabilidad del signal disponible
+Modelización
+↓
+Scoring
+↓
+Ranking
+↓
+Player Intelligence
+↓
+Decision Support
 ```
-
-La evolución del proyecto ha demostrado que modelos más complejos solo aportan valor cuando las variables incorporan información diferencial sobre rendimiento, trayectoria, contexto y potencial futuro.
 
 ---
 
-# ⚽ Features actuales
+# Estado actual
+
+La plataforma incorpora actualmente:
+
+- features ofensivas
+- features defensivas básicas
+- contexto competitivo
+- variables longitudinales
+- growth features
+- composite indices
+- scoring features
+- risk features
+- business evaluation features
+
+Dataset actual:
+
+| Métrica | Valor |
+|----------|----------:|
+| Observaciones | 3.916 |
+| Jugadores únicos | 2.136 |
+| Cobertura temporal | 2019-2020 → 2025-2026 |
+
+---
+
+# Arquitectura de Feature Engineering
+
+```mermaid
+flowchart TD
+
+A[Raw Sources]
+--> B[Base Features]
+
+B --> C[Derived Features]
+
+C --> D[Growth Features]
+
+D --> E[Composite Indices]
+
+E --> F[Modeling Dataset]
+
+F --> G[Predictions]
+
+G --> H[Scoring Features]
+
+H --> I[Risk Features]
+
+I --> J[Player Intelligence Features]
+```
+
+---
+
+# Features actuales
 
 ## Producción ofensiva
 
-- `goals_per90`
-- `assists_per90`
-- `shots_per90`
-- `g_a_per90`
+- goals
+- assists
+- goals_per90
+- assists_per90
+- g_a_per90
+- shots_per90
+
+---
 
 ## Volumen competitivo
 
-- `minutes_played`
-- `log_minutes_played`
-- `starts`
-- `nineties`
+- minutes_played
+- log_minutes_played
+- starts
+- nineties
+
+---
 
 ## Contexto
 
-- `age`
-- `league`
-- `season`
-- `position_group`
-
-## Defensivas
-
-- `tackles_per90`
-- `interceptions_per90`
-- `blocks_per90`
-
-## Calidad y matching
-
-- `matching_confidence`
-- `matching_method`
-- `club_score`
-- `age_diff`
-
-Estas variables no representan rendimiento deportivo puro, pero son relevantes para evaluar la fiabilidad de las observaciones y alimentar la capa de `confidence_score`.
+- age
+- league
+- season
+- club
+- position_group
 
 ---
 
-# 📈 Features derivadas
+## Features defensivas
 
-Transformaciones principales:
-
-| Variable | Tipo | Uso |
-|---|---|---|
-| `log_market_value_eur` | target transform | modelización |
-| `log_minutes_played` | log transform | modelización |
-| `age_squared` | nonlinear age | trayectoria |
-| `career_year` | experiencia | growth |
-| `breakout_indicator` | explosión temprana | growth/scouting |
-
-## Justificación
-
-El valor de mercado presenta una distribución altamente asimétrica, por lo que la transformación logarítmica permite estabilizar la varianza, reducir el impacto de outliers y mejorar la interpretación relativa de los errores.
-
-La edad y la trayectoria se modelan de forma no lineal porque el mercado no valora igual un rendimiento elevado a los 18 años que a los 23. En jugadores jóvenes, la edad contiene información sobre potencial, madurez competitiva y margen de revalorización.
+- tackles_per90
+- interceptions_per90
+- blocks_per90
+- aerial_duels_won_pct
 
 ---
 
-# 🚀 Growth Features
+## Matching & Quality
 
-Variables implementadas:
+- matching_confidence
+- matching_method
+- age_diff
+- club_score
+
+Estas variables alimentan directamente la construcción del Confidence Score.
+
+---
+
+# Features derivadas
+
+## Transformaciones logarítmicas
+
+### log_market_value_eur
+
+Target principal.
+
+Objetivo:
+
+- estabilizar varianza
+- reducir asimetría
+- mejorar ajuste
+
+### log_minutes_played
+
+Objetivo:
+
+- reducir influencia de outliers
+- capturar volumen competitivo
+
+---
+
+## Transformaciones de edad
+
+### age_squared
+
+Captura relaciones no lineales.
+
+Justificación:
+
+```text
+El mercado no valora igual
+un mismo rendimiento a los 18 años
+que a los 23.
+```
+
+---
+
+## Trayectoria
+
+### career_year
+
+Proxy de experiencia.
+
+### breakout_indicator
+
+Detecta explosión temprana.
+
+---
+
+# Growth Features
+
+Introducidas durante Sprint 2.
+
+Variables:
 
 | Variable | Objetivo |
-|---|---|
-| `market_value_growth_prev` | crecimiento histórico |
-| `delta_log_market_value_prev` | evolución relativa |
-| `breakout_indicator` | detección temprana |
-| `growth_index` | potencial |
-| `career_year` | experiencia |
-
-Resultados observados:
-
-| Modelo | R² |
-|---|---:|
-| Baseline OLS | 0.4160 |
-| Growth OLS | 0.5255 |
-
-Interpretación:
-
-Las variables temporales aportan señal significativa porque el mercado de fichajes no descuenta únicamente rendimiento presente, sino también expectativas de evolución futura.
-
-La mejora del modelo Growth OLS frente al baseline confirma que el valor de mercado incorpora dinámicas longitudinales y señales de progresión profesional.
+|----------|----------|
+| market_value_growth_prev | crecimiento histórico |
+| delta_log_market_value_prev | evolución relativa |
+| breakout_indicator | explosión temprana |
+| growth_index | potencial |
+| career_year | experiencia |
 
 ---
 
-# 🧩 Composite Football Indices
+## Impacto observado
 
-Índices implementados:
+| Modelo | R² |
+|----------|----------:|
+| Baseline OLS | 0.4160 |
+| Growth OLS | 0.5258 |
 
-- `finishing_index`
-- `playmaking_index`
-- `growth_index`
-- `experience_index`
+Conclusión:
 
-Uso actual:
+Las variables longitudinales representan una de las mejoras más relevantes de todo el proyecto.
+
+---
+
+# Composite Football Indices
+
+Introducidos durante Sprint 3.
+
+Variables:
+
+- finishing_index
+- playmaking_index
+- growth_index
+- experience_index
+
+---
+
+## Uso actual
+
+Utilizados en:
 
 - scouting
-- explainability
-- rankings
 - reporting
-- análisis descriptivo
+- explainability
+- benchmarking
 
 No utilizados en:
 
 ```text
-modelo predictivo final
+Modelo predictivo final
 ```
 
-debido a redundancia informativa con variables base y de crecimiento.
-
-## Decisión metodológica
-
-Aunque los índices compuestos no mejoraron el rendimiento predictivo, se mantienen como variables de interpretación. En un contexto de scouting, estos índices permiten explicar perfiles de jugador de forma más intuitiva que una lista extensa de variables individuales.
-
-Su valor principal está en la traducción del output técnico a lenguaje de negocio deportivo.
+Debido a redundancia parcial con variables base.
 
 ---
 
-# 🎯 Variables derivadas para scoring — Sprint 5
+## Decisión metodológica
 
-Sprint 5 incorpora una capa de variables derivadas exclusivamente orientada a scouting.
-
-Estas variables no se utilizan como inputs del modelo predictivo base, sino como outputs construidos a partir de predicciones, valor observado, trayectoria y fiabilidad.
-
-## Inefficiency variables
-
-| Variable | Descripción |
-|---|---|
-| `predicted_market_value_eur` | valor estimado por el modelo |
-| `market_value_gap_eur` | diferencia entre valor estimado y observado |
-| `market_value_gap_pct` | gap porcentual relativo |
-| `inefficiency_score` | señal de infravaloración |
-| `inefficiency_score_z` | señal normalizada |
-
-Interpretación:
+Mantenerlos por:
 
 ```text
-inefficiency_score > 0  → posible jugador infravalorado
-inefficiency_score < 0  → posible jugador sobrevalorado
+Valor interpretativo
 ```
 
-## Growth variables
+aunque no mejoren directamente las métricas predictivas.
 
-| Variable | Descripción |
-|---|---|
-| `growth_score` | potencial de crecimiento |
-| `growth_score_z` | potencial normalizado |
+---
 
-## Confidence variables
+# Sprint 5 — Scoring Features
 
-| Variable | Descripción |
-|---|---|
-| `confidence_score` | fiabilidad global de la recomendación |
-| `confidence_score_z` | fiabilidad normalizada |
+Sprint 5 transforma las predicciones en señales accionables.
+
+Flujo:
+
+```text
+Predicción
+↓
+Inefficiency Score
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+```
+
+---
+
+## Inefficiency Features
+
+- predicted_market_value_eur
+- market_value_gap_eur
+- market_value_gap_pct
+- inefficiency_score
+- inefficiency_score_z
+
+Objetivo:
+
+```text
+Detección de infravaloración
+```
+
+---
+
+## Growth Features derivadas
+
+- growth_score
+- growth_score_z
+
+---
+
+## Confidence Features
+
+- confidence_score
+- confidence_score_z
 
 Componentes:
 
-- `matching_confidence`
-- `minutes_reliability`
-- `feature_completeness`
-- `temporal_stability`
+- matching_confidence
+- minutes_reliability
+- feature_completeness
+- temporal_stability
 
-## Opportunity variables
+---
 
-| Variable | Descripción |
-|---|---|
-| `opportunity_score` | score multicriterio final |
-| `opportunity_rank` | ranking global |
-| `opportunity_tier` | nivel de prioridad |
+## Opportunity Features
+
+- opportunity_score
+- opportunity_rank
+- opportunity_tier
 
 Fórmula conceptual:
 
 ```python
-opportunity_score = (
-    0.55 * inefficiency_score_z
-    + 0.25 * growth_score_z
-    + 0.20 * confidence_score_z
-)
+0.55 * inefficiency_score_z +
+0.25 * growth_score_z +
+0.20 * confidence_score_z
 ```
 
-## Rol dentro del sistema
+---
 
-Sprint 5 transforma el sistema desde una lógica puramente predictiva hacia una lógica de decisión:
+# Sprint 10 — Risk Features
+
+Sprint 10.3 incorpora una nueva familia de variables.
+
+Problema identificado:
 
 ```text
-predicción
-↓
-inefficiency score
-↓
-growth score
-↓
-confidence score
-↓
-opportunity score
-↓
-rankings
+Alta oportunidad
+≠
+bajo riesgo
 ```
 
 ---
 
-# 📊 Variables de evaluación y negocio — Sprint 6
+## Risk Variables
 
-Sprint 6 incorpora una capa de validación posterior al scoring. Esta fase no crea features predictivas para el modelo base, sino variables y métricas derivadas para evaluar si los rankings generados tienen utilidad real desde una perspectiva de scouting y negocio.
+### risk_score
 
-## Objetivo del Sprint 6
-
-Validar si el sistema de scoring produce rankings útiles, estables y económicamente interpretables.
-
-La pregunta deja de ser únicamente:
+Objetivo:
 
 ```text
-¿predice bien el valor de mercado?
+Cuantificar incertidumbre
 ```
 
-y pasa a ser:
+---
+
+### risk_level
+
+Valores:
+
+- Low
+- Medium
+- High
+
+---
+
+### risk_adjusted_opportunity_score
+
+Combina:
 
 ```text
-¿ordena correctamente jugadores con potencial de oportunidad?
+Opportunity
++
+Risk
 ```
 
----
-
-## Ranking diagnostics
-
-Variables y outputs generados:
-
-| Output | Objetivo |
-|---|---|
-| `ranking_summary.csv` | resumen global de rankings |
-| `ranking_by_league.csv` | diagnóstico por liga |
-| `ranking_by_position.csv` | diagnóstico por posición |
-| `ranking_score_correlations.csv` | correlaciones entre scores |
-| `ranking_tier_summary.csv` | distribución por niveles de prioridad |
-
-Uso metodológico:
-
-- detectar sesgos por liga
-- detectar sesgos por posición
-- validar coherencia interna del Opportunity Score
-- comprobar concentración excesiva de rankings
-- auditar estabilidad de señales
+para mejorar priorización.
 
 ---
 
-## Precision@K
+# Sprint 10.1 — Player Intelligence Features
 
-Variables de evaluación:
+Introducidas para soportar:
 
-| Variable | Descripción |
-|---|---|
-| `k` | tamaño del top ranking evaluado |
-| `players` | número de jugadores considerados |
-| `true_positive` | jugadores con señal positiva posterior |
-| `precision_at_k` | proporción de aciertos en el top K |
-
-Resultados actuales:
-
-| K | Precision@K |
-|---:|---:|
-| 10 | 0.90 |
-| 20 | 0.90 |
-| 50 | 0.90 |
-| 100 | 0.85 |
-
-Interpretación:
-
-El sistema mantiene una precisión elevada en los primeros tramos del ranking. Esto sugiere que el Opportunity Score concentra perfiles con evolución positiva y no se limita a ordenar ruido estadístico.
-
-Advertencia metodológica:
-
-Precision@K debe interpretarse como validación preliminar de ranking. No implica causalidad ni garantiza rentabilidad real, ya que depende de proxies longitudinales disponibles en el dataset.
+- Player Radar MVP
+- Positional Benchmarking
+- Scouting Narrative
 
 ---
 
-## ROI simulation
+## Radar Features
 
-Variables derivadas:
+MID / ATT
 
-| Variable | Descripción |
-|---|---|
-| `expected_profit_eur` | beneficio esperado estimado |
-| `expected_roi_pct` | retorno esperado porcentual |
-| `risk_adjusted_profit_eur` | beneficio ajustado por riesgo |
-| `risk_adjusted_roi_pct` | ROI ajustado por riesgo |
-| `positive_roi_rate` | proporción de operaciones potencialmente positivas |
+- minutes_played
+- goals_per90
+- assists_per90
+- g_a_per90
+- growth_score
+- confidence_score
 
-Hipótesis conservadora adoptada:
+---
 
-```python
-realization_factor = 0.5
+DEF
 
-assumed_sell_price_eur = (
-    market_value_eur
-    + (predicted_market_value_eur - market_value_eur) * realization_factor
-)
+- minutes_played
+- tackles_per90
+- interceptions_per90
+- blocks_per90
+- growth_score
+- confidence_score
+
+---
+
+GK
+
+- minutes_played
+- save_pct
+- clean_sheets
+- growth_score
+- confidence_score
+
+---
+
+## Benchmarking Features
+
+### radar_percentile
+
+Percentil de la métrica.
+
+### benchmark_group
+
+Valores:
+
+- Position
+- Global
+
+---
+
+## Scouting Narrative Features
+
+Variables utilizadas:
+
+- opportunity_score
+- risk_score
+- growth_score
+- confidence_score
+
+---
+
+# Sprint 10.2 — FBref Advanced Audit
+
+Objetivo:
+
+Evaluar nuevas fuentes de señal.
+
+Tablas auditadas:
+
+- Shooting
+- Defense
+- Misc
+- Playing Time
+- Passing
+- Possession
+- Goal & Shot Creation
+
+---
+
+## Variables candidatas
+
+Alta prioridad:
+
+- shots_per90
+- shots_on_target_per90
+- tackles_won_per90
+- interceptions_per90
+- blocks_per90
+- fouls_drawn_per90
+- crosses_per90
+
+---
+
+## Resultado
+
+Base técnica para:
+
+```text
+Advanced Football Radar
 ```
 
-Justificación:
-
-El valor estimado por el modelo no debe interpretarse como precio garantizado de venta. El mercado real incorpora costes de transacción, incertidumbre contractual, riesgo deportivo, negociación, liquidez limitada y variabilidad temporal.
-
-Por ello, Sprint 6 aplica una hipótesis conservadora en la que solo una parte del upside estimado se materializa.
+Sprint 11.
 
 ---
 
-## Business features derivadas
+# Business Features
 
-Estas variables no se incorporan al entrenamiento, pero sí al análisis de negocio:
+Introducidas durante Sprint 6.
 
-- `expected_profit_eur`
-- `expected_roi_pct`
-- `risk_adjusted_profit_eur`
-- `risk_adjusted_roi_pct`
-- `positive_roi_rate`
-- `transfer_strategy_segment`
-- `ranking_tier`
-- `is_top_k`
-- `is_scouting_shortlist`
-
-## Decisión metodológica
-
-Las variables de Sprint 6 pertenecen a la capa de evaluación y puesta en valor, no al dataset de entrenamiento.
-
-Esto preserva la separación entre:
-
-| Capa | Función |
-|---|---|
-| Features predictivas | estimar valor esperado |
-| Scores | transformar predicción en señal de scouting |
-| Ranking diagnostics | validar ordenación |
-| Business metrics | evaluar utilidad económica potencial |
+No utilizadas para entrenamiento.
 
 ---
 
-# 🔄 Feature tracking
+## ROI Features
+
+- expected_profit_eur
+- expected_roi_pct
+- risk_adjusted_profit_eur
+- risk_adjusted_roi_pct
+- positive_roi_rate
+
+---
+
+## Ranking Features
+
+- transfer_strategy_segment
+- ranking_tier
+- is_top_k
+- is_scouting_shortlist
+
+---
+
+# Feature Tracking
 
 MLflow registra:
 
 - feature set
 - transformaciones
-- grupos de variables
-- métricas predictivas
-- feature importance
-- parámetros de scoring
-- outputs de evaluación
-- artefactos de ranking
-
-Sprint 6 amplía la trazabilidad del sistema porque permite registrar no solo métricas de modelo, sino también métricas de utilidad de ranking y negocio.
-
-Esto resulta clave para justificar decisiones ante un tribunal o ante un stakeholder deportivo: el sistema no se evalúa únicamente por RMSE, sino por su capacidad para priorizar oportunidades.
-
----
-
-# 🛡️ Prevención de leakage
-
-Variables excluidas del entrenamiento predictivo:
-
-- `market_value_next_eur`
-- `future_minutes`
-- `predicted_market_value_eur`
-- `market_value_gap_eur`
-- `market_value_gap_pct`
-- `inefficiency_score`
-- `growth_score`
-- `confidence_score`
-- `opportunity_score`
-- `opportunity_rank`
-- `ranking_tier`
-- `expected_profit_eur`
-- `expected_roi_pct`
-- `positive_roi_rate`
+- métricas
+- importancia
+- scores
 - rankings
+- artefactos
 
-Principio:
+Beneficio:
 
 ```text
-toda feature predictiva debe existir
-en el momento real de decisión
+Reproducibilidad completa
 ```
 
-## Separación crítica
+---
 
-Las variables de Sprint 5 y Sprint 6 son outputs derivados, no inputs de entrenamiento.
+# Prevención de leakage
 
-Esto evita que el modelo aprenda información generada por sí mismo o información posterior al momento de decisión.
+Variables excluidas:
+
+- market_value_next_eur
+- predicted_market_value_eur
+- market_value_gap_eur
+- inefficiency_score
+- growth_score
+- confidence_score
+- opportunity_score
+- risk_score
+- rankings derivados
 
 ---
 
-# ⚖️ Trade-offs
+## Principio
+
+```text
+Toda variable predictiva
+debe existir en el momento real
+de la decisión.
+```
+
+---
+
+# Trade-offs metodológicos
 
 | Trade-off | Decisión |
-|---|---|
-| muchas features vs interpretabilidad | equilibrio |
-| complejidad vs estabilidad | modularización |
-| precisión vs explicabilidad | arquitectura híbrida |
-| señal deportiva vs ruido muestral | filtros y confidence score |
-| ranking agresivo vs recomendación fiable | Opportunity Score multicriterio |
-| ROI optimista vs prudencia de negocio | realization factor conservador |
-| métricas técnicas vs utilidad real | añadir Precision@K y ROI simulation |
+|----------|-----------|
+| Muchas features vs interpretabilidad | Equilibrio |
+| Complejidad vs estabilidad | Modularización |
+| Precisión vs explicabilidad | Arquitectura híbrida |
+| Cobertura vs robustez | Quality First |
+| Ranking agresivo vs fiabilidad | Opportunity + Risk |
+| Evaluación histórica vs operación | Separación Sprint 10 |
 
 ---
 
-# 🚀 Roadmap
+# Roadmap
 
-## Alta prioridad
+## Sprint 11
+
+Advanced Football Radar
+
+Variables previstas:
+
+- shots_per90
+- shots_on_target_per90
+- tackles_won_per90
+- interceptions_per90
+- blocks_per90
+- fouls_drawn_per90
+- crosses_per90
+
+---
+
+## Sprint 12
+
+Understat Integration
+
+Variables:
 
 - xG
 - xA
-- métricas defensivas avanzadas
-- rolling metrics
-- progression metrics
-- estabilidad temporal de rankings
-- robustness checks por liga y posición
-
-## Media prioridad
-
-- eventos StatsBomb
-- métricas tácticas
-- context features
-- league strength adjustment
-- team strength adjustment
-- age curves por posición
-
-## Futuro
-
-- embeddings
-- modelos específicos por posición
-- similar players engine
-- scouting reports automáticos
-- dashboard Streamlit
-- API de scoring
-- retraining continuo
+- xGChain
+- xGBuildup
 
 ---
 
-# 🧠 Conclusión
+## Sprint 13
 
-El feature engineering representa actualmente el mayor potencial de mejora del sistema.
+Advanced Modeling
 
-Los sprints anteriores demostraron que:
+- position-specific features
+- rolling metrics
+- similarity engine
+- automated scouting reports
 
-- la normalización contextual por posición y liga no mejoró el rendimiento predictivo de forma directa
-- las variables temporales y de crecimiento sí aportaron señal relevante
-- los índices compuestos aportan valor interpretativo aunque no mejoren métricas
-- el scoring multicriterio permite transformar predicciones en rankings accionables
+---
 
-Sprint 5 añadió una nueva capa de variables derivadas que convierte señales predictivas en señales de scouting:
+# Conclusión
+
+El Feature Engineering constituye actualmente el principal vector de mejora del sistema.
+
+La evolución observada durante los distintos sprints demuestra que:
+
+- las variables longitudinales aportan la mayor ganancia predictiva
+- los índices compuestos aportan interpretabilidad
+- el scoring transforma predicciones en señales accionables
+- el Risk Framework mejora la priorización
+- el Player Intelligence Layer convierte métricas en análisis operativos
+
+La principal contribución de Sprint 10 es ampliar el alcance del Feature Engineering más allá de la modelización, permitiendo alimentar:
 
 ```text
-predicción
+Current Scouting Layer
 ↓
-scoring
+Player Intelligence Layer
 ↓
-rankings
+Decision Support Layer
 ↓
-decisión
+Scouting Intelligence
 ```
 
-Sprint 6 completa esta evolución incorporando validación de ranking y evaluación de negocio:
-
-```text
-rankings
-↓
-Precision@K
-↓
-ROI simulation
-↓
-validación de negocio
-```
-
-La arquitectura resultante ya no se limita a estimar valores de mercado, sino que construye un sistema analítico completo para priorizar oportunidades, evaluar su fiabilidad y traducirlas a una lógica de decisión propia de un departamento de Football Analytics profesional.
+y consolidando la transición desde un sistema predictivo hacia una plataforma integral de Football Analytics aplicada al scouting profesional.

@@ -1,250 +1,154 @@
-````md id="4k1vqp"
-# 🧪 Calidad de datos
+# 🧪 Calidad de Datos
 
-<div align="center">
+## Objetivo
 
-![Data Quality](https://img.shields.io/badge/Data%20Quality-Validated-success)
-![Matching](https://img.shields.io/badge/Matching-88.36%25-brightgreen)
-![Validation](https://img.shields.io/badge/Validation-Temporal-important)
-![Architecture](https://img.shields.io/badge/Architecture-Modular-blue)
-![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
-![Config](https://img.shields.io/badge/Configuration-YAML-purple)
+Este documento describe los controles de calidad implementados en la versión v1.0.0 — Scouting Intelligence Platform.
 
-</div>
+Su objetivo es garantizar:
 
----
-
-# 📑 Tabla de contenidos
-
-- [🧠 Objetivo del documento](#-objetivo-del-documento)
-- [🏗️ Filosofía de calidad de datos](#️-filosofía-de-calidad-de-datos)
-- [📦 Fuentes analizadas](#-fuentes-analizadas)
-- [⚠️ Principales riesgos de calidad](#️-principales-riesgos-de-calidad)
-- [🔗 Calidad del matching](#-calidad-del-matching)
-- [📊 Resultados del matching](#-resultados-del-matching)
-- [🧪 Controles de validación implementados](#-controles-de-validación-implementados)
-- [📉 Calidad del dataset modelizable](#-calidad-del-dataset-modelizable)
-- [🛡️ Prevención de leakage](#️-prevención-de-leakage)
-- [📈 Calidad temporal](#-calidad-temporal)
-- [📂 Controles de esquema](#-controles-de-esquema)
-- [⚙️ Configuración centralizada de validaciones](#️-configuración-centralizada-de-validaciones)
-- [🧪 Tracking y auditoría experimental](#-tracking-y-auditoría-experimental)
-- [📝 Logging y trazabilidad](#-logging-y-trazabilidad)
-- [⚖️ Trade-offs metodológicos](#️-trade-offs-metodológicos)
-- [📉 Limitaciones actuales](#-limitaciones-actuales)
-- [🚀 Mejoras futuras previstas](#-mejoras-futuras-previstas)
-- [🧠 Conclusión](#-conclusión)
-
----
-
-# 🧠 Objetivo del documento
-
-Este documento describe los controles y decisiones relacionados con la calidad de datos dentro del sistema analítico.
-
-El objetivo es documentar:
-
-- riesgos identificados
-- controles implementados
-- validaciones de integración
-- calidad del matching
+- robustez metodológica
+- reproducibilidad
 - consistencia temporal
+- auditabilidad
+- trazabilidad
 - prevención de leakage
-- trazabilidad experimental
-- controles de reproducibilidad
 
-La calidad de datos constituye un componente crítico del proyecto porque el sistema depende de:
+---
+
+# Filosofía de calidad
+
+Principio central:
 
 ```text
-integración multi-fuente sin identificador común
+Calidad > Cobertura
 ```
 
----
+El sistema prioriza:
 
-# 🏗️ Filosofía de calidad de datos
+- precisión del matching
+- coherencia temporal
+- fiabilidad de las observaciones
+- robustez estadística
 
-La estrategia de calidad de datos se basa en cinco principios principales:
-
-| Principio              | Objetivo                         |
-| ---------------------- | -------------------------------- |
-| Validación incremental | Detectar errores tempranos       |
-| Reproducibilidad       | Evitar transformaciones manuales |
-| Auditabilidad          | Poder rastrear decisiones        |
-| Separación de capas    | Evitar contaminación             |
-| Consistencia temporal  | Evitar leakage                   |
+frente a maximizar artificialmente el tamaño del dataset.
 
 ---
 
-## Principio metodológico central
-
-Se prioriza:
-
-```text id="5kgfgj"
-calidad y robustez del dataset
-```
-
-frente a:
-
-```text id="3vd8fs"
-maximizar artificialmente cobertura
-```
-
----
-
-## Implicación práctica
-
-El sistema prefiere:
-
-* perder observaciones ambiguas
-* mantener mayor confianza
-* reducir false positives
-* preservar coherencia metodológica
-
----
-
-# 📦 Fuentes analizadas
+# Fuentes analizadas
 
 ## FBref
 
-### Tipo de información
+Información deportiva:
 
-* rendimiento deportivo
-* métricas por 90
-* participación
-* estadísticas ofensivas y defensivas
+- minutos
+- goles
+- asistencias
+- métricas por 90
+- estadísticas defensivas
 
 ---
 
 ## Transfermarkt
 
-### Tipo de información
+Información económica:
 
-* valor de mercado
-* edad
-* club
-* posición
-* histórico temporal
+- valor de mercado
+- edad
+- posición
+- club
+- histórico temporal
 
 ---
 
-## Problema principal
+# Riesgos principales
 
-Las fuentes:
+## Matching incorrecto
 
-```text id="ghh0jx"
-NO comparten identificador universal
+Problema:
+
+```text
+FBref y Transfermarkt no comparten identificador universal
+```
+
+Riesgos:
+
+- nombres inconsistentes
+- transliteraciones
+- cambios de club
+- errores ortográficos
+
+---
+
+## Leakage temporal
+
+Riesgo:
+
+```text
+Utilizar información futura
 ```
 
 ---
 
-# ⚠️ Principales riesgos de calidad
-
-## 1️⃣ Riesgo de matching incorrecto
-
-Problemas detectados:
-
-* transliteraciones
-* nombres inconsistentes
-* cambios de club
-* variaciones ortográficas
-* granularidad distinta
-
----
-
-## 2️⃣ Leakage temporal
-
-Riesgo de incorporar:
-
-* información futura
-* variables derivadas posteriores
-* outputs del modelo
-
----
-
-## 3️⃣ Inconsistencias contextuales
+## Inconsistencias contextuales
 
 Ejemplos:
 
-* ligas distintas
-* posiciones ambiguas
-* diferencias de calendario
-* cambios intra-temporada
+- posiciones ambiguas
+- ligas distintas
+- temporadas incompletas
 
 ---
 
-## 4️⃣ Datos faltantes
+## Datos faltantes
 
-Riesgos:
+Posibles efectos:
 
-* baja cobertura
-* features incompletas
-* temporadas parciales
-
----
-
-## 5️⃣ Ruido estructural
-
-Problemas derivados de:
-
-* variabilidad deportiva
-* mercado subjetivo
-* observaciones extremas
-* muestras reducidas por posición
+- pérdida de cobertura
+- sesgo muestral
+- menor estabilidad
 
 ---
 
-# 🔗 Calidad del matching
+# Calidad del matching
 
-## Problema crítico del proyecto
-
-El matching FBref ↔ Transfermarkt representa el principal reto técnico del sistema.
-
----
-
-## Objetivo
-
-Construir integración robusta manteniendo:
-
-* precisión
-* coherencia temporal
-* trazabilidad
-* auditabilidad
-
----
-
-## Estrategia implementada
+## Estrategia
 
 Pipeline jerárquico:
 
-1. normalización
-2. matching exacto
-3. validación por club
-4. matching fuzzy
-5. validación por edad
+```text
+Normalización
+↓
+Matching exacto
+↓
+Validación por club
+↓
+Matching fuzzy
+↓
+Validación por edad
+```
 
 ---
 
 ## Variables utilizadas
 
-| Variable               | Uso                   |
-| ---------------------- | --------------------- |
-| player_name_normalized | Matching principal    |
-| age                    | Validación            |
-| club                   | Validación contextual |
-| season                 | Restricción temporal  |
+- player_name_normalized
+- age
+- club
+- season
 
 ---
 
-## Algoritmo fuzzy
+## Algoritmo
 
-```text id="khpn5d"
+```text
 RapidFuzz
 ```
 
 ---
 
-## Thresholds actuales
+## Thresholds
 
-```python id="r0nt6g"
+```python
 MAX_AGE_DIFF = 1.5
 MIN_CLUB_SCORE = 70
 FUZZY_THRESHOLD = 92
@@ -252,614 +156,388 @@ FUZZY_THRESHOLD = 92
 
 ---
 
-## Justificación metodológica
+# Resultados del matching
 
-Los thresholds se diseñaron para:
+## Panel completo
 
-* minimizar false positives
-* restringir matching ambiguo
-* mantener trazabilidad
-* preservar coherencia futbolística
-
----
-
-# 📊 Resultados del matching
-
-## Resultados globales
-
-| Métrica                   | Resultado |
-| ------------------------- | --------: |
-| Observaciones totales     |    23,580 |
-| Observaciones emparejadas |    20,836 |
-| Match rate                |    88.36% |
-
----
-
-## Distribución de métodos
-
-| Método                   | Interpretación             |
-| ------------------------ | -------------------------- |
-| exact_age_validated      | Dominante                  |
-| exact_age_club_validated | Alta confianza             |
-| fuzzy_age_club_validated | Casos ambiguos controlados |
-
----
-
-## Insight principal
-
-El matching exacto domina claramente el dataset final.
-
-Esto reduce significativamente:
-
-* riesgo de false positives
-* contaminación del dataset
-* ruido en modelización
+| Métrica | Valor |
+|----------|----------:|
+| Observaciones panel | 24.194 |
+| Observaciones emparejadas | 21.245 |
+| Match Rate | ≈ 88% |
 
 ---
 
 ## Decisión metodológica
 
-El sistema prefiere:
+Principio:
 
-```text id="3l3ffr"
-perder cobertura antes que introducir matching dudoso
+```text
+Perder cobertura antes que aceptar matching dudoso
 ```
 
----
+Beneficios:
 
-# 🧪 Controles de validación implementados
-
-## Validaciones de esquema
-
-### Controles
-
-* columnas críticas existentes
-* tipos válidos
-* nombres consistentes
-* unicidad esperada
+- menor ruido
+- menor contaminación
+- menor probabilidad de false positives
 
 ---
 
-## Validaciones de negocio
+# Controles implementados
 
-### Controles
+## Validación de esquema
 
-* market value positivo
-* edad válida
-* minutos razonables
-* temporada válida
-* posición válida
+Controles:
 
----
-
-## Validaciones temporales
-
-### Controles
-
-* coherencia cronológica
-* temporadas válidas
-* orden temporal consistente
+- columnas obligatorias
+- tipos válidos
+- nombres consistentes
+- claves esperadas
 
 ---
 
-## Validaciones de matching
+## Validación de negocio
 
-### Controles
+Controles:
 
-* diferencia máxima de edad
-* similitud de club
-* confidence score mínimo
-* trazabilidad del método
-
----
-
-## Validaciones de modelización
-
-### Controles
-
-* features completas
-* target válido
-* categorías válidas
-* split temporal correcto
+- market value positivo
+- edad válida
+- minutos válidos
+- temporada válida
+- posición válida
 
 ---
 
-# 📉 Calidad del dataset modelizable
+## Validación temporal
+
+Controles:
+
+- coherencia cronológica
+- orden temporal
+- temporadas válidas
+
+---
+
+## Validación de matching
+
+Controles:
+
+- edad máxima permitida
+- similitud de club
+- threshold fuzzy
+- trazabilidad del método
+
+---
+
+# Calidad del dataset modelizable
 
 ## Dataset final
 
-| Métrica          | Valor |
-| ---------------- | ----: |
-| Observaciones    | 3,297 |
-| Jugadores únicos | 1,847 |
-| Edad             | 18–23 |
-| Ligas            |     7 |
+| Métrica | Valor |
+|----------|----------:|
+| Observaciones | 3.916 |
+| Jugadores únicos | 2.136 |
+| Edad | 18–23 |
+| Ligas | 7 |
+| Temporadas | 2019-2020 → 2025-2026 |
+
+---
+
+## Distribución temporal
+
+| Temporada | Observaciones |
+|----------|----------:|
+| 2019-2020 | 537 |
+| 2020-2021 | 536 |
+| 2021-2022 | 544 |
+| 2022-2023 | 542 |
+| 2023-2024 | 586 |
+| 2024-2025 | 552 |
+| 2025-2026 | 619 |
 
 ---
 
 ## Filtros aplicados
 
-* matching válido
-* minutos mínimos
-* market value disponible
-* edad válida
-* posición válida
+- matching válido
+- edad válida
+- market value disponible
+- minutos mínimos
+- posición válida
+
+---
+
+# Sprint 10 — Impacto sobre calidad
+
+Sprint 10 introduce cambios relevantes en gobernanza y validación.
+
+---
+
+## Sprint 10.1
+
+Player Intelligence Layer
+
+Nuevos controles:
+
+- consistencia de percentiles
+- validación de benchmarks
+- coherencia de radar
+
+---
+
+## Sprint 10.2
+
+FBref Advanced Audit
+
+Tablas auditadas:
+
+- Shooting
+- Defense
+- Misc
+- Playing Time
+- Passing
+- Possession
+- Goal & Shot Creation
+
+Resultado:
+
+```text
+Evaluación de viabilidad antes de integración
+```
+
+Principio aplicado:
+
+```text
+Auditar antes de incorporar
+```
+
+---
+
+## Sprint 10.3
+
+Current Scouting Layer
+
+Nueva separación:
+
+```text
+Historical Evaluation Layer
+≠
+Current Scouting Layer
+```
+
+Beneficios:
+
+- menor contaminación analítica
+- mayor validez externa
+- mayor claridad metodológica
+
+---
+
+# Prevención de leakage
+
+## Principio
+
+```text
+Toda variable debe existir
+en el momento real de la decisión.
+```
+
+---
+
+## Variables excluidas
+
+- market_value_next_eur
+- delta_log_market_value_1y
+- predicted_market_value_eur
+- inefficiency_score
+- opportunity_score
+- risk_score
+- rankings derivados
+
+---
+
+## Leakage controlado
+
+- temporal leakage
+- target leakage
+- train-test leakage
+- scoring leakage
+
+---
+
+# Calidad temporal
+
+## Estrategia histórica
+
+Validación temporal:
+
+| Split | Temporadas |
+|----------|------------|
+| Train | 2019-2020 → 2024-2025 |
+| Scouting | 2025-2026 |
 
 ---
 
 ## Justificación
 
-Los filtros buscan construir un dataset:
+Se evita:
 
-```text id="6n6d8j"
-más pequeño pero más fiable
-```
-
----
-
-## Beneficio
-
-Esto mejora:
-
-* estabilidad del modelo
-* interpretabilidad
-* robustez
-* coherencia futbolística
+- optimismo artificial
+- fuga temporal
+- sobreestimación de capacidad predictiva
 
 ---
 
-# 🛡️ Prevención de leakage
+# Controles de arquitectura
 
-## Principio fundamental
+Separación explícita:
 
-Toda variable debe existir:
-
-```text id="jcc9om"
-en el momento real de decisión
-```
-
----
-
-## Variables explícitamente excluidas
-
-| Variable                   | Motivo             |
-| -------------------------- | ------------------ |
-| market_value_next_eur      | Información futura |
-| delta_log_market_value_1y  | Leakage temporal   |
-| predicted_market_value_eur | Output derivado    |
-| inefficiency_score         | Output derivado    |
-| rankings                   | Output derivado    |
+| Capa | Objetivo |
+|--------|----------|
+| Raw Data | Fuente original |
+| Processed Data | Features |
+| Modeling Dataset | Entrenamiento |
+| Historical Evaluation | Validación |
+| Current Scouting | Operación |
+| Player Intelligence | Benchmarking |
+| Dashboard | Consumo ejecutivo |
 
 ---
 
-## Tipos de leakage controlados
+# Tracking y auditoría
 
-* temporal leakage
-* target leakage
-* leakage entre train/test
-* leakage derivado de scoring
+## MLflow
 
----
+Información registrada:
 
-## Decisión metodológica
+### Parámetros
 
-Las variables derivadas del modelo:
+- features
+- hiperparámetros
+- split temporal
 
-```text id="6qohba"
-NO vuelven al dataset base
-```
+### Métricas
 
----
+- RMSE
+- MAE
+- R²
 
-# 📈 Calidad temporal
+### Artefactos
 
-## Estrategia de validación
-
-El sistema utiliza:
-
-```text id="10mbsn"
-temporal validation
-```
-
----
-
-## Split actual
-
-| Split | Temporadas            |
-| ----- | --------------------- |
-| Train | 2019-2020 → 2023-2024 |
-| Test  | 2024-2025             |
-
----
-
-## Justificación
-
-El random split:
-
-* rompe coherencia temporal
-* introduce optimismo artificial
-* sobreestima generalización
-
----
-
-## Beneficio
-
-La validación temporal mejora:
-
-* realismo
-* robustez
-* credibilidad metodológica
-
----
-
-# 📂 Controles de esquema
-
-## Separación entre capas
-
-El sistema separa:
-
-| Elemento       | Directorio        |
-| -------------- | ----------------- |
-| Raw data       | `data/raw/`       |
-| Processed data | `data/processed/` |
-| Outputs        | `reports/`        |
-| Artifacts      | `artifacts/`      |
-| Tracking       | `mlruns/`         |
-| Configuración  | `config/`         |
-| Logs           | `logs/`           |
-
----
-
-## Objetivo
-
-Evitar:
-
-* contaminación
-* mezcla de responsabilidades
-* pérdida de trazabilidad
-* leakage accidental
-
----
-
-## Decisión importante
-
-Los outputs del modelo:
-
-* no forman parte del dataset base
-* permanecen separados
-* son reproducibles
-
----
-
-# ⚙️ Configuración centralizada de validaciones
-
-## Directorio
-
-<pre>
-config/
-</pre>
-
----
-
-## Archivos relevantes
-
-| Archivo       | Función                  |
-| ------------- | ------------------------ |
-| matching.yaml | Thresholds matching      |
-| modeling.yaml | Split temporal y filtros |
-| features.yaml | Features utilizadas      |
-| paths.yaml    | Rutas del sistema        |
+- modelos
+- predicciones
+- rankings
+- explainability
 
 ---
 
 ## Beneficios
 
-La configuración centralizada permite:
+MLflow permite:
 
-* evitar hardcoding
-* reproducir ejecuciones
-* versionar cambios
-* comparar experimentos
-* mantener coherencia entre pipelines
-
----
-
-## Relación con calidad
-
-Los thresholds críticos quedan desacoplados del código.
-
-Esto facilita:
-
-* auditoría
-* tuning controlado
-* análisis de sensibilidad
-
----
-
-# 🧪 Tracking y auditoría experimental
-
-## Herramienta utilizada
-
-```text id="mzuw0i"
-MLflow
+```text
+Reconstruir exactamente
+qué configuración produjo cada resultado
 ```
 
 ---
 
-## Objetivo
+# Trade-offs metodológicos
 
-Registrar:
-
-* métricas
-* parámetros
-* configuraciones
-* artefactos
-* outputs
-
----
-
-## Beneficios para calidad
-
-MLflow mejora:
-
-* trazabilidad
-* reproducibilidad
-* comparación entre ejecuciones
-* auditoría metodológica
+| Trade-off | Decisión |
+|----------|-----------|
+| Cobertura vs precisión | Priorizar precisión |
+| Matching agresivo vs conservador | Conservador |
+| Dataset grande vs fiable | Fiable |
+| Complejidad vs reproducibilidad | Reproducibilidad |
+| Evaluación histórica vs operación | Separación Sprint 10 |
 
 ---
 
-## Información registrada
+# Limitaciones actuales
 
-### Parámetros
+## Datos
 
-* features
-* target
-* fixed effects
-* hiperparámetros
-* split temporal
+Pendiente:
 
----
-
-### Métricas
-
-* RMSE
-* MAE
-* R²
+- xG
+- xA
+- salarios
+- contratos
+- eventos avanzados
 
 ---
 
-### Artefactos
+## Matching
 
-* modelos
-* predicciones
-* rankings
-* feature importance
+Existe siempre:
 
----
-
-## Decisión metodológica
-
-El tracking experimental permite:
-
-```text id="pd1m8f"
-reconstruir qué configuración produjo cada resultado
-```
-
----
-
-# 📝 Logging y trazabilidad
-
-## Directorio
-
-<pre>
-logs/
-</pre>
-
----
-
-## Objetivo
-
-Registrar información operativa de ejecución.
-
----
-
-## Uso previsto
-
-Los logs permiten almacenar:
-
-* errores controlados
-* filas procesadas
-* warnings
-* paths utilizados
-* duración de pipelines
-
----
-
-## Diferencia respecto a MLflow
-
-| Elemento | Función                |
-| -------- | ---------------------- |
-| logs     | Auditoría operativa    |
-| mlruns   | Auditoría experimental |
-
----
-
-## Beneficio
-
-La combinación de ambos sistemas mejora:
-
-* debugging
-* mantenimiento
-* trazabilidad
-* reproducibilidad
-
----
-
-# ⚖️ Trade-offs metodológicos
-
-## Cobertura vs precisión
-
-Trade-off principal del matching.
-
----
-
-## Decisión adoptada
-
-Priorizar:
-
-```text id="yj0tlg"
-precisión y confianza
-```
-
-frente a:
-
-```text id="okty6r"
-máxima cobertura posible
-```
-
----
-
-## Coste
-
-Se pierden observaciones potencialmente válidas.
-
----
-
-## Beneficio
-
-Se reduce:
-
-* ruido
-* false positives
-* contaminación del modelo
-* rankings erróneos
-
----
-
-# 📉 Limitaciones actuales
-
-## Cobertura de features
-
-Todavía faltan:
-
-* xG
-* xA
-* métricas avanzadas defensivas
-* eventos tipo StatsBomb
-
----
-
-## Dataset size
-
-El dataset modelizable sigue siendo relativamente pequeño para:
-
-* modelos altamente complejos
-* deep learning
-* segmentación extrema
-
----
-
-## Matching residual
-
-Aunque el sistema es robusto, siempre existe:
-
-```text id="5fwz5k"
+```text
 riesgo residual de matching imperfecto
 ```
 
 ---
 
-## Calidad de mercado
+## Mercado
 
-Transfermarkt incorpora inevitablemente:
+Transfermarkt incorpora:
 
-* subjetividad
-* ruido contextual
-* componentes no observables
-
----
-
-# 🚀 Mejoras futuras previstas
-
-## Validación avanzada
-
-Pendiente incorporar:
-
-* análisis de estabilidad
-* robustness checks
-* validación cruzada temporal avanzada
+- subjetividad
+- ruido contextual
+- factores no observables
 
 ---
 
-## Quality scoring
+# Roadmap de calidad
 
-Posible evolución:
+## Sprint 11
 
-```python id="j0fg0g"
-confidence_score =
-matching_quality +
-feature_completeness +
-temporal_stability
-```
+Advanced Football Radar
 
----
+Validación prevista:
 
-## Feature engineering
-
-Próximas mejoras:
-
-* z-scores posicionales
-* percentiles
-* progression metrics
-* rolling metrics
+- shots_per90
+- shots_on_target_per90
+- tackles_won_per90
+- interceptions_per90
+- blocks_per90
 
 ---
 
-## Explainability
+## Sprint 12
 
-Pendiente:
+Understat
 
-* SHAP
-* explicaciones individuales
-* estabilidad de rankings
+Nuevos controles:
 
----
-
-## Automatización
-
-Posibles evoluciones:
-
-* validaciones automáticas
-* data quality monitoring
-* alertas de anomalías
+- xG
+- xA
+- consistencia de eventos
 
 ---
 
-# 🧠 Conclusión
+## Futuras mejoras
 
-La calidad de datos representa uno de los componentes más críticos del sistema analítico desarrollado.
+- monitorización automática
+- alertas de anomalías
+- robustness checks
+- rolling validation
 
-El proyecto prioriza:
+---
 
-* robustez
-* consistencia temporal
-* trazabilidad
-* auditabilidad
-* prevención de leakage
-* reproducibilidad experimental
+# Conclusión
 
-La incorporación de:
+La calidad de datos constituye uno de los pilares fundamentales del proyecto.
 
-* matching validado
-* configuración centralizada
-* MLflow
-* logging estructurado
+La arquitectura actual incorpora:
 
-permite construir un entorno mucho más sólido desde el punto de vista metodológico y cercano a prácticas profesionales de analytics engineering y sports analytics.
+- matching validado
+- controles de negocio
+- validación temporal
+- prevención de leakage
+- MLflow
+- auditoría FBref
+- separación Historical vs Current Scouting
 
-El principal reto futuro no será únicamente aumentar volumen de datos, sino incrementar:
-
-```text id="2cl0y8"
-calidad de señal predictiva manteniendo robustez metodológica
-```
+La principal mejora introducida durante Sprint 10 es la separación explícita entre evaluación histórica y scouting operativo, reforzando la robustez metodológica y la validez de las recomendaciones generadas por la plataforma.

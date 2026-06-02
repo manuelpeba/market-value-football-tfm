@@ -1,275 +1,437 @@
-# 🔄 Referencia de pipelines
+# 🔄 Referencia de Pipelines
 
-::: {align="center"}
-![Pipelines](https://img.shields.io/badge/Pipelines-Reproducible-success)
-![Validation](https://img.shields.io/badge/Validation-Temporal-blue)
-![Tracking](https://img.shields.io/badge/Tracking-MLflow-orange)
-![Scouting](https://img.shields.io/badge/Scouting-Scoring%20Engine-success)
-![Business](https://img.shields.io/badge/Business-Evaluation-purple)
-![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
-![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
-![Status](https://img.shields.io/badge/Status-v0.8.0--Executive--Dashboard-brightgreen)
-![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
-![VisualAnalytics](https://img.shields.io/badge/Visual%20Analytics-Executive-success)
-:::
+## Objetivo
 
----
+Este documento describe la arquitectura de pipelines implementada en la versión v1.0.0 del proyecto.
 
-# 🧠 Objetivo
+Su objetivo es garantizar:
 
-Este documento describe los pipelines implementados, sus
-responsabilidades, inputs, outputs y relaciones entre componentes.
-
-Su objetivo es garantizar reproducibilidad experimental y trazabilidad
-completa del sistema analítico.
+- reproducibilidad
+- trazabilidad
+- mantenibilidad
+- auditabilidad
+- consistencia metodológica
 
 ---
 
-# 📊 Estado actual
+# Estado actual
 
 | Pipeline | Estado |
 |----------|----------|
-| Data ingestion | ✅ |
-| Feature engineering | ✅ |
+| Data Ingestion | ✅ |
+| Feature Engineering | ✅ |
 | Matching | ✅ |
-| Modeling dataset | ✅ |
-| Econometric modeling | ✅ |
-| Machine Learning | ✅ |
-| Explainability | ✅ |
+| Modeling Dataset | ✅ |
+| Econometric Pipeline | ✅ |
+| Machine Learning Pipeline | ✅ |
+| Explainability Pipeline | ✅ |
 | Scoring Engine | ✅ |
+| Risk Engine | ✅ |
 | Ranking Engine | ✅ |
-| Evaluation & Business Layer | ✅ |
-| Dashboard Scouting | ✅ |
-| Visual Analytics | ✅ |
+| Evaluation Layer | ✅ |
+| Current Scouting Layer | ✅ |
+| Player Intelligence Layer | ✅ |
+| Executive Dashboard | ✅ |
 | Decision Support Layer | ✅ |
 
 ---
 
-# 🏗️ Pipeline global
+# Pipeline global
 
-``` mermaid
+```mermaid
 flowchart TD
 
 A[Raw Sources]
 --> B[Feature Engineering]
 
-B --> C[Matching]
+B --> C[Player-Season Matching]
 
-C --> D[Player Season Panel]
+C --> D[Player-Season Panel]
 
 D --> E[Modeling Dataset]
 
 E --> F[Econometric Pipeline]
 E --> G[Machine Learning Pipeline]
 
-F --> H[Scoring Engine]
+F --> H[Historical Evaluation Layer]
 G --> H
 
-H --> I[Ranking Engine]
+H --> I[Explainability]
 
-I --> J[Explainability]
+G --> J[Operational Predictions]
 
-J --> K[Executive Dashboard]
+J --> K[Scoring Engine]
 
-K --> L[Visual Analytics]
+K --> L[Opportunity Score]
+K --> M[Risk Score]
 
-L --> M[Decision Support]
+L --> N[Ranking Engine]
+M --> N
 
-M --> N[Scouting Intelligence]
+N --> O[Scouting Shortlist]
 
-F --> O[MLflow]
-G --> O
+O --> P[Player Intelligence]
+
+P --> Q[Executive Dashboard]
+
+Q --> R[Decision Support]
+
+R --> S[Scouting Intelligence]
 ```
 
 ---
 
-# 🤖 Machine Learning Pipeline
+# Data Pipeline
 
-Pipeline principal:
+Responsable de la ingestión y consolidación de datos.
 
-``` text
-src/models/machine_learning/train_ml_tuned.py
-```
+Fuentes:
 
-Modelos:
+- FBref
+- Transfermarkt
 
--   Tuned Random Forest
--   Tuned XGBoost
--   Tuned LightGBM
--   HistGradientBoosting
+Scripts principales:
 
-Modelo seleccionado:
-
-``` text
-Tuned XGBoost
-R² = 0.5536
-RMSE = 0.8753
-MAE = 0.7004
-```
-
----
-
-# 🎯 Scoring Pipeline
-
-``` text
-Predictions
- ↓
-build_inefficiency_score.py
- ↓
-build_growth_score.py
- ↓
-build_confidence_score.py
- ↓
-build_opportunity_score.py
- ↓
-generate_rankings.py
+```text
+ingest_fbref.py
+ingest_transfermarkt.py
 ```
 
 Outputs:
 
-``` text
-reports/rankings/
+```text
+data/raw/
+data/interim/
+```
 
-scouting_shortlist.csv
+---
+
+# Feature Engineering Pipeline
+
+Responsable de construir variables deportivas y económicas.
+
+Scripts:
+
+```text
+build_fbref_features.py
+build_transfermarkt_features.py
+build_modeling_dataset.py
+```
+
+Outputs:
+
+```text
+player_season_panel.parquet
+player_season_modeling.parquet
+```
+
+Dataset actual:
+
+| Métrica | Valor |
+|----------|----------:|
+| Observaciones | 3.916 |
+| Jugadores únicos | 2.136 |
+| Cobertura temporal | 2019-2020 → 2025-2026 |
+
+---
+
+# Matching Pipeline
+
+Objetivo:
+
+```text
+FBref ↔ Transfermarkt
+```
+
+Metodología:
+
+- matching exacto
+- validación por edad
+- validación por club
+- fuzzy matching controlado
+
+Resultado:
+
+```text
+Match Rate ≈ 88%
+```
+
+Output:
+
+```text
+player_season_panel.parquet
+```
+
+---
+
+# Econometric Pipeline
+
+Ubicación:
+
+```text
+src/models/econometric/
+```
+
+Objetivo:
+
+Construir benchmark interpretable.
+
+Modelo principal:
+
+```text
+Growth OLS
+```
+
+Resultados finales:
+
+| Modelo | MAE | RMSE | R² |
+|----------|----------:|----------:|----------:|
+| Growth OLS | 0.7287 | 0.9053 | 0.5258 |
+
+Outputs:
+
+```text
+econometric_metrics.csv
+ols_predictions.csv
+```
+
+---
+
+# Machine Learning Pipeline
+
+Ubicación:
+
+```text
+src/models/machine_learning/
+```
+
+Modelos entrenados:
+
+- Tuned Random Forest
+- Tuned LightGBM
+- HistGradientBoosting
+- Tuned XGBoost
+
+Resultados finales:
+
+| Modelo | MAE | RMSE | R² |
+|----------|----------:|----------:|----------:|
+| Tuned Random Forest | 0.7486 | 0.9303 | 0.4980 |
+| Tuned LightGBM | 0.7307 | 0.9052 | 0.5248 |
+| HistGradientBoosting | 0.7292 | 0.9011 | 0.5291 |
+| Tuned XGBoost | **0.7120** | **0.8892** | **0.5414** |
+
+Modelo productivo:
+
+```text
+Tuned XGBoost
+```
+
+---
+
+# Historical Evaluation Pipeline
+
+Introducido y consolidado en Sprint 10.
+
+Objetivo:
+
+Separar validación histórica de scouting operativo.
+
+Funciones:
+
+- validación temporal
+- comparación de modelos
+- backtesting
+- análisis metodológico
+
+Artefactos:
+
+```text
+tuned_xgboost_test_predictions.csv
+tuned_xgboost_full_predictions.csv
+```
+
+---
+
+# Explainability Pipeline
+
+Objetivo:
+
+Interpretar decisiones de los modelos.
+
+Componentes:
+
+```text
+build_feature_importance_comparison.py
+build_shap_analysis.py
+build_player_shap_report.py
+```
+
+Outputs:
+
+```text
+reports/figures/explainability/
+reports/scouting_reports/
+```
+
+---
+
+# Scoring Engine
+
+Transforma predicciones en señales accionables.
+
+Flujo:
+
+```text
+Predictions
+↓
+Inefficiency Score
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Risk Score
+```
+
+Componentes:
+
+```text
+build_inefficiency_score.py
+build_growth_score.py
+build_confidence_score.py
+build_opportunity_score.py
+build_risk_score.py
+```
+
+---
+
+# Ranking Engine
+
+Genera recomendaciones priorizadas.
+
+Outputs:
+
+```text
 top_undervalued_global.csv
 top_undervalued_by_league.csv
 top_undervalued_by_position.csv
 top_high_potential.csv
 top_low_risk.csv
+scouting_shortlist.csv
+scouting_shortlist_with_risk.csv
 ```
 
 ---
 
-# 📈 Evaluation Pipeline
+# Current Scouting Pipeline
 
-``` text
-src/models/evaluation/
+Introducido en Sprint 10.3.
 
-build_ranking_diagnostics.py
-build_roi_simulation.py
-build_precision_at_k.py
+Objetivo:
+
+Operar sobre el mercado actual.
+
+Inputs:
+
+```text
+tuned_xgboost_predictions.csv
 ```
 
 Outputs:
 
-``` text
-reports/model_diagnostics/
-reports/business/
-reports/evaluation/
-```
-
-Métricas:
-
--   Precision@K
--   Expected ROI
--   Positive ROI rate
--   Risk-adjusted profit
-
-Resultados actuales:
-
-  K       Precision@K
-  ----- -------------
-  10             0.90
-  20             0.90
-  50             0.90
-  100            0.85
-
----
-
-# 🖥️ Executive Dashboard Pipeline
-
-Pipeline principal:
-
 ```text
-dashboard/
-streamlit_app.py
+scoring_dataset.csv
+scouting_shortlist.csv
+scouting_shortlist_with_risk.csv
 ```
-
-Objetivo:
-
-Transformar predicciones, rankings y señales de scouting en una herramienta de apoyo a decisiones para departamentos deportivos.
-
----
-
-## Sprint 9.1 — Executive Scouting Filters
 
 Capacidades:
 
-* presets de scouting
-* filtros ejecutivos
-* shortlist dinámica
-* universo modelado visible
-* métricas de cobertura
-* filtros activos visibles
-
-Variables:
-
-* Liga
-* Posición
-* Edad
-* Opportunity Score
-* Confidence Score
+- Opportunity Score
+- Risk Score
+- Opportunity vs Risk Matrix
+- Shortlist operativa
 
 ---
 
-## Sprint 9.2 — Visual Analytics
+# Player Intelligence Pipeline
 
-### Coste actual vs Upside estimado
+Introducido en Sprint 10.1.
 
-Matriz estratégica basada en:
+Objetivo:
 
-* valor de mercado actual
-* gap de mercado estimado
-* Opportunity Score
-* tier de oportunidad
+Transformar rankings en análisis individuales.
 
-Representación:
+Componentes:
+
+### Player Radar MVP
+
+- minutos
+- goles/90
+- asistencias/90
+- G+A/90
+- Growth Score
+- Confidence Score
+
+### Positional Benchmarking
+
+Comparación frente a:
+
+- misma posición
+- universo completo
+
+### Scouting Narrative
+
+Generación automática de interpretación.
+
+---
+
+# Executive Dashboard Pipeline
+
+Aplicación principal:
 
 ```text
-Eje X → Coste actual
-Eje Y → Upside estimado
-Tamaño → Opportunity Score
-Color → Prioridad scouting
+app/streamlit_app.py
 ```
 
-### Segmentación estratégica
+Capas implementadas:
 
-* Comprar / priorizar
-* Oportunidades premium
-* Seguimiento
-* Menor prioridad
+### Executive Filters
 
-### Hallazgos ejecutivos
+- liga
+- posición
+- edad
+- opportunity score
+- confidence score
 
-* candidatos prioritarios
-* oportunidades premium
-* score oportunidad medio
-* upside agregado
-* liga dominante
+### Visual Analytics
 
-### Top 5 destacados
+- Coste vs Upside
+- Opportunity vs Risk Matrix
+- Executive Insights
 
-Identificación automática de oportunidades prioritarias.
+### Player Intelligence
 
----
+- radar
+- benchmarking
+- scouting cards
 
-## Informe individual
+### Explainability
 
-* Opportunity Score
-* Growth Score
-* Confidence Score
-* Valor estimado
-* Gap de mercado
-* Recomendación analítica
+- SHAP individual
+- drivers positivos
+- drivers negativos
 
 ---
 
-## Explainability
+# Decision Support Pipeline
 
-* SHAP local
-* drivers positivos
-* drivers negativos
-* explicación ejecutiva
+Objetivo:
+
+Convertir resultados analíticos en decisiones operativas.
 
 Resultado:
 
@@ -280,7 +442,9 @@ Scoring
 ↓
 Ranking
 ↓
-Visual Analytics
+Player Intelligence
+↓
+Dashboard
 ↓
 Decision Support
 ↓
@@ -289,61 +453,34 @@ Scouting Intelligence
 
 ---
 
-### Sprint 10 — Advanced Player Intelligence
+# Evolución por sprints
 
-- radar avanzado de jugador
-- comparador jugador vs jugador
-- comparador jugador vs percentil de liga
-- scouting cards descargables
-- exportación PDF de perfiles
+| Sprint | Contribución |
+|----------|-------------|
+| Sprint 5 | Scoring Engine |
+| Sprint 6 | Evaluation Layer |
+| Sprint 7 | Dashboard |
+| Sprint 9 | Decision Support System |
+| Sprint 10.1 | Player Intelligence |
+| Sprint 10.2 | FBref Advanced Audit |
+| Sprint 10.3 | Current Scouting Layer + Risk Framework |
 
-### Sprint 11 — Advanced Explainability
+---
 
-- SHAP por posición
-- SHAP por liga
-- explicación avanzada de rankings
-- estabilidad de rankings
+# Conclusión
 
-### Sprint 12 — Advanced Feature Engineering
-
-- progression metrics
-- carrying metrics
-- passing value metrics
-- percentiles avanzados
-- normalización por liga
-
-### Roadmap técnico
-
-- API scoring
-- Understat integration
-- Continuous retraining
-- Business Validation Layer
-
-## Conclusión
-
-La arquitectura de pipelines implementada permite recorrer de forma reproducible todo el ciclo analítico:
+La principal evolución introducida durante Sprint 10 es la separación explícita entre:
 
 ```text
-Raw Data
+Historical Evaluation Layer
 ↓
-Feature Engineering
+Current Scouting Layer
 ↓
-Matching
+Player Intelligence Layer
 ↓
-Modeling
-↓
-Scoring
-↓
-Ranking
-↓
-Explainability
-↓
-Visual Analytics
-↓
-Decision Support
-↓
-Scouting Intelligence
+Decision Support Layer
 ```
 
-Tras la incorporación del Executive Dashboard (Sprint 9), el sistema deja de ser únicamente un conjunto de pipelines de modelización para convertirse en una plataforma integrada de Football Analytics orientada a identificación, priorización y justificación de oportunidades de mercado.
+Esta arquitectura evita mezclar validación histórica con recomendaciones operativas y aproxima el proyecto a plataformas utilizadas en entornos profesionales de Football Analytics y Scouting.
 
+La versión v1.0.0 consolida la transición desde un sistema predictivo hacia una plataforma integral de Scouting Intelligence.

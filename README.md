@@ -8,8 +8,8 @@
 ![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-yellow)
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
-![Status](https://img.shields.io/badge/Status-Scouting%20Platform-success)
-![Version](https://img.shields.io/badge/version-v0.9.0--Decision--Support--Layer-blue)
+![Status](https://img.shields.io/badge/Status-Scouting%20Intelligence%20Platform-success)
+![Version](https://img.shields.io/badge/version-v1.0.0--Scouting--Intelligence-blue)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
@@ -40,6 +40,8 @@ El sistema combina:
 -   Validación temporal out-of-sample
 -   Analytics engineering
 -   Scouting cuantitativo
+
+La plataforma incorpora actualmente una capa completa de Decision Support y Scouting Intelligence que transforma predicciones en recomendaciones operativas mediante Opportunity Score, Risk Score, rankings automatizados, benchmarking posicional e informes individuales de jugador.
 
 ---
 
@@ -334,7 +336,15 @@ CRISP-DM
 ## Estado actual
 
 ``` text
-Evaluation → Decision Support → Visual Analytics
+Evaluation
+↓
+Decision Support
+↓
+Current Scouting
+↓
+Player Intelligence
+↓
+Scouting Intelligence
 ```
 
 ---
@@ -492,7 +502,7 @@ FUZZY_THRESHOLD = 92
 
 | Métrica | Resultado |
 |---|---:|
-| Match rate | 88.36% |
+| Match rate | ≈88% |
 | Observaciones emparejadas | 20,836 |
 | Observaciones totales | 23,580 |
 
@@ -519,19 +529,48 @@ B --> C[Player-Season Matching]
 C --> D[Player-Season Panel]
 D --> E[Modeling Dataset]
 
+%% Historical Evaluation Layer
+
 E --> F[Econometric Pipeline]
 E --> G[Machine Learning Pipeline]
 
-F --> H[Scoring Engine]
+F --> H[Model Evaluation]
 G --> H
 
-H --> I[Ranking Engine]
-I --> J[Explainability]
-J --> K[Executive Dashboard]
-K --> L[Visual Analytics]
-L --> M[Decision Support]
-M --> N[Scouting Intelligence]
-N --> O[Toma de decisión deportiva]
+H --> I[Explainability]
+I --> J[Historical Validation]
+
+%% Current Scouting Layer
+
+G --> K[Operational Predictions]
+
+K --> L[Scoring Engine]
+
+L --> M[Opportunity Score]
+L --> N[Risk Score]
+
+M --> O[Ranking Engine]
+N --> O
+
+%% Player Intelligence Layer
+
+O --> P[Scouting Shortlist]
+P --> Q[Player Radar MVP]
+P --> R[Positional Benchmarking]
+
+Q --> S[Player Intelligence]
+R --> S
+
+%% Decision Support Layer
+
+S --> T[Executive Dashboard]
+T --> U[Visual Analytics]
+U --> V[Decision Support]
+
+%% Business Outcome
+
+V --> W[Scouting Intelligence]
+W --> X[Toma de decisión deportiva]
 ```
 
 ---
@@ -541,9 +580,9 @@ N --> O[Toma de decisión deportiva]
 ## Panel completo
 
 | Métrica | Valor |
-|---|---:|
-| Observaciones | 23,580 |
-| Temporadas | 2019-2020 → 2024-2025 |
+|----------|----------:|
+| Observaciones | 24,194 |
+| Temporadas | 2019-2020 → 2025-2026 |
 | Ligas | 7 |
 
 ---
@@ -551,22 +590,63 @@ N --> O[Toma de decisión deportiva]
 ## Dataset modelizable
 
 | Métrica | Valor |
-|---|---:|
-| Observaciones | 3,297 |
-| Jugadores | 1,847 |
+|----------|----------:|
+| Observaciones | 3,916 |
+| Jugadores únicos | 2,136 |
 | Edad | 18–23 |
+
+### Distribución temporal
+
+| Temporada | Observaciones |
+|------------|------------:|
+| 2019-2020 | 537 |
+| 2020-2021 | 536 |
+| 2021-2022 | 544 |
+| 2022-2023 | 542 |
+| 2023-2024 | 586 |
+| 2024-2025 | 552 |
+| 2025-2026 | 619 |
+
+---
+
+## Distribución por liga
+
+| Liga | Observaciones |
+|--------|------------:|
+| Ligue 1 | 731 |
+| Eredivisie | 660 |
+| Serie A | 578 |
+| Premier League | 545 |
+| Bundesliga | 529 |
+| LaLiga | 453 |
+| Liga Portugal | 420 |
+
+---
+
+## Distribución por posición
+
+| Posición | Observaciones |
+|------------|------------:|
+| MID | 2,042 |
+| DEF | 1,358 |
+| ATT | 407 |
+| GK | 109 |
 
 ---
 
 ## Ligas incluidas
 
--   Premier League
--   LaLiga
--   Bundesliga
--   Serie A
--   Ligue 1
--   Eredivisie
--   Liga Portugal
+- Premier League
+- LaLiga
+- Bundesliga
+- Serie A
+- Ligue 1
+- Eredivisie
+- Liga Portugal
+
+### Contribución Sprint 10.3
+
+La incorporación de la temporada 2025-2026 permitió ampliar el dataset modelizable desde 3.297 hasta 3.916 observaciones manteniendo la estabilidad de los modelos predictivos y mejorando la representatividad temporal del sistema.
 
 ---
 
@@ -687,7 +767,8 @@ src/models/machine_learning/
 
 -   Random Forest
 -   HistGradientBoosting
--   GradientBoostingRegressor
+-   XGBoost
+-   LightGBM
 
 ---
 
@@ -781,10 +862,49 @@ opportunity_score =
 Resultados actuales:
 
 | Métrica | Valor |
-|---|---:|
-| Observaciones | 1,138 |
-| Scouting targets | 53 |
-| Alta prioridad + targets | 376 |
+|----------|----------:|
+| Jugadores evaluados | 619 |
+| Scouting Targets | 7 |
+| High Priority + Targets | 70 |
+---
+
+## Risk Scoring Framework
+
+Sprint 10 incorpora una nueva capa analítica orientada a evaluar la incertidumbre asociada a cada oportunidad de scouting.
+
+Mientras que Opportunity Score mide el potencial relativo de mercado identificado por el sistema, Risk Score estima el nivel de riesgo asociado a cada recomendación.
+
+### Objetivo
+
+Incorporar una dimensión explícita de riesgo para evitar priorizar únicamente jugadores con alto upside potencial.
+
+La evaluación combina señales relacionadas con:
+
+- estabilidad del rendimiento
+- robustez estadística de la muestra
+- confianza de las predicciones
+- consistencia competitiva
+
+### Interpretación
+
+| Risk Score | Interpretación |
+|------------|----------------|
+| Bajo | Perfil estable y validado |
+| Medio | Riesgo moderado |
+| Alto | Perfil con elevada incertidumbre |
+
+### Aplicación
+
+La combinación de Opportunity Score y Risk Score permite distinguir entre:
+
+```text
+High Potential / Low Risk
+High Potential / High Risk
+Moderate Potential / Low Risk
+Moderate Potential / High Risk
+```
+
+Esta capa aproxima el sistema a procesos reales de toma de decisiones utilizados en departamentos de scouting profesional.
 
 ---
 
@@ -835,6 +955,34 @@ El sistema genera automáticamente:
 -   feature importance
 -   diagnostics
 -   predicciones
+
+---
+
+# 📊 Opportunity vs Risk Matrix
+
+Sprint 10 incorpora una matriz estratégica diseñada para facilitar la priorización de objetivos de scouting.
+
+La visualización combina:
+
+- Opportunity Score
+- Risk Score
+
+permitiendo segmentar automáticamente los jugadores según su perfil de riesgo-retorno.
+
+## Interpretación estratégica
+
+| Zona | Interpretación |
+|--------|---------------|
+| Alta oportunidad + bajo riesgo | Prioridad máxima |
+| Alta oportunidad + alto riesgo | Apuesta estratégica |
+| Oportunidad moderada + bajo riesgo | Seguimiento recomendado |
+| Oportunidad moderada + alto riesgo | Baja prioridad |
+
+## Objetivo
+
+Transformar señales analíticas complejas en una herramienta visual orientada a la toma de decisiones deportivas.
+
+Esta matriz constituye la primera implementación de una capa explícita de gestión del riesgo dentro del sistema de scouting.
 
 ---
 
@@ -1025,6 +1173,368 @@ Decisión deportiva
 
 La plataforma deja de ser únicamente un sistema predictivo para convertirse en una herramienta de priorización de talento y soporte cuantitativo a decisiones deportivas.
 
+## Sprint 10 en el Dashboard
+
+El sprint 10 incorpora:
+
+• Risk Score
+• Opportunity ajustada por riesgo
+• Opportunity vs Risk Matrix
+• Player Radar MVP
+• Positional Benchmarking
+• Player Intelligence Layer
+
+---
+
+# 🚀 Sprint 10 — Scouting Intelligence Platform
+
+Sprint 10 representa la evolución más importante del proyecto desde su inicio.
+
+La plataforma deja de funcionar únicamente como un sistema predictivo y de ranking para convertirse en una herramienta integral de Scouting Intelligence orientada a la identificación, priorización y evaluación de talento en el mercado de fichajes.
+
+La principal contribución metodológica de esta fase es la separación explícita entre:
+
+```text
+Historical Evaluation Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Decision Support Layer
+```
+
+Esta arquitectura evita mezclar validación histórica con evaluación operativa de jugadores actuales y aproxima el funcionamiento del sistema a un entorno real de Football Analytics profesional.
+
+---
+
+## Sprint 10.1 — Player Radar MVP & Positional Benchmarking
+
+### Objetivo
+
+Transformar la shortlist cuantitativa en una herramienta de scouting explicativa mediante benchmarking dinámico y análisis individual de jugadores.
+
+Hasta este momento el sistema identificaba oportunidades de mercado, pero no proporcionaba contexto visual suficiente para comprender el perfil deportivo de cada candidato.
+
+Sprint 10.1 introduce una primera capa de Player Intelligence basada en comparación relativa mediante percentiles.
+
+### Funcionalidades implementadas
+
+#### 📡 Player Radar MVP
+
+Se incorpora un radar interactivo basado en percentiles relativos al benchmark seleccionado.
+
+Para mediocampistas y atacantes:
+
+```text
+Minutos
+Goles/90
+Asistencias/90
+G+A/90
+Growth Score
+Confidence Score
+```
+
+Para defensores y porteros el sistema queda preparado para incorporar métricas específicas cuando existan en el dataset operativo.
+
+#### 📊 Positional Benchmarking
+
+Comparación dinámica frente a:
+
+```text
+Jugadores de la misma posición
+o
+Universo completo de scouting
+```
+
+El benchmark se recalcula automáticamente según la selección realizada por el usuario.
+
+#### 🧾 Scouting Cards
+
+Se generan tarjetas analíticas para cada dimensión evaluada:
+
+```text
+P97
+Elite
+
+P45
+Promedio
+
+P12
+Bajo
+```
+
+facilitando la interpretación ejecutiva del perfil del jugador.
+
+#### 🤖 Scouting Narrative
+
+El sistema genera automáticamente una lectura descriptiva basada en los percentiles observados.
+
+Ejemplo:
+
+```text
+El jugador destaca principalmente en Growth Score y minutos disputados, mostrando una señal sólida de desarrollo potencial.
+```
+
+### Contribución metodológica
+
+Sprint 10.1 introduce la primera implementación de:
+
+```text
+Player Intelligence Layer
+```
+
+permitiendo interpretar perfiles individuales más allá del ranking cuantitativo.
+
+---
+
+## Sprint 10.2 — FBref Advanced Metrics Audit
+
+### Objetivo
+
+Evaluar la viabilidad técnica de incorporar métricas avanzadas de FBref para enriquecer el sistema de scouting.
+
+Antes de ampliar el radar era necesario validar qué tablas y métricas podían integrarse de forma robusta dentro del pipeline actual.
+
+### Auditoría realizada
+
+Se analizaron las tablas:
+
+```text
+Shooting
+Defense
+Misc
+Playing Time
+Passing
+Possession
+Goal & Shot Creation
+```
+
+### Resultados
+
+#### Alta viabilidad
+
+```text
+shots_per90
+shots_on_target_per90
+tackles_won_per90
+interceptions_per90
+blocks_per90
+fouls_drawn_per90
+crosses_per90
+minutes_per_match
+```
+
+#### Viabilidad parcial
+
+```text
+Passing
+Possession
+Goal Creation
+```
+
+debido a limitaciones estructurales del dataset disponible.
+
+### Impacto
+
+Sprint 10.2 genera el roadmap técnico para la siguiente evolución del sistema:
+
+```text
+Advanced Football Radar
+```
+
+basado en métricas deportivas reales y comparables con herramientas profesionales de scouting.
+
+---
+
+## Sprint 10.3 — Current Season Scouting Refresh
+
+### Objetivo
+
+Actualizar la plataforma para operar sobre el mercado actual mediante la incorporación de la temporada 2025-2026.
+
+Hasta este punto el sistema se centraba principalmente en la evaluación histórica y validación temporal de modelos. Sprint 10.3 introduce una capa operativa específica orientada al scouting actual mediante la incorporación de la temporada 2025-2026.
+
+### Funcionalidades implementadas
+
+#### ⚽ Integración temporada 2025-2026
+
+Actualización completa de:
+
+```text
+FBref
+Transfermarkt
+Matching
+Feature Engineering
+Modeling Dataset
+```
+
+#### 🤖 Reentrenamiento integral
+
+Se reconstruyen:
+
+```text
+Pipeline econométrico
+Pipeline Machine Learning
+Scoring Engine
+Ranking Engine
+```
+
+utilizando el dataset ampliado.
+
+#### 📈 Operational Scouting Layer
+
+Generación automática de:
+
+```text
+Shortlist actualizada
+Opportunity Score
+Risk Score
+Risk-adjusted Opportunity
+```
+
+sobre jugadores activos del mercado actual.
+
+### 📊 Separación entre evaluación histórica y scouting operativo
+
+Sprint 10.3 introduce una separación explícita entre dos capas analíticas diferenciadas:
+
+#### Historical Evaluation Layer
+
+Utilizada para:
+
+- validación temporal
+- comparación de modelos
+- backtesting
+- análisis metodológico
+- memoria académica
+
+Artefactos principales:
+
+```text
+player_season_modeling_indices.parquet
+tuned_xgboost_test_predictions.csv
+tuned_xgboost_full_predictions.csv
+```
+
+#### Current Scouting Layer
+
+Utilizada para:
+
+- rankings operativos
+- dashboard
+- scouting actual
+- identificación de oportunidades de mercado
+
+Artefactos principales:
+
+```text
+tuned_xgboost_predictions.csv
+scoring_dataset.csv
+scouting_shortlist.csv
+scouting_shortlist_with_risk.csv
+```
+
+Esta separación evita mezclar oportunidades históricas con recomendaciones actuales y mejora la validez externa del sistema como herramienta de apoyo a decisiones deportivas.
+
+#### 🎯 Risk Scoring Framework
+
+Se incorpora una nueva dimensión de evaluación basada en riesgo analítico.
+
+La oportunidad de fichaje deja de evaluarse únicamente por potencial de mercado e incorpora una medida explícita de incertidumbre.
+
+Esto permite distinguir entre:
+
+```text
+High Potential / Low Risk
+High Potential / High Risk
+Moderate Potential / Low Risk
+Moderate Potential / High Risk
+```
+
+#### 📊 Opportunity vs Risk Matrix
+
+Se implementa una matriz estratégica para priorizar objetivos de scouting en función de:
+
+```text
+Opportunity Score
+Risk Score
+```
+
+permitiendo identificar perfiles prioritarios y apuestas estratégicas.
+
+### Contribución metodológica
+
+Sprint 10.3 introduce una separación explícita entre:
+
+```text
+Historical Evaluation Layer
+```
+
+utilizada para validación temporal y evaluación metodológica,
+
+y
+
+```text
+Current Scouting Layer
+```
+
+utilizada para generación de recomendaciones operativas.
+
+Esta separación constituye una de las principales mejoras metodológicas del proyecto y refuerza la validez de los resultados obtenidos.
+
+---
+
+## Arquitectura funcional actual
+
+La evolución completa del sistema puede resumirse mediante el siguiente flujo:
+
+```text
+Raw Data
+↓
+Feature Engineering
+↓
+Modeling Dataset
+↓
+Econometric & ML Models
+↓
+Historical Evaluation Layer
+↓
+Operational Scoring Layer
+↓
+Ranking Engine
+↓
+Player Intelligence Layer
+↓
+Executive Dashboard
+↓
+Decision Support Layer
+↓
+Scouting Intelligence
+↓
+Toma de decisión deportiva
+```
+
+---
+
+## Impacto sobre el proyecto
+
+Tras Sprint 10, la plataforma evoluciona desde un sistema predictivo hacia una solución completa de Football Analytics orientada a scouting profesional.
+
+Las capacidades actuales incluyen:
+
+* estimación de valor de mercado esperado
+* identificación de ineficiencias de mercado
+* scoring multicriterio de oportunidades
+* evaluación explícita del riesgo
+* rankings automatizados
+* benchmarking posicional
+* radar individual de jugador
+* interpretabilidad mediante SHAP
+* visual analytics interactivo
+* soporte cuantitativo a decisiones deportivas
+
+La plataforma constituye actualmente una primera versión funcional de un sistema de Scouting Intelligence aplicado al mercado de fichajes europeo.
 
 # 📂 Estructura del proyecto
 
@@ -1214,14 +1724,70 @@ deportivas y contextuales, no de sobreajuste temporal.
 
 ---
 
-## Machine Learning
+## 🤖 Machine Learning
+
+Tras la actualización completa del dataset y la incorporación de la temporada 2025-2026, se reentrenaron todos los modelos supervisados utilizando el dataset modelizable actualizado.
+
+### Resultados finales
 
 | Modelo | MAE | RMSE | R² |
-|---|---:|---:|---:|
-| OLS final | 0.7907 | 0.9823 | 0.4439 |
-| Random Forest | 0.7704 | 0.9691 | 0.4587 |
-| HistGradientBoosting | 0.7723 | 0.9680 | 0.4600 |
-| Gradient Boosting | **0.7613** | **0.9493** | **0.4807** |
+|----------|----------:|----------:|----------:|
+| Growth OLS | 0.7287 | 0.9053 | 0.5258 |
+| Tuned Random Forest | 0.7486 | 0.9303 | 0.4980 |
+| Tuned LightGBM | 0.7307 | 0.9052 | 0.5248 |
+| HistGradientBoosting | 0.7292 | 0.9011 | 0.5291 |
+| Tuned XGBoost | **0.7120** | **0.8892** | **0.5414** |
+
+---
+
+### Modelo ganador
+
+```text
+Tuned XGBoost
+```
+
+Métricas finales:
+
+```text
+RMSE = 0.8892
+MAE  = 0.7120
+R²   = 0.5414
+```
+
+---
+
+### Interpretación metodológica
+
+El modelo Tuned XGBoost mantiene la mejor capacidad predictiva del sistema tras la incorporación de 619 nuevas observaciones correspondientes a la temporada 2025-2026.
+
+La mejora respecto al mejor modelo econométrico sigue siendo moderada:
+
+```text
+Growth OLS:
+R² = 0.5258
+
+Tuned XGBoost:
+R² = 0.5414
+```
+
+ΔR² ≈ +0.0156
+
+Este resultado sugiere que la mayor parte de la señal predictiva ya está capturada por variables deportivas y efectos estructurales, reforzando la validez de la aproximación econométrica como benchmark explicativo.
+
+---
+
+### Conclusión
+
+Machine Learning supera consistentemente a la econometría tradicional, pero la diferencia permanece contenida.
+
+Esta evidencia indica que futuras mejoras del sistema dependerán principalmente de:
+
+- nuevas fuentes de datos
+- métricas avanzadas de scouting
+- enriquecimiento de variables
+- ampliación de la señal deportiva
+
+más que de la sustitución de algoritmos.
 
 ---
 
@@ -1771,6 +2337,40 @@ priorización de fichajes.
 
 ---
 
+# 🎯 Resultados operativos actuales
+
+Además de la evaluación estadística de modelos, el proyecto genera actualmente resultados operativos orientados a scouting profesional.
+
+## Current Scouting Layer
+
+Estado actual:
+
+- Temporada operativa: 2025-2026
+- Ranking Engine: implementado
+- Opportunity Score: implementado
+- Risk Score: implementado
+- Opportunity ajustada por riesgo: implementada
+- Executive Dashboard: implementado
+- Player Radar MVP: implementado
+- Positional Benchmarking: implementado
+- Player Intelligence Layer: implementada
+
+## Outputs operativos
+
+El sistema genera automáticamente:
+
+```text
+Scouting Shortlist
+Top Opportunities
+Top Low Risk Targets
+Opportunity vs Risk Matrix
+Player Radar
+Player Benchmarking
+```
+
+Estos outputs constituyen la capa final de consumo de resultados para procesos de identificación y priorización de talento.
+
+---
 
 # ⚖️ Trade-offs metodológicos
 
@@ -1807,24 +2407,16 @@ Se optimizó:
 
 # 🚀 Próximos pasos
 
-## Sprint 10 — Advanced Scouting Intelligence
+## Sprint 11 - Advanced Football Radar
 
-### Objetivo
+Advanced Football Radar:
 
-Ampliar la capacidad analítica del dashboard incorporando herramientas avanzadas de evaluación individual y comparación de talento.
+Shooting
+Defense
+Misc
+Playing Time
 
-### Funcionalidades previstas
-
-* Radar individual de jugador
-* Comparador entre jugadores
-* Risk Score
-* Exportación PDF de shortlists
-* Simulación de escenarios de fichaje
-* Business Validation Panel
-
----
-
-## Sprint 11 — Data Enrichment
+## Sprint 12 — Data Enrichment
 
 ### Objetivo
 
@@ -1841,7 +2433,7 @@ Incrementar la calidad de señal predictiva mediante nuevas fuentes de datos y m
 
 ---
 
-## Sprint 12 — Advanced Modeling
+## Sprint 13 — Advanced Modeling
 
 ### Objetivo
 
@@ -1856,7 +2448,7 @@ Evaluar algoritmos de nueva generación orientados a datasets tabulares.
 
 ---
 
-## Sprint 13 — Production Layer
+## Sprint 14 — Production Layer
 
 ### Objetivo
 
@@ -1869,6 +2461,41 @@ Preparar el sistema para inferencia automatizada y despliegue.
 * Actualización periódica de rankings
 * Arquitectura de despliegue
 
+---
+
+# ✅ Estado actual del proyecto
+
+La plataforma ha evolucionado desde un ejercicio de modelización predictiva hacia una solución integral de Football Analytics aplicada al scouting profesional.
+
+Actualmente incorpora:
+
+- integración multi-fuente FBref + Transfermarkt
+- matching jerárquico validado
+- panel longitudinal jugador-temporada
+- econometría aplicada
+- machine learning supervisado
+- experiment tracking mediante MLflow
+- explainability mediante SHAP
+- Opportunity Score
+- Risk Score
+- Ranking Engine
+- Executive Dashboard
+- Opportunity vs Risk Matrix
+- Player Radar MVP
+- Positional Benchmarking
+- Player Intelligence Layer
+- Decision Support Layer
+- Scouting Intelligence Layer
+
+Versión actual:
+
+```text
+v1.0.0 — Scouting Intelligence Platform
+```
+
+La arquitectura resultante aproxima un flujo de trabajo real utilizado en departamentos modernos de Football Analytics y Scouting.
+
+---
 
 # 🧠 Valor del proyecto
 

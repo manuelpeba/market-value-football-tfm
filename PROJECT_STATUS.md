@@ -4,14 +4,14 @@
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Modeling](https://img.shields.io/badge/Modeling-OLS%20%2B%20ML-blue)
 ![Matching](https://img.shields.io/badge/Matching-88.36%25-brightgreen)
-![Dataset](https://img.shields.io/badge/Dataset-1%2C138%20scored-orange)
+![Dataset](https://img.shields.io/badge/Dataset-3%2C916%20observations-orange)
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Config](https://img.shields.io/badge/Configuration-Centralized-blueviolet)
-![Status](https://img.shields.io/badge/Status-Scouting%20Dashboard-success)
+![Status](https://img.shields.io/badge/Status-Scouting%20Intelligence%20Platform-success)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![VisualAnalytics](https://img.shields.io/badge/Visual%20Analytics-Executive-success)
-![Version](https://img.shields.io/badge/version-v0.8.0--Executive--Dashboard-blue)
+![Version](https://img.shields.io/badge/version-v1.0.0--Scouting--Intelligence-blue)
 ![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
 
 
@@ -72,10 +72,10 @@ El sistema se basa en:
 
 | Métrica | Valor |
 |---|---:|
-| Observaciones panel | 23,580 |
-| Dataset modelizable | 3,297 |
-| Jugadores únicos | 1,847 |
-| Cobertura temporal | 2019-2020 → 2024-2025 |
+| Observaciones panel | 24,194 |
+| Dataset modelizable | 3,916 |
+| Jugadores únicos | 2,136 |
+| Cobertura temporal | 2019-2020 → 2025-2026 |
 | Ligas | 7 |
 | Match rate | 88.36% |
 
@@ -128,7 +128,7 @@ feature engineering y calidad de señal predictiva
 ## Fase actual
 
 ``` text
-Evaluation → Decision Support → Visual Analytics
+Evaluation → Decision Support → Current Scouting → Player Intelligence → Scouting Intelligence
 ```
 
 ---
@@ -2136,3 +2136,46 @@ cada vez más cercana a entornos profesionales reales.
 ---
 
 
+
+
+---
+
+# 🚀 Sprint 10 — Scouting Intelligence Platform (Completed)
+
+## Sprint 10.1 — Player Radar MVP & Positional Benchmarking
+Status: Completed
+
+- Player Radar MVP
+- Positional Benchmarking
+- Scouting Cards
+- Scouting Narrative
+- Player Intelligence Layer
+
+## Sprint 10.2 — FBref Advanced Metrics Audit
+Status: Completed
+
+- Auditoría de métricas avanzadas FBref
+- Evaluación de Shooting, Defense, Misc y Playing Time
+- Definición del roadmap Advanced Football Radar
+
+## Sprint 10.3 — Current Season Scouting Refresh
+Status: Completed
+
+- Integración temporada 2025-2026
+- Reentrenamiento completo de modelos
+- Current Scouting Layer
+- Risk Score
+- Opportunity vs Risk Matrix
+- Operational Scouting Layer
+
+Arquitectura resultante:
+
+Historical Evaluation Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Decision Support Layer
+↓
+Scouting Intelligence

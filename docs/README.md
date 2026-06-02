@@ -1,13 +1,13 @@
-# 📚 Documentación técnica del proyecto
+# 📚 Documentación Técnica del Proyecto
 
 <div align="center">
 
-![Docs](https://img.shields.io/badge/Docs-Technical%20Documentation-blue)
+![Docs](https://img.shields.io/badge/Docs-Scouting%20Intelligence-blue)
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Methodology](https://img.shields.io/badge/Methodology-CRISP--DM-orange)
 ![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
-![Config](https://img.shields.io/badge/Configuration-YAML-purple)
-![Status](https://img.shields.io/badge/Status-Modeling%20%2F%20Evaluation-success)
+![Version](https://img.shields.io/badge/Version-v1.0.0-purple)
+![Status](https://img.shields.io/badge/Status-Scouting%20Intelligence%20Platform-success)
 
 </div>
 
@@ -15,229 +15,378 @@
 
 # 🧠 Objetivo
 
-Esta carpeta contiene la documentación técnica y metodológica del sistema analítico desarrollado para el TFM:
+Esta carpeta contiene la documentación técnica y metodológica de la plataforma desarrollada para el Trabajo Fin de Máster:
 
-<pre>
-Identificación de jugadores infravalorados en el mercado de fichajes europeo
-</pre>
+```text
+Market Value Dynamics and Market Inefficiency Detection
+in European Football
+```
 
-La documentación recoge las decisiones de arquitectura, datos, calidad, modelización, feature engineering, trazabilidad experimental y evolución metodológica del proyecto.
+La documentación recoge las decisiones relacionadas con:
 
-El objetivo de esta carpeta no es únicamente describir el código, sino documentar las decisiones que explican cómo se ha construido el sistema analítico y por qué se han adoptado determinados trade-offs técnicos y metodológicos.
+- arquitectura
+- datos
+- calidad
+- modelización
+- feature engineering
+- explainability
+- scoring
+- player intelligence
+- decision support
+- scouting intelligence
+
+Su objetivo no es únicamente describir el código, sino justificar las decisiones metodológicas adoptadas durante la evolución del sistema.
 
 ---
 
-# 📂 Índice de documentación
+# 🚀 Estado actual del proyecto
+
+La plataforma ha evolucionado desde un sistema predictivo centrado en estimación de valor de mercado hacia una solución integral de Football Analytics orientada a scouting profesional.
+
+Estado actual:
+
+```text
+Historical Evaluation Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Decision Support Layer
+↓
+Scouting Intelligence
+```
+
+---
+
+## Capacidades actuales
+
+### Data Layer
+
+- integración FBref + Transfermarkt
+- matching jerárquico validado
+- panel longitudinal jugador-temporada
+- dataset modelizable reproducible
+
+### Modeling Layer
+
+- econometría aplicada
+- machine learning supervisado
+- validación temporal
+- MLflow
+
+### Scoring Layer
+
+- Inefficiency Score
+- Growth Score
+- Confidence Score
+- Opportunity Score
+- Risk Score
+
+### Player Intelligence Layer
+
+- Player Radar MVP
+- Positional Benchmarking
+- Scouting Narrative
+
+### Decision Support Layer
+
+- Executive Dashboard
+- Opportunity vs Risk Matrix
+- Explainability SHAP
+- Rankings interactivos
+
+---
+
+# 📊 Estado cuantitativo
+
+| Métrica | Valor |
+|----------|----------:|
+| Observaciones modelizables | 3.916 |
+| Jugadores únicos | 2.136 |
+| Cobertura temporal | 2019-2020 → 2025-2026 |
+| Ligas | 7 |
+| Modelo productivo | Tuned XGBoost |
+| R² final | 0.5414 |
+
+---
+
+# 📂 Índice documental
 
 ## 🏗️ Arquitectura y sistema
 
 | Documento | Descripción |
-|---|---|
-| [architecture.md](architecture.md) | Arquitectura global del sistema, evolución notebooks → pipelines, configuración centralizada, MLflow, logs y decisiones de analytics engineering |
-| [pipeline_reference.md](pipeline_reference.md) | Referencia operativa de pipelines, comandos de ejecución, inputs, outputs, dependencias, configuración, logs y tracking experimental |
-| [schema_decisions.md](schema_decisions.md) | Decisiones de diseño del dataset, unidad de análisis, target, variables, separación entre capas, prevención de leakage, MLflow y configuración YAML |
+|------------|-------------|
+| architecture.md | Arquitectura global del sistema y evolución hasta Scouting Intelligence |
+| pipeline_reference.md | Referencia completa de pipelines y flujos operativos |
+| schema_decisions.md | Diseño de datasets, target, unidades de análisis y prevención de leakage |
 
 ---
 
 ## 📊 Datos
 
 | Documento | Descripción |
-|---|---|
-| [data_sources.md](data_sources.md) | Fuentes de datos utilizadas, rol de cada fuente, estrategia de integración, matching, trazabilidad y limitaciones metodológicas |
-| [data_quality.md](data_quality.md) | Calidad del dataset, matching, sesgos, cobertura, validaciones, leakage, configuración, logging y riesgos |
-| [data_dictionary.md](data_dictionary.md) | Diccionario de variables, outputs, variables de scoring, variables excluidas por leakage, variables de tracking y configuración |
+|------------|-------------|
+| data_sources.md | Fuentes de datos, matching e integración multi-fuente |
+| data_quality.md | Controles de calidad, validaciones y prevención de leakage |
+| data_dictionary.md | Diccionario completo de variables y outputs |
 
 ---
 
-## 📈 Modelización y scoring
+## 🤖 Modelización y analítica
 
 | Documento | Descripción |
-|---|---|
-| [modeling_decisions.md](modeling_decisions.md) | Decisiones metodológicas de modelización, OLS, ML, validación temporal, scoring, MLflow y configuración centralizada |
-| [feature_engineering_plan.md](feature_engineering_plan.md) | Plan de feature engineering avanzado aplicado a scouting, valoración de jugadores, normalización contextual y mejora del signal predictivo |
+|------------|-------------|
+| modeling_decisions.md | Decisiones metodológicas de econometría, ML, scoring y evaluación |
+| feature_engineering_plan.md | Estrategia completa de Feature Engineering y roadmap futuro |
 
 ---
 
-# 🔄 Estado actual del proyecto
+# 🧩 Evolución metodológica
 
-El proyecto ha evolucionado desde un enfoque exploratorio basado en notebooks hacia una arquitectura modular reproducible, trazable y orientada a experimentación.
+La documentación refleja la evolución progresiva del proyecto.
 
-## Estado metodológico
-
-<pre>
-Modeling → Evaluation
-</pre>
-
-## Capacidades actuales
-
-- integración multi-fuente
-- matching FBref ↔ Transfermarkt
-- construcción de panel jugador-temporada
-- dataset modelizable
-- pipeline econométrico
-- pipeline Machine Learning
-- scoring de ineficiencia
-- rankings de scouting
-- validación temporal out-of-sample
-- outputs reproducibles
-- configuración centralizada mediante YAML
-- tracking experimental con MLflow
-- persistencia de artefactos
-- logging operativo
-- separación clara entre datos, modelos, outputs y experimentos
+| Sprint | Contribución principal |
+|----------|----------------------|
+| Sprint 1 | Positional Normalization |
+| Sprint 2 | Temporal Dynamics |
+| Sprint 3 | Composite Football Indices |
+| Sprint 4 | Machine Learning |
+| Sprint 4C | Explainability |
+| Sprint 5 | Scoring Engine |
+| Sprint 6 | Business Evaluation |
+| Sprint 7 | Executive Dashboard |
+| Sprint 9 | Decision Support Layer |
+| Sprint 10.1 | Player Intelligence Layer |
+| Sprint 10.2 | FBref Advanced Audit |
+| Sprint 10.3 | Current Scouting Layer + Risk Framework |
 
 ---
 
-# 🧱 Estructura documental recomendada
+# 🔄 Flujo documental recomendado
 
-Para entender el proyecto de forma ordenada, se recomienda leer:
+Para comprender el sistema de forma progresiva se recomienda el siguiente orden:
 
-1. [architecture.md](architecture.md)
-2. [pipeline_reference.md](pipeline_reference.md)
-3. [schema_decisions.md](schema_decisions.md)
-4. [data_sources.md](data_sources.md)
-5. [data_quality.md](data_quality.md)
-6. [data_dictionary.md](data_dictionary.md)
-7. [modeling_decisions.md](modeling_decisions.md)
-8. [feature_engineering_plan.md](feature_engineering_plan.md)
+1. architecture.md
+2. pipeline_reference.md
+3. schema_decisions.md
+4. data_sources.md
+5. data_quality.md
+6. data_dictionary.md
+7. modeling_decisions.md
+8. feature_engineering_plan.md
 
 ---
 
-# 🧩 Relación entre documentación y arquitectura
+# 🧠 Relación entre documentos
 
 ```mermaid
 flowchart TD
 
-A[architecture.md] --> B[pipeline_reference.md]
+A[architecture.md]
+--> B[pipeline_reference.md]
+
 A --> C[schema_decisions.md]
-A --> I[MLflow Tracking]
-A --> J[Config YAML]
 
-B --> I
-B --> J
-
-C --> D[data_dictionary.md]
+C --> D[data_sources.md]
 C --> E[data_quality.md]
+C --> F[data_dictionary.md]
 
-F[data_sources.md] --> C
-F --> E
-
-E --> G[modeling_decisions.md]
-D --> G
+D --> G[modeling_decisions.md]
+E --> G
+F --> G
 
 G --> H[feature_engineering_plan.md]
-B --> H
-I --> G
-J --> G
+
+H --> I[Current Scouting Layer]
+
+I --> J[Player Intelligence Layer]
+
+J --> K[Decision Support Layer]
+
+K --> L[Scouting Intelligence]
 ```
 
 ---
 
-# 📌 Convenciones
+# 🏗️ Relación con la arquitectura
 
-## Archivos de documentación
+La documentación sigue la misma estructura conceptual que la arquitectura del sistema.
 
-* Cada documento debe explicar decisiones, no solo describir código.
-* Las decisiones metodológicas deben justificar trade-offs.
-* Las limitaciones deben documentarse explícitamente.
-* Los outputs generados deben estar alineados con la arquitectura real del repositorio.
-* La documentación debe distinguir claramente entre datasets, outputs, artefactos, experimentos y logs.
-* Las decisiones de modelización deben quedar vinculadas a validación temporal y trazabilidad experimental.
-* La configuración debe documentarse como parte del sistema, no como un elemento auxiliar.
+```text
+Raw Sources
+↓
+Feature Engineering
+↓
+Modeling Dataset
+↓
+Econometric & ML Models
+↓
+Historical Evaluation Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Decision Support Layer
+↓
+Scouting Intelligence
+```
 
 ---
 
-## Relación notebooks / pipelines
+# 📌 Convenciones documentales
+
+## Principios
+
+Todos los documentos deben:
+
+- justificar decisiones
+- documentar trade-offs
+- describir limitaciones
+- explicar impactos metodológicos
+- mantener trazabilidad
+
+---
+
+## Reproducibilidad
+
+La ejecución reproducible reside en:
+
+```text
+src/
+```
 
 Los notebooks se mantienen como soporte para:
 
-* exploración
-* validación
-* interpretación
-* análisis visual
-* explicación narrativa de resultados
-
-La ejecución reproducible del sistema reside en:
-
-<pre>
-src/
-</pre>
+- exploración
+- validación
+- interpretación
+- visualización
 
 ---
 
-## Relación configuración / código
+## Tracking experimental
 
-La configuración se centraliza en:
+MLflow se utiliza para:
 
-<pre>
-config/
-</pre>
+```text
+Parámetros
+↓
+Métricas
+↓
+Modelos
+↓
+Artefactos
+```
 
-El código consume dicha configuración desde los pipelines, evitando hardcoding de parámetros críticos.
+Ubicación:
 
-La lógica funcional permanece en:
-
-<pre>
-src/
-</pre>
-
----
-
-## Relación MLflow / outputs
-
-MLflow se utiliza para tracking experimental:
-
-<pre>
+```text
 mlruns/
-</pre>
-
-Los outputs finales del proyecto se mantienen separados en:
-
-<pre>
-reports/
-artifacts/
-</pre>
-
-Por tanto:
-
-| Elemento     | Función                                                |
-| ------------ | ------------------------------------------------------ |
-| `reports/`   | Outputs interpretables y tablas finales                |
-| `artifacts/` | Modelos, predicciones y objetos persistidos            |
-| `mlruns/`    | Runs, métricas, parámetros y artefactos experimentales |
-| `logs/`      | Trazabilidad operativa y debugging                     |
+```
 
 ---
 
-# 🚀 Próximas actualizaciones previstas
+## Outputs finales
 
-Documentos actualizados tras la implementación de MLflow y configuración centralizada:
-
-* [x] architecture.md
-* [x] pipeline_reference.md
-* [x] modeling_decisions.md
-* [x] schema_decisions.md
-* [x] data_quality.md
-* [x] data_dictionary.md
-* [x] feature_engineering_plan.md
-* [x] data_sources.md
-* [x] docs/README.md
+| Directorio | Función |
+|------------|----------|
+| reports/ | resultados interpretables |
+| artifacts/ | modelos y predicciones |
+| mlruns/ | tracking experimental |
+| logs/ | trazabilidad operativa |
 
 ---
 
-# 📌 Próximas líneas documentales recomendadas
+# 🚀 Sprint 10 — Impacto documental
 
-Tras esta actualización, las siguientes mejoras documentales recomendadas son:
+Sprint 10 obliga a actualizar la documentación para reflejar una nueva arquitectura conceptual.
 
-* revisar PROJECT_STATUS.md si se añaden nuevos resultados de experimentos
-* añadir una sección específica de MLflow en la memoria del TFM dentro de Tecnología o Modelización
-* documentar la convención de versionado de experimentos si se consolida un flujo estable
-* añadir ejemplos de ejecución reproducible con comandos completos
+Principales incorporaciones:
+
+## Sprint 10.1
+
+Player Intelligence Layer
+
+- Player Radar MVP
+- Positional Benchmarking
+- Scouting Narrative
 
 ---
 
-# 🧠 Criterio general
+## Sprint 10.2
 
-La documentación debe reflejar que el proyecto no es únicamente un análisis en notebooks, sino un sistema analítico modular, reproducible, trazable y orientado a generar outputs accionables para scouting cuantitativo.
+FBref Advanced Audit
 
-La incorporación de MLflow, configuración centralizada y logging refuerza la madurez del proyecto, acercándolo a una práctica profesional de Data Science aplicada a football analytics.
+- evaluación de nuevas métricas
+- validación de viabilidad
+- roadmap Advanced Football Radar
+
+---
+
+## Sprint 10.3
+
+Current Scouting Layer
+
+- temporada 2025-2026
+- Risk Framework
+- Opportunity vs Risk Matrix
+- separación evaluación vs operación
+
+---
+
+# 📌 Próximas líneas documentales
+
+## Sprint 11
+
+Advanced Football Radar
+
+Documentar:
+
+- métricas avanzadas FBref
+- benchmark posicional ampliado
+
+---
+
+## Sprint 12
+
+Understat Integration
+
+Documentar:
+
+- xG
+- xA
+- nuevas señales ofensivas
+
+---
+
+## Sprint 13
+
+Advanced Modeling
+
+Documentar:
+
+- CatBoost
+- Ensembles
+- modelos específicos por posición
+
+---
+
+# 🧠 Conclusión
+
+La documentación refleja la transición desde un proyecto académico centrado en modelización hacia una plataforma integral de Football Analytics.
+
+La principal contribución metodológica de la release v1.0.0 es la separación explícita entre:
+
+```text
+Historical Evaluation Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Decision Support Layer
+```
+
+permitiendo transformar modelos predictivos en recomendaciones operativas orientadas a scouting profesional.
