@@ -73,6 +73,12 @@ reports/model_diagnostics/*
 !reports/scouting_reports/.gitkeep
 !reports/model_diagnostics/.gitkeep
 
+# Dashboard screenshots used in README
+!reports/figures/dashboard/
+!reports/figures/dashboard/dashboard_executive.png
+!reports/figures/dashboard/player_radar.png
+!reports/figures/dashboard/opportunity_risk_matrix.png
+
 # Allow selected versioned report outputs if needed
 !reports/tables/*.csv
 !reports/rankings/*.csv
