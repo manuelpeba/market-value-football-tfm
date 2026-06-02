@@ -7,7 +7,7 @@ INPUT_PATH = ROOT / "data/processed/player_season_panel.parquet"
 OUTPUT_PATH = ROOT / "data/processed/player_season_modeling.parquet"
 
 MIN_SEASON = 2019
-MAX_SEASON = 2024
+MAX_SEASON = 2025
 
 MIN_AGE = 18
 MAX_AGE = 23

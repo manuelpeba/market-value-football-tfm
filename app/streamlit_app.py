@@ -8,11 +8,25 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
-ROOT = Path(__file__).resolve().parents[1]
+def find_project_root() -> Path:
+    """Resolve project root whether the dashboard is launched from /dashboard, /app or project root."""
+    current = Path(__file__).resolve()
+    candidates = [current.parent, *current.parents]
+
+    for candidate in candidates:
+        if (candidate / "reports" / "rankings").exists() or (candidate / "data" / "processed").exists():
+            return candidate
+
+    # Expected layout: project_root/dashboard/streamlit_app.py
+    return current.parents[1]
+
+
+ROOT = find_project_root()
 
 RANKINGS_PATH = ROOT / "reports" / "rankings"
 BUSINESS_PATH = ROOT / "reports" / "business"
 EVALUATION_PATH = ROOT / "reports" / "evaluation"
+PROCESSED_PATH = ROOT / "data" / "processed"
 
 SCORED_UNIVERSE_SIZE = 1_138
 
@@ -271,6 +285,66 @@ div[data-testid="stVerticalBlock"] {
     margin-top: 4px;
 }
 
+/* =========================
+   Player Radar & Benchmarking
+   ========================= */
+
+.radar-card {
+    background: #ffffff;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-height: 112px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+}
+
+.radar-card-title {
+    color: #0f172a;
+    font-size: 0.86rem;
+    font-weight: 850;
+    margin-bottom: 6px;
+}
+
+.radar-card-percentile {
+    color: #0f172a;
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.radar-card-label {
+    color: #64748b;
+    font-size: 0.80rem;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.radar-card-value {
+    color: #94a3b8;
+    font-size: 0.72rem;
+    margin-top: 5px;
+}
+
+.radar-info-box {
+    background: #f8fafc;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #334155;
+    font-size: 0.90rem;
+    margin-bottom: 0.75rem;
+}
+
+.radar-warning-box {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #9a3412;
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -286,6 +360,13 @@ def load_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path)
+
+
+@st.cache_data
+def load_parquet(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame()
+    return pd.read_parquet(path)
 
 
 def translate_tier(value):
@@ -427,6 +508,468 @@ def build_recommendation(row):
     return "Revisión exploratoria"
 
 
+
+# =============================================================================
+# Player Radar & Positional Benchmarking helpers
+# =============================================================================
+
+RADAR_DATASET_CANDIDATES = [
+    "player_season_modeling_indices.parquet",
+    "player_season_modeling_growth.parquet",
+    "player_season_modeling_advanced.parquet",
+    "player_season_modeling.parquet",
+    "player_season_panel.parquet",
+]
+
+RADAR_METRIC_CANDIDATES = {
+    "MID": [
+        ("minutes_played", "Minutos"),
+        ("goals_per90", "Goles/90"),
+        ("assists_per90", "Asistencias/90"),
+        ("g_a_per90", "G+A/90"),
+        ("growth_score", "Growth Score"),
+        ("confidence_score", "Confidence Score"),
+    ],
+    "ATT": [
+        ("minutes_played", "Minutos"),
+        ("goals_per90", "Goles/90"),
+        ("assists_per90", "Asistencias/90"),
+        ("g_a_per90", "G+A/90"),
+        ("growth_score", "Growth Score"),
+        ("confidence_score", "Confidence Score"),
+    ],
+    "DEF": [
+        ("minutes_played", "Minutos"),
+        ("tackles_per90", "Tackles/90"),
+        ("interceptions_per90", "Interceptions/90"),
+        ("blocks_per90", "Blocks/90"),
+        ("growth_score", "Growth Score"),
+        ("confidence_score", "Confidence Score"),
+    ],
+    "GK": [
+        ("minutes_played", "Minutos"),
+        ("save_pct", "Save %"),
+        ("clean_sheets", "Clean Sheets"),
+        ("growth_score", "Growth Score"),
+        ("confidence_score", "Confidence Score"),
+    ],
+}
+
+RADAR_GENERIC_FOOTBALL_METRICS = [
+    ("minutes_played", "Minutos"),
+    ("goals_per90", "Goles/90"),
+    ("assists_per90", "Asistencias/90"),
+    ("g_a_per90", "G+A/90"),
+    ("growth_score", "Growth Score"),
+    ("confidence_score", "Confidence Score"),
+]
+
+
+def normalize_position_group(value) -> str:
+    position = str(value).upper().strip()
+    if position in {"FWD", "FW"}:
+        return "ATT"
+    return position
+
+
+def get_all_radar_metric_columns() -> list[str]:
+    cols = []
+    for metrics in RADAR_METRIC_CANDIDATES.values():
+        cols.extend([col for col, _ in metrics])
+    cols.extend([col for col, _ in RADAR_GENERIC_FOOTBALL_METRICS])
+    return sorted(set(cols))
+
+
+def load_radar_feature_dataset() -> pd.DataFrame:
+    """Load the richest available processed player-season dataset for radar metrics."""
+    for filename in RADAR_DATASET_CANDIDATES:
+        candidate_path = PROCESSED_PATH / filename
+        candidate_df = load_parquet(candidate_path)
+
+        if candidate_df.empty:
+            continue
+
+        radar_cols = set(get_all_radar_metric_columns())
+        available_radar_cols = radar_cols.intersection(candidate_df.columns)
+
+        if available_radar_cols:
+            return candidate_df.copy()
+
+    return pd.DataFrame()
+
+
+def enrich_shortlist_with_radar_features(shortlist_df: pd.DataFrame) -> pd.DataFrame:
+    """Attach FBref/modeling football metrics to the shortlist if rankings do not contain them.
+
+    The ranking CSV is intentionally narrow. Sprint 10.1 needs player-performance
+    columns, so the dashboard attempts to recover them from processed player-season
+    datasets using progressively less restrictive merge keys.
+    """
+    if shortlist_df.empty:
+        return shortlist_df
+
+    radar_source = load_radar_feature_dataset()
+    if radar_source.empty:
+        return shortlist_df
+
+    left = shortlist_df.copy()
+    right = radar_source.copy()
+
+    if "player_name_fbref" not in right.columns and "player_name" in right.columns:
+        right = right.rename(columns={"player_name": "player_name_fbref"})
+
+    radar_metric_cols = get_all_radar_metric_columns()
+    context_cols = ["position_group", "league", "age", "minutes_played"]
+    cols_to_add = [
+        col
+        for col in radar_metric_cols + context_cols
+        if col in right.columns and col not in left.columns
+    ]
+
+    if not cols_to_add:
+        return left
+
+    merge_key_options = [
+        ["player_name_fbref", "season", "club"],
+        ["player_name_fbref", "season"],
+        ["player_name_tm", "season"],
+        ["player_name_fbref", "club"],
+        ["player_name_fbref"],
+    ]
+
+    best_enriched = left.copy()
+    best_non_null = -1
+
+    for candidate_keys in merge_key_options:
+        merge_keys = [col for col in candidate_keys if col in left.columns and col in right.columns]
+        if not merge_keys or not any(k in merge_keys for k in ["player_name_fbref", "player_name_tm"]):
+            continue
+
+        right_cols = merge_keys + [col for col in cols_to_add if col not in merge_keys]
+        right_tmp = right[right_cols].copy()
+
+        # Avoid many-to-many explosions. Keep the first valid row per merge key after
+        # preferring rows with more available radar metrics.
+        available_metric_cols = [col for col in cols_to_add if col in right_tmp.columns]
+        if available_metric_cols:
+            right_tmp["_radar_completeness"] = right_tmp[available_metric_cols].notna().sum(axis=1)
+            right_tmp = right_tmp.sort_values("_radar_completeness", ascending=False)
+            right_tmp = right_tmp.drop(columns=["_radar_completeness"])
+
+        right_tmp = right_tmp.drop_duplicates(subset=merge_keys)
+
+        merged = left.merge(
+            right_tmp,
+            on=merge_keys,
+            how="left",
+            suffixes=("", "_radar"),
+        )
+
+        non_null_count = int(merged[cols_to_add].notna().sum().sum())
+        if non_null_count > best_non_null:
+            best_non_null = non_null_count
+            best_enriched = merged
+
+    return best_enriched
+
+def get_available_radar_metrics(position_group: object, source_df: pd.DataFrame) -> list[tuple[str, str]]:
+    """Return only Sprint 10.1 position-specific football metrics available in the current data."""
+    position_key = normalize_position_group(position_group)
+    candidates = RADAR_METRIC_CANDIDATES.get(position_key, [])
+
+    available = []
+    used_labels = set()
+
+    for col, label in candidates:
+        if col in source_df.columns and source_df[col].notna().any() and label not in used_labels:
+            available.append((col, label))
+            used_labels.add(label)
+
+    return available[:6]
+
+def calculate_percentile(series: pd.Series, value) -> float | None:
+    clean_series = pd.to_numeric(series, errors="coerce").dropna()
+    player_value = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+
+    if clean_series.empty or pd.isna(player_value):
+        return None
+
+    return round(float((clean_series <= player_value).mean() * 100), 1)
+
+
+def percentile_label(percentile: float | None) -> str:
+    if percentile is None or pd.isna(percentile):
+        return "Sin dato"
+    if percentile >= 90:
+        return "Elite"
+    if percentile >= 75:
+        return "Muy alto"
+    if percentile >= 60:
+        return "Alto"
+    if percentile >= 40:
+        return "Promedio"
+    return "Bajo"
+
+
+def format_radar_metric_value(value) -> str:
+    numeric_value = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(numeric_value):
+        return "Valor no disponible"
+    if abs(float(numeric_value)) >= 100:
+        return f"Valor jugador: {float(numeric_value):,.0f}"
+    return f"Valor jugador: {float(numeric_value):.2f}"
+
+
+def build_player_radar_data(
+    player_row: pd.Series,
+    benchmark_df: pd.DataFrame,
+    source_df: pd.DataFrame,
+) -> tuple[pd.DataFrame, list[str]]:
+    radar_metrics = get_available_radar_metrics(
+        safe_get(player_row, "position_group", "UNK"),
+        source_df,
+    )
+
+    records = []
+    missing_metrics = []
+
+    for metric, label in radar_metrics:
+        if metric not in benchmark_df.columns:
+            missing_metrics.append(metric)
+            continue
+
+        percentile = calculate_percentile(
+            benchmark_df[metric],
+            safe_get(player_row, metric, np.nan),
+        )
+
+        if percentile is None:
+            missing_metrics.append(metric)
+            continue
+
+        records.append(
+            {
+                "metric": metric,
+                "label": label,
+                "percentile": percentile,
+                "rating": percentile_label(percentile),
+                "value": safe_get(player_row, metric, np.nan),
+            }
+        )
+
+    return pd.DataFrame(records), missing_metrics
+
+def build_player_radar_chart(radar_df: pd.DataFrame, selected_player: str) -> go.Figure | None:
+    if radar_df.empty:
+        return None
+
+    closed_r = radar_df["percentile"].tolist() + [radar_df["percentile"].iloc[0]]
+    closed_theta = radar_df["label"].tolist() + [radar_df["label"].iloc[0]]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatterpolar(
+            r=closed_r,
+            theta=closed_theta,
+            fill="toself",
+            name=selected_player,
+            hovertemplate="%{theta}<br>Percentil %{r:.1f}<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                tickvals=[20, 40, 60, 80, 100],
+            )
+        ),
+        showlegend=False,
+        height=550,
+        margin=dict(l=35, r=35, t=45, b=35),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+    )
+
+    return fig
+
+
+def render_scouting_cards(radar_df: pd.DataFrame) -> None:
+    """Render compact scouting percentile cards."""
+
+    if radar_df.empty:
+        return
+
+    cards_per_row = 3
+
+    for start_idx in range(0, len(radar_df), cards_per_row):
+        row_df = radar_df.iloc[start_idx:start_idx + cards_per_row]
+        cols = st.columns(cards_per_row)
+
+        for col, (_, row) in zip(cols, row_df.iterrows()):
+            with col:
+                st.markdown(
+                    f"""
+                    <div class="radar-card">
+                        <div class="radar-card-title">{html.escape(str(row['label']))}</div>
+                        <div class="radar-card-percentile">P{float(row['percentile']):.0f}</div>
+                        <div class="radar-card-label">{html.escape(str(row['rating']))}</div>
+                        <div class="radar-card-value">{html.escape(format_radar_metric_value(row['value']).replace('Valor jugador: ', 'Valor: '))}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+
+def render_benchmark_context(benchmark_df: pd.DataFrame, benchmark_mode: str, player_position: str) -> None:
+    """Render benchmark context for the radar section."""
+
+    if benchmark_df.empty:
+        return
+
+    n_players = len(benchmark_df)
+
+    avg_age = None
+    avg_minutes = None
+
+    if "age" in benchmark_df.columns:
+        avg_age = pd.to_numeric(benchmark_df["age"], errors="coerce").mean()
+
+    if "minutes_played" in benchmark_df.columns:
+        avg_minutes = pd.to_numeric(benchmark_df["minutes_played"], errors="coerce").mean()
+
+    parts = [
+        f"<b>Benchmark:</b> {html.escape(benchmark_mode.lower())}",
+        f"<b>Posición:</b> {html.escape(str(player_position))}",
+        f"<b>Muestra:</b> {n_players:,} jugadores",
+    ]
+
+    if pd.notna(avg_age):
+        parts.append(f"<b>Edad media:</b> {avg_age:.1f} años")
+
+    if pd.notna(avg_minutes):
+        parts.append(f"<b>Minutos medios:</b> {avg_minutes:,.0f}")
+
+    st.markdown(
+        f"""
+        <div class="radar-info-box">
+            {" · ".join(parts)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
+    st.markdown("---")
+    st.header("🎯 Player Radar & Positional Benchmarking")
+    st.markdown(
+        """
+<div class="radar-info-box">
+<b>Objetivo:</b> transformar el ranking en scouting explicativo. En Sprint 10.1 el radar MVP compara al jugador seleccionado contra un benchmark dinámico mediante percentiles usando métricas disponibles: Minutos, Goles/90, Asistencias/90, G+A/90, Growth Score y Confidence Score. DEF/GK incorporan métricas específicas solo si existen.</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    if shortlist_df.empty:
+        st.info("No hay jugadores disponibles para construir el radar con los filtros actuales.")
+        return
+
+    player_name_col = "player_name_tm" if "player_name_tm" in shortlist_df.columns else "player_name_fbref"
+    if player_name_col not in shortlist_df.columns:
+        st.info("No hay columna de nombre de jugador disponible para el selector del radar.")
+        return
+
+    selector_df = shortlist_df.dropna(subset=[player_name_col]).copy()
+    if selector_df.empty:
+        st.info("No hay jugadores con nombre disponible para el radar.")
+        return
+
+    if "opportunity_score" in selector_df.columns:
+        selector_df = selector_df.sort_values("opportunity_score", ascending=False)
+
+    player_options = selector_df[player_name_col].astype(str).drop_duplicates().tolist()
+
+    controls = st.columns([1.5, 1.0])
+    with controls[0]:
+        selected_radar_player = st.selectbox(
+            "Seleccionar jugador",
+            player_options,
+            key="radar_selected_player",
+        )
+    with controls[1]:
+        benchmark_mode = st.radio(
+            "Comparar contra",
+            ["Misma posición", "Toda la muestra"],
+            horizontal=True,
+            key="radar_benchmark_mode",
+        )
+
+    player_row = selector_df[selector_df[player_name_col].astype(str) == selected_radar_player].iloc[0]
+    player_position = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
+
+    benchmark_df = shortlist_df.copy()
+    if benchmark_mode == "Misma posición" and "position_group" in benchmark_df.columns:
+        benchmark_df = benchmark_df[
+            benchmark_df["position_group"].apply(normalize_position_group) == player_position
+        ].copy()
+
+    radar_df, missing_metrics = build_player_radar_data(
+        player_row=player_row,
+        benchmark_df=benchmark_df,
+        source_df=shortlist_df,
+    )
+
+    if radar_df.empty or len(radar_df) < 3:
+        position_key = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
+        expected_metrics = [metric for metric, _ in RADAR_METRIC_CANDIDATES.get(position_key, [])]
+
+        st.warning(
+            "No hay suficientes métricas Sprint 10.1 para construir benchmarking posicional real. "
+            "La shortlist actual solo contiene variables de scoring y métricas ofensivas básicas. "
+            "Regenera el ranking incorporando columnas FBref avanzadas o revisa que existan en data/processed/."
+        )
+        st.caption("Métricas esperadas para esta posición: " + ", ".join(expected_metrics))
+        st.caption("Columnas disponibles para radar: " + ", ".join([c for c in shortlist_df.columns if c in get_all_radar_metric_columns()]))
+        return
+
+    render_benchmark_context(
+        benchmark_df=benchmark_df,
+        benchmark_mode=benchmark_mode,
+        player_position=player_position,
+    )
+
+    radar_col, cards_col = st.columns([1.15, 1.0], gap="large")
+    with radar_col:
+        radar_fig = build_player_radar_chart(radar_df, selected_radar_player)
+        if radar_fig is not None:
+            st.plotly_chart(
+                radar_fig,
+                use_container_width=True,
+                config={"displaylogo": False},
+            )
+
+    with cards_col:
+        st.subheader("🧾 Tarjetas de scouting")
+        render_scouting_cards(radar_df)
+
+        if missing_metrics:
+            st.caption(
+                "Métricas sin dato para este benchmark: " + ", ".join(sorted(set(missing_metrics)))
+            )
+
+    top_attributes = radar_df.sort_values("percentile", ascending=False).head(4)
+    explanation = " · ".join(
+        f"{row['label']} P{float(row['percentile']):.1f} ({row['rating']})"
+        for _, row in top_attributes.iterrows()
+    )
+    st.markdown(
+        f"**Lectura scouting:** {html.escape(str(selected_radar_player))} destaca principalmente en {explanation}."
+    )
+
+
 def build_html_table(page_df: pd.DataFrame):
     columns = [
         ("player_name_fbref", "Jugador"),
@@ -443,6 +986,9 @@ def build_html_table(page_df: pd.DataFrame):
         ("growth_score", "Growth Score"),
         ("confidence_score", "Confidence Score"),
         ("opportunity_score", "Opportunity Score"),
+        ("risk_score", "Risk Score"),
+        ("risk_level", "Riesgo"),
+        ("risk_adjusted_opportunity_score", "Opp. ajustada"),
         ("dashboard_tier", "Tier"),
     ]
 
@@ -461,7 +1007,7 @@ def build_html_table(page_df: pd.DataFrame):
                     val = f"{float(val):.0f}%"
                 except Exception:
                     val = "N/A"
-            elif col in ["growth_score", "confidence_score", "opportunity_score"]:
+            elif col in ["growth_score", "confidence_score", "opportunity_score", "risk_score", "risk_adjusted_opportunity_score"]:
                 val = format_score(val)
             elif col == "age":
                 try:
@@ -701,29 +1247,23 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         )
     )
 
-    fig.add_vline(x=cost_ref, line_dash="dash", line_color="rgba(15, 23, 42, 0.45)", line_width=1.2, annotation_text="Coste mediano", annotation_position="top")
-    fig.add_hline(y=upside_ref, line_dash="dash", line_color="rgba(15, 23, 42, 0.45)", line_width=1.2, annotation_text="Upside mediano", annotation_position="right")
+    fig.add_vline(
+        x=cost_ref,
+        line_dash="dash",
+        line_color="rgba(15, 23, 42, 0.65)",
+        line_width=2,
+        annotation_text="Coste mediano",
+        annotation_position="top",
+    )
 
-    quadrant_annotations = [
-        (0.18, 0.90, "<b>🟢 Comprar / priorizar</b>", "#22c55e", "#166534"),
-        (0.78, 0.90, "<b>🔵 Oportunidades premium</b>", "#3b82f6", "#1d4ed8"),
-        (0.18, 0.18, "<b>🟡 Seguimiento</b>", "#facc15", "#854d0e"),
-        (0.78, 0.18, "<b>🔴 Menor prioridad</b>", "#ef4444", "#991b1b"),
-    ]
-    for x, y, text, border, color in quadrant_annotations:
-        fig.add_annotation(
-            xref="paper",
-            yref="paper",
-            x=x,
-            y=y,
-            text=text,
-            showarrow=False,
-            bgcolor="rgba(255,255,255,0.90)",
-            bordercolor=border,
-            borderwidth=1,
-            borderpad=5,
-            font=dict(size=13, color=color),
-        )
+    fig.add_hline(
+        y=upside_ref,
+        line_dash="dash",
+        line_color="rgba(15, 23, 42, 0.65)",
+        line_width=2,
+        annotation_text="Upside mediano",
+        annotation_position="right",
+    )
 
     fig.update_layout(
         height=620,
@@ -754,6 +1294,344 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
 
     return fig
 
+
+
+def assign_decision_quadrant(row, opportunity_ref: float, risk_ref: float) -> str:
+    """Assign scouting decision quadrant from Opportunity and Risk scores."""
+    opportunity = pd.to_numeric(pd.Series([safe_get(row, "opportunity_score")]), errors="coerce").iloc[0]
+    risk = pd.to_numeric(pd.Series([safe_get(row, "risk_score")]), errors="coerce").iloc[0]
+
+    if pd.isna(opportunity) or pd.isna(risk):
+        return "Sin clasificar"
+    if opportunity >= opportunity_ref and risk <= risk_ref:
+        return "Objetivo prioritario"
+    if opportunity >= opportunity_ref and risk > risk_ref:
+        return "Apuesta estratégica"
+    if opportunity < opportunity_ref and risk <= risk_ref:
+        return "Perfil estable"
+    return "Evitar"
+
+
+def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | None:
+    required = {
+        "opportunity_score",
+        "risk_score",
+        "risk_adjusted_opportunity_score",
+    }
+
+    if chart_source.empty or not required.issubset(chart_source.columns):
+        return None
+
+    df = chart_source.dropna(subset=list(required)).copy()
+
+    if df.empty:
+        return None
+
+    for col in required:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    df = df.dropna(subset=list(required)).copy()
+
+    if df.empty:
+        return None
+
+    risk_ref = float(df["risk_score"].median())
+    opportunity_ref = float(df["opportunity_score"].quantile(0.60))
+
+    def assign_zone(row):
+        if row["opportunity_score"] >= opportunity_ref and row["risk_score"] <= risk_ref:
+            return "Objetivo prioritario"
+        if row["opportunity_score"] >= opportunity_ref and row["risk_score"] > risk_ref:
+            return "Apuesta estratégica"
+        if row["opportunity_score"] < opportunity_ref and row["risk_score"] <= risk_ref:
+            return "Perfil estable"
+        return "Evitar"
+
+    df["risk_zone"] = df.apply(assign_zone, axis=1)
+
+    color_map = {
+        "Objetivo prioritario": "#22c55e",
+        "Apuesta estratégica": "#f97316",
+        "Perfil estable": "#3b82f6",
+        "Evitar": "#ef4444",
+    }
+
+    min_adjusted = float(df["risk_adjusted_opportunity_score"].min())
+    max_adjusted = float(df["risk_adjusted_opportunity_score"].max())
+    span_adjusted = max(max_adjusted - min_adjusted, 1.0)
+
+    df["bubble_size"] = (
+        14
+        + (
+            (df["risk_adjusted_opportunity_score"] - min_adjusted)
+            / span_adjusted
+        ).clip(0, 1).mul(42)
+    )
+
+    top5 = (
+        df.sort_values("risk_adjusted_opportunity_score", ascending=False)
+        .head(5)
+        .reset_index(drop=True)
+    )
+
+    fig = go.Figure()
+
+    fig.add_shape(
+        type="rect",
+        x0=0,
+        x1=risk_ref,
+        y0=opportunity_ref,
+        y1=100,
+        fillcolor="rgba(34,197,94,0.13)",
+        line=dict(width=0),
+        layer="below",
+    )
+    fig.add_shape(
+        type="rect",
+        x0=risk_ref,
+        x1=100,
+        y0=opportunity_ref,
+        y1=100,
+        fillcolor="rgba(249,115,22,0.12)",
+        line=dict(width=0),
+        layer="below",
+    )
+    fig.add_shape(
+        type="rect",
+        x0=0,
+        x1=risk_ref,
+        y0=0,
+        y1=opportunity_ref,
+        fillcolor="rgba(59,130,246,0.10)",
+        line=dict(width=0),
+        layer="below",
+    )
+    fig.add_shape(
+        type="rect",
+        x0=risk_ref,
+        x1=100,
+        y0=0,
+        y1=opportunity_ref,
+        fillcolor="rgba(239,68,68,0.09)",
+        line=dict(width=0),
+        layer="below",
+    )
+
+    for zone in [
+        "Objetivo prioritario",
+        "Apuesta estratégica",
+        "Perfil estable",
+        "Evitar",
+    ]:
+        zone_df = df[df["risk_zone"] == zone]
+
+        if zone_df.empty:
+            continue
+
+        hover_text = [
+            f"<b>{get_player_name(row)}</b><br>"
+            f"Club: {safe_get(row, 'club')}<br>"
+            f"Liga: {safe_get(row, 'league')}<br>"
+            f"Posición: {safe_get(row, 'position_group')}<br>"
+            f"Opportunity Score: {format_score(safe_get(row, 'opportunity_score'))}<br>"
+            f"Risk Score: {format_score(safe_get(row, 'risk_score'))}<br>"
+            f"Risk Level: {safe_get(row, 'risk_level')}<br>"
+            f"Risk Adjusted Opportunity: {format_score(safe_get(row, 'risk_adjusted_opportunity_score'))}"
+            for _, row in zone_df.iterrows()
+        ]
+
+        fig.add_trace(
+            go.Scatter(
+                x=zone_df["risk_score"],
+                y=zone_df["opportunity_score"],
+                mode="markers",
+                name=zone,
+                hovertext=hover_text,
+                hoverinfo="text",
+                marker=dict(
+                    size=zone_df["bubble_size"],
+                    color=color_map[zone],
+                    opacity=0.72,
+                    line=dict(width=1, color="rgba(15,23,42,0.25)"),
+                ),
+            )
+        )
+
+    fig.add_trace(
+        go.Scatter(
+            x=top5["risk_score"],
+            y=top5["opportunity_score"],
+            mode="text",
+            text=[str(i + 1) for i in range(len(top5))],
+            textfont=dict(size=13, color="white", family="Arial Black"),
+            textposition="middle center",
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+
+    fig.add_vline(
+        x=risk_ref,
+        line_dash="dash",
+        line_color="rgba(15,23,42,0.65)",
+        line_width=2,
+        annotation_text="Riesgo mediano",
+        annotation_position="top",
+    )
+
+    fig.add_hline(
+        y=opportunity_ref,
+        line_dash="dash",
+        line_color="rgba(15,23,42,0.65)",
+        line_width=2,
+        annotation_text="Top 40% oportunidad",
+        annotation_position="right",
+    )
+
+    fig.update_layout(
+        height=560,
+        margin=dict(l=20, r=30, t=35, b=30),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.03,
+            xanchor="right",
+            x=1,
+        ),
+        xaxis_title="Risk Score (Incertidumbre relativa)",
+        yaxis_title="Opportunity Score (Upside potencial)",
+    )
+
+    fig.update_xaxes(
+        range=[0, 100],
+        showgrid=True,
+        gridcolor="#e5e7eb",
+        zeroline=False,
+    )
+
+    fig.update_yaxes(
+        range=[
+            max(0, float(df["opportunity_score"].min()) - 5),
+            101,
+        ],
+        showgrid=True,
+        gridcolor="#e5e7eb",
+        zeroline=False,
+    )
+
+    return fig
+
+
+def render_opportunity_risk_summary(chart_source: pd.DataFrame) -> None:
+    """Render executive KPIs for Opportunity vs Risk matrix."""
+
+    required = {
+        "opportunity_score",
+        "risk_score",
+    }
+
+    if chart_source.empty or not required.issubset(chart_source.columns):
+        return
+
+    summary_df = chart_source.copy()
+
+    summary_df["opportunity_score"] = pd.to_numeric(
+        summary_df["opportunity_score"],
+        errors="coerce",
+    )
+    summary_df["risk_score"] = pd.to_numeric(
+        summary_df["risk_score"],
+        errors="coerce",
+    )
+
+    if "risk_adjusted_opportunity_score" in summary_df.columns:
+        summary_df["risk_adjusted_opportunity_score"] = pd.to_numeric(
+            summary_df["risk_adjusted_opportunity_score"],
+            errors="coerce",
+        )
+
+    summary_df = summary_df.dropna(
+        subset=[
+            "opportunity_score",
+            "risk_score",
+        ]
+    )
+
+    if summary_df.empty:
+        return
+
+    risk_ref = float(summary_df["risk_score"].median())
+    opportunity_ref = float(summary_df["opportunity_score"].quantile(0.60))
+
+    quadrants = summary_df.apply(
+        lambda row: assign_decision_quadrant(
+            row,
+            opportunity_ref,
+            risk_ref,
+        ),
+        axis=1,
+    )
+
+    priority_targets = int((quadrants == "Objetivo prioritario").sum())
+    strategic_bets = int((quadrants == "Apuesta estratégica").sum())
+    stable_profiles = int((quadrants == "Perfil estable").sum())
+    avoid_profiles = int((quadrants == "Evitar").sum())
+
+    if (
+        "risk_adjusted_opportunity_score" in summary_df.columns
+        and summary_df["risk_adjusted_opportunity_score"].notna().any()
+    ):
+        top_idx = summary_df["risk_adjusted_opportunity_score"].idxmax()
+        top_adjusted = float(
+            summary_df.loc[top_idx, "risk_adjusted_opportunity_score"]
+        )
+        top_player = get_player_name(summary_df.loc[top_idx])
+        top_value = f"{top_adjusted:.1f}"
+        top_caption = f"Mejor oportunidad: {top_player}"
+    else:
+        top_value = f"{summary_df['opportunity_score'].max():.1f}"
+        top_caption = "Mejor opportunity score"
+
+    st.markdown("### 🎯 Lectura ejecutiva Opportunity vs Risk")
+
+    c1, c2, c3, c4, c5 = st.columns(5)
+
+    with c1:
+        render_metric_card_with_caption(
+            "Objetivos prioritarios",
+            priority_targets,
+            "alto potencial · bajo riesgo",
+        )
+
+    with c2:
+        render_metric_card_with_caption(
+            "Apuestas estratégicas",
+            strategic_bets,
+            "alto potencial · alto riesgo",
+        )
+
+    with c3:
+        render_metric_card_with_caption(
+            "Perfiles estables",
+            stable_profiles,
+            "potencial moderado · bajo riesgo",
+        )
+
+    with c4:
+        render_metric_card_with_caption(
+            "Evitar",
+            avoid_profiles,
+            "potencial moderado · alto riesgo",
+        )
+
+    with c5:
+        render_metric_card_with_caption(
+            "🏆 Mejor objetivo",
+            top_player,
+            f"Risk-adjusted: {top_value}",
+        )
 
 def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
     """Render executive KPI-style summary for the Cost vs Upside matrix."""
@@ -846,12 +1724,13 @@ def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
 # Load data
 # =============================================================================
 
-shortlist = load_csv(RANKINGS_PATH / "scouting_shortlist.csv")
+shortlist = load_csv(RANKINGS_PATH / "scouting_shortlist_with_risk.csv")
+shortlist = enrich_shortlist_with_radar_features(shortlist)
 precision = load_csv(EVALUATION_PATH / "precision_at_k.csv")
 roi = load_csv(BUSINESS_PATH / "roi_global_summary.csv")
 
 if shortlist.empty:
-    st.warning("No se ha encontrado `reports/rankings/scouting_shortlist.csv`.")
+    st.warning("No se ha encontrado `reports/rankings/scouting_shortlist_with_risk.csv`. Ejecuta primero `python -m src.models.scouting.build_risk_score`.")
     st.stop()
 
 df = shortlist.copy()
@@ -864,8 +1743,30 @@ numeric_cols = [
     "opportunity_score",
     "growth_score",
     "confidence_score",
+    "risk_score",
+    "risk_score_raw",
+    "risk_adjusted_opportunity_score",
+    "risk_age_component",
+    "risk_minutes_component",
+    "risk_confidence_component",
+    "risk_gap_component",
     "age",
     "minutes_played",
+    "goals_per90",
+    "assists_per90",
+    "g_a_per90",
+    "shots_per90",
+    "xG_per90",
+    "xg_per90",
+    "xA_per90",
+    "xa_per90",
+    "tackles_per90",
+    "interceptions_per90",
+    "blocks_per90",
+    "aerial_duels_won_pct",
+    "pass_completion_pct",
+    "progressive_passes_per90",
+    "progressive_carries_per90",
 ]
 
 for col in numeric_cols:
@@ -901,7 +1802,7 @@ Plataforma analítica para identificación de jugadores infravalorados mediante:
 )
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ESTADO DEL PROYECTO")
-st.sidebar.success("Sprint 9 — Dashboard productizado")
+st.sidebar.success("Sprint 10.3 — Opportunity vs Risk Matrix")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### FILTROS RÁPIDOS")
 st.sidebar.caption("El filtro principal de perfiles accionables está disponible al inicio del dashboard.")
@@ -921,7 +1822,7 @@ Perfil interesante para seguimiento.
 Requiere revisión adicional.
 """
 )
-st.sidebar.markdown("<br><br><span style='color:#94a3b8;font-size:0.8rem;'>v0.9.0-dashboard-product</span>", unsafe_allow_html=True)
+st.sidebar.markdown("<br><br><span style='color:#94a3b8;font-size:0.8rem;'>v0.10.3-advanced-scouting-intelligence</span>", unsafe_allow_html=True)
 
 
 # =============================================================================
@@ -938,7 +1839,7 @@ modelos predictivos, scoring multicriterio, explainability y validación de nego
 st.markdown(
     """
 <div class="info-box">
-<span class="info-icon">i</span> Modo ejecutivo: primero acota el universo de scouting; después interpreta KPIs, coste vs upside y ranking.
+<span class="info-icon">i</span> Modo ejecutivo: primero acota el universo de scouting; después interpreta KPIs, Opportunity vs Risk y ranking.
 </div>
 """,
     unsafe_allow_html=True,
@@ -1114,18 +2015,22 @@ No representa rentabilidad garantizada; es una simulación conservadora basada e
 # =============================================================================
 
 st.markdown("---")
-st.markdown("## 💎 Coste actual vs upside estimado", unsafe_allow_html=True)
+st.markdown("## 🎯 Opportunity vs Risk Matrix", unsafe_allow_html=True)
 st.markdown(
     """
-Cada burbuja representa un jugador del **Top 20 filtrado**.  
-La matriz divide el mercado en cuatro zonas estratégicas según **coste actual** y **upside estimado**.  
-El tamaño representa el **Opportunity Score** y los números identifican el **Top 5** del ranking actual.
+Cada burbuja representa un jugador de la **shortlist filtrada**.  
+La matriz cruza el **Opportunity Score** con el **Risk Score** para separar objetivos prioritarios,
+apuestas estratégicas, perfiles estables y casos a evitar.
+
+El tamaño de la burbuja representa el **Risk Adjusted Opportunity Score**, es decir,
+el atractivo de la oportunidad después de penalizar por riesgo.  
+Los números identifican el **Top 5 ajustado por riesgo**.
 """
 )
 
-fig = build_opportunity_chart(filtered_df)
+fig = build_opportunity_risk_matrix(filtered_df)
 if fig is None:
-    st.info("No hay datos suficientes para generar el gráfico con los filtros actuales.")
+    st.info("No hay datos suficientes para generar la matriz Opportunity vs Risk con los filtros actuales.")
 else:
     st.plotly_chart(
         fig,
@@ -1135,10 +2040,7 @@ else:
             "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"],
         },
     )
-
-    top5_legend_df = filtered_df.sort_values("opportunity_score", ascending=False).head(5).reset_index(drop=True)
-    render_bubble_legend(top5_legend_df)
-    render_chart_executive_summary(filtered_df)
+    render_opportunity_risk_summary(filtered_df)
 
 
 # =============================================================================
@@ -1189,6 +2091,13 @@ with pag_right:
 
 
 # =============================================================================
+# Player Radar & Positional Benchmarking
+# =============================================================================
+
+render_player_radar_benchmarking(table_df)
+
+
+# =============================================================================
 # Individual player report
 # =============================================================================
 
@@ -1202,7 +2111,7 @@ player_names = table_df["player_name_fbref"].fillna("Jugador").tolist()
 selected_player = st.selectbox("Selecciona un jugador", player_names)
 player_df = table_df[table_df["player_name_fbref"] == selected_player].iloc[0]
 
-m1, m2, m3, m4, m5 = st.columns([1.2, 1.2, 1.2, 1.25, 1.1])
+m1, m2, m3, m4, m5, m6 = st.columns([1.1, 1.1, 1.1, 1.15, 1.05, 0.95])
 with m1:
     render_metric_card("Valor mercado", format_money_tm(safe_get(player_df, "market_value_eur")))
 with m2:
@@ -1210,8 +2119,10 @@ with m2:
 with m3:
     render_metric_card("Gap de mercado", format_money_tm(safe_get(player_df, "market_value_gap_eur")))
 with m4:
-    render_metric_card("Opportunity Score", f"{format_score(safe_get(player_df, 'opportunity_score'))} / 100")
+    render_metric_card("Opportunity", f"{format_score(safe_get(player_df, 'opportunity_score'))} / 100")
 with m5:
+    render_metric_card("Risk Score", f"{format_score(safe_get(player_df, 'risk_score'))} / 100")
+with m6:
     rank = int(table_df.index[table_df["player_name_fbref"] == selected_player][0]) + 1
     render_metric_card("Ranking", f"#{rank} / {len(table_df)}")
 
@@ -1230,6 +2141,7 @@ with profile_col:
             <tr><td>Temporada:</td><td>{html.escape(str(safe_get(player_df, 'season')))}</td></tr>
             <tr><td>Minutos en liga:</td><td>{int(float(safe_get(player_df, 'minutes_played', 0))):,}</td></tr>
             <tr><td>Tier:</td><td>{tier_badge(safe_get(player_df, 'dashboard_tier'))}</td></tr>
+            <tr><td>Nivel de riesgo:</td><td>{html.escape(str(safe_get(player_df, 'risk_level')))}</td></tr>
         </table>
         """
         st.markdown(profile_table, unsafe_allow_html=True)
@@ -1261,13 +2173,15 @@ with reading_col:
         st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
         gap_rel = calculate_gap_relative(player_df)
         gap_text = f"{gap_rel:.1%}" if gap_rel is not None else "N/A"
-        s1, s2, s3 = st.columns(3)
+        s1, s2, s3, s4 = st.columns(4)
         with s1:
-            render_metric_card("Gap relativo estimado", gap_text)
+            render_metric_card("Gap relativo", gap_text)
         with s2:
-            render_metric_card("Growth Score", f"{format_score(safe_get(player_df, 'growth_score'))} / 100")
+            render_metric_card("Growth", f"{format_score(safe_get(player_df, 'growth_score'))} / 100")
         with s3:
-            render_metric_card("Confidence Score", f"{format_score(safe_get(player_df, 'confidence_score'))} / 100")
+            render_metric_card("Confidence", f"{format_score(safe_get(player_df, 'confidence_score'))} / 100")
+        with s4:
+            render_metric_card("Opp. ajustada", f"{format_score(safe_get(player_df, 'risk_adjusted_opportunity_score'))} / 100")
         st.markdown("<div style='height:18px; clear: both;'></div>", unsafe_allow_html=True)
 
 

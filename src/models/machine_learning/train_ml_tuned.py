@@ -200,7 +200,26 @@ def export_feature_importance(
 # PREDICTION EXPORT
 # ==========================================================
 
-def export_predictions(
+def add_prediction_columns(
+    df: pd.DataFrame,
+    model_name: str,
+    predictions: np.ndarray,
+    y_true: pd.Series,
+) -> pd.DataFrame:
+    predictions_df = df.copy()
+
+    predictions_df["model_name"] = model_name
+    predictions_df["predicted_log_market_value"] = predictions
+    predictions_df["observed_log_market_value"] = y_true.values
+    predictions_df["prediction_error_log"] = (
+        predictions_df["observed_log_market_value"]
+        - predictions_df["predicted_log_market_value"]
+    )
+
+    return predictions_df
+
+
+def export_test_predictions(
     model_name: str,
     fitted_pipeline: Pipeline,
     test_df: pd.DataFrame,
@@ -209,30 +228,61 @@ def export_predictions(
 ) -> Path:
     predictions = np.asarray(fitted_pipeline.predict(X_test))
 
-    predictions_df = test_df.copy()
-
-    predictions_df["model_name"] = model_name
-    predictions_df["predicted_log_market_value"] = predictions
-    predictions_df["observed_log_market_value"] = y_test.values
-    predictions_df["prediction_error_log"] = (
-        predictions_df["observed_log_market_value"]
-        - predictions_df["predicted_log_market_value"]
+    predictions_df = add_prediction_columns(
+        df=test_df,
+        model_name=model_name,
+        predictions=predictions,
+        y_true=y_test,
     )
 
-    canonical_output_path = PREDICTIONS_DIR / "tuned_xgboost_predictions.csv"
-    model_output_path = PREDICTIONS_DIR / f"{model_name}_predictions.csv"
+    output_path = PREDICTIONS_DIR / f"{model_name}_test_predictions.csv"
+    predictions_df.to_csv(output_path, index=False)
 
-    predictions_df.to_csv(model_output_path, index=False)
+    logger.info("Test predictions exported: %s", output_path)
+
+    return output_path
+
+
+def export_full_predictions(
+    model_name: str,
+    fitted_pipeline: Pipeline,
+    df: pd.DataFrame,
+    X: pd.DataFrame,
+    y: pd.Series,
+) -> Path:
+    predictions = np.asarray(fitted_pipeline.predict(X))
+
+    predictions_df = add_prediction_columns(
+        df=df,
+        model_name=model_name,
+        predictions=predictions,
+        y_true=y,
+    )
+
+    full_output_path = PREDICTIONS_DIR / f"{model_name}_full_predictions.csv"
+    canonical_output_path = PREDICTIONS_DIR / "tuned_xgboost_predictions.csv"
+
+    latest_season = predictions_df["season"].max()
+    scoring_df = predictions_df[
+        predictions_df["season"] == latest_season
+    ].copy()
+
+    predictions_df.to_csv(full_output_path, index=False)
 
     if model_name == "tuned_xgboost":
-        predictions_df.to_csv(canonical_output_path, index=False)
-    elif not canonical_output_path.exists():
-        predictions_df.to_csv(canonical_output_path, index=False)
+        scoring_df.to_csv(canonical_output_path, index=False)
 
-    logger.info("Predictions exported: %s", model_output_path)
-    logger.info("Canonical predictions path available: %s", canonical_output_path)
+        logger.info(
+            "Canonical scoring predictions exported for season %s: %s",
+            latest_season,
+            canonical_output_path,
+        )
 
-    return model_output_path
+    logger.info("Full historical predictions exported: %s", full_output_path)
+    logger.info("Scoring rows: %s", len(scoring_df))
+    logger.info("Full rows: %s", len(predictions_df))
+
+    return full_output_path
 
 
 # ==========================================================
@@ -335,8 +385,12 @@ def main() -> None:
     X_test = test[FEATURES]
     y_test = test[TARGET]
 
+    X_full = df[FEATURES]
+    y_full = df[TARGET]
+
     logger.info("Train rows: %s", len(train))
     logger.info("Test rows: %s", len(test))
+    logger.info("Full scoring rows: %s", len(df))
 
     models: dict[str, tuple[Any, dict[str, list[Any]]]] = {
         "tuned_random_forest": (
@@ -429,12 +483,20 @@ def main() -> None:
     best_model_name = str(results_df.iloc[0]["model"])
     best_model = fitted_models[best_model_name]
 
-    predictions_output_path = export_predictions(
+    test_predictions_output_path = export_test_predictions(
         model_name=best_model_name,
         fitted_pipeline=best_model,
         test_df=test,
         X_test=X_test,
         y_test=y_test,
+    )
+
+    full_predictions_output_path = export_full_predictions(
+        model_name=best_model_name,
+        fitted_pipeline=best_model,
+        df=df,
+        X=X_full,
+        y=y_full,
     )
 
     with mlflow.start_run(run_name="tuned_ml_comparison_summary"):
@@ -449,11 +511,13 @@ def main() -> None:
         mlflow.log_metric("best_r2", float(results_df.iloc[0]["r2"]))
 
         mlflow.log_artifact(str(comparison_output_path))
-        mlflow.log_artifact(str(predictions_output_path))
+        mlflow.log_artifact(str(test_predictions_output_path))
+        mlflow.log_artifact(str(full_predictions_output_path))
 
     logger.info("Best model: %s", best_model_name)
     logger.info("Comparison exported: %s", comparison_output_path)
-    logger.info("Predictions exported for Sprint 5: %s", predictions_output_path)
+    logger.info("Test predictions exported: %s", test_predictions_output_path)
+    logger.info("Full predictions exported: %s", full_predictions_output_path)
 
 
 if __name__ == "__main__":

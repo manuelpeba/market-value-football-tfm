@@ -1,28 +1,28 @@
 feature,importance
-log_minutes_played,2446
-age,2244
-experience_index,1576
-goals_position_percentile,1505
-finishing_index,1425
-playmaking_index,1327
-assists_position_percentile,1284
-goals_per90,935
-assists_per90,715
-age_squared,690
-career_year,507
-league_Eredivisie,478
-league_Liga Portugal,442
-league_Premier League,343
+log_minutes_played,2476
+age,2253
+experience_index,1520
+goals_position_percentile,1463
+finishing_index,1380
+playmaking_index,1280
+assists_position_percentile,1200
+goals_per90,1024
+assists_per90,764
+age_squared,685
+career_year,522
+league_Eredivisie,487
+league_Liga Portugal,445
+league_Premier League,350
 season_2019-2020,324
-breakout_indicator,291
-league_Ligue 1,237
+breakout_indicator,297
+league_Ligue 1,238
 league_LaLiga,203
-season_2022-2023,182
-league_Bundesliga,171
-season_2020-2021,170
-position_group_MID,164
-season_2021-2022,135
-league_Serie A,88
-position_group_DEF,78
-position_group_ATT,39
-position_group_GK,1
+season_2022-2023,202
+season_2020-2021,168
+position_group_MID,165
+league_Bundesliga,162
+season_2021-2022,151
+position_group_DEF,103
+league_Serie A,89
+position_group_ATT,47
+position_group_GK,2
