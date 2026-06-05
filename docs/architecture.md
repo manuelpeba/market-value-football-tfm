@@ -1,55 +1,59 @@
-# Arquitectura del Sistema
+# 🏗️ Arquitectura del Sistema
 
 ## Visión general
 
-La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centrado en notebooks hacia una plataforma modular de Football Analytics orientada a Scouting Intelligence.
+La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centrado en notebooks hacia una plataforma integral de Football Analytics orientada a scouting profesional y soporte a decisiones.
 
-El sistema implementa un flujo completo de generación de valor analítico:
+La versión actual (v1.1.0) implementa una arquitectura multicapa que transforma datos deportivos en recomendaciones accionables para procesos de recruitment.
 
 ```text
 Fuentes de datos
 ↓
 Feature Engineering
 ↓
+Matching
+↓
 Modelización
 ↓
-Evaluación histórica
+Opportunity Detection
 ↓
-Scouting operativo
+Risk Assessment
 ↓
 Player Intelligence
 ↓
-Decision Support
+Recruitment Intelligence
 ↓
-Scouting Intelligence
-↓
-Toma de decisión deportiva
+Decision Support System
 ```
 
 ---
 
-# Principios arquitectónicos
+## Principios arquitectónicos
 
 La arquitectura se ha diseñado siguiendo los siguientes principios:
 
-- modularidad
-- reproducibilidad
-- trazabilidad experimental
-- separación de responsabilidades
-- validación temporal
-- interpretabilidad
-- escalabilidad analítica
+* Modularidad.
+* Reproducibilidad.
+* Trazabilidad experimental.
+* Separación de responsabilidades.
+* Validación temporal.
+* Interpretabilidad.
+* Escalabilidad analítica.
+* Orientación a negocio.
 
 ---
 
-# Arquitectura funcional actual
+# 🧩 Arquitectura funcional actual
 
 ```mermaid
 flowchart TD
 
 A[Raw Sources] --> B[Feature Engineering]
+
 B --> C[Player-Season Matching]
+
 C --> D[Player-Season Panel]
+
 D --> E[Modeling Dataset]
 
 E --> F[Econometric Pipeline]
@@ -59,6 +63,7 @@ F --> H[Model Evaluation]
 G --> H
 
 H --> I[Explainability]
+
 I --> J[Historical Validation]
 
 G --> K[Operational Predictions]
@@ -71,58 +76,50 @@ L --> N[Risk Score]
 M --> O[Ranking Engine]
 N --> O
 
-O --> P[Scouting Shortlist]
+O --> P[Current Scouting Layer]
 
-P --> Q[Player Radar MVP]
-P --> R[Positional Benchmarking]
+P --> Q[Player Intelligence Layer]
 
-Q --> S[Player Intelligence]
-R --> S
+Q --> R[Recruitment Intelligence Layer]
 
-S --> T[Executive Dashboard]
+R --> S[Decision Support System]
 
-T --> U[Visual Analytics]
-
-U --> V[Decision Support]
-
-V --> W[Scouting Intelligence]
-
-W --> X[Toma de decisión deportiva]
+S --> T[Sporting Decision]
 ```
 
 ---
 
-# Capas arquitectónicas
+# 🏛️ Capas arquitectónicas
 
 ## 1. Data Layer
 
-Responsable de la integración y preparación de datos.
+Responsable de la adquisición, limpieza y preparación de datos.
 
-Fuentes:
+### Fuentes
 
-- FBref
-- Transfermarkt
+* FBref.
+* Transfermarkt.
 
-Componentes:
+### Responsabilidades
+
+* Ingestión.
+* Limpieza.
+* Estandarización.
+* Enriquecimiento.
+* Generación de variables.
+
+### Componentes
 
 ```text
 src/data/
 src/features/
 ```
 
-Funciones:
-
-- ingestión
-- limpieza
-- estandarización
-- enriquecimiento
-- generación de variables
-
 ---
 
 ## 2. Matching Layer
 
-Responsable de la integración jugador-temporada entre fuentes.
+Responsable de la integración entre fuentes.
 
 Objetivo:
 
@@ -130,14 +127,14 @@ Objetivo:
 FBref ↔ Transfermarkt
 ```
 
-Metodología:
+### Metodología
 
-- matching exacto
-- validación por edad
-- validación por club
-- fuzzy matching controlado
+* Exact Matching.
+* Club Validation.
+* Age Validation.
+* Fuzzy Matching.
 
-Resultado:
+### Resultado
 
 ```text
 Match Rate ≈ 88%
@@ -147,73 +144,64 @@ Match Rate ≈ 88%
 
 ## 3. Modeling Layer
 
-Construcción del dataset modelizable y entrenamiento de modelos.
+Responsable de la construcción del dataset modelizable y entrenamiento de modelos.
 
-Dataset actual:
-
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
-| Temporadas | 2019-2020 → 2025-2026 |
-
-Componentes:
+### Componentes
 
 ```text
 src/models/econometric/
 src/models/machine_learning/
 ```
 
+### Modelos implementados
+
+#### Growth OLS
+
+Benchmark interpretable.
+
+#### Tuned XGBoost
+
+Modelo productivo de la plataforma.
+
 ---
 
 ## 4. Historical Evaluation Layer
 
-Introducida y consolidada durante Sprint 10.
+Responsable de la validación metodológica de modelos.
 
-Objetivo:
+### Funciones
 
-Evaluar rigurosamente la capacidad predictiva de los modelos.
+* Validación temporal.
+* Comparación de algoritmos.
+* Backtesting.
+* Evaluación académica.
+* Explainability.
 
-Funciones:
-
-- validación temporal
-- comparación de modelos
-- backtesting
-- análisis metodológico
-- evaluación académica
-
-Outputs:
+### Outputs
 
 ```text
-tuned_xgboost_test_predictions.csv
-tuned_xgboost_full_predictions.csv
-evaluation metrics
-feature importance
-SHAP analysis
+Predictions
+Metrics
+Feature Importance
+SHAP Analysis
 ```
 
 ---
 
 ## 5. Current Scouting Layer
 
-Introducida en Sprint 10.3.
+Responsable de separar evaluación histórica y explotación operativa.
 
-Objetivo:
+### Funciones
 
-Separar evaluación histórica de recomendaciones operativas.
+* Predicción temporada vigente.
+* Generación de rankings.
+* Construcción de shortlists.
+* Priorización de oportunidades.
 
-Funciones:
-
-- scoring actual
-- rankings de scouting
-- generación de shortlists
-- actualización temporada vigente
-
-Outputs:
+### Outputs
 
 ```text
-tuned_xgboost_predictions.csv
-scoring_dataset.csv
 scouting_shortlist.csv
 scouting_shortlist_with_risk.csv
 ```
@@ -224,174 +212,188 @@ scouting_shortlist_with_risk.csv
 
 Transforma predicciones en señales accionables.
 
-Componentes:
+### Componentes
 
 ```text
-build_inefficiency_score.py
-build_growth_score.py
-build_confidence_score.py
-build_opportunity_score.py
-build_risk_score.py
-generate_rankings.py
+Inefficiency Score
+Growth Score
+Confidence Score
+Opportunity Score
+Risk Score
 ```
 
-Scores implementados:
+### Objetivo
 
-### Inefficiency Score
-
-```text
-Valor esperado - Valor observado
-```
-
-### Growth Score
-
-Captura potencial de desarrollo.
-
-### Confidence Score
-
-Captura robustez de la señal.
-
-### Opportunity Score
-
-Priorización multicriterio.
-
-### Risk Score
-
-Nueva dimensión incorporada en Sprint 10.
-
-Permite distinguir:
-
-```text
-High Potential / Low Risk
-High Potential / High Risk
-Moderate Potential / Low Risk
-Moderate Potential / High Risk
-```
+Convertir predicciones en recomendaciones operativas para scouting.
 
 ---
 
 ## 7. Ranking Engine
 
-Transforma scores en recomendaciones priorizadas.
+Transforma scores en listas priorizadas de candidatos.
 
-Outputs:
+### Capacidades
 
-- scouting_shortlist
-- top opportunities
-- top low risk targets
-- rankings por liga
-- rankings por posición
+* Rankings globales.
+* Rankings por posición.
+* Rankings por liga.
+* Rankings por nivel de riesgo.
+
+### Resultado
+
+```text
+Scouting Shortlists
+```
 
 ---
 
 ## 8. Player Intelligence Layer
 
-Incorporada en Sprint 10.1.
+Introducida durante Sprint 10.
 
 Objetivo:
 
 Transformar rankings en análisis individuales de jugadores.
 
-Componentes:
+### Componentes
 
-### Player Radar MVP
+#### Player Radar
 
-Métricas actuales:
+Visualización multidimensional del perfil del jugador.
 
-- minutos
-- goles/90
-- asistencias/90
-- G+A/90
-- Growth Score
-- Confidence Score
+#### Positional Benchmarking
 
-### Positional Benchmarking
+Comparación respecto a jugadores de la misma posición.
 
-Comparación dinámica contra:
+#### Scouting Narrative
 
-- misma posición
-- universo completo
-
-### Scouting Narrative
-
-Interpretación automática de perfiles.
+Interpretación automática de fortalezas y debilidades.
 
 ---
 
-## 9. Decision Support Layer
+## 9. Recruitment Intelligence Layer
 
-Implementada entre Sprint 7 y Sprint 10.
+Introducida durante Sprint 11.
 
-Componentes:
+Objetivo:
+
+Transformar análisis individuales en procesos operativos de recruitment.
+
+### Recruitment Board
+
+Permite:
+
+* Construcción de shortlists.
+* Selección múltiple.
+* Gestión de candidatos.
+
+### Candidate Selection System
+
+Permite:
+
+* Selección simultánea.
+* Comparación dinámica.
+* Priorización operativa.
+
+### Comparative Player Analysis
+
+Comparación directa de:
+
+* Opportunity Score.
+* Risk Score.
+* Confidence Score.
+* Market Value.
+* Predicted Value.
+* Mispricing.
+
+### Executive Scouting Workflow
+
+```text
+Opportunity Detection
+↓
+Filtering
+↓
+Shortlisting
+↓
+Comparative Analysis
+↓
+Recruitment Decision
+```
+
+---
+
+## 10. Decision Support System Layer
+
+Consolidada durante Sprint 12.
+
+Objetivo:
+
+Facilitar la adopción operativa de resultados analíticos por usuarios de negocio.
 
 ### Executive Dashboard
 
-Aplicación:
+Aplicación principal:
 
 ```text
 app/streamlit_app.py
 ```
 
-Capacidades:
+### Componentes
 
-- filtros ejecutivos
-- rankings interactivos
-- explainability
-- scouting reports
-- player radar
-- benchmarking
+#### Advanced Search Engine
 
-### Opportunity vs Risk Matrix
+Búsqueda por:
 
-Introducida en Sprint 10.3.
+* Jugador.
+* Club.
+* Liga.
+* Posición.
 
-Objetivo:
+#### Search Suggestions
 
-Facilitar priorización estratégica de objetivos.
+Autocompletado dinámico.
 
----
+#### Search Chips
 
-## 10. Scouting Intelligence Layer
+Indicadores visuales de filtros activos.
 
-Capa final del sistema.
+#### UX Redesign
 
-Integra:
+Optimización de:
 
-- predicción
-- scoring
-- riesgo
-- ranking
-- benchmarking
-- visual analytics
+* Filtros.
+* Navegación.
+* Interacción.
 
-Resultado:
+#### Internationalization
 
-```text
-Recomendaciones accionables para scouting profesional
-```
+Idiomas soportados:
+
+* Español.
+* Inglés.
 
 ---
 
-# Evolución arquitectónica
+# 🔄 Evolución arquitectónica
 
-| Sprint | Evolución principal |
-|----------|------------------|
-| Sprint 1 | Positional Normalization |
-| Sprint 2 | Temporal Dynamics |
-| Sprint 3 | Composite Football Indices |
-| Sprint 4 | Machine Learning |
-| Sprint 4C | Explainability |
-| Sprint 5 | Scoring Engine |
-| Sprint 6 | Business Evaluation |
-| Sprint 7 | Dashboard |
-| Sprint 9 | Decision Support System |
-| Sprint 10.1 | Player Intelligence |
-| Sprint 10.2 | FBref Advanced Audit |
-| Sprint 10.3 | Current Scouting Layer + Risk Framework |
+| Sprint    | Evolución                                 |
+| --------- | ----------------------------------------- |
+| Sprint 1  | Positional Normalization                  |
+| Sprint 2  | Temporal Dynamics                         |
+| Sprint 3  | Composite Football Indices                |
+| Sprint 4  | Machine Learning                          |
+| Sprint 4C | Explainability                            |
+| Sprint 5  | Scoring Engine                            |
+| Sprint 6  | Business Evaluation                       |
+| Sprint 7  | Executive Dashboard                       |
+| Sprint 9  | Decision Support Layer                    |
+| Sprint 10 | Player Intelligence Layer                 |
+| Sprint 11 | Recruitment Intelligence Layer            |
+| Sprint 12 | Productization, UX & Internationalization |
 
 ---
 
-# Arquitectura física
+# 🖥️ Arquitectura física
 
 ```text
 market-value-football-tfm/
@@ -410,20 +412,19 @@ market-value-football-tfm/
 
 ---
 
-# Conclusión
+# 🏁 Conclusión
 
-La principal contribución arquitectónica del Sprint 10 es la separación explícita entre:
+La arquitectura v1.1.0 consolida la evolución del proyecto desde un sistema de estimación de valor de mercado hacia una plataforma DSS orientada a scouting y recruitment profesional.
+
+La incorporación de las capas de:
 
 ```text
-Historical Evaluation Layer
+Player Intelligence
 ↓
-Current Scouting Layer
+Recruitment Intelligence
 ↓
-Player Intelligence Layer
-↓
-Decision Support Layer
+Decision Support System
 ```
 
-Esta decisión evita mezclar validación histórica con recomendaciones operativas y aproxima el sistema a arquitecturas utilizadas en departamentos profesionales de Football Analytics.
+permite transformar modelos predictivos en procesos de decisión accionables alineados con las necesidades reales de departamentos deportivos.
 
-La versión v1.0.0 consolida la transición desde un sistema de estimación de valor de mercado hacia una plataforma integral de Scouting Intelligence orientada a identificación, priorización y evaluación de oportunidades de mercado.

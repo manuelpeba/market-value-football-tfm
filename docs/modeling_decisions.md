@@ -2,25 +2,25 @@
 
 ## Objetivo
 
-Este documento recoge las decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release v1.0.0 — Scouting Intelligence Platform.
+Este documento recoge las decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release v1.1.0 — Recruitment Intelligence & Decision Support System.
 
 El objetivo es justificar las decisiones desde una perspectiva:
 
-- econométrica
-- machine learning
-- explainability
-- scoring multicriterio
-- evaluación de negocio
-- football analytics
-- scouting cuantitativo
+* Econométrica.
+* Machine Learning.
+* Explainability.
+* Scoring multicriterio.
+* Evaluación de negocio.
+* Football Analytics.
+* Scouting cuantitativo.
 
 ---
 
-# Filosofía de modelización
+# 🧠 Filosofía de modelización
 
 El proyecto adopta una arquitectura híbrida donde la precisión predictiva no constituye el objetivo final.
 
-La finalidad última es generar recomendaciones accionables para scouting.
+La finalidad última es generar recomendaciones accionables para scouting y recruitment.
 
 Arquitectura conceptual:
 
@@ -35,21 +35,21 @@ Ranking
 ↓
 Player Intelligence
 ↓
-Decision Support
+Recruitment Intelligence
 ↓
-Scouting Intelligence
+Decision Support System
 ```
 
 Principio metodológico:
 
 ```text
-maximizar utilidad de scouting
+Maximizar utilidad para scouting
 y no únicamente métricas predictivas
 ```
 
 ---
 
-# Decisiones econométricas
+# 📈 Decisiones econométricas
 
 ## Modelo seleccionado
 
@@ -66,79 +66,76 @@ league FE +
 position FE
 ```
 
-Decisiones:
+### Decisiones adoptadas
 
-- logaritmo del valor de mercado
-- efectos fijos por liga
-- efectos fijos por posición
-- covarianza robusta HC3
-- validación temporal
+* Transformación logarítmica de la variable objetivo.
+* Efectos fijos por liga.
+* Efectos fijos por posición.
+* Covarianza robusta HC3.
+* Validación temporal estricta.
 
-Rol:
+### Rol metodológico
 
 ```text
 Benchmark interpretable
 ```
 
-Resultados finales:
+### Resultado
 
-| Modelo | MAE | RMSE | R² |
-|----------|----------:|----------:|----------:|
+| Modelo     |    MAE |   RMSE |     R² |
+| ---------- | -----: | -----: | -----: |
 | Growth OLS | 0.7287 | 0.9053 | 0.5258 |
 
-Conclusión:
+### Conclusión
 
 OLS permanece como benchmark explicativo del sistema.
 
 ---
 
-# Decisiones Machine Learning
+# 🤖 Decisiones de Machine Learning
 
 ## Modelos evaluados
 
-- Tuned Random Forest
-- Tuned LightGBM
-- HistGradientBoosting
-- Tuned XGBoost
+* Random Forest.
+* HistGradientBoosting.
+* LightGBM.
+* XGBoost.
 
 ## Diseño experimental
 
 El pipeline incorpora:
 
-- validación temporal
-- ColumnTransformer
-- imputación
-- escalado
-- codificación categórica
-- RandomizedSearchCV
-- MLflow
+* Validación temporal.
+* ColumnTransformer.
+* Imputación.
+* Escalado.
+* Codificación categórica.
+* RandomizedSearchCV.
+* MLflow.
 
-## Resultados finales
+## Resultado final
 
-| Modelo | MAE | RMSE | R² |
-|----------|----------:|----------:|----------:|
-| Tuned Random Forest | 0.7486 | 0.9303 | 0.4980 |
-| Tuned LightGBM | 0.7307 | 0.9052 | 0.5248 |
-| HistGradientBoosting | 0.7292 | 0.9011 | 0.5291 |
+| Modelo        |        MAE |       RMSE |         R² |
+| ------------- | ---------: | ---------: | ---------: |
 | Tuned XGBoost | **0.7120** | **0.8892** | **0.5414** |
 
-Decisión:
+## Decisión
 
 ```text
 Tuned XGBoost = modelo productivo
 ```
 
-Justificación:
+### Justificación
 
-- mejor MAE
-- mejor RMSE
-- mejor R²
-- robustez
-- compatibilidad SHAP
+* Mejor MAE.
+* Mejor RMSE.
+* Mejor R².
+* Robustez.
+* Compatibilidad con SHAP.
 
 ---
 
-# Explainability
+# 🔍 Explainability
 
 ## Decisión principal
 
@@ -146,28 +143,29 @@ Justificación:
 SHAP = mecanismo oficial de interpretación
 ```
 
-Capacidades:
+### Explainability global
 
-### Global
+Permite identificar:
 
-- feature importance
-- SHAP importance
-- summary plots
+* Feature Importance.
+* SHAP Importance.
+* Summary Plots.
 
-### Local
+### Explainability local
 
-- explicación por jugador
-- scouting reports
-- drivers positivos
-- drivers negativos
+Permite explicar:
 
-Justificación:
+* Drivers positivos.
+* Drivers negativos.
+* Estimaciones individuales.
 
-La recomendación debe ser defendible ante perfiles no técnicos.
+### Justificación
+
+Las recomendaciones deben ser defendibles ante usuarios no técnicos.
 
 ---
 
-# Decisiones sobre scoring
+# 🎯 Decisiones sobre scoring
 
 Sprint 5 introduce una capa específica para transformar predicciones en señales accionables.
 
@@ -191,16 +189,13 @@ Risk Score
 
 ## Inefficiency Score
 
-Objetivo:
+Captura desviaciones entre:
 
 ```text
-Valor esperado - valor observado
+Valor esperado
+vs
+Valor observado
 ```
-
-Permite detectar:
-
-- infravaloración
-- sobrevaloración
 
 ---
 
@@ -208,9 +203,9 @@ Permite detectar:
 
 Captura:
 
-- potencial
-- trayectoria
-- revalorización futura
+* Potencial.
+* Trayectoria.
+* Revalorización futura.
 
 ---
 
@@ -218,9 +213,9 @@ Captura:
 
 Captura:
 
-- calidad de matching
-- robustez estadística
-- estabilidad temporal
+* Calidad del matching.
+* Robustez estadística.
+* Estabilidad temporal.
 
 ---
 
@@ -234,22 +229,22 @@ Implementación conceptual:
 0.20 * confidence_score_z
 ```
 
-Decisión:
+### Decisión
 
 Priorizar infravaloración sin ignorar potencial ni robustez.
 
 ---
 
-# Sprint 10 — Risk Framework
+# ⚠️ Risk Framework
 
-Introducido en Sprint 10.3.
+Introducido durante Sprint 10.
 
 Problema identificado:
 
 ```text
-Opportunity alta
+Alta oportunidad
 ≠
-recomendación segura
+Recomendación segura
 ```
 
 Se incorpora:
@@ -258,74 +253,72 @@ Se incorpora:
 Risk Score
 ```
 
-Objetivo:
+### Objetivo
 
-Cuantificar incertidumbre asociada a cada oportunidad.
+Cuantificar incertidumbre asociada a cada recomendación.
 
-Interpretación:
+### Interpretación
 
-| Riesgo | Significado |
-|----------|-------------|
-| Bajo | Perfil estable |
-| Medio | Riesgo moderado |
-| Alto | Elevada incertidumbre |
+| Riesgo | Significado           |
+| ------ | --------------------- |
+| Bajo   | Perfil estable        |
+| Medio  | Riesgo moderado       |
+| Alto   | Elevada incertidumbre |
 
-Resultado:
+### Resultado
 
 ```text
 Opportunity Score
 +
 Risk Score
 =
-priorización más realista
+Priorización más realista
 ```
 
 ---
 
-# Ranking Engine
+# 📋 Ranking Engine
 
 Objetivo:
 
-Convertir scores en recomendaciones priorizadas.
+Transformar scores en recomendaciones priorizadas.
 
-Outputs:
-
-```text
-top_undervalued_global.csv
-top_undervalued_by_league.csv
-top_undervalued_by_position.csv
-top_high_potential.csv
-top_low_risk.csv
-scouting_shortlist.csv
-scouting_shortlist_with_risk.csv
-```
-
-Decisión:
+### Principio metodológico
 
 Los rankings no sustituyen al scout.
 
-Reducen espacio de búsqueda.
+Su función es:
+
+```text
+Reducir espacio de búsqueda
+```
+
+y facilitar procesos posteriores de análisis.
 
 ---
 
-# Decisiones de evaluación
+# 📊 Decisiones de evaluación
 
 El proyecto adopta una visión más amplia que la evaluación tradicional.
 
-Métricas utilizadas:
+## Métricas utilizadas
 
-- RMSE
-- MAE
-- R²
-- Precision@K
-- ROI esperado
-- ROI ajustado por riesgo
-- Positive ROI Rate
+### Técnicas
 
-Principio:
+* RMSE.
+* MAE.
+* R².
+
+### Negocio
+
+* Precision@K.
+* Positive ROI Rate.
+* Métricas de priorización.
+
+### Principio
 
 ```text
-un modelo útil
+Un modelo útil
 no es únicamente
 el que predice mejor
 sino el que genera mejores decisiones
@@ -333,48 +326,20 @@ sino el que genera mejores decisiones
 
 ---
 
-# Historical Evaluation Layer
-
-Introducida formalmente en Sprint 10.
+# 🔄 Historical Evaluation Layer
 
 Objetivo:
 
-Separar evaluación metodológica de uso operativo.
+Separar evaluación metodológica de explotación operativa.
 
-Funciones:
+### Funciones
 
-- comparación de modelos
-- validación temporal
-- análisis académico
-- backtesting
+* Comparación de modelos.
+* Validación temporal.
+* Backtesting.
+* Análisis académico.
 
-Artefactos:
-
-```text
-tuned_xgboost_test_predictions.csv
-tuned_xgboost_full_predictions.csv
-```
-
----
-
-# Current Scouting Layer
-
-Introducida en Sprint 10.3.
-
-Objetivo:
-
-Generar recomendaciones operativas sobre la temporada actual.
-
-Artefactos:
-
-```text
-tuned_xgboost_predictions.csv
-scoring_dataset.csv
-scouting_shortlist.csv
-scouting_shortlist_with_risk.csv
-```
-
-Contribución metodológica:
+### Contribución
 
 ```text
 Evaluación histórica
@@ -382,45 +347,29 @@ Evaluación histórica
 Scouting operativo
 ```
 
-Esta separación constituye una de las decisiones más importantes del proyecto.
+Esta separación constituye una de las decisiones metodológicas más importantes del proyecto.
 
 ---
 
-# Sprint 10.1 — Player Intelligence
+# ⚽ Player Intelligence
+
+Introducida durante Sprint 10.
 
 Problema identificado:
 
 ```text
 Ranking
 ≠
-comprensión del perfil del jugador
+Comprensión del perfil del jugador
 ```
 
-Solución:
+### Solución
 
-## Player Radar MVP
+* Player Radar.
+* Positional Benchmarking.
+* Scouting Narrative.
 
-Métricas:
-
-- minutos
-- goles/90
-- asistencias/90
-- G+A/90
-- Growth Score
-- Confidence Score
-
-## Positional Benchmarking
-
-Comparación contra:
-
-- misma posición
-- universo completo
-
-## Scouting Narrative
-
-Interpretación automática del perfil.
-
-Resultado:
+### Resultado
 
 ```text
 Player Intelligence Layer
@@ -428,76 +377,84 @@ Player Intelligence Layer
 
 ---
 
-# Sprint 10.2 — FBref Advanced Audit
+# 🎯 Recruitment Intelligence
 
-Objetivo:
+Introducida durante Sprint 11.
 
-Determinar viabilidad de métricas avanzadas.
-
-Tablas auditadas:
-
-- Shooting
-- Defense
-- Misc
-- Playing Time
-- Passing
-- Possession
-- Goal & Shot Creation
-
-Resultado:
-
-Definición del roadmap para:
+Problema identificado:
 
 ```text
-Advanced Football Radar
+Análisis individual
+≠
+Proceso real de recruitment
+```
+
+### Solución
+
+* Recruitment Board.
+* Candidate Selection System.
+* Comparative Player Analysis.
+* Executive Scouting Workflow.
+
+### Resultado
+
+```text
+Recruitment Intelligence Layer
 ```
 
 ---
 
-# Sprint 10.3 — Current Season Scouting Refresh
+# 🖥️ Decision Support System
 
-Decisiones adoptadas:
+Consolidado durante Sprint 12.
 
-- integración temporada 2025-2026
-- reentrenamiento completo
-- Risk Framework
-- Current Scouting Layer
+Problema identificado:
 
-Resultado:
+```text
+Análisis avanzado
+≠
+Adopción por usuarios finales
+```
 
-Dataset modelizable:
+### Solución
 
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
-| Temporadas | 2019-2020 → 2025-2026 |
+* Advanced Search Engine.
+* UX Redesign.
+* Search Suggestions.
+* Search Chips.
+* Internationalization EN/ES.
 
----
+### Resultado
 
-# Trade-offs metodológicos
-
-| Trade-off | Decisión |
-|----------|-----------|
-| Interpretabilidad vs precisión | OLS + XGBoost |
-| Econometría vs ML | Arquitectura híbrida |
-| Cobertura vs matching estricto | Priorizar calidad |
-| Complejidad vs reproducibilidad | Modularización |
-| Métrica técnica vs utilidad | Precision@K + ROI |
-| Ranking automático vs scout | Sistema de apoyo |
-| Evaluación histórica vs operación | Separación explícita Sprint 10 |
+```text
+Decision Support System
+```
 
 ---
 
-# Prevención de leakage
+# ⚖️ Trade-offs metodológicos
 
-Controles:
+| Trade-off                         | Decisión             |
+| --------------------------------- | -------------------- |
+| Interpretabilidad vs precisión    | OLS + XGBoost        |
+| Econometría vs ML                 | Arquitectura híbrida |
+| Cobertura vs matching estricto    | Priorizar calidad    |
+| Complejidad vs reproducibilidad   | Modularización       |
+| Métrica técnica vs utilidad       | Precision@K          |
+| Ranking automático vs scout       | Sistema de apoyo     |
+| Evaluación histórica vs operación | Separación explícita |
 
-- validación temporal
-- separación train/test
-- exclusión de variables futuras
-- scoring posterior a predicción
-- persistencia independiente
+---
+
+# 🛡️ Prevención de leakage
+
+Controles implementados:
+
+* Validación temporal.
+* Separación train/test.
+* Exclusión de variables futuras.
+* Scoring posterior a predicción.
+* Persistencia independiente.
 
 Principio:
 
@@ -509,69 +466,54 @@ de la decisión.
 
 ---
 
-# Limitaciones actuales
+# ⚠️ Limitaciones actuales
 
 ## Datos
 
-- ausencia de xG/xA Understat
-- limitaciones defensivas avanzadas
-- ausencia de variables salariales
-- ausencia de variables contractuales
+* Dependencia de Transfermarkt.
+* Ausencia de variables salariales.
+* Ausencia de variables contractuales.
 
 ## Modelización
 
-- dependencia parcial de Transfermarkt
-- heterogeneidad por posición
-- sensibilidad a outliers
+* Heterogeneidad entre posiciones.
+* Posible drift temporal.
+* Sensibilidad a cambios estructurales del mercado.
 
 ## Evaluación
 
-- Precision@K basada en proxies
-- ausencia de transferencias reales
-- ausencia de backtesting rolling completo
+* Precision@K basada en proxies.
+* Ausencia de transferencias observadas.
+* Backtesting limitado por disponibilidad histórica.
 
 ---
 
-# Próximas decisiones
+# 🛣️ Próximas líneas de investigación
 
-## Sprint 11
+## Sprint 13 — Multi-League Expansion
 
-Advanced Football Radar
+Ligas candidatas:
 
-- shooting
-- defense
-- misc
-- playing time
-
-## Sprint 12
-
-Data Enrichment
-
-- Understat
-- xG
-- xA
-
-## Sprint 13
-
-Advanced Modeling
-
-- CatBoost
-- TabPFN
-- Ensemble Models
+* Championship.
+* Segunda División.
+* Belgian Pro League.
 
 ---
 
-# Conclusión
+## Sprint 14 — Transfer Strategy Engine
 
-La principal evolución metodológica del proyecto se produce durante Sprint 10.
+Posibles extensiones:
 
-La arquitectura deja de centrarse exclusivamente en:
+* Replacement Analysis.
+* Portfolio Construction.
+* Investment Optimization.
+* Transfer Strategy Simulation.
 
-```text
-Predicción
-```
+---
 
-y pasa a estructurarse como:
+# 🏁 Conclusión
+
+La principal evolución metodológica del proyecto consiste en transformar una arquitectura centrada en predicción hacia una arquitectura orientada a decisión.
 
 ```text
 Predicción
@@ -582,11 +524,10 @@ Ranking
 ↓
 Player Intelligence
 ↓
-Decision Support
+Recruitment Intelligence
 ↓
-Scouting Intelligence
+Decision Support System
 ```
 
-La separación entre Historical Evaluation Layer y Current Scouting Layer constituye la decisión metodológica más relevante de la release v1.0.0.
+La combinación de econometría, Machine Learning, explainability y scoring multicriterio permite convertir modelos predictivos en herramientas operativas para scouting y recruitment profesional.
 
-Esta arquitectura aproxima el proyecto a sistemas utilizados en departamentos profesionales de Football Analytics y Scouting.

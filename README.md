@@ -1,20 +1,19 @@
-# 📊 Identificación de jugadores infravalorados en el mercado de fichajes europeo
+# 📊 Market Value Dynamics and Market Inefficiency Detection in Professional Football
 
+### Identificación de jugadores infravalorados en el mercado de fichajes europeo
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458)
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-orange)
 ![Statsmodels](https://img.shields.io/badge/Statsmodels-Econometrics-green)
 ![DuckDB](https://img.shields.io/badge/DuckDB-Analytics-yellow)
-![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
-![Validation](https://img.shields.io/badge/Validation-Temporal-important)
-![Status](https://img.shields.io/badge/Status-Scouting%20Intelligence%20Platform-success)
-![Version](https://img.shields.io/badge/version-v1.0.0--Scouting--Intelligence-blue)
-![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
-![DecisionSupport](https://img.shields.io/badge/Decision%20Support-System-success)
 ![MLflow](https://img.shields.io/badge/MLflow-enabled-success)
-![Scouting](https://img.shields.io/badge/Scouting-Ranking%20Engine-success)
-![Explainability](https://img.shields.io/badge/Explainability-SHAP-success)
+![SHAP](https://img.shields.io/badge/Explainability-SHAP-success)
+![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
+![Status](https://img.shields.io/badge/Status-Decision%20Support%20System-success)
+![Version](https://img.shields.io/badge/version-v1.1.0-blue)
+
+---
 
 ## Historial de releases
 
@@ -29,45 +28,33 @@
 | v0.7.0 | Dashboard |
 | v0.8.0 | Dashboard Productizado |
 | v1.0.0 | Scouting Intelligence Platform |
+| v1.1.0 | Recruitment Intelligence & Decision Support System |
 
 ---
 
 ## 📑 Tabla de contenidos
 
-- [Historial de releases](#historial-de-releases)
-- [Resumen ejecutivo](#-resumen-ejecutivo)
-- [Resultados clave](#-resultados-clave)
-- [Problema de negocio](#-problema-de-negocio)
-- [Objetivos del proyecto](#-objetivos-del-proyecto)
-- [Contribuciones del proyecto](#-contribuciones-del-proyecto)
-- [Arquitectura global](#-arquitectura-global)
-- [Metodología](#-metodología)
-- [Fuentes de datos](#-fuentes-de-datos)
-- [Sistema de matching](#-sistema-de-matching)
-- [Dataset final](#-dataset-final)
-- [Diccionario resumido de variables](#-diccionario-resumido-de-variables)
-- [Feature Engineering](#-feature-engineering)
-- [Modelización econométrica](#-modelización-econométrica)
-- [Machine Learning](#-machine-learning)
-- [Experiment Tracking con MLflow](#-experiment-tracking-con-mlflow)
-- [Explainability](#-explainability)
-- [Evaluación técnica](#-evaluación-técnica)
-- [Evaluación de negocio](#-evaluación-de-negocio)
-- [Resultados finales](#-resultados-finales)
-- [Scoring Intelligence Engine](#-scoring-intelligence-engine)
-- [Capturas de la plataforma](#-capturas-de-la-plataforma)
-- [Dashboard y DSS](#️-dashboard-y-dss)
-- [Scouting Intelligence Platform](#-scouting-intelligence-platform)
-- [Valor para departamentos deportivos](#-valor-para-departamentos-deportivos)
-- [Estado actual del proyecto](#-estado-actual-del-proyecto)
-- [Limitaciones](#-limitaciones)
-- [Roadmap](#-roadmap)
-- [Estructura del proyecto](#-estructura-del-proyecto)
-- [Reproducibilidad](#-reproducibilidad)
-- [Ejecución reproducible](#️-ejecución-reproducible)
-- [Referencias](#-referencias)
-- [Autoría](#-autoría)
-- [Conclusión](#-conclusión)
+- [🧠 Resumen ejecutivo](#-resumen-ejecutivo)
+- [📌 Resultados clave](#-resultados-clave)
+- [🎯 Problema de negocio](#-problema-de-negocio)
+- [🎯 Objetivos del proyecto](#-objetivos-del-proyecto)
+- [🏆 Contribuciones del proyecto](#-contribuciones-del-proyecto)
+- [🏗️ Arquitectura global](#️-arquitectura-global)
+- [📚 Metodología](#-metodología)
+- [📦 Datos y preparación](#-datos-y-preparación)
+- [📈 Modelización](#-modelización)
+- [📊 Evaluación y resultados](#-evaluación-y-resultados)
+- [🖥️ Evolución hacia un DSS](#️-evolución-hacia-un-dss)
+- [⚽ Valor para departamentos deportivos](#-valor-para-departamentos-deportivos)
+- [✅ Estado actual del proyecto](#-estado-actual-del-proyecto)
+- [⚠️ Limitaciones](#️-limitaciones)
+- [🛣️ Roadmap](#️-roadmap)
+- [📂 Estructura del proyecto](#-estructura-del-proyecto)
+- [🔁 Reproducibilidad](#-reproducibilidad)
+- [▶️ Ejecución reproducible](#️-ejecución-reproducible)
+- [📚 Referencias](#-referencias)
+- [👨‍🎓 Autoría](#-autoría)
+- [🏁 Conclusión](#-conclusión)
 
 ---
 
@@ -75,46 +62,47 @@
 
 Este Trabajo Fin de Máster desarrolla una plataforma integral de Football Analytics orientada a la identificación de jugadores infravalorados en el mercado europeo de fichajes.
 
-El proyecto combina:
+El proyecto combina técnicas de:
 
-- econometría aplicada
-- machine learning supervisado
-- explainability
-- scoring multicriterio
-- visual analytics
-- decision support systems
+- Econometría aplicada.
+- Machine Learning supervisado.
+- Explainable AI.
+- Scoring multicriterio.
+- Visual Analytics.
+- Decision Support Systems.
 
-con el objetivo de transformar grandes volúmenes de datos futbolísticos en recomendaciones accionables para departamentos deportivos.
+El objetivo es transformar grandes volúmenes de datos futbolísticos y de mercado en recomendaciones accionables para departamentos de scouting, recruitment y dirección deportiva.
 
-La plataforma implementada permite:
+La plataforma desarrollada permite:
 
-- estimar el valor de mercado esperado de jugadores
-- detectar ineficiencias de mercado
-- identificar oportunidades de fichaje
-- cuantificar el riesgo asociado a cada recomendación
-- priorizar objetivos de scouting
+- Estimar el valor de mercado esperado de jugadores profesionales.
+- Detectar ineficiencias de mercado.
+- Identificar oportunidades potenciales de fichaje.
+- Cuantificar el riesgo asociado a cada recomendación.
+- Construir shortlists de scouting.
+- Comparar candidatos de forma simultánea.
+- Apoyar procesos de toma de decisiones mediante un sistema DSS interactivo.
 
 La versión actual corresponde a:
 
 ```text
-v1.0.0 — Scouting Intelligence Platform
+v1.1.0 — Recruitment Intelligence & Decision Support System
 ```
 
-y representa la culminación de diez sprints de desarrollo incremental.
+y representa la evolución del proyecto desde un sistema predictivo de valoración de jugadores hacia una plataforma integral de soporte a decisiones para scouting profesional.
 
 ---
 
 ## 📌 Resultados clave
 
-- Match Rate: 88%
-- 24.194 observaciones integradas
-- 21.245 observaciones emparejadas
-- 3.916 observaciones modelizables
-- 2.136 jugadores únicos
-- R² OLS: 0.5258
-- R² Tuned XGBoost: 0.5414
-- Precision@10: 90%
-- Release: v1.0.0 — Scouting Intelligence Platform
+| Indicador | Valor |
+|------------|------------:|
+| Match Rate FBref ↔ Transfermarkt | 88% |
+| Jugadores analizados | 2.136 |
+| Observaciones modelables | 3.916 |
+| R² modelo productivo (XGBoost) | 0.5414 |
+| Precision@10 | 90% |
+| Estado actual | DSS para scouting y recruitment |
 
 ---
 
@@ -122,19 +110,19 @@ y representa la culminación de diez sprints de desarrollo incremental.
 
 La toma de decisiones en el mercado de fichajes se caracteriza por:
 
-- información incompleta
-- elevada incertidumbre
-- recursos limitados
-- sesgos cognitivos
-- asimetrías informativas
+- Información incompleta.
+- Elevada incertidumbre.
+- Recursos limitados.
+- Sesgos cognitivos.
+- Asimetrías informativas.
 
-Los clubes deben seleccionar un número reducido de jugadores dentro de un universo potencialmente compuesto por miles de futbolistas distribuidos entre múltiples ligas y competiciones.
+Los clubes deben seleccionar un número reducido de objetivos dentro de un universo potencialmente compuesto por miles de futbolistas distribuidos entre múltiples ligas y competiciones.
 
 La pregunta central del proyecto es:
 
 > ¿Qué jugadores presentan un valor de mercado observado inferior al valor que cabría esperar dadas sus características deportivas, edad, experiencia y rendimiento reciente?
 
-Responder esta pregunta permite detectar potenciales ineficiencias de mercado y apoyar estrategias de captación basadas en creación de valor.
+Responder a esta cuestión permite detectar potenciales ineficiencias de mercado y apoyar estrategias de captación basadas en creación de valor.
 
 ---
 
@@ -154,33 +142,19 @@ Sell High
 
 con potencial aplicación en departamentos de scouting profesional.
 
----
-
 ### Objetivos analíticos
 
-#### Objetivo 1
+1. Construir un dataset longitudinal jugador-temporada mediante integración multi-fuente.
 
-Construir un dataset longitudinal jugador-temporada mediante integración de múltiples fuentes.
+2. Modelizar el valor de mercado esperado mediante técnicas econométricas y de Machine Learning.
 
-#### Objetivo 2
+3. Comparar capacidad predictiva e interpretabilidad entre ambos enfoques.
 
-Modelizar el valor de mercado esperado mediante técnicas econométricas y de machine learning.
+4. Diseñar métricas compuestas orientadas a scouting.
 
-#### Objetivo 3
+5. Implementar una capa de soporte a decisiones basada en rankings, scoring y visual analytics.
 
-Comparar capacidad predictiva e interpretabilidad entre ambos enfoques.
-
-#### Objetivo 4
-
-Diseñar métricas compuestas orientadas a scouting.
-
-#### Objetivo 5
-
-Construir una capa de soporte a decisiones basada en rankings, scoring y visual analytics.
-
-#### Objetivo 6
-
-Transformar resultados analíticos en recomendaciones operativas para scouting profesional.
+6. Transformar resultados analíticos en procesos operativos de scouting y recruitment.
 
 ---
 
@@ -188,63 +162,36 @@ Transformar resultados analíticos en recomendaciones operativas para scouting p
 
 ### Contribuciones académicas
 
-- aplicación de CRISP-DM al ámbito futbolístico
-- integración de econometría y machine learning
-- validación temporal estricta
-- evaluación orientada a negocio
-- estudio de ineficiencias de mercado deportivas
-
----
+- Aplicación de CRISP-DM al ámbito del fútbol profesional.
+- Integración de econometría y Machine Learning dentro de un mismo marco metodológico.
+- Validación temporal estricta para aproximar escenarios reales de uso.
+- Evaluación orientada a negocio mediante métricas de scouting.
+- Estudio aplicado de ineficiencias de mercado en fútbol europeo.
 
 ### Contribuciones técnicas
 
-- matching multi-fuente FBref ↔ Transfermarkt
-- arquitectura modular reproducible
-- experiment tracking mediante MLflow
-- explainability basada en SHAP
-- scoring multicriterio
-- dashboard interactivo
-
----
+- Matching multi-fuente FBref ↔ Transfermarkt.
+- Arquitectura modular reproducible.
+- Experiment tracking mediante MLflow.
+- Explainability basada en SHAP.
+- Opportunity Score.
+- Risk Framework.
+- Decision Support System interactivo.
 
 ### Contribuciones de negocio
 
-- Opportunity Score
-- Risk Score
-- Ranking Engine
-- Player Intelligence Layer
-- Decision Support Layer
-- Scouting Intelligence Platform
+- Opportunity Detection.
+- Risk Assessment.
+- Recruitment Intelligence.
+- Candidate Comparison.
+- Recruitment Board.
+- Decision Support System.
 
 ---
 
 ## 🏗️ Arquitectura global
 
-La arquitectura final se organiza en múltiples capas analíticas especializadas.
-
-```mermaid
-flowchart TD
-
-A[Raw Sources] --> B[Feature Engineering]
-B --> C[Matching Layer]
-C --> D[Player Season Panel]
-
-D --> E[Modeling Dataset]
-
-E --> F[Historical Evaluation Layer]
-
-F --> G[Current Scouting Layer]
-
-G --> H[Player Intelligence Layer]
-
-H --> I[Decision Support Layer]
-
-I --> J[Scouting Intelligence]
-```
-
----
-
-### Arquitectura funcional
+La arquitectura final se organiza en múltiples capas analíticas especializadas orientadas a transformar datos deportivos en decisiones accionables.
 
 ```text
 Raw Sources
@@ -257,141 +204,44 @@ Player Season Panel
 ↓
 Modeling Dataset
 ↓
-Historical Evaluation Layer
+Econometric Model
 ↓
-Current Scouting Layer
+Machine Learning Model
 ↓
-Player Intelligence Layer
+Opportunity Detection
 ↓
-Decision Support Layer
+Risk Assessment
 ↓
-Scouting Intelligence
+Recruitment Intelligence
+↓
+Decision Support System
 ```
 
----
+### Evolución metodológica
 
-### 🏗️ Arquitectura funcional final
-
-La evolución completa del proyecto puede resumirse mediante:
+La evolución funcional del proyecto puede resumirse mediante la siguiente secuencia:
 
 ```text
-Raw Data
+Econometric Model
 ↓
-Feature Engineering
+Machine Learning
 ↓
-Matching Layer
+Opportunity Detection
 ↓
-Player Season Panel
+Risk Assessment
 ↓
-Modeling Dataset
+Recruitment Intelligence
 ↓
-Historical Evaluation Layer
-↓
-Current Scouting Layer
-↓
-Scoring Engine
-↓
-Risk Framework
-↓
-Ranking Engine
-↓
-Player Intelligence Layer
-↓
-Executive Dashboard
-↓
-Decision Support Layer
-↓
-Scouting Intelligence
-↓
-Toma de decisión deportiva
+Decision Support System
 ```
 
----
-
-#### Diagrama global
-
-```mermaid
-flowchart TD
-
-A[Raw Sources]
---> B[Feature Engineering]
-
-B --> C[Matching Layer]
-
-C --> D[Player Season Panel]
-
-D --> E[Modeling Dataset]
-
-E --> F[Historical Evaluation Layer]
-
-F --> G[Current Scouting Layer]
-
-G --> H[Scoring Engine]
-
-H --> I[Risk Framework]
-
-I --> J[Ranking Engine]
-
-J --> K[Player Intelligence Layer]
-
-K --> L[Executive Dashboard]
-
-L --> M[Decision Support Layer]
-
-M --> N[Scouting Intelligence]
-
-N --> O[Toma de decisión deportiva]
-```
-
----
-
-### Historical Evaluation Layer
-
-Responsable de:
-
-- entrenamiento
-- validación temporal
-- comparación de modelos
-- evaluación metodológica
-
----
-
-### Current Scouting Layer
-
-Responsable de:
-
-- scoring operativo
-- ranking actual
-- oportunidades recientes
-- shortlist de scouting
-
----
-
-### Player Intelligence Layer
-
-Responsable de:
-
-- player radar
-- benchmarking posicional
-- perfiles individuales
-- scouting narrative
-
----
-
-### Decision Support Layer
-
-Responsable de:
-
-- visual analytics
-- dashboards
-- opportunity matrix
-- risk matrix
+Esta evolución refleja la transición desde una investigación centrada exclusivamente en predicción de valor de mercado hacia una plataforma orientada a la toma de decisiones deportivas.
 
 ---
 
 ## 📚 Metodología
 
-El proyecto sigue una adaptación de CRISP-DM.
+El proyecto sigue una adaptación de la metodología CRISP-DM aplicada al contexto del fútbol profesional.
 
 ```mermaid
 flowchart LR
@@ -404,114 +254,72 @@ A[Business Understanding]
 --> F[Deployment]
 ```
 
----
-
 ### 1. Business Understanding
 
-Definición del problema:
-
-```text
-Identificación de jugadores infravalorados
-```
-
-y evaluación de su utilidad para procesos de scouting.
-
----
+Definición del problema de negocio y de los objetivos asociados a la identificación de jugadores infravalorados.
 
 ### 2. Data Understanding
 
-Análisis exploratorio de:
-
-- FBref
-- Transfermarkt
-
-incluyendo cobertura, calidad y compatibilidad.
-
----
+Análisis exploratorio de las fuentes utilizadas, cobertura de datos, calidad de información y compatibilidad entre sistemas.
 
 ### 3. Data Preparation
 
-Incluye:
-
-- matching
-- feature engineering
-- limpieza
-- normalización
-- construcción del panel
-
----
+Procesos de matching, limpieza, normalización, feature engineering y construcción del panel longitudinal.
 
 ### 4. Modeling
 
-Desarrollo de:
-
-- modelos econométricos
-- modelos ML
-- tuning
-- validación temporal
-
----
+Desarrollo y comparación de modelos econométricos y de Machine Learning para estimar el valor de mercado esperado.
 
 ### 5. Evaluation
 
-Evaluación:
-
-#### Técnica
-
-- RMSE
-- MAE
-- R²
-
-#### Negocio
-
-- Precision@K
-- ROI potencial
-- Positive ROI Rate
-
----
+Evaluación mediante métricas técnicas y métricas de negocio orientadas a procesos de scouting.
 
 ### 6. Deployment
 
-Implementación mediante:
-
-- MLflow
-- artefactos serializados
-- dashboard Streamlit
+Implementación de los resultados mediante artefactos reproducibles, MLflow y un dashboard interactivo orientado a soporte a decisiones.
 
 ---
 
-## 📦 Fuentes de datos
+## 📦 Datos y preparación
 
-### FBref
+### Fuentes de datos
+
+El proyecto integra dos fuentes complementarias de información deportiva y de mercado.
+
+#### FBref
 
 Fuente principal de rendimiento deportivo.
 
-Variables extraídas:
+Variables utilizadas:
 
-- minutos
-- goles
-- asistencias
-- acciones defensivas
-- progresión
-- posesión
+- Minutos disputados.
+- Goles.
+- Asistencias.
+- Producción ofensiva.
+- Acciones defensivas.
+- Progresión y posesión.
+- Indicadores avanzados normalizados por 90 minutos.
 
 ---
 
-### Transfermarkt
+#### Transfermarkt
 
-Fuente principal de mercado.
+Fuente principal de información de mercado.
 
-Variables extraídas:
+Variables utilizadas:
 
-- valor de mercado
-- edad
-- club
-- posición
-- histórico de valor
+- Valor de mercado.
+- Edad.
+- Posición.
+- Club.
+- Histórico de valor.
+- Contexto competitivo.
 
 ---
 
 ### Cobertura geográfica
+
+La versión actual incorpora siete ligas europeas:
 
 - Premier League
 - LaLiga
@@ -523,11 +331,13 @@ Variables extraídas:
 
 ---
 
-## 🔗 Sistema de matching
+## 🔗 Matching multi-fuente
 
-Uno de los principales retos técnicos del proyecto fue la ausencia de un identificador universal compartido entre FBref y Transfermarkt.
+Uno de los principales retos metodológicos del proyecto fue la ausencia de un identificador universal compartido entre FBref y Transfermarkt.
 
-Se desarrolló un pipeline jerárquico específico.
+Para resolver este problema se diseñó un pipeline específico de matching jerárquico capaz de maximizar la calidad de emparejamiento sin comprometer la precisión de los registros.
+
+### Flujo de matching
 
 ```text
 Normalización
@@ -541,25 +351,21 @@ Fuzzy Matching
 Age Validation
 ```
 
----
-
-### Métricas oficiales v1.0.0
+### Resultados
 
 | Métrica | Valor |
 |----------|----------:|
-| Observaciones panel | 24.194 |
+| Observaciones integradas | 24.194 |
 | Observaciones emparejadas | 21.245 |
-| Match Rate | ≈88% |
+| Match Rate | 88% |
 
----
-
-### Contribución metodológica
-
-El matching constituye uno de los principales aportes técnicos del proyecto y fue determinante para la construcción del panel longitudinal utilizado durante toda la investigación.
+La calidad del matching constituye una de las principales contribuciones técnicas del proyecto, ya que permite construir el panel longitudinal utilizado durante toda la investigación.
 
 ---
 
 ## 📊 Dataset final
+
+Tras los procesos de integración, validación y preparación se construye un panel longitudinal jugador-temporada.
 
 ### Panel completo
 
@@ -569,77 +375,25 @@ El matching constituye uno de los principales aportes técnicos del proyecto y f
 | Temporadas | 2019-2020 → 2025-2026 |
 | Ligas | 7 |
 
----
-
 ### Dataset modelizable
+
+La fase de modelización se centra en jugadores jóvenes con potencial de desarrollo y revalorización.
 
 | Métrica | Valor |
 |----------|----------:|
 | Observaciones | 3.916 |
 | Jugadores únicos | 2.136 |
-| Edad | 18-23 |
-
----
-
-### Distribución temporal
-
-| Temporada | Observaciones |
-|----------|----------:|
-| 2019-2020 | 537 |
-| 2020-2021 | 536 |
-| 2021-2022 | 544 |
-| 2022-2023 | 542 |
-| 2023-2024 | 586 |
-| 2024-2025 | 552 |
-| 2025-2026 | 619 |
-
----
-
-## 📖 Diccionario resumido de variables
-
-### Variables demográficas
-
-- age
-- position
-- league
-- club
-
----
-
-### Variables de rendimiento
-
-- minutes_played
-- goals_per90
-- assists_per90
-- tackles_per90
-- interceptions_per90
-
----
-
-### Variables de mercado
-
-- market_value_eur
-- log_market_value_eur
-- market_value_growth
-
----
-
-### Variables derivadas
-
-- growth_score
-- confidence_score
-- opportunity_score
-- risk_score
+| Rango de edad | 18–23 |
 
 ---
 
 ## ⚙️ Feature Engineering
 
-El proyecto incorpora múltiples capas de transformación.
+El proyecto incorpora múltiples capas de transformación orientadas a capturar rendimiento, experiencia y evolución temporal.
 
-### Growth Features
+### Variables de crecimiento
 
-Variables orientadas a capturar evolución temporal.
+Diseñadas para modelar la trayectoria reciente del jugador.
 
 Ejemplos:
 
@@ -648,11 +402,9 @@ Ejemplos:
 - breakout_indicator
 - career_year
 
----
-
 ### Composite Football Indices
 
-Construidos durante Sprint 3.
+Indicadores sintéticos construidos para representar dimensiones futbolísticas complejas.
 
 Ejemplos:
 
@@ -661,225 +413,73 @@ Ejemplos:
 - experience_index
 - growth_index
 
----
+### Transformaciones aplicadas
 
-### Variables normalizadas
+- Transformaciones logarítmicas.
+- Escalado robusto.
+- Winsorización.
+- Estandarización.
 
-Se aplican transformaciones:
-
-- logarítmicas
-- escalado robusto
-- winsorización
-- estandarización
+Estas transformaciones permiten reducir la influencia de valores extremos y mejorar la estabilidad de los modelos predictivos.
 
 ---
 
-### Variables utilizadas en modelización
+## 📈 Modelización
 
-Las variables finales combinan:
-
-- edad
-- experiencia
-- rendimiento ofensivo
-- rendimiento defensivo
-- progresión
-- contexto competitivo
-- dinámica temporal
-
-
-## 📈 Modelización econométrica
+### Modelización econométrica
 
 La primera aproximación metodológica del proyecto se basa en econometría aplicada al fútbol profesional.
 
-El objetivo es construir un modelo interpretable capaz de estimar el valor de mercado esperado de un jugador a partir de sus características deportivas y contextuales.
+Su objetivo es construir un modelo interpretable capaz de estimar el valor de mercado esperado de un jugador.
 
----
-
-### Justificación
-
-La literatura académica sobre valoración de futbolistas utiliza tradicionalmente modelos econométricos debido a:
-
-- elevada interpretabilidad
-- facilidad de explicación
-- análisis de elasticidades
-- inferencia estadística
-
-Por ello, el proyecto incorpora una capa econométrica completa antes de desarrollar modelos de Machine Learning.
-
----
-
-### Variable objetivo
-
-Se utiliza:
+#### Variable objetivo
 
 ```text
 log_market_value_eur
 ```
 
-en lugar del valor de mercado bruto.
+Se utiliza la transformación logarítmica para reducir asimetrías y estabilizar la varianza observada en los valores de mercado.
 
-#### Motivación
+#### Benchmark econométrico
 
-La distribución del valor de mercado presenta:
+Modelo final:
 
-- fuerte asimetría positiva
-- colas largas
-- heterocedasticidad
-
-La transformación logarítmica permite:
-
-- estabilizar varianza
-- mejorar capacidad predictiva
-- facilitar interpretación
-
----
-
-### Especificación base
-
-```python
-log_market_value_eur ~
-age +
-log_minutes_played +
-goals_per90 +
-assists_per90
+```text
+Growth OLS
 ```
 
----
+Variables utilizadas:
 
-### Evolución del modelo
+- Edad.
+- Experiencia.
+- Rendimiento deportivo.
+- Variables de crecimiento.
+- Indicadores compuestos.
 
-#### Baseline OLS
-
-Variables simples:
-
-- edad
-- minutos
-- goles
-- asistencias
-
----
-
-#### Growth OLS
-
-Incorpora:
-
-- crecimiento histórico
-- experiencia acumulada
-- indicadores compuestos
-- variables temporales
-
-Esta especificación constituye el benchmark econométrico final.
-
----
-
-### Resultados finales
+#### Resultados
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
 | Growth OLS | 0.7287 | 0.9053 | 0.5258 |
 
----
-
-### Interpretación
-
-El modelo captura aproximadamente:
-
-```text
-52.6%
-```
-
-de la variabilidad observada en los valores de mercado.
-
-Aunque existen limitaciones inherentes a la linealidad del modelo, proporciona una base sólida para comparación con algoritmos más complejos.
+El modelo explica aproximadamente el 52.6% de la variabilidad observada en los valores de mercado.
 
 ---
 
-## 🤖 Machine Learning
+### Machine Learning
 
 Tras establecer el benchmark econométrico se desarrolla una segunda capa basada en Machine Learning supervisado.
 
----
+#### Algoritmos evaluados
 
-### Objetivo
+- Random Forest
+- HistGradientBoosting
+- LightGBM
+- XGBoost
 
-Capturar:
+Todos los modelos fueron optimizados mediante búsqueda sistemática de hiperparámetros.
 
-- relaciones no lineales
-- interacciones complejas
-- patrones difíciles de modelizar mediante regresión lineal
-
----
-
-### Algoritmos evaluados
-
-#### Random Forest
-
-Ventajas:
-
-- robustez
-- baja sensibilidad al ruido
-- interpretabilidad relativa
-
----
-
-#### LightGBM
-
-Ventajas:
-
-- velocidad
-- eficiencia computacional
-- escalabilidad
-
----
-
-#### HistGradientBoosting
-
-Ventajas:
-
-- implementación optimizada
-- entrenamiento rápido
-
----
-
-#### XGBoost
-
-Ventajas:
-
-- elevado rendimiento en datos tabulares
-- capacidad de generalización
-- manejo de relaciones complejas
-
----
-
-### Tuning de hiperparámetros
-
-Todos los modelos fueron optimizados mediante búsqueda sistemática.
-
-Parámetros ajustados:
-
-#### Random Forest
-
-- n_estimators
-- max_depth
-- min_samples_leaf
-
-#### LightGBM
-
-- learning_rate
-- num_leaves
-- max_depth
-
-#### XGBoost
-
-- learning_rate
-- max_depth
-- n_estimators
-- subsample
-- colsample_bytree
-
----
-
-### Modelo productivo
+#### Modelo productivo
 
 Tras la evaluación comparativa se selecciona:
 
@@ -887,21 +487,15 @@ Tras la evaluación comparativa se selecciona:
 Tuned XGBoost
 ```
 
-como modelo operativo.
+como modelo operativo de la plataforma.
 
----
-
-### Resultados finales
+#### Resultados
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
 | Tuned XGBoost | 0.7120 | 0.8892 | 0.5414 |
 
----
-
-### Decisión metodológica
-
-El proyecto adopta:
+#### Decisión metodológica
 
 ```text
 Growth OLS
@@ -913,138 +507,77 @@ Tuned XGBoost
 Modelo productivo
 ```
 
-Esta separación combina:
-
-- rigor académico
-- interpretabilidad
-- capacidad predictiva
+Esta separación combina rigor académico, interpretabilidad y capacidad predictiva.
 
 ---
 
 ## 🔬 Experiment Tracking con MLflow
 
-El proyecto incorpora una capa completa de seguimiento experimental mediante MLflow.
-
----
-
-### Objetivos
-
-Garantizar:
-
-- reproducibilidad
-- trazabilidad
-- comparabilidad
-
-entre experimentos.
-
----
+El proyecto incorpora una capa completa de trazabilidad experimental mediante MLflow.
 
 ### Información registrada
 
 #### Parámetros
 
-- hiperparámetros
-- configuraciones
-- seeds
+- Hiperparámetros.
+- Configuraciones.
+- Seeds.
 
 #### Métricas
 
-- MAE
-- RMSE
-- R²
-- métricas de negocio
+- MAE.
+- RMSE.
+- R².
+- Métricas de negocio.
 
 #### Artefactos
 
-- modelos serializados
-- gráficos
-- tablas
-- datasets
+- Modelos serializados.
+- Gráficos.
+- Tablas.
+- Datasets.
 
----
-
-### Beneficios
-
-MLflow permite reconstruir completamente cualquier experimento ejecutado durante el desarrollo del TFM.
+MLflow permite reconstruir completamente cualquier experimento ejecutado durante el desarrollo del proyecto.
 
 ---
 
 ## 🔍 Explainability
 
-Uno de los objetivos del proyecto es evitar sistemas de caja negra difíciles de interpretar.
-
-Por ello se incorpora una capa de Explainability basada en SHAP.
-
----
-
-### SHAP
-
-SHAP (SHapley Additive exPlanations) permite explicar:
-
-- predicciones globales
-- predicciones individuales
-
----
+La plataforma incorpora Explainable AI mediante SHAP para reducir la opacidad del modelo productivo.
 
 ### Explainability global
 
-Responde a:
+Permite responder a la pregunta:
 
 > ¿Qué variables son más importantes para el modelo?
 
 Outputs generados:
 
-- Feature Importance
-- SHAP Importance
-- Summary Plot
-
----
+- Feature Importance.
+- SHAP Importance.
+- Summary Plot.
 
 ### Explainability local
 
-Responde a:
+Permite responder a la pregunta:
 
 > ¿Por qué el modelo estima un valor determinado para este jugador?
 
 Outputs generados:
 
-- drivers positivos
-- drivers negativos
-- explicación individual
+- Drivers positivos.
+- Drivers negativos.
+- Explicación individual.
+
+La interpretabilidad constituye un elemento fundamental para facilitar la adopción de modelos analíticos dentro de entornos profesionales de scouting.
 
 ---
 
-### Aplicación a scouting
+## 📊 Evaluación y resultados
 
-La interpretabilidad permite justificar recomendaciones ante:
+La evaluación se realiza mediante validación temporal estricta para aproximar escenarios reales de utilización en scouting profesional.
 
-- dirección deportiva
-- scouting
-- analistas
-
-reduciendo la opacidad del modelo.
-
----
-
-## 📊 Evaluación técnica
-
-La evaluación técnica se realiza mediante validación temporal estricta.
-
----
-
-### Motivación
-
-Evitar:
-
-```text
-Data Leakage
-```
-
-y aproximar escenarios reales de uso.
-
----
-
-### Esquema temporal final
+### Esquema temporal
 
 ```text
 Train:
@@ -1054,163 +587,58 @@ Current Scouting:
 2025-2026
 ```
 
-Las temporadas 2019-2020 → 2024-2025 se utilizan para entrenamiento y evaluación histórica.
-
-La temporada 2025-2026 se reserva para la capa Current Scouting Layer y no participa en el entrenamiento de modelos.
+La temporada 2025-2026 queda reservada para explotación operativa y no participa en el entrenamiento de modelos.
 
 ---
 
-### Métricas utilizadas
-
-#### MAE
-
-Error absoluto medio.
-
-#### RMSE
-
-Penaliza errores grandes.
-
-#### R²
-
-Capacidad explicativa.
-
----
-
-### Comparativa final
+### Evaluación técnica
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
 | Growth OLS | 0.7287 | 0.9053 | 0.5258 |
 | Tuned XGBoost | 0.7120 | 0.8892 | 0.5414 |
 
----
-
-### Conclusión
-
-El modelo ML mejora consistentemente el benchmark econométrico.
-
----
-
-## 💼 Evaluación de negocio
-
-La evaluación técnica resulta insuficiente para determinar utilidad operativa.
-
-Por ello se desarrolla una capa de evaluación orientada a negocio.
-
----
-
-### Pregunta principal
-
-> ¿Los jugadores identificados generan realmente oportunidades de mercado?
-
----
-
-### Precision@K
-
-Mide:
-
-```text
-Proporción de jugadores exitosos
-dentro de los K primeros rankings
-```
-
----
-
-### Resultados
-
-| K | Precision@K |
-|---:|---:|
-| 10 | 0.90 |
-| 20 | 0.90 |
-| 50 | 0.90 |
-| 100 | 0.85 |
-
----
-
-### Positive ROI Rate
-
-Evalúa:
-
-```text
-Porcentaje de jugadores con
-retorno positivo potencial
-```
-
----
-
-### Simulación ROI
-
-Se desarrollan simulaciones para estimar:
-
-- valor capturado
-- upside agregado
-- potencial económico
-
----
-
-### Conclusión
-
-La evaluación de negocio demuestra que el sistema genera rankings con utilidad práctica para procesos de scouting.
-
----
-
-## 🏆 Resultados finales
-
-### Calidad del matching
-
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones panel | 24.194 |
-| Observaciones emparejadas | 21.245 |
-| Match Rate | 88% |
-
----
-
-### Dataset modelizable
-
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
-| Cobertura | 2019-2020 → 2025-2026 |
-| Ligas | 7 |
-
----
-
-### Benchmark econométrico
-
-| Modelo | MAE | RMSE | R² |
-|----------|----------:|----------:|----------:|
-| Growth OLS | 0.7287 | 0.9053 | 0.5258 |
-
----
-
-### Modelo productivo
-
-| Modelo | MAE | RMSE | R² |
-|----------|----------:|----------:|----------:|
-| Tuned XGBoost | 0.7120 | 0.8892 | 0.5414 |
+Los resultados muestran una mejora consistente del modelo de Machine Learning respecto al benchmark econométrico.
 
 ---
 
 ### Evaluación de negocio
 
+La utilidad práctica del sistema se evalúa mediante métricas orientadas a scouting.
+
+#### Precision@K
+
 | K | Precision@K |
-|---:|---:|
+|----------:|----------:|
 | 10 | 0.90 |
 | 20 | 0.90 |
 | 50 | 0.90 |
 | 100 | 0.85 |
 
----
-
-## 🎯 Scoring Intelligence Engine
-
-Una vez generadas las predicciones, el proyecto transforma dichas señales en métricas operativas.
+Estas métricas permiten evaluar la capacidad real del sistema para priorizar oportunidades de mercado relevantes.
 
 ---
 
-### Arquitectura
+### Conclusiones analíticas
+
+Los resultados obtenidos muestran que:
+
+- El matching multi-fuente alcanza niveles elevados de calidad.
+- El modelo XGBoost supera consistentemente al benchmark econométrico.
+- Las métricas de negocio validan la utilidad operativa del sistema.
+- La combinación de predicción, scoring y explainability permite construir recomendaciones reproducibles para procesos de scouting profesional.
+
+La base analítica desarrollada constituye el fundamento sobre el que posteriormente se construyen las capas de Recruitment Intelligence y Decision Support System incorporadas en las últimas fases del proyecto.
+
+---
+
+## 🖥️ Evolución hacia un DSS
+
+A partir del Sprint 7 el proyecto evoluciona desde un sistema puramente predictivo hacia una plataforma orientada al consumo de resultados por usuarios de negocio.
+
+El objetivo deja de ser únicamente responder a preguntas analíticas y pasa a centrarse en apoyar procesos reales de scouting y recruitment.
+
+La evolución funcional puede resumirse mediante la siguiente secuencia:
 
 ```text
 Predicción
@@ -1219,349 +647,38 @@ Scoring
 ↓
 Ranking
 ↓
-Scouting Intelligence
-```
-
----
-
-### Filosofía
-
-La decisión de fichar un jugador no depende únicamente del valor estimado.
-
-Es necesario incorporar:
-
-- potencial
-- confianza
-- riesgo
-- contexto
-
----
-
-### Inefficiency Score
-
-Mide:
-
-```text
-Valor esperado
--
-Valor observado
-```
-
-Cuanto mayor sea la diferencia positiva:
-
-mayor potencial de infravaloración.
-
----
-
-### Growth Score
-
-Captura:
-
-- evolución reciente
-- trayectoria
-- potencial futuro
-
----
-
-### Confidence Score
-
-Captura:
-
-- estabilidad estadística
-- robustez de la señal
-- confianza en la predicción
-
----
-
-### Opportunity Score
-
-Combina todas las dimensiones anteriores.
-
-```python
-0.55 * inefficiency_score_z +
-0.25 * growth_score_z +
-0.20 * confidence_score_z
-```
-
----
-
-### Resultado
-
-Obtención de una métrica única de priorización.
-
----
-
-## 🏅 Ranking Engine
-
-La última capa analítica transforma los scores en rankings accionables.
-
----
-
-### Inputs
-
-- Opportunity Score
-- Growth Score
-- Confidence Score
-
----
-
-### Outputs
-
-```text
-scoring_dataset.csv
-scouting_shortlist.csv
-```
-
----
-
-### Funciones
-
-#### Ranking global
-
-Todos los jugadores.
-
-#### Ranking por posición
-
-- DEF
-- MID
-- ATT
-- GK
-
-#### Ranking por liga
-
-Comparación intra-competición.
-
-#### Ranking operativo
-
-Shortlist priorizada.
-
----
-
-### Beneficio
-
-Reduce miles de jugadores potenciales a un conjunto manejable de candidatos prioritarios.
-
----
-
-## 🚀 Evolución metodológica (Sprint 1 → Sprint 6)
-
-### Sprint 1
-
-#### Positional Normalization
-
-Objetivo:
-
-Construir un lenguaje común entre competiciones.
-
-Contribuciones:
-
-- estandarización de posiciones
-- limpieza inicial
-
----
-
-### Sprint 2
-
-#### Growth Features
-
-Introducción de dinámica temporal.
-
-Contribuciones:
-
-- crecimiento histórico
-- evolución del jugador
-
----
-
-### Sprint 3
-
-#### Composite Football Indices
-
-Construcción de indicadores compuestos.
-
-Contribuciones:
-
-- finishing index
-- playmaking index
-- experience index
-- growth index
-
----
-
-### Sprint 4A
-
-#### Machine Learning Baseline
-
-Primeros modelos ML.
-
----
-
-### Sprint 4B
-
-#### Improved ML Pipeline
-
-Tuning y optimización.
-
----
-
-### Sprint 4C
-
-#### Explainability
-
-Integración de SHAP.
-
----
-
-### Sprint 5
-
-#### Scoring Engine
-
-Nacimiento del Opportunity Score.
-
----
-
-### Sprint 6
-
-#### Business Evaluation
-
-Evaluación orientada a negocio.
-
-Introducción de:
-
-- Precision@K
-- ROI Analysis
-- Positive ROI Rate
-
----
-
-### Resultado acumulado
-
-Tras Sprint 6 el proyecto ya dispone de:
-
-```text
-Dataset Integrado
-+
-Econometría
-+
-Machine Learning
-+
-Explainability
-+
-Scoring
-+
-Evaluación de negocio
-```
-
-constituyendo la base analítica sobre la que posteriormente se construyen el Dashboard, DSS y la Scouting Intelligence Platform.
-
----
-
-## 📸 Capturas de la plataforma
-
-Las siguientes figuras muestran las principales funcionalidades desarrolladas durante los Sprint 7–10.3 y representan la evolución del proyecto desde un sistema predictivo hasta una plataforma de Scouting Intelligence orientada a soporte a decisiones deportivas.
-
----
-
-## 🖥️ Dashboard y DSS
-
-A partir del Sprint 7 el proyecto evoluciona desde un sistema puramente analítico hacia una plataforma orientada al consumo de resultados por usuarios de negocio.
-
-El objetivo es reducir la distancia entre:
-
-```text
-Modelo
+Player Intelligence
 ↓
-Resultado analítico
+Recruitment Intelligence
 ↓
-Decisión deportiva
+Decision Support System
 ```
 
 ---
 
-### 🚀 Sprint 7 — Executive Dashboard
+### Sprint 7 — Executive Dashboard
 
-Sprint 7 introduce la primera capa visual de consumo de resultados.
+Sprint 7 introduce la primera capa de visualización y consumo de resultados analíticos.
 
-#### Objetivo
+Hasta este momento, el proyecto se centraba principalmente en la generación de modelos predictivos y métricas de scouting. Con la incorporación del dashboard, los resultados pasan a estar disponibles mediante una interfaz interactiva orientada a usuarios de negocio.
 
-Transformar los outputs analíticos en una herramienta accesible para procesos de scouting cuantitativo.
+#### Funcionalidades incorporadas
 
----
+- Visualización de métricas clave mediante Executive KPIs.
+- Ranking interactivo de oportunidades de mercado.
+- Exploración dinámica mediante filtros y segmentaciones.
+- Acceso individual a perfiles de jugadores.
+- Integración de explicaciones analíticas para apoyar la interpretación de resultados.
 
-#### Funcionalidades implementadas
+#### Contribución
 
-##### 📊 Executive KPIs
-
-Visualización integrada de:
-
-- jugadores en shortlist
-- Precision@K
-- Positive ROI Rate
-- ligas representadas
-- opportunity score medio
+El Sprint 7 representa el inicio de la transición desde un proyecto analítico hacia una herramienta de soporte a decisiones orientada a scouting profesional.
 
 ---
 
-##### 📋 Ranking interactivo
+### Sprint 9 — Decision Support Layer
 
-Exploración dinámica mediante:
-
-- paginación
-- ordenación
-- filtros
-- búsqueda
-
----
-
-##### 🔍 Explainability
-
-Integración de:
-
-- SHAP local
-- drivers positivos
-- drivers negativos
-- interpretación ejecutiva
-
----
-
-##### 👤 Perfil individual
-
-Cada jugador incorpora:
-
-- valor actual
-- valor esperado
-- gap de mercado
-- Opportunity Score
-- ranking
-- recomendación analítica
-
----
-
-#### Contribución metodológica
-
-Sprint 7 constituye la primera capa real de consumo de resultados del proyecto.
-
----
-
-### 🚧 Sprint 8 — Reserved
-
-Tras la revisión académica del proyecto se decidió reservar el Sprint 8.
-
-Las funcionalidades inicialmente previstas evolucionaron posteriormente hacia el Sprint 9.
-
-Esta decisión evitó:
-
-- duplicidades funcionales
-- complejidad innecesaria
-- fragmentación metodológica
-
----
-
-### 🎯 Sprint 9 — Executive Dashboard & Decision Support Layer
-
-Sprint 9 representa la transición desde un dashboard descriptivo hacia un verdadero sistema DSS (Decision Support System).
-
----
+Sprint 9 representa la transición desde un dashboard descriptivo hacia un sistema DSS (Decision Support System).
 
 #### Objetivo
 
@@ -1577,432 +694,320 @@ Ranking
 Decisión deportiva
 ```
 
----
+#### Funcionalidades implementadas
 
-#### Dashboard ejecutivo
+##### Executive Scouting Filters
 
-![Dashboard ejecutivo](reports/figures/dashboard/dashboard_executive.png)
+Segmentación dinámica mediante:
 
----
-
-#### Sprint 9.1 — Executive Scouting Filters
-
-##### Funcionalidades
-
-- filtros dinámicos
-- presets de scouting
-- segmentación automática
-- shortlist ejecutiva
-
----
-
-##### Variables de segmentación
-
-- Liga
-- Posición
-- Edad
-- Opportunity Score
-- Confidence Score
-
----
-
-#### Sprint 9.2 — Visual Analytics
+- Liga.
+- Posición.
+- Edad.
+- Opportunity Score.
+- Confidence Score.
 
 ##### Cost vs Upside Matrix
 
-Nueva matriz estratégica basada en:
+Visualización estratégica para evaluar simultáneamente:
 
-- coste de adquisición
-- upside potencial
-- Opportunity Score
+- Coste de adquisición.
+- Potencial de revalorización.
+- Atractivo de mercado.
 
----
+##### Shortlisting
 
-##### Interpretación
+Priorización automática de candidatos en función de criterios analíticos configurables.
 
-| Zona | Significado |
-|--------|--------|
-| Comprar | Bajo coste + alto upside |
-| Premium | Alto upside + coste elevado |
-| Seguimiento | Potencial moderado |
-| Baja prioridad | Menor atractivo |
+#### Contribución
+
+Nacimiento de la Decision Support Layer.
 
 ---
 
-##### Top 5 destacados
+### Sprint 10 — Player Intelligence Layer
 
-Identificación automática de los mejores perfiles dentro del universo filtrado.
-
----
-
-#### Sprint 9.3 — Decision Support
-
-Sprint 9 culmina con la primera implementación DSS del proyecto.
-
-Arquitectura:
-
-```text
-Predicción
-↓
-Scoring
-↓
-Ranking
-↓
-Visual Analytics
-↓
-Decision Support
-↓
-Scouting
-```
-
----
-
-#### Contribución metodológica
-
-La plataforma deja de ser únicamente un sistema predictivo para convertirse en una herramienta de apoyo a decisiones deportivas.
-
----
-
-### 🧠 Scouting Intelligence Platform
-
-El Sprint 10 constituye la evolución más importante del proyecto.
-
-Introduce una arquitectura orientada explícitamente a procesos modernos de scouting profesional.
-
----
+Sprint 10 introduce una nueva capa centrada en la interpretación individual de jugadores y en la incorporación explícita del riesgo dentro del proceso de scouting.
 
 #### Objetivos
 
-- separar validación histórica y scouting operativo
-- incorporar riesgo analítico
-- introducir benchmarking avanzado
-- desarrollar inteligencia de jugador
+- Mejorar la interpretabilidad individual.
+- Incorporar benchmarking posicional.
+- Formalizar la dimensión riesgo-retorno.
+- Separar evaluación histórica y scouting operativo.
 
 ---
 
-#### 👤 Sprint 10.1 — Player Intelligence Layer
+#### Sprint 10.1 — Player Radar & Positional Benchmarking
 
-Sprint 10.1 introduce una nueva capa analítica centrada en la interpretación individual del jugador.
+##### Player Radar
 
----
-
-##### Player Intelligence Layer
-
-![Player Radar](reports/figures/dashboard/player_radar.png)
-
----
-
-##### Player Radar MVP
-
-Construcción de radares posicionales para:
-
-- MID
-- ATT
+Visualización multidimensional de rendimiento mediante radares posicionales.
 
 Variables utilizadas:
 
-- minutos
-- goles/90
-- asistencias/90
-- G+A/90
-- Growth Score
-- Confidence Score
-
----
+- Minutos.
+- Goles por 90.
+- Asistencias por 90.
+- G+A por 90.
+- Growth Score.
+- Confidence Score.
 
 ##### Positional Benchmarking
 
-Comparación respecto a:
+Comparación relativa frente a jugadores de la misma posición.
 
-###### Grupo posicional
-
-```text
-MID vs MID
-ATT vs ATT
-DEF vs DEF
-GK vs GK
-```
-
-###### Universo completo
-
-Comparación relativa frente a todos los jugadores modelados.
-
----
+Permite contextualizar el rendimiento dentro del grupo competitivo relevante.
 
 ##### Scouting Narrative
 
-Generación automática de narrativa analítica basada en:
-
-- fortalezas
-- debilidades
-- upside
-- oportunidad
+Generación automática de narrativa analítica basada en fortalezas y áreas de mejora.
 
 ---
 
-##### Contribución
+#### Sprint 10.2 — Opportunity Score
 
-Nacimiento de la:
+Desarrollo de una métrica multicriterio para priorización de oportunidades.
 
-```text
-Player Intelligence Layer
-```
+El score combina:
 
----
-
-#### 📈 Sprint 10.2 — FBref Advanced Metrics Audit
-
-Antes de ampliar el modelo se realiza una auditoría completa de las tablas avanzadas disponibles en FBref.
-
----
-
-##### Tablas auditadas
-
-###### Shooting
-
-- shots
-- shots on target
-- shot distance
-
-###### Passing
-
-- progressive passes
-- key passes
-- passes completed
-
-###### Possession
-
-- carries
-- progressive carries
-- take-ons
-
-###### Defense
-
-- tackles
-- interceptions
-- blocks
-
-###### Goal & Shot Creation
-
-- SCA
-- GCA
-
-###### Misc
-
-- aerials
-- fouls
-- recoveries
-
-###### Playing Time
-
-- minutes
-- starts
-- appearances
-
----
+- Mispricing.
+- Confidence.
+- Performance.
+- Edad.
+- Valor de mercado.
 
 ##### Resultado
 
-La auditoría sirve como base para futuras fases de enriquecimiento.
+Generación de rankings operativos orientados a scouting.
 
 ---
 
-#### Sprint 10.3 — Risk Framework & Current Scouting Layer
+#### Sprint 10.3 — Risk Assessment Layer
 
-Sprint 10.3 introduce una separación explícita entre evaluación histórica y scouting operativo, además de incorporar una dimensión formal de riesgo dentro del proceso de identificación de oportunidades de mercado.
-
----
-
-##### Opportunity vs Risk Matrix
-
-![Opportunity vs Risk Matrix](reports/figures/dashboard/opportunity_risk_matrix.png)
-
----
-
-##### Problema metodológico
-
-Hasta Sprint 10.2 coexistían en el mismo flujo analítico:
-
-- validación histórica
-- evaluación de modelos
-- identificación de oportunidades actuales
-
-Esta aproximación mezclaba objetivos metodológicos distintos y podía generar confusión entre el rendimiento histórico del sistema y su aplicación operativa en procesos de scouting.
-
----
-
-##### Solución
-
-Se introduce una separación formal entre:
-
-```text
-Historical Evaluation Layer
-```
-
-y
-
-```text
-Current Scouting Layer
-```
-
-permitiendo distinguir claramente entre:
-
-- evaluación científica del modelo;
-- validación temporal;
-- identificación de oportunidades actuales;
-- soporte a decisiones deportivas.
-
----
-
-##### Historical Evaluation Layer
-
-Capa utilizada exclusivamente para:
-
-- entrenamiento de modelos;
-- validación temporal;
-- comparación de algoritmos;
-- evaluación metodológica;
-- análisis de robustez.
-
-Su objetivo es responder a la pregunta:
-
-> ¿Qué capacidad predictiva presenta el sistema sobre datos históricos?
-
----
-
-##### Current Scouting Layer
-
-Capa orientada a explotación operativa.
-
-Se utiliza para:
-
-- generar rankings actuales;
-- identificar oportunidades recientes;
-- construir shortlists;
-- alimentar el dashboard ejecutivo.
-
-Su objetivo es responder a la pregunta:
-
-> ¿Qué jugadores representan actualmente oportunidades potenciales de mercado?
-
----
-
-##### Outputs principales
-
-```text
-tuned_xgboost_predictions.csv
-
-scoring_dataset.csv
-
-scouting_shortlist.csv
-
-scouting_shortlist_with_risk.csv
-```
-
----
-
-##### Risk Framework
-
-Sprint 10.3 incorpora una dimensión explícita de riesgo dentro de la lógica de priorización de jugadores.
-
-La oportunidad de fichaje no depende únicamente del upside potencial.
-
-También depende de factores relacionados con:
-
-- incertidumbre;
-- estabilidad;
-- robustez de la señal;
-- confianza en la estimación.
-
-El objetivo es aproximar una lógica de decisión basada en riesgo-retorno similar a la utilizada en otros ámbitos analíticos.
-
----
+Incorporación de una dimensión formal de riesgo dentro del sistema.
 
 ##### Risk Score
 
-Métrica diseñada para cuantificar el nivel de riesgo asociado a cada recomendación generada por el sistema.
+Métrica diseñada para cuantificar la incertidumbre asociada a cada recomendación.
 
-El score combina diferentes dimensiones relacionadas con:
+##### Risk Categories
 
-- estabilidad estadística;
-- consistencia histórica;
-- robustez de la señal analítica.
+Segmentación automática en:
 
-Valores elevados indican una mayor incertidumbre asociada a la oportunidad identificada.
-
----
-
-##### Risk Adjusted Opportunity
-
-La combinación de Opportunity Score y Risk Score permite construir una evaluación ajustada por riesgo.
-
-Esto permite diferenciar perfiles como:
-
-```text
-High Potential / Low Risk
-
-High Potential / High Risk
-
-Moderate Potential / Low Risk
-
-Moderate Potential / High Risk
-```
-
-Esta aproximación resulta especialmente útil para adaptar la estrategia de scouting a diferentes perfiles de riesgo.
-
----
+- Low Risk.
+- Medium Risk.
+- High Risk.
 
 ##### Opportunity vs Risk Matrix
 
-La matriz Opportunity vs Risk constituye la principal herramienta visual desarrollada en Sprint 10.3.
+Herramienta visual para evaluar simultáneamente potencial y riesgo.
 
-Se construye a partir de:
+#### Contribución
+
+Nacimiento de la Player Intelligence Layer y consolidación de la lógica riesgo-retorno dentro del proceso de identificación de oportunidades.
+
+---
+
+### Sprint 11 — Recruitment Intelligence Layer
+
+Sprint 11 transforma el sistema desde una herramienta centrada en rankings hacia una plataforma de análisis comparativo para procesos de recruitment.
+
+#### Objetivo
+
+Reducir el tiempo necesario para evaluar, comparar y priorizar candidatos potenciales.
+
+---
+
+#### Recruitment Board
+
+Nueva sección orientada a procesos reales de scouting.
+
+Permite:
+
+- Selección múltiple de candidatos.
+- Construcción dinámica de shortlists.
+- Comparación simultánea de jugadores.
+- Vista ejecutiva de perfiles filtrados.
+
+---
+
+#### Candidate Selection System
+
+Implementación de un sistema de selección multijugador.
+
+Capacidades:
+
+- Selección simultánea.
+- Comparación dinámica.
+- Gestión de shortlists temporales.
+
+---
+
+#### Comparative Player Analysis
+
+Comparación directa entre candidatos.
+
+Variables comparadas:
+
+- Opportunity Score.
+- Risk Score.
+- Confidence Score.
+- Market Value.
+- Predicted Value.
+- Mispricing.
+
+Esta funcionalidad permite evaluar alternativas potenciales dentro de un mismo proceso de captación.
+
+---
+
+#### Executive Scouting Workflow
+
+El flujo metodológico evoluciona desde:
 
 ```text
-Opportunity Score
-Risk Score
-```
-
-y permite clasificar automáticamente los jugadores según su equilibrio entre potencial y riesgo.
-
----
-
-###### Objetivo
-
-Priorizar:
-
-- objetivos inmediatos;
-- oportunidades de mercado;
-- apuestas estratégicas;
-- perfiles de seguimiento.
-
----
-
-###### Beneficio
-
-La incorporación explícita de la dimensión riesgo-retorno permite enriquecer significativamente el proceso de toma de decisiones deportivas y representa uno de los principales avances metodológicos de la Scouting Intelligence Platform.
-
----
-
-###### Contribución metodológica
-
-Sprint 10.3 culmina la evolución del proyecto desde un sistema de predicción de valor de mercado hacia una plataforma integral de Scouting Intelligence capaz de combinar:
-
-```text
-Predicción
-+
-Scoring
-+
-Riesgo
-+
+Modelo
+↓
 Ranking
-+
-Player Intelligence
-+
-Decision Support
 ```
 
-dentro de un marco analítico unificado orientado a departamentos deportivos profesionales.
+hacia:
+
+```text
+Modelo
+↓
+Opportunity Detection
+↓
+Filtering
+↓
+Shortlisting
+↓
+Comparative Analysis
+↓
+Recruitment Decision
+```
+
+#### Contribución
+
+Nacimiento de la Recruitment Intelligence Layer.
+
+---
+
+### Sprint 12 — Productization, UX & Internationalization Layer
+
+Sprint 12 se centra en convertir el dashboard en una aplicación analítica profesional orientada a usuarios finales.
+
+#### Objetivos
+
+- Mejorar experiencia de usuario.
+- Reducir fricción operativa.
+- Incrementar accesibilidad.
+- Facilitar adopción internacional.
+
+---
+
+#### Advanced Search Engine
+
+Implementación de un buscador global con capacidad de búsqueda por:
+
+- Jugador.
+- Club.
+- Liga.
+- Posición.
+
+Características:
+
+- Autocompletado.
+- Sugerencias dinámicas.
+- Filtrado inmediato.
+
+---
+
+#### Search Suggestions
+
+Sistema de sugerencias integrado dentro del propio componente de búsqueda.
+
+Comportamiento tipo:
+
+```text
+Autocomplete
+Typeahead
+```
+
+sin necesidad de paneles auxiliares.
+
+---
+
+#### Search Chip
+
+Incorporación de indicadores visuales de filtros activos.
+
+Ejemplo:
+
+```text
+✕ Búsqueda: Player Name
+```
+
+Permite eliminar filtros mediante un único clic.
+
+---
+
+#### Filter UX Redesign
+
+Refactorización completa del sistema de filtros.
+
+Mejoras introducidas:
+
+- Mayor visibilidad.
+- Menor fricción de uso.
+- Consistencia visual.
+- Reducción de clics necesarios.
+
+---
+
+#### Range Slider Improvements
+
+Los valores mínimo y máximo permanecen visibles permanentemente.
+
+Beneficios:
+
+- Mejor comprensión del rango disponible.
+- Mayor precisión durante la exploración.
+
+---
+
+#### Full Internationalization
+
+Dashboard completamente bilingüe.
+
+Idiomas disponibles:
+
+- Español.
+- Inglés.
+
+La internacionalización se aplica a:
+
+- Sidebar.
+- Métricas.
+- Tablas.
+- Tooltips.
+- Alertas.
+- Recruitment Board.
+- Componentes de comparación.
+
+---
+
+#### Dashboard Productization
+
+La plataforma deja de comportarse como un prototipo analítico y pasa a funcionar como un sistema DSS orientado a:
+
+- Departamentos de scouting.
+- Recruitment teams.
+- Directores deportivos.
+- Analistas de rendimiento.
+
+#### Contribución
+
+Consolidación del proyecto como una plataforma de Decision Support System aplicada al mercado europeo de fichajes.
 
 ---
 
@@ -2014,12 +1019,15 @@ Aplicaciones potenciales:
 
 - Identificación de jugadores infravalorados.
 - Priorización objetiva de targets.
+- Construcción de shortlists.
+- Comparación de candidatos.
 - Reducción del universo de scouting.
 - Comparación entre mercados y ligas.
 - Detección temprana de talento emergente.
 - Evaluación riesgo-retorno de fichajes.
+- Apoyo cuantitativo a procesos de recruitment.
 
-La arquitectura propuesta permite complementar el scouting tradicional con evidencia cuantitativa reproducible.
+La arquitectura propuesta complementa el scouting tradicional mediante evidencia cuantitativa reproducible y explicable.
 
 ---
 
@@ -2027,27 +1035,25 @@ La arquitectura propuesta permite complementar el scouting tradicional con evide
 
 Actualmente la plataforma incorpora:
 
-- integración multi-fuente
-- matching jerárquico
-- panel longitudinal
-- econometría aplicada
-- machine learning supervisado
-- MLflow
-- SHAP
-- Opportunity Score
-- Risk Score
-- Ranking Engine
-- Executive Dashboard
-- DSS
-- Player Radar MVP
-- Positional Benchmarking
-- Player Intelligence Layer
-- Scouting Intelligence Layer
+- Integración multi-fuente.
+- Matching jerárquico.
+- Panel longitudinal.
+- Econometría aplicada.
+- Machine Learning supervisado.
+- MLflow.
+- Explainable AI.
+- Opportunity Score.
+- Risk Framework.
+- Decision Support Layer.
+- Player Intelligence Layer.
+- Recruitment Intelligence Layer.
+- Internacionalización EN/ES.
+- Sistema DSS interactivo.
 
 Versión actual:
 
 ```text
-v1.0.0 — Scouting Intelligence Platform
+v1.1.0 — Recruitment Intelligence & Decision Support System
 ```
 
 ---
@@ -2056,70 +1062,52 @@ v1.0.0 — Scouting Intelligence Platform
 
 ### Limitaciones de datos
 
-- dependencia de Transfermarkt
-- ausencia de identificador universal
-- matching imperfecto
-
----
+- Dependencia de Transfermarkt como fuente de valor de mercado.
+- Ausencia de identificador universal entre fuentes.
+- Cobertura limitada a siete ligas europeas.
 
 ### Limitaciones deportivas
 
-- ausencia de datos tracking
-- ausencia de eventos avanzados completos
-- cobertura parcial de algunas métricas
-
----
+- Ausencia de datos de tracking.
+- Cobertura parcial de métricas avanzadas.
+- Dependencia de estadísticas observables.
 
 ### Limitaciones metodológicas
 
-- riesgo de cambios estructurales del mercado
-- dependencia temporal
-- posible drift futuro
+- Cambios estructurales del mercado de fichajes.
+- Posible drift temporal.
+- Necesidad de recalibración periódica de modelos.
 
 ---
 
 ## 🛣️ Roadmap
 
-### Sprint 11 — Advanced Football Radar
+Las siguientes líneas de investigación representan posibles extensiones futuras y es posible que no formen parte de la versión evaluada en este TFM.
 
-Nuevos radares:
+### Sprint 13 — Multi-League Expansion
 
-- Shooting
-- Defense
-- Possession
-- Misc
+Ampliación progresiva de cobertura hacia ligas de desarrollo y exportación de talento:
 
----
+- Championship.
+- Segunda División española.
+- Belgian Pro League.
 
-### Sprint 12 — Data Enrichment
+Objetivo:
 
-Integración:
-
-- Understat
-- xG
-- xA
-- progresión avanzada
+Incrementar la capacidad de detección de ineficiencias de mercado fuera de las grandes ligas europeas.
 
 ---
 
-### Sprint 13 — Advanced Modeling
+### Sprint 14 — Transfer Strategy Engine
 
-Evaluación de:
+Evolución del DSS hacia un sistema de planificación estratégica de fichajes.
 
-- CatBoost
-- TabPFN
-- Ensemble Models
+Líneas de trabajo potenciales:
 
----
-
-### Sprint 14 — Production Layer
-
-Implementación de:
-
-- API
-- inferencia automatizada
-- actualización periódica
-- despliegue productivo
+- Sustitución de jugadores.
+- Construcción de carteras de targets.
+- Optimización de inversión.
+- Estrategia de mercado.
 
 ---
 
@@ -2221,20 +1209,6 @@ market-value-football-tfm/
 └── requirements.txt                       # Dependencias Python
 ```
 
-### Principios de diseño
-
-La arquitectura del proyecto se ha diseñado siguiendo los siguientes principios:
-
-- Modularidad.
-- Reproducibilidad.
-- Escalabilidad.
-- Separación de responsabilidades.
-- Configuración centralizada.
-- Trazabilidad experimental mediante MLflow.
-- Compatibilidad con futuras capas de Scouting Intelligence.
-
-La estructura facilita la incorporación de nuevas fuentes de datos, modelos predictivos, métricas avanzadas y funcionalidades de soporte a decisiones sin necesidad de modificar la arquitectura principal del sistema.
-
 ---
 
 ## 🔁 Reproducibilidad
@@ -2245,58 +1219,13 @@ La arquitectura ha sido diseñada para garantizar que cualquier resultado pueda 
 
 ---
 
-### Versionado y trazabilidad
-
-#### MLflow
-
-Todos los experimentos son registrados mediante MLflow.
-
-Se almacenan:
-
-- hiperparámetros
-- métricas
-- modelos entrenados
-- artefactos analíticos
-- configuraciones utilizadas
-
----
-
-#### Dataset Versioning
-
-Cada dataset generado incorpora:
-
-- hash de versión
-- timestamp de generación
-- metadata descriptiva
-
-Esto permite reconstruir exactamente cualquier experimento realizado durante el desarrollo del proyecto.
-
----
-
-#### Configuración centralizada
-
-La configuración se encuentra desacoplada del código mediante archivos YAML:
-
-```text
-config/
-├── features.yaml
-├── matching.yaml
-├── modeling.yaml
-├── scoring.yaml
-└── validation.yaml
-```
-
-Esto facilita la repetibilidad de experimentos y la modificación controlada de parámetros.
-
----
-
-## ▶️ Ejecución reproducible
+### ▶️ Ejecución reproducible
 
 La ejecución completa del pipeline puede reproducirse siguiendo las etapas descritas a continuación.
 
 ---
 
-### 1️⃣ Construir features FBref
+#### 1️⃣ Construir features FBref
 
 ```bash
 python -m src.data.build_fbref_features
@@ -2304,7 +1233,7 @@ python -m src.data.build_fbref_features
 
 ---
 
-### 2️⃣ Construir features Transfermarkt
+#### 2️⃣ Construir features Transfermarkt
 
 ```bash
 python -m src.data.build_transfermarkt_features
@@ -2312,7 +1241,7 @@ python -m src.data.build_transfermarkt_features
 
 ---
 
-### 3️⃣ Construir panel jugador-temporada
+#### 3️⃣ Construir panel jugador-temporada
 
 ```bash
 python -m src.data.build_player_season_panel
@@ -2320,7 +1249,7 @@ python -m src.data.build_player_season_panel
 
 ---
 
-### 4️⃣ Construir dataset modelizable
+#### 4️⃣ Construir dataset modelizable
 
 ```bash
 python -m src.data.build_modeling_dataset
@@ -2328,7 +1257,7 @@ python -m src.data.build_modeling_dataset
 
 ---
 
-### 5️⃣ Ejecutar pipeline econométrico
+#### 5️⃣ Ejecutar pipeline econométrico
 
 ```bash
 python -m src.models.econometric.run_ols_pipeline
@@ -2336,7 +1265,7 @@ python -m src.models.econometric.run_ols_pipeline
 
 ---
 
-### 6️⃣ Ejecutar pipeline Machine Learning
+#### 6️⃣ Ejecutar pipeline Machine Learning
 
 ```bash
 python -m src.models.machine_learning.run_ml_pipeline
@@ -2344,7 +1273,7 @@ python -m src.models.machine_learning.run_ml_pipeline
 
 ---
 
-### 7️⃣ Ejecutar Scoring Engine
+#### 7️⃣ Ejecutar Scoring Engine
 
 ```bash
 python -m src.models.scoring.build_inefficiency_score
@@ -2356,7 +1285,7 @@ python -m src.models.scoring.generate_rankings
 
 ---
 
-### 8️⃣ Ejecutar capa de evaluación
+#### 8️⃣ Ejecutar capa de evaluación
 
 ```bash
 python -m src.models.evaluation.build_ranking_diagnostics
@@ -2366,7 +1295,7 @@ python -m src.models.evaluation.build_precision_at_k
 
 ---
 
-### Resultado final
+#### Resultado final
 
 La ejecución completa genera:
 
@@ -2403,6 +1332,9 @@ garantizando la reproducibilidad integral de los resultados presentados en este 
 - SHAP
 - MLflow
 - Streamlit
+- DuckDB
+- Pandas
+- Statsmodels
 
 ### Metodologías
 
@@ -2424,7 +1356,7 @@ garantizando la reproducibilidad integral de los resultados presentados en este 
 
 Trabajo Fin de Máster
 
-**Market Value Dynamics and Market Inefficiency Detection in European Football**
+**Market Value Dynamics and Market Inefficiency Detection in Professional Football**
 
 Autores:
 
@@ -2435,6 +1367,16 @@ Autores:
 Tutor:
 
 - Antonio Pita Lozano
+
+---
+
+## 🎯 Impacto potencial
+
+La plataforma desarrollada permite transformar grandes volúmenes de información futbolística en procesos de decisión accionables para departamentos deportivos.
+
+El sistema no pretende sustituir el scouting tradicional, sino complementarlo mediante evidencia cuantitativa reproducible, interpretable y escalable.
+
+La combinación de modelos predictivos, scoring multicriterio, evaluación de riesgo y herramientas de recruitment permite reducir el universo de análisis inicial y priorizar oportunidades con potencial de creación de valor.
 
 ---
 
@@ -2449,22 +1391,23 @@ Econometría
 +
 Machine Learning
 +
-Explainability
+Explainable AI
 +
-Scoring
+Opportunity Detection
 +
-Decision Support
+Risk Assessment
 +
-Player Intelligence
+Recruitment Intelligence
++
+Decision Support System
 ```
 
-permite transformar datos deportivos en recomendaciones accionables para procesos de captación de talento.
+permite transformar datos deportivos en recomendaciones accionables para procesos reales de captación de talento.
 
 La release:
 
 ```text
-v1.0.0 — Scouting Intelligence Platform
+v1.1.0 — Recruitment Intelligence & Decision Support System
 ```
 
-constituye la primera versión funcional completa de una plataforma de Scouting Intelligence aplicada al mercado europeo de fichajes.
-```
+representa la consolidación del proyecto como una plataforma DSS aplicada al mercado europeo de fichajes y constituye la culminación de la evolución metodológica desarrollada a lo largo del TFM.

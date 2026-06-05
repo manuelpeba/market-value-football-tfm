@@ -6,10 +6,10 @@ Este documento centraliza decisiones metodológicas, hipótesis, experimentos, r
 
 ```text
 Market Value Dynamics and Market Inefficiency Detection
-in European Football
+in Professional Football
 ```
 
-Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release v1.0.0 — Scouting Intelligence Platform.
+Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release v1.1.0 — Recruitment Intelligence & Decision Support System.
 
 ---
 
@@ -57,16 +57,18 @@ Explainability
 ↓
 Scoring multicriterio
 ↓
+Decision Support Layer
+↓
+Current Scouting Layer
+↓
+Player Intelligence Layer
+↓
+Recruitment Intelligence Layer
+↓
 Decision Support System
-↓
-Current Scouting
-↓
-Player Intelligence
-↓
-Scouting Intelligence
 ```
 
-La release v1.0.0 consolida esta transición.
+La release v1.1.0 consolida esta evolución metodológica.
 
 ---
 
@@ -526,40 +528,217 @@ Sprint 10.3 constituye la principal aportación metodológica de la release v1.0
 
 ---
 
+---
+
+# Sprint 11 — Recruitment Intelligence Layer
+
+## Problema identificado
+
+La incorporación de la Player Intelligence Layer permitió analizar jugadores de forma individual, pero todavía existía una diferencia importante entre el análisis individual y los procesos reales de recruitment utilizados por departamentos deportivos.
+
+```text
+Player Intelligence
+≠
+Proceso real de recruitment
+```
+
+## Objetivo
+
+Transformar análisis individuales en flujos operativos de captación de talento.
+
+## Implementación
+
+### Recruitment Board
+
+Nueva capa diseñada para construir shortlists dinámicas de candidatos.
+
+Capacidades:
+
+- selección múltiple de jugadores
+- shortlist dinámica
+- vista ejecutiva de recruitment
+
+### Candidate Selection System
+
+Sistema de comparación simultánea entre candidatos.
+
+Permite:
+
+- selección múltiple
+- comparación dinámica
+- gestión de alternativas
+
+### Comparative Player Analysis
+
+Comparación directa de:
+
+- Opportunity Score
+- Risk Score
+- Confidence Score
+- Market Value
+- Predicted Value
+- Mispricing
+
+### Executive Scouting Workflow
+
+Nueva secuencia metodológica:
+
+```text
+Opportunity Detection
+↓
+Filtering
+↓
+Shortlisting
+↓
+Comparative Analysis
+↓
+Recruitment Decision
+```
+
+## Conclusión
+
+La incorporación de Sprint 11 transforma el sistema desde una herramienta de análisis individual hacia una plataforma orientada a procesos reales de recruitment.
+
+Nace formalmente la:
+
+```text
+Recruitment Intelligence Layer
+```
+
+---
+
+# Sprint 12 — Productization, UX & Internationalization Layer
+
+## Problema identificado
+
+La utilidad analítica de una plataforma no garantiza su adopción por usuarios finales.
+
+```text
+Modelo útil
+≠
+Herramienta adoptable
+```
+
+## Objetivo
+
+Convertir el dashboard en una aplicación profesional orientada a usuarios de negocio.
+
+## Implementación
+
+### Advanced Search Engine
+
+Búsqueda global por:
+
+- jugador
+- club
+- liga
+- posición
+
+Características:
+
+- autocompletado
+- sugerencias dinámicas
+- filtrado inmediato
+
+### Search Suggestions
+
+Implementación de comportamiento tipo:
+
+```text
+Autocomplete
+Typeahead
+```
+
+integrado en el propio componente de búsqueda.
+
+### Search Chips
+
+Incorporación de indicadores visuales de filtros activos para mejorar la experiencia de usuario.
+
+### UX Redesign
+
+Refactorización de:
+
+- filtros
+- navegación
+- organización visual
+- interacción
+
+### Range Slider Improvements
+
+Visualización permanente de valores mínimo y máximo para mejorar la exploración de datos.
+
+### Internationalization
+
+Dashboard completamente bilingüe.
+
+Idiomas:
+
+- Español
+- Inglés
+
+Aplicado a:
+
+- métricas
+- tablas
+- tooltips
+- mensajes
+- alertas
+- Recruitment Board
+
+## Conclusión
+
+Sprint 12 consolida la transición desde un prototipo analítico hacia una aplicación profesional orientada a scouting y recruitment.
+
+La arquitectura culmina en:
+
+```text
+Decision Support System
+```
+
+---
+
 # Conclusión metodológica global
 
-La evolución completa del proyecto muestra una transición progresiva desde:
+La evolución completa del proyecto muestra una transición progresiva desde un problema de predicción de valor de mercado hacia un sistema integral de apoyo a decisiones aplicado al scouting profesional.
+
+La secuencia metodológica desarrollada puede resumirse como:
 
 ```text
-Predicción de valor de mercado
+Predicción
+↓
+Interpretabilidad
+↓
+Scoring
+↓
+Riesgo
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Decision Support System
 ```
 
-hacia:
-
-```text
-Scouting Intelligence Platform
-```
-
-Las principales contribuciones metodológicas son:
+Las principales contribuciones metodológicas del proyecto son:
 
 - integración multi-fuente FBref + Transfermarkt
 - matching jerárquico reproducible
 - panel longitudinal jugador-temporada
-- comparación econometría vs Machine Learning
+- comparación entre econometría y Machine Learning
 - explainability mediante SHAP
-- scoring multicriterio
-- validación mediante Precision@K
-- dashboard ejecutivo
-- Decision Support System
+- Opportunity Score
 - Risk Framework
 - Current Scouting Layer
 - Player Intelligence Layer
+- Recruitment Intelligence Layer
+- Dashboard DSS bilingüe
 
 ---
 
 ## Conclusión principal
 
-La capacidad predictiva es importante, pero no constituye el principal valor generado por el sistema.
+La capacidad predictiva constituye un requisito necesario, pero no suficiente, para generar valor dentro de un proceso de scouting profesional.
 
 El valor emerge de la combinación entre:
 
@@ -574,10 +753,12 @@ Riesgo
 ↓
 Player Intelligence
 ↓
-Decision Support
+Recruitment Intelligence
+↓
+Decision Support System
 ```
 
-La principal conclusión metodológica es que la separación explícita entre:
+La separación explícita entre:
 
 ```text
 Historical Evaluation Layer
@@ -585,6 +766,12 @@ Historical Evaluation Layer
 Current Scouting Layer
 ```
 
-permite mantener rigor académico y, simultáneamente, generar recomendaciones operativas aplicables a contextos reales de scouting profesional.
+permite mantener simultáneamente:
 
-La release v1.0.0 consolida la evolución del proyecto desde un ejercicio de modelización predictiva hacia una plataforma integral de Football Analytics orientada a identificación, priorización y evaluación de oportunidades de mercado.
+- rigor académico
+- reproducibilidad
+- utilidad operativa
+
+La incorporación posterior de las capas de Player Intelligence, Recruitment Intelligence y Productization transforma la arquitectura inicial en una plataforma DSS orientada a contextos reales de scouting y recruitment profesional.
+
+La release v1.1.0 consolida la culminación de esta evolución metodológica.
