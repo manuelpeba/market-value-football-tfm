@@ -1623,6 +1623,222 @@ div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
 )
 
 
+
+
+# =============================================================================
+# Final UX stabilization patch: sidebar labels, sliders and clickable search clear
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Clear, modern global search */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    border-radius: 14px !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    min-height: 46px !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12), 0 10px 24px rgba(15,23,42,.065) !important;
+}
+/* Sidebar slider titles and permanent range boxes */
+.sidebar-slider-title {
+    color: #ffffff !important;
+    font-size: 0.88rem;
+    font-weight: 850;
+    margin: 1.05rem 0 0.15rem 0;
+}
+[data-testid="stSidebar"] .slider-range-hint {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0.35rem 0 0.95rem 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, 0.14) !important;
+    border: 1px solid rgba(191, 219, 254, 0.28) !important;
+    font-size: 0.74rem !important;
+    line-height: 1.2 !important;
+}
+[data-testid="stSidebar"] .slider-range-hint span,
+[data-testid="stSidebar"] .slider-range-hint b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+/* Hide native BaseWeb hover value balloons/tick labels; our range box is the canonical reference */
+[data-testid="stSidebar"] [data-testid="stTickBar"],
+[data-testid="stSidebar"] [data-testid="stThumbValue"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] [aria-hidden="true"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="ThumbValue"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="TickBar"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="tick"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="Tick"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+/* Keep slider track/thumb visible after hiding labels */
+[data-testid="stSidebar"] div[data-baseweb="slider"] [role="slider"] {
+    display: block !important;
+    visibility: visible !important;
+}
+/* Product glossary and clear-search controls */
+.clear-search-button button {
+    border-radius: 999px !important;
+    border: 1px solid #dbeafe !important;
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    font-weight: 850 !important;
+    padding: 0.35rem 0.75rem !important;
+}
+.clear-search-button button:hover {
+    background: #dbeafe !important;
+    border-color: #bfdbfe !important;
+}
+.context-chip-clear {
+    cursor: default !important;
+    text-decoration: none !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# Sprint 11 UX closure patch: search, sidebar helpers and filter chips
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Premium global search block */
+.global-search-shell {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #dbe7f5;
+    border-radius: 18px;
+    padding: 14px 16px 12px 16px;
+    box-shadow: 0 12px 30px rgba(15,23,42,.065);
+    margin: 0 0 16px 0;
+}
+.global-search-title {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.78rem;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#1e3a8a;
+    margin-bottom:4px;
+}
+.global-search-caption {
+    color:#64748b;
+    font-size:.82rem;
+    margin-bottom:8px;
+}
+/* Main selectbox used as autocomplete search */
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 1px solid #b7c8dd !important;
+    min-height: 50px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.060) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 12px 28px rgba(15,23,42,.075) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] label {
+    font-weight: 900 !important;
+    color: #1e293b !important;
+}
+/* Sidebar help controls: avoid blank white expander and align with product style */
+[data-testid="stSidebar"] div[data-testid="stPopover"] button {
+    background: rgba(219,234,254,.11) !important;
+    border: 1px solid rgba(191,219,254,.30) !important;
+    color: #eaf2ff !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    min-height: 42px !important;
+    font-weight: 850 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+[data-testid="stSidebar"] div[data-testid="stPopover"] button:hover {
+    background: rgba(219,234,254,.18) !important;
+    border-color: rgba(191,219,254,.45) !important;
+}
+/* Slider title + range above the track */
+.sidebar-slider-title {
+    color: #ffffff !important;
+    font-size: 0.86rem !important;
+    font-weight: 900 !important;
+    margin: 1.00rem 0 0.20rem 0 !important;
+}
+[data-testid="stSidebar"] .slider-range-hint {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 0 0.18rem 0 !important;
+    padding: 7px 9px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, 0.14) !important;
+    border: 1px solid rgba(191, 219, 254, 0.30) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+[data-testid="stSidebar"] .slider-range-hint span,
+[data-testid="stSidebar"] .slider-range-hint b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+/* Hide native hover/tick values: custom range box is canonical */
+[data-testid="stSidebar"] [data-testid="stTickBar"],
+[data-testid="stSidebar"] [data-testid="stThumbValue"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] [aria-hidden="true"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="ThumbValue"],
+[data-testid="stSidebar"] div[data-baseweb="slider"] div[class*="Tick"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+[data-testid="stSidebar"] .stSlider {
+    margin-bottom: .70rem !important;
+}
+/* Clickable active-search chip */
+.context-chip-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1e3a8a !important;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: .78rem;
+    font-weight: 900;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    text-decoration: none !important;
+}
+.context-chip-link:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -1947,6 +2163,7 @@ def UI(text: object) -> str:
     return translations.get(value, value)
 
 def render_metric_card(label, value, show_info_icon=False):
+    label = TXT(label) if 'TXT' in globals() else label
     info_icon = " <span class='info-icon'>i</span>" if show_info_icon else ""
     st.markdown(
         f"""
@@ -3505,12 +3722,15 @@ def classify_replacement_fit(row: pd.Series) -> str:
 def recommendation_badge(label: str) -> str:
     """HTML badge for executive recommendation/action labels."""
     raw_label = str(label)
+    if raw_label in {"Iniciar contacto", "Due diligence", "Vídeo scouting", "Seguimiento activo", "Monitorización pasiva", "No priorizar", "Analizar en vídeo"}:
+        return render_action_badge(raw_label) if "render_action_badge" in globals() else f"<span class='badge-gray'>{html.escape(V(raw_label))}</span>"
     class_name = "badge-gray"
-    if raw_label in {"Priorizar", "Sustituto prioritario", "Iniciar contacto", "Due diligence"}:
+    if raw_label in {"Priorizar", "Sustituto prioritario"}:
         class_name = "badge-red"
-    elif raw_label in {"Analizar en vídeo", "Alternativa viable", "Vídeo scouting"}:
+    elif raw_label in {"Alternativa viable", "Seguimiento"}:
         class_name = "badge-yellow"
     return f'<span class="{class_name}">{html.escape(V(raw_label))}</span>'
+
 
 
 def render_sprint11_context_box(title: str, text: str) -> None:
@@ -6718,6 +6938,52 @@ TEXT_EN_EXTRA.update({
     "Importante": "Important",
 })
 
+
+TEXT_EN_EXTRA.update({
+    "Comparativa ejecutiva de candidatos filtrados. El CSV conserva las variables auxiliares para auditoría metodológica.": "Executive comparison of filtered candidates. The CSV keeps auxiliary variables for methodological audit.",
+    "Selecciona al menos un jugador para construir la tabla comparativa.": "Select at least one player to build the comparison table.",
+    "No hay columna de nombre disponible para construir la tabla comparativa.": "No player-name column available to build the comparison table.",
+    "No hay columna de nombre disponible para construir el comparador.": "No player-name column available to build the comparator.",
+    "No hay jugadores disponibles para construir el radar con los filtros actuales.": "No players available to build the radar with the current filters.",
+    "No hay suficientes métricas disponibles para construir benchmarking posicional real.": "Not enough metrics available to build a real positional benchmark.",
+    "No hay suficientes métricas comunes para construir el radar comparativo.": "Not enough common metrics to build the comparison radar.",
+    "Mejor reemplazo": "Best replacement",
+    "Similitud": "Similarity",
+    "Adaptación": "Adaptation",
+    "Riesgo": "Risk",
+    "Jugador referencia": "Reference player",
+    "Perfil más similar": "Most similar profile",
+    "Similitud media": "Average similarity",
+    "Top perfiles": "Top profiles",
+    "No disponible": "Not available",
+    "Mayor Growth": "Best growth",
+    "Mayor Confidence": "Highest confidence",
+    "Menor Risk": "Lowest risk",
+    "Líder Opportunity": "Opportunity leader",
+    "Opportunity Score": "Opportunity Score",
+    "Growth Score": "Growth Score",
+    "Confidence Score": "Confidence Score",
+    "Risk Score": "Risk Score",
+    "Comparación de percentiles": "Percentile comparison",
+    "Ganador por métrica": "Performance leaders",
+    "Conclusión comparativa": "Scouting insight",
+    "Descargar comparación CSV": "Download comparison CSV",
+    "Descargar sustitutos CSV": "Download replacements CSV",
+})
+VALUE_TRANSLATIONS.setdefault("EN", {}).update({
+    "Seguimiento activo": "Active tracking",
+    "Monitorización pasiva": "Passive monitoring",
+    "Vídeo scouting": "Video scouting",
+    "Analizar en vídeo": "Video review",
+    "Seguimiento recomendado": "Recommended tracking",
+    "Revisión exploratoria": "Exploratory review",
+    "Scouting prioritario": "Priority scouting",
+    "Alta prioridad": "High priority",
+    "Objetivo scouting": "Scouting target",
+    "Exploratorio": "Exploratory",
+    "Bajo riesgo": "Low risk",
+})
+
 def league_quality_display_name(value: object) -> str:
     return V(value)
 
@@ -6749,27 +7015,808 @@ def localize_display_df(display_df: pd.DataFrame) -> pd.DataFrame:
             result[col] = result[col].astype(str)
     return result
 
-def render_slider_range_hint(min_value, max_value, current_value, suffix: str = "") -> None:
-    """Always show slider limits and selected value; Streamlit native labels only appear on hover."""
-    if isinstance(current_value, tuple):
-        current_text = f"{current_value[0]:g}–{current_value[1]:g}{suffix}"
-    else:
-        current_text = f"{current_value:g}{suffix}" if isinstance(current_value, (int, float, np.integer, np.floating)) else str(current_value)
+def _fmt_sidebar_number(value, suffix: str = "") -> str:
+    """Format sidebar numeric values without unnecessary decimals."""
+    try:
+        numeric = float(value)
+        if numeric.is_integer():
+            return f"{int(numeric):,}{suffix}"
+        return f"{numeric:g}{suffix}"
+    except Exception:
+        return f"{value}{suffix}"
 
-    if "LANG" in globals() and LANG == "EN":
-        range_label, selection_label = "Range", "Selected"
+
+def render_slider_range_hint(min_value, max_value, current_value, suffix: str = "") -> None:
+    """Render a persistent value-first slider card.
+
+    Native Streamlit/BaseWeb slider labels are unreliable because several values
+    are only visible on hover. This custom card is the canonical source of truth:
+    it shows the selected value prominently and keeps the valid range visible.
+    """
+    if isinstance(current_value, tuple):
+        selected_text = f"{_fmt_sidebar_number(current_value[0], suffix)} – {_fmt_sidebar_number(current_value[1], suffix)}"
     else:
-        range_label, selection_label = "Rango", "Selección"
+        selected_text = _fmt_sidebar_number(current_value, suffix)
+
+    range_text = f"{_fmt_sidebar_number(min_value, suffix)} – {_fmt_sidebar_number(max_value, suffix)}"
+    selected_label = "Selected" if globals().get("LANG", "ES") == "EN" else "Seleccionado"
+    range_label = "Range" if globals().get("LANG", "ES") == "EN" else "Rango"
 
     st.markdown(
         f"""
-        <div class="slider-range-hint">
-            <span>{range_label}: {min_value:g}–{max_value:g}{suffix}</span>
-            <span>{selection_label}: <b>{current_text}</b></span>
+        <div class="sidebar-slider-state sidebar-slider-state-modern">
+            <div class="sidebar-slider-current"><span>{selected_label}</span><b>{selected_text}</b></div>
+            <div class="sidebar-slider-range"><span>{range_label}</span><b>{range_text}</b></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+
+
+# =============================================================================
+# Final UX close patch: stronger search, stable clear action and sidebar sliders
+# =============================================================================
+st.markdown(
+    """
+<style>
+.global-search-shell {
+    border: 1px solid #c8d7ec !important;
+    border-radius: 18px !important;
+    padding: 14px 16px !important;
+    margin: 0 0 8px 0 !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f3f8ff 100%) !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.075) !important;
+}
+.global-search-title { color:#0f2f5f !important; letter-spacing:.08em !important; }
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] label {
+    font-size: .86rem !important;
+    color: #0f172a !important;
+    font-weight: 900 !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 52px !important;
+    border: 1px solid #b7c8dd !important;
+    background: #ffffff !important;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.065) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.13), 0 12px 28px rgba(15,23,42,.075) !important;
+}
+.search-clear-row { margin: -12px 0 18px 0 !important; }
+[data-testid="stSidebar"] .sidebar-slider-title {
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    margin-top: 1.10rem !important;
+    margin-bottom: .30rem !important;
+}
+[data-testid="stSidebar"] .slider-range-hint {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 0 .32rem 0 !important;
+    padding: 7px 9px !important;
+    border-radius: 9px !important;
+    background: rgba(219,234,254,.16) !important;
+    border: 1px solid rgba(191,219,254,.34) !important;
+    box-shadow: none !important;
+    font-size: .73rem !important;
+    line-height: 1.15 !important;
+}
+[data-testid="stSidebar"] .slider-range-hint span,
+[data-testid="stSidebar"] .slider-range-hint b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"],
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"] *,
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] *,
+[data-testid="stSidebar"] .stSlider [role="tooltip"],
+[data-testid="stSidebar"] .stSlider [data-baseweb="tooltip"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown("""<style>
+
+/* =========================
+   Sprint 11 UX closure: definitive search + sidebar filter readability
+   ========================= */
+.global-search-shell {
+    border: 1px solid #b9cbe3 !important;
+    border-radius: 20px !important;
+    padding: 16px 18px 14px 18px !important;
+    margin: 0 0 10px 0 !important;
+    background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%) !important;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .080) !important;
+}
+.global-search-title {
+    color: #0f2f5f !important;
+    font-size: .82rem !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+}
+.global-search-caption {
+    color: #475569 !important;
+    font-size: .86rem !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 54px !important;
+    border: 1px solid #aebfd4 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .070) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .14), 0 14px 32px rgba(15, 23, 42, .085) !important;
+}
+.sidebar-filter-group-title {
+    color: #93c5fd !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    margin: 1.05rem 0 .30rem 0 !important;
+    padding-top: .55rem !important;
+    border-top: 1px solid rgba(148, 163, 184, .22) !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-title {
+    color: #ffffff !important;
+    font-size: .86rem !important;
+    font-weight: 900 !important;
+    margin: .82rem 0 .22rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-state,
+[data-testid="stSidebar"] .sidebar-slider-state * {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-state {
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin: 0 0 .24rem 0 !important;
+    padding: 7px 9px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, .16) !important;
+    border: 1px solid rgba(191, 219, 254, .36) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+    font-size: .72rem !important;
+    line-height: 1.15 !important;
+    font-weight: 800 !important;
+}
+/* Native slider values/ticks are intentionally suppressed: sidebar-slider-state is the single visible source. */
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"],
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"] *,
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] *,
+[data-testid="stSidebar"] .stSlider [role="tooltip"],
+[data-testid="stSidebar"] .stSlider [data-baseweb="tooltip"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+.search-clear-row button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    min-height: 32px !important;
+    padding: .25rem .70rem !important;
+}
+.search-clear-row button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+
+</style>""", unsafe_allow_html=True)
+
+
+
+# =============================================================================
+# UX closing micro-patch: search prominence and sidebar range readability
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Make the bordered search container behave like an obvious product search card. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) {
+    border: 1px solid #b8cce6 !important;
+    border-radius: 20px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f2f8ff 100%) !important;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .085) !important;
+    padding: 4px 6px 10px 6px !important;
+    margin-bottom: 16px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) label {
+    font-size: .82rem !important;
+    font-weight: 950 !important;
+    color: #1e293b !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #9fb7d6 !important;
+    border-radius: 16px !important;
+    min-height: 56px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.070) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 12px 28px rgba(15,23,42,.085) !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    min-height: 34px !important;
+    margin-top: .25rem !important;
+}
+/* Range box is now rendered after the slider track and must always be readable. */
+[data-testid="stSidebar"] .sidebar-slider-state {
+    margin: .34rem 0 1.10rem 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    background: rgba(219,234,254,.16) !important;
+    border: 1px solid rgba(191,219,254,.36) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-state span,
+[data-testid="stSidebar"] .sidebar-slider-state b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
+}
+/* Aggressive but scoped cleanup of native slider labels that only appear on hover. */
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"],
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+[data-testid="stSidebar"] .stSlider [role="tooltip"],
+[data-testid="stSidebar"] .stSlider [data-baseweb="tooltip"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11/12 final UX closure patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search: single CRM-style entry point, not a generic filter card. */
+.final-search-card {
+    border: 1px solid #b6cae5;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .090);
+    padding: 18px 20px 16px 20px;
+    margin: 0 0 18px 0;
+}
+.final-search-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f2f5f;
+    font-size: .86rem;
+    font-weight: 950;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.final-search-caption {
+    color: #475569;
+    font-size: .88rem;
+    line-height: 1.35;
+    margin-bottom: 10px;
+}
+.final-search-card label {
+    font-weight: 950 !important;
+    color: #0f172a !important;
+}
+.final-search-card div[data-baseweb="select"] > div {
+    min-height: 58px !important;
+    border: 2px solid #9fb7d6 !important;
+    background: #ffffff !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.075) !important;
+    font-size: 1rem !important;
+}
+.final-search-card div[data-baseweb="select"] > div:hover,
+.final-search-card div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 14px 30px rgba(15,23,42,.090) !important;
+}
+.final-search-card [data-baseweb="select"] svg {
+    opacity: 1 !important;
+}
+/* Hide old duplicated clear-search button styles if legacy code remains. */
+.search-clear-row, .clear-search-button { display: none !important; }
+
+/* Quick guide / scouting setup */
+.quick-guide-card {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050);
+    margin: 0 0 18px 0;
+}
+.scouting-setup-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: .86rem;
+}
+.scouting-setup-table th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 900;
+    padding: 9px 10px;
+    text-align: left;
+}
+.scouting-setup-table td {
+    padding: 9px 10px;
+    border-top: 1px solid #edf2f7;
+    color: #334155;
+}
+.scouting-concept-chip, .matrix-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: .78rem;
+    font-weight: 900;
+    margin: 0 6px 7px 0;
+}
+.matrix-chip-green { background:#ecfdf5; border-color:#bbf7d0; color:#166534; }
+.matrix-chip-orange { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+.matrix-chip-blue { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+.matrix-chip-red { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+
+/* Sidebar preset and value-first sliders */
+.sidebar-preset-card {
+    background: rgba(219,234,254,.12);
+    border: 1px solid rgba(191,219,254,.28);
+    border-radius: 14px;
+    padding: 12px 13px;
+    margin: .70rem 0 1.15rem 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.sidebar-preset-eyebrow {
+    color: #bfdbfe !important;
+    -webkit-text-fill-color: #bfdbfe !important;
+    font-size: .72rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 5px;
+}
+.sidebar-preset-title {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 1.02rem;
+    font-weight: 950;
+    line-height: 1.15;
+    margin-bottom: 5px;
+}
+.sidebar-preset-text {
+    color: #cbd5e1 !important;
+    -webkit-text-fill-color: #cbd5e1 !important;
+    font-size: .82rem;
+    line-height: 1.38;
+}
+[data-testid="stSidebar"] .sidebar-slider-title {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: .89rem !important;
+    font-weight: 950 !important;
+    margin: 1.10rem 0 .32rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-state-modern {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: rgba(219,234,254,.13) !important;
+    border: 1px solid rgba(191,219,254,.34) !important;
+    border-radius: 13px !important;
+    padding: 9px 10px !important;
+    margin: 0 0 .35rem 0 !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin-bottom: 4px !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current span,
+[data-testid="stSidebar"] .sidebar-slider-range span {
+    color: #bfdbfe !important;
+    -webkit-text-fill-color: #bfdbfe !important;
+    font-size: .70rem !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .04em !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 1.12rem !important;
+    font-weight: 950 !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-range {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-range b {
+    color: #dbeafe !important;
+    -webkit-text-fill-color: #dbeafe !important;
+    font-size: .78rem !important;
+    font-weight: 850 !important;
+}
+/* Keep native slider tick labels and hover balloons suppressed; our card is canonical. */
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"],
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"] *,
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"],
+[data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] *,
+[data-testid="stSidebar"] .stSlider [role="tooltip"],
+[data-testid="stSidebar"] .stSlider [data-baseweb="tooltip"],
+[data-testid="stSidebar"] .stSlider div[aria-hidden="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Context hierarchy: candidates first, model universe second. */
+.context-strip-v2 {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050);
+    margin: 14px 0 24px 0;
+}
+.context-strip-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.context-current-kpi {
+    min-width: 210px;
+}
+.context-current-value {
+    font-size: 2.35rem;
+    line-height: .95;
+    font-weight: 950;
+    color: #0f172a;
+}
+.context-current-label {
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-top: 4px;
+}
+.context-secondary-kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.active-search-chip button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    min-height: 33px !important;
+    padding: .25rem .70rem !important;
+    margin: 0 0 10px 0 !important;
+}
+.active-search-chip button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+.action-badge-green { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+.action-badge-yellow { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+.action-badge-red { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+.action-badge-gray { background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+.action-badge-green, .action-badge-yellow, .action-badge-red, .action-badge-gray {
+    display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-weight:900;font-size:.74rem;white-space:nowrap;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Final integrated UX patch: search card, quick guide card and active chips
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Modern Quick Guide card: replaces the default expander look. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.quick-guide-title) {
+    border: 1px solid #dbe3ee !important;
+    border-radius: 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%) !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .050) !important;
+    padding: 8px 10px 12px 10px !important;
+    margin: 0 0 18px 0 !important;
+}
+.quick-guide-header { margin-bottom: 8px; }
+.quick-guide-title {
+    color: #0f2f5f;
+    font-size: .90rem;
+    font-weight: 950;
+    letter-spacing: .02em;
+    margin-bottom: 3px;
+}
+.quick-guide-subtitle {
+    color: #64748b;
+    font-size: .82rem;
+    line-height: 1.35;
+    margin-bottom: 9px;
+}
+.quick-guide-chip-row { display:flex; flex-wrap:wrap; gap:7px; }
+.quick-guide-chip-row span {
+    display:inline-flex;
+    align-items:center;
+    border:1px solid #dbeafe;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:.74rem;
+    font-weight:900;
+}
+
+/* Integrated CRM search card. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    border: 1px solid #b6cae5 !important;
+    border-radius: 22px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #eef6ff 100%) !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .090) !important;
+    padding: 12px 14px 14px 14px !important;
+    margin: 0 0 18px 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-title {
+    color:#0f2f5f !important;
+    font-size:.88rem !important;
+    font-weight:950 !important;
+    letter-spacing:.075em !important;
+    text-transform:uppercase !important;
+    margin-bottom:5px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-caption {
+    color:#475569 !important;
+    font-size:.88rem !important;
+    line-height:1.35 !important;
+    margin-bottom:10px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) label {
+    font-size:.82rem !important;
+    font-weight:950 !important;
+    color:#0f172a !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height:58px !important;
+    border:2px solid #9fb7d6 !important;
+    background:#ffffff !important;
+    border-radius:18px !important;
+    box-shadow:0 12px 28px rgba(15,23,42,.075) !important;
+    font-size:1rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color:#2563eb !important;
+    box-shadow:0 0 0 4px rgba(37,99,235,.14), 0 14px 30px rgba(15,23,42,.090) !important;
+}
+
+/* Active search chip lives only inside Contexto activo. */
+.context-chip-row { display:flex; flex-wrap:wrap; gap:0; }
+.context-chip-search {
+    text-decoration:none !important;
+    cursor:pointer !important;
+    border-color:#bfdbfe !important;
+    background:#eff6ff !important;
+    color:#1e3a8a !important;
+    font-weight:950 !important;
+}
+.context-chip-search:hover {
+    background:#dbeafe !important;
+    border-color:#93c5fd !important;
+}
+.active-search-chip, .search-clear-row, .clear-search-button { display:none !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def render_quick_guide() -> None:
+    """Top-level product guide with tabs, replacing the default Streamlit expander."""
+    title = "ℹ️ Quick Guide" if LANG == "EN" else "ℹ️ Guía rápida"
+    subtitle = (
+        "Use these tabs to understand ranking logic, filters and operating concepts."
+        if LANG == "EN"
+        else "Consulta la lógica del ranking, la lectura de filtros y el glosario operativo."
+    )
+
+    with st.container(border=True):
+        st.markdown(
+            f"""
+            <div class="quick-guide-header">
+                <div class="quick-guide-title">{html.escape(title)}</div>
+                <div class="quick-guide-subtitle">{html.escape(subtitle)}</div>
+                <div class="quick-guide-chip-row">
+                    <span>Ranking</span><span>{'Filters' if LANG == 'EN' else 'Filtros'}</span><span>{'Glossary' if LANG == 'EN' else 'Glosario'}</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        tab_rank, tab_filters, tab_glossary = st.tabs(
+            [
+                "Ranking",
+                "Filters" if LANG == "EN" else "Filtros",
+                "Glossary" if LANG == "EN" else "Glosario",
+            ]
+        )
+        with tab_rank:
+            if LANG == "EN":
+                st.markdown(
+                    """
+The ranking is not a market-price prediction table. It is an executive decision layer that combines **Future Asset**, **ROI 3Y**, **Opportunity**, **Risk**, **Context Fit** and **Confidence** to reduce the scouting search space.
+                    """
+                )
+            else:
+                st.markdown(
+                    """
+El ranking no es una tabla de predicción de precio de mercado. Es una capa ejecutiva de decisión que combina **Future Asset**, **ROI 3Y**, **Opportunity**, **Risk**, **Context Fit** y **Confidence** para reducir el espacio de búsqueda del área deportiva.
+                    """
+                )
+        with tab_filters:
+            if LANG == "EN":
+                st.markdown(
+                    """
+The sidebar defines the active scouting universe. The most important operational filters are **maximum age**, **minimum minutes** and **minimum confidence**; they remain visible in large format to avoid relying on slider hover labels.
+                    """
+                )
+            else:
+                st.markdown(
+                    """
+La barra lateral define el universo activo de scouting. Los filtros operativos más importantes son **edad máxima**, **minutos mínimos** y **confianza mínima**; por eso se muestran en grande y no dependen del hover del slider.
+                    """
+                )
+        with tab_glossary:
+            if LANG == "EN":
+                rows = [
+                    ("Opportunity", "Sporting-economic upside and undervaluation signal."),
+                    ("Risk", "Estimated uncertainty; lower is better."),
+                    ("Recommendation", "Analytical interpretation of the candidate profile."),
+                    ("Action", "Next operational step for the recruitment team."),
+                    ("Decision Score", "Final executive priority score."),
+                    ("Tier", "Secondary opportunity classification."),
+                ]
+            else:
+                rows = [
+                    ("Opportunity", "Potencial deportivo-económico y señal de infravaloración."),
+                    ("Risk", "Riesgo estimado; menor es mejor."),
+                    ("Recommendation", "Interpretación analítica del perfil candidato."),
+                    ("Action", "Siguiente paso operativo para el área deportiva."),
+                    ("Decision Score", "Score ejecutivo final de priorización."),
+                    ("Tier", "Clasificación secundaria de oportunidad."),
+                ]
+            table_rows = "".join(
+                f"<tr><td><b>{html.escape(k)}</b></td><td>{html.escape(v)}</td></tr>" for k, v in rows
+            )
+            st.markdown(
+                f"""
+<table class="scouting-setup-table">
+    <thead><tr><th>{html.escape('Concept' if LANG == 'EN' else 'Concepto')}</th><th>{html.escape('Meaning' if LANG == 'EN' else 'Qué significa')}</th></tr></thead>
+    <tbody>{table_rows}</tbody>
+</table>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
+    """Build CRM-like search labels while preserving raw values for filtering."""
+    labels: list[str] = []
+    label_to_raw: dict[str, str] = {}
+
+    def add(label: str, raw: str) -> None:
+        if raw is None or str(raw).strip() == "":
+            return
+        if label not in label_to_raw:
+            labels.append(label)
+            label_to_raw[label] = str(raw)
+
+    if "league" in df.columns:
+        for league in sorted(df["league"].dropna().astype(str).unique().tolist(), key=str.lower):
+            add(f"🏆 {league_display_name(league)}", league)
+    if "club" in df.columns:
+        for club in sorted(df["club"].dropna().astype(str).unique().tolist(), key=str.lower):
+            add(f"🏟️ {club}", club)
+    name_col = get_player_name_column(df)
+    if name_col is not None:
+        tmp = df.dropna(subset=[name_col]).copy()
+        if "executive_decision_score_v2" in tmp.columns:
+            tmp = tmp.sort_values("executive_decision_score_v2", ascending=False)
+        elif "opportunity_score" in tmp.columns:
+            tmp = tmp.sort_values("opportunity_score", ascending=False)
+        for _, row in tmp.drop_duplicates(subset=[name_col]).head(350).iterrows():
+            name = str(row[name_col])
+            meta = " · ".join(str(x) for x in [safe_get(row, "club", ""), safe_get(row, "position_group", "")] if str(x).strip())
+            add(f"👤 {name}" + (f" ({meta})" if meta else ""), name)
+    if "position_group" in df.columns:
+        for pos in sorted(df["position_group"].dropna().astype(str).unique().tolist(), key=str.lower):
+            add(f"📍 {pos}", pos)
+    return labels, label_to_raw
+
+
+def render_action_badge(label: str) -> str:
+    """Modern action badges for the recruitment ranking."""
+    raw = str(label)
+    display = action_display_name(raw) if "action_display_name" in globals() else V(raw)
+    if raw in {"Iniciar contacto", "Due diligence"}:
+        cls, icon = "action-badge-green", "🟢"
+    elif raw in {"Vídeo scouting", "Seguimiento activo", "Analizar en vídeo"}:
+        cls, icon = "action-badge-yellow", "🟡"
+    elif raw in {"Monitorización pasiva", "No priorizar", "Descartar por riesgo"}:
+        cls, icon = "action-badge-red", "🔴"
+    else:
+        cls, icon = "action-badge-gray", "⚪"
+    return f'<span class="{cls}">{icon} {html.escape(display)}</span>'
 
 
 # =============================================================================
@@ -6786,40 +7833,47 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+render_quick_guide()
+
 base_df = add_executive_decision_features(df.copy())
 
-# Clear the global search from the active-filter chip link.
+# Clear the global search without external navigation.
+def clear_global_scouting_search() -> None:
+    st.session_state["global_scouting_search"] = None
+
 try:
     if st.query_params.get("clear_search") == "1":
-        st.session_state["global_scouting_search"] = None
+        clear_global_scouting_search()
         st.query_params.clear()
 except Exception:
     pass
 
-# Native autocomplete search. The dropdown is attached to the search field and
-# Streamlit filters options as the user types; no detached suggestion module is rendered.
-suggestion_cols = [
-    col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group"]
-    if col in base_df.columns
-]
-search_options = []
-for col in suggestion_cols:
-    search_options.extend(base_df[col].dropna().astype(str).unique().tolist())
-search_options = sorted(set(search_options), key=lambda value: value.lower())
+# CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
+search_options, search_label_to_raw = build_search_options(base_df)
 
-global_search_query = st.selectbox(
-    T("search_label"),
-    options=search_options,
-    index=None,
-    placeholder=T("search_placeholder"),
-    key="global_scouting_search",
-    help=(
-        "Start typing to show matching players, clubs, leagues or positions."
-        if LANG == "EN"
-        else "Empieza a escribir para ver jugadores, clubes, ligas o posiciones coincidentes."
-    ),
-)
-global_search_query = "" if global_search_query is None else str(global_search_query)
+with st.container(border=True):
+    st.markdown(
+        f"""
+        <div class="final-search-title">🔎 {html.escape('Search players, clubs, leagues and positions' if LANG == 'EN' else 'Buscar jugador, club, liga o posición')}</div>
+        <div class="final-search-caption">{html.escape('Type a name, club, league or position and select a CRM-style match.' if LANG == 'EN' else 'Escribe un jugador, club, liga o posición y selecciona una coincidencia tipo CRM.')}</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    global_search_label = st.selectbox(
+        "Search" if LANG == "EN" else "Búsqueda global",
+        options=search_options,
+        index=None,
+        placeholder="e.g. Bundesliga, Bayern, Yan Diomandé, MID..." if LANG == "EN" else "Ej.: Bundesliga, Bayern, Yan Diomandé, MID...",
+        key="global_scouting_search",
+        help=(
+            "Suggestions are grouped by league, club, player and position."
+            if LANG == "EN"
+            else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
+        ),
+    )
+
+global_search_query = "" if global_search_label is None else search_label_to_raw.get(str(global_search_label), str(global_search_label))
+global_search_display = "" if global_search_label is None else str(global_search_label)
 
 PRESETS = {
     "full_exploration": {
@@ -6882,22 +7936,53 @@ preset_key = st.sidebar.radio(
 preset = PRESETS[preset_key]
 selected_preset_label = T("selected_preset")
 preset_description = preset["description"].get(LANG, preset["description"]["ES"])
-st.sidebar.caption(f"{selected_preset_label}: {preset_description}")
+st.sidebar.markdown(
+    f"""
+    <div class="sidebar-preset-card">
+        <div class="sidebar-preset-eyebrow">🎯 {html.escape('Active preset' if LANG == 'EN' else 'Preset activo')}</div>
+        <div class="sidebar-preset-title">{html.escape(preset_label(preset_key))}</div>
+        <div class="sidebar-preset-text">{html.escape(preset_description)}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 preset_name = preset_key
+
+st.sidebar.markdown(
+    f"<div class='sidebar-filter-group-title'>{html.escape('Sporting profile' if LANG == 'EN' else 'Perfil deportivo')}</div>",
+    unsafe_allow_html=True,
+)
 
 filter_row_1 = [st.sidebar, st.sidebar, st.sidebar]
 filter_row_2 = [st.sidebar, st.sidebar, st.sidebar, st.sidebar]
 filter_row_3 = [st.sidebar, st.sidebar, st.sidebar]
 
 with filter_row_1[0]:
-    max_age = st.slider(T("max_age"), min_value=18, max_value=30, value=int(preset["max_age"]), step=1, format="", key=f"max_age_{preset_name}")
-    render_slider_range_hint(18, 30, max_age)
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_age'))}</div>", unsafe_allow_html=True)
+    max_age_key = f"max_age_{preset_name}"
+    max_age_default = int(preset["max_age"])
+    max_age_preview = st.session_state.get(max_age_key, max_age_default)
+    render_slider_range_hint(18, 30, max_age_preview, " years" if LANG == "EN" else " años")
+    max_age = st.slider(T("max_age"), min_value=18, max_value=30, value=max_age_default, step=1, format="", key=max_age_key, label_visibility="collapsed")
 with filter_row_1[1]:
-    min_minutes = st.slider(T("min_minutes"), min_value=0, max_value=3000, value=int(preset["min_minutes"]), step=100, format="", key=f"min_minutes_{preset_name}")
-    render_slider_range_hint(0, 3000, min_minutes)
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_minutes'))}</div>", unsafe_allow_html=True)
+    min_minutes_key = f"min_minutes_{preset_name}"
+    min_minutes_default = int(preset["min_minutes"])
+    min_minutes_preview = st.session_state.get(min_minutes_key, min_minutes_default)
+    render_slider_range_hint(0, 3000, min_minutes_preview)
+    min_minutes = st.slider(T("min_minutes"), min_value=0, max_value=3000, value=min_minutes_default, step=100, format="", key=min_minutes_key, label_visibility="collapsed")
 with filter_row_1[2]:
-    min_confidence = st.slider(T("min_confidence"), min_value=0, max_value=100, value=int(preset["min_confidence"]), step=5, format="", key=f"min_confidence_{preset_name}")
-    render_slider_range_hint(0, 100, min_confidence)
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_confidence'))}</div>", unsafe_allow_html=True)
+    min_confidence_key = f"min_confidence_{preset_name}"
+    min_confidence_default = int(preset["min_confidence"])
+    min_confidence_preview = st.session_state.get(min_confidence_key, min_confidence_default)
+    render_slider_range_hint(0, 100, min_confidence_preview)
+    min_confidence = st.slider(T("min_confidence"), min_value=0, max_value=100, value=min_confidence_default, step=5, format="", key=min_confidence_key, label_visibility="collapsed")
+
+st.sidebar.markdown(
+    f"<div class='sidebar-filter-group-title'>{html.escape('Competitive context' if LANG == 'EN' else 'Contexto competitivo')}</div>",
+    unsafe_allow_html=True,
+)
 
 with filter_row_2[0]:
     raw_leagues = sorted(base_df["league"].dropna().astype(str).unique().tolist())
@@ -6917,38 +8002,38 @@ with filter_row_2[2]:
 with filter_row_2[3]:
     global_min_os = float(np.floor(base_df["opportunity_score"].min()))
     global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
-    os_range = st.slider(T("opportunity_range"), min_value=global_min_os, max_value=global_max_os, value=(float(preset["min_opportunity"]), global_max_os), format="", key=f"opportunity_range_{preset_name}")
-    render_slider_range_hint(global_min_os, global_max_os, os_range)
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('opportunity_range'))}</div>", unsafe_allow_html=True)
+    os_range_key = f"opportunity_range_{preset_name}"
+    os_range_default = (float(preset["min_opportunity"]), global_max_os)
+    os_range_preview = st.session_state.get(os_range_key, os_range_default)
+    render_slider_range_hint(global_min_os, global_max_os, os_range_preview)
+    os_range = st.slider(T("opportunity_range"), min_value=global_min_os, max_value=global_max_os, value=os_range_default, format="", key=os_range_key, label_visibility="collapsed")
+
+st.sidebar.markdown(
+    f"<div class='sidebar-filter-group-title'>{html.escape('Market and risk' if LANG == 'EN' else 'Mercado y riesgo')}</div>",
+    unsafe_allow_html=True,
+)
 
 with filter_row_3[0]:
     global_max_value_m = float(np.ceil(pd.to_numeric(base_df.get("market_value_eur", 0), errors="coerce").max() / 1_000_000))
     max_value_limit_m = max(1.0, global_max_value_m)
-    max_market_value_m = st.slider(T("max_value"), min_value=0.5, max_value=max_value_limit_m, value=max_value_limit_m, step=0.5, format="", key=f"max_value_{preset_name}")
-    render_slider_range_hint(0.5, max_value_limit_m, max_market_value_m, "M")
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_value'))}</div>", unsafe_allow_html=True)
+    max_value_key = f"max_value_{preset_name}"
+    max_value_preview = st.session_state.get(max_value_key, max_value_limit_m)
+    render_slider_range_hint(0.5, max_value_limit_m, max_value_preview, "M")
+    max_market_value_m = st.slider(T("max_value"), min_value=0.5, max_value=max_value_limit_m, value=max_value_limit_m, step=0.5, format="", key=max_value_key, label_visibility="collapsed")
 with filter_row_3[1]:
-    min_roi = st.slider(T("min_roi"), min_value=0, max_value=400, value=0, step=25, format="", key=f"min_roi_{preset_name}")
-    render_slider_range_hint(0, 400, min_roi, "%")
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_roi'))}</div>", unsafe_allow_html=True)
+    min_roi_key = f"min_roi_{preset_name}"
+    min_roi_preview = st.session_state.get(min_roi_key, 0)
+    render_slider_range_hint(0, 400, min_roi_preview, "%")
+    min_roi = st.slider(T("min_roi"), min_value=0, max_value=400, value=0, step=25, format="", key=min_roi_key, label_visibility="collapsed")
 with filter_row_3[2]:
-    max_risk_filter = st.slider(T("max_risk"), min_value=0, max_value=100, value=100, step=5, format="", key=f"max_risk_{preset_name}")
-    render_slider_range_hint(0, 100, max_risk_filter)
-
-with st.sidebar.popover("ℹ️ " + T("how_filters")):
-    if LANG == "ES":
-        st.markdown("""
-- **Preset de scouting**: aplica una configuración inicial de edad, minutos, confianza y Opportunity.
-- **Opportunity Score**: señal de upside/infravaloración. Más alto es mejor.
-- **Risk Score**: incertidumbre del perfil. Más bajo es mejor.
-- **ROI 3Y**: retorno proyectado a tres años sobre el valor actual.
-- **Liga**: se muestra con país para evitar ambigüedad competitiva.
-        """)
-    else:
-        st.markdown("""
-- **Scouting preset**: applies an initial age, minutes, confidence and Opportunity setup.
-- **Opportunity Score**: upside/undervaluation signal. Higher is better.
-- **Risk Score**: profile uncertainty. Lower is better.
-- **ROI 3Y**: projected three-year return over current value.
-- **League**: shown with country to avoid competitive-context ambiguity.
-        """)
+    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_risk'))}</div>", unsafe_allow_html=True)
+    max_risk_key = f"max_risk_{preset_name}"
+    max_risk_preview = st.session_state.get(max_risk_key, 100)
+    render_slider_range_hint(0, 100, max_risk_preview)
+    max_risk_filter = st.slider(T("max_risk"), min_value=0, max_value=100, value=100, step=5, format="", key=max_risk_key, label_visibility="collapsed")
 
 filtered_df = base_df.copy()
 filtered_df = filtered_df[
@@ -7024,34 +8109,39 @@ if selected_position != T("all_f"):
     active_filters.append(f"{T('position')}: {selected_position}")
 if selected_tier != T("all_m"):
     active_filters.append(f"{T('tier')}: {tier_display_name(selected_tier)}")
-if search_query_clean:
-    active_filters.append(f"✕ {'Search' if LANG == 'EN' else 'Búsqueda'}: {global_search_query}")
-
+# Search is rendered as a clickable active chip inside the Contexto activo strip.
 context_chip_items = []
+if search_query_clean:
+    context_chip_items.append(
+        f"<a class='context-chip context-chip-search' href='?clear_search=1'>🔎 {html.escape(str(global_search_query))} ×</a>"
+    )
 for item in active_filters:
     item_text = str(item)
-    if search_query_clean and item_text.startswith(("✕ Search:", "✕ Búsqueda:")):
-        context_chip_items.append(
-            f"<a class='context-chip context-chip-neutral context-chip-clear' href='?clear_search=1'>{html.escape(item_text)}</a>"
-        )
-    else:
-        context_chip_items.append(
-            f"<span class='context-chip context-chip-neutral'>{html.escape(item_text)}</span>"
-        )
+    context_chip_items.append(
+        f"<span class='context-chip context-chip-neutral'>{html.escape(item_text)}</span>"
+    )
 context_chips = "".join(context_chip_items)
 st.markdown(
     f"""
-<div class="context-strip">
+<div class="context-strip-v2">
     <div class="context-strip-title">{html.escape(UI("Contexto activo"))}</div>
-    <span class="context-chip">{html.escape(UI("Universo modelado"))} · {SCORED_UNIVERSE_SIZE:,}</span>
-    <span class="context-chip">{html.escape(UI("Shortlist ejecutiva"))} · {shortlist_universe:,}</span>
-    <span class="context-chip">{html.escape(UI("Candidatos actuales"))} · {filtered_universe:,}</span>
-    <div style="height:8px;"></div>
-    {context_chips}
+    <div class="context-strip-main">
+        <div class="context-current-kpi">
+            <div class="context-current-value">{filtered_universe:,}</div>
+            <div class="context-current-label">{html.escape(UI("Candidatos actuales"))}</div>
+        </div>
+        <div class="context-secondary-kpis">
+            <span class="context-chip">{html.escape(UI("Universo modelado"))} · {SCORED_UNIVERSE_SIZE:,}</span>
+            <span class="context-chip">{html.escape(UI("Shortlist ejecutiva"))} · {shortlist_universe:,}</span>
+            <span class="context-chip context-chip-neutral">{filtered_pct_shortlist:.0%} {html.escape(UI("de la shortlist"))}</span>
+        </div>
+    </div>
+    <div class="context-chip-row">{context_chips}</div>
 </div>
 """,
     unsafe_allow_html=True,
 )
+
 
 
 
@@ -7202,6 +8292,17 @@ fig = build_opportunity_risk_matrix(filtered_df)
 if fig is None:
     st.info("Not enough data to build the Opportunity vs Risk matrix with current filters." if LANG == "EN" else "No hay datos suficientes para generar la matriz Opportunity vs Risk con los filtros actuales.")
 else:
+    st.markdown(
+        f"""
+        <div style="margin: 4px 0 12px 0;">
+            <span class="matrix-chip matrix-chip-green">🟢 {html.escape('Immediate priority' if LANG == 'EN' else 'Prioridad inmediata')}</span>
+            <span class="matrix-chip matrix-chip-orange">🟠 {html.escape('Growth bet' if LANG == 'EN' else 'Crecimiento')}</span>
+            <span class="matrix-chip matrix-chip-blue">🔵 {html.escape('Low impact' if LANG == 'EN' else 'Bajo impacto')}</span>
+            <span class="matrix-chip matrix-chip-red">🔴 {html.escape('High risk' if LANG == 'EN' else 'Riesgo elevado')}</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.expander(T("methodology"), expanded=False):
         if LANG == "EN":
             st.markdown("""
