@@ -1839,6 +1839,674 @@ st.markdown(
 )
 
 
+
+
+# =============================================================================
+# Final deterministic sidebar slider state override
+# =============================================================================
+st.markdown(
+    """
+<style>
+[data-testid="stSidebar"] .sidebar-slider-current-state,
+[data-testid="stSidebar"] .sidebar-slider-current-state * {
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current-state {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0.15rem 0 0.35rem 0 !important;
+    padding: 7px 9px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, 0.14) !important;
+    border: 1px solid rgba(191, 219, 254, 0.30) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current-state span {
+    font-size: 0.68rem !important;
+    font-weight: 850 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: #dbeafe !important;
+    -webkit-text-fill-color: #dbeafe !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-current-state b {
+    font-size: 0.82rem !important;
+    font-weight: 950 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 numeric sidebar filters: no native slider hover labels
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Numeric sidebar filters replace st.slider for the executive filter panel. */
+[data-testid="stSidebar"] .sidebar-filter-value-badge {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 0 0.35rem 0 !important;
+    padding: 7px 10px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, 0.16) !important;
+    border: 1px solid rgba(191, 219, 254, 0.36) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge span {
+    color: #dbeafe !important;
+    -webkit-text-fill-color: #dbeafe !important;
+    font-size: .70rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: .055em !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: .86rem !important;
+    font-weight: 950 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: .85rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    border-radius: 10px !important;
+    font-weight: 850 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    color: #0f172a !important;
+    background: #f8fafc !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 UX refinement: compact header, collapsed guide, search and numeric filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Reduce excessive whitespace above the product header. */
+.block-container {
+    padding-top: 0.55rem !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+}
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 2.25rem !important;
+}
+
+/* Make the collapsed guide look intentional rather than fully expanded onboarding. */
+div[data-testid="stExpander"] {
+    margin: 0 0 14px 0 !important;
+}
+div[data-testid="stExpander"] details:not([open]) > summary {
+    border-bottom: 0 !important;
+}
+
+/* Stronger, product-like global search card and writable select input. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%) !important;
+    border: 1px solid #c8d9ee !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.075) !important;
+    padding: 14px 16px 16px 16px !important;
+    margin-bottom: 18px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-title {
+    font-size: 0.90rem !important;
+    color: #0b2f5f !important;
+    letter-spacing: 0.085em !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 56px !important;
+    border: 2px solid #93b5da !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.065) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14), 0 14px 32px rgba(15, 23, 42, 0.090) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input {
+    font-size: 1.00rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Numeric sidebar controls: visible stepper buttons and cleaner input body. */
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-top: 0.20rem !important;
+    margin-bottom: 0.88rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-weight: 900 !important;
+    min-height: 38px !important;
+    border-radius: 10px 0 0 10px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #eaf2ff !important;
+    color: #0f2f5f !important;
+    -webkit-text-fill-color: #0f2f5f !important;
+    border-left: 1px solid #c7d7ea !important;
+    min-width: 30px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button svg {
+    color: #0f2f5f !important;
+    fill: #0f2f5f !important;
+    opacity: 1 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button:hover {
+    background: #dbeafe !important;
+}
+.sidebar-filter-value {
+    margin-bottom: 0.20rem !important;
+}
+
+/* Clear search: visible, modern and separated from the context strip without looking like a raw Streamlit default. */
+.search-clear-row {
+    display: block !important;
+    margin: -0.35rem 0 1.10rem 0 !important;
+}
+.search-clear-row + div[data-testid="stButton"] button,
+div[data-testid="stButton"] button[kind="secondary"] {
+    border-radius: 999px !important;
+}
+div[data-testid="stButton"] button:has(p) {
+    font-weight: 850 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 final visual polish: compact header, search emphasis, filter badges
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Pull the product header closer to the top of the viewport. */
+.block-container {
+    padding-top: 0.15rem !important;
+}
+header[data-testid="stHeader"] {
+    height: 1.35rem !important;
+    min-height: 1.35rem !important;
+    background: transparent !important;
+}
+.scouting-topbar {
+    margin-top: 0.05rem !important;
+    margin-bottom: 8px !important;
+}
+
+/* Make the search module read as the primary interaction. */
+.global-search-shell,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.10), 0 10px 24px rgba(15, 23, 42, 0.055) !important;
+}
+.global-search-title, .final-search-title {
+    color: #0b2f5f !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #93c5fd !important;
+    border-radius: 16px !important;
+    min-height: 54px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 8px 22px rgba(37,99,235,.08) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 12px 28px rgba(37,99,235,.11) !important;
+}
+
+/* Sidebar numeric filter state: selected value + allowed range in one compact badge. */
+[data-testid="stSidebar"] .sidebar-filter-value-badge {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 8px 9px !important;
+    border-radius: 10px !important;
+    background: rgba(219, 234, 254, 0.14) !important;
+    border: 1px solid rgba(191, 219, 254, 0.34) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06) !important;
+    margin: 0.18rem 0 0.30rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-badge-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-badge-item:last-child {
+    align-items: flex-end !important;
+    text-align: right !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge span {
+    color: #b9d4f5 !important;
+    -webkit-text-fill-color: #b9d4f5 !important;
+    font-size: 0.66rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .055em !important;
+    text-transform: uppercase !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge b {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 0.82rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: 0.95rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    border-radius: 10px 0 0 10px !important;
+    font-weight: 900 !important;
+    min-height: 40px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    background: #eff6ff !important;
+    color: #0f2f5f !important;
+    -webkit-text-fill-color: #0f2f5f !important;
+    border-left: 1px solid #c7d8ee !important;
+    font-weight: 950 !important;
+}
+
+/* Clear-search action: closer to context card and more product-like. */
+.search-clear-row {
+    margin: -0.70rem 0 0.95rem 1.05rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] {
+    margin-top: -0.70rem !important;
+    margin-bottom: 0.95rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button,
+.clear-search-button button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    padding: 0.38rem 0.82rem !important;
+    min-height: 34px !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.10) !important;
+}
+.search-clear-row + div[data-testid="stButton"] button:hover,
+.clear-search-button button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# UX polish v2: spacing, Google-like search, compact guide and numeric filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Reduce only the excessive Streamlit chrome above the product header. */
+header[data-testid="stHeader"] {
+    height: 0.35rem !important;
+    min-height: 0.35rem !important;
+    background: transparent !important;
+}
+.block-container {
+    padding-top: 0.45rem !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 14px !important;
+}
+
+/* Quick guide: calmer collapsed product card, with breathing room after the header. */
+div[data-testid="stExpander"] {
+    margin-top: 10px !important;
+    margin-bottom: 24px !important;
+    border-radius: 16px !important;
+    border: 1px solid #dbe3ee !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.045) !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"] details > summary {
+    min-height: 46px !important;
+    padding: 11px 16px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    color: #0f2f5f !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.01em !important;
+}
+div[data-testid="stExpander"] details[open] > summary {
+    border-bottom: 1px solid #e5edf7 !important;
+}
+.quick-guide-intro {
+    color: #64748b !important;
+    font-size: 0.84rem !important;
+    margin: 4px 0 12px 0 !important;
+}
+
+/* Search module: white, prominent and closer to a Google-like input. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 20px !important;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.085), 0 8px 18px rgba(15, 23, 42, 0.045) !important;
+    padding: 16px 18px 18px 18px !important;
+    margin-bottom: 18px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-title {
+    color: #0b2f5f !important;
+    font-size: 0.90rem !important;
+    font-weight: 950 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-caption {
+    color: #475569 !important;
+    font-size: 0.86rem !important;
+    margin-bottom: 10px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #93c5fd !important;
+    border-radius: 999px !important;
+    min-height: 52px !important;
+    box-shadow: 0 5px 16px rgba(37, 99, 235, 0.10) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13), 0 8px 20px rgba(37, 99, 235, 0.12) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-weight: 750 !important;
+}
+
+/* Sidebar numeric filters: clearer distance between state badge and editable input. */
+[data-testid="stSidebar"] .sidebar-filter-value-badge {
+    margin: 0.20rem 0 0.56rem 0 !important;
+    padding: 9px 10px !important;
+    gap: 12px !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge--range {
+    margin-bottom: 0.70rem !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-badge-item b {
+    line-height: 1.25 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-top: 0 !important;
+    margin-bottom: 1.10rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    background: #eaf2ff !important;
+    color: #0b2f5f !important;
+    -webkit-text-fill-color: #0b2f5f !important;
+    font-weight: 950 !important;
+    opacity: 1 !important;
+}
+
+/* Clear-search: closer to context strip and less dead vertical space. */
+.context-strip-v2 {
+    margin-bottom: 0.20rem !important;
+}
+.search-clear-row {
+    display: block !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.search-clear-row + div[data-testid="stButton"] {
+    margin-top: -0.10rem !important;
+    margin-bottom: 0.90rem !important;
+    margin-left: 0.75rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    padding: 0.34rem 0.82rem !important;
+    min-height: 32px !important;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, 0.10) !important;
+}
+.search-clear-row + div[data-testid="stButton"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 final product coherence patch: scouting universe + football lookup
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Restore Streamlit toolbar while keeping the product header near the top. */
+header[data-testid="stHeader"] {
+    height: 2.15rem !important;
+    min-height: 2.15rem !important;
+    background: transparent !important;
+}
+.block-container {
+    padding-top: 0.65rem !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+}
+
+/* Search becomes the primary interaction: white card, clear blue hierarchy and larger input. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #d5e3f6 !important;
+    border-left: 5px solid #2563eb !important;
+    border-radius: 22px !important;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .075) !important;
+    padding: 18px 20px 20px 20px !important;
+    margin: 0 0 22px 0 !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: 1.03rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 7px !important;
+}
+.final-search-caption {
+    color: #475569 !important;
+    font-size: .92rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 10px !important;
+}
+.final-search-microcopy {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    border-radius: 999px !important;
+    padding: 6px 11px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    font-size: .76rem !important;
+    margin-bottom: 12px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 18px !important;
+    min-height: 64px !important;
+    box-shadow: 0 10px 28px rgba(37, 99, 235, .13) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div {
+    font-size: 1.02rem !important;
+    line-height: 1.25 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 14px 34px rgba(37,99,235,.16) !important;
+}
+
+/* Sidebar: keep the value badge compact, add air between badge and numeric control. */
+[data-testid="stSidebar"] .sidebar-slider-title {
+    margin: 1.25rem 0 .42rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge,
+[data-testid="stSidebar"] .sidebar-slider-state-modern,
+[data-testid="stSidebar"] .sidebar-slider-current-state {
+    padding: 8px 10px !important;
+    margin-bottom: .68rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: 1.32rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    min-height: 42px !important;
+    font-weight: 850 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    min-width: 36px !important;
+}
+
+/* Guide and actions: attached to context, but not floating as an orphan block. */
+.quick-guide-action-row {
+    margin-top: -0.90rem !important;
+    margin-bottom: .95rem !important;
+}
+.search-clear-row {
+    margin-top: -0.90rem !important;
+    margin-bottom: .95rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button {
+    border-radius: 999px !important;
+    border: 1px solid #93c5fd !important;
+    background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    box-shadow: 0 8px 18px rgba(37,99,235,.12) !important;
+}
+
+/* Product narrative card for players found outside the Scouting Universe. */
+.outside-scouting-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15,23,42,.060);
+    padding: 16px 18px;
+    margin: -8px 0 18px 0;
+}
+.outside-scouting-eyebrow {
+    color:#1d4ed8;
+    font-size:.74rem;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.outside-scouting-title {
+    color:#0f172a;
+    font-size:1.02rem;
+    font-weight:950;
+    margin-bottom:6px;
+}
+.outside-scouting-player {
+    color:#0f172a;
+    font-size:1.28rem;
+    font-weight:950;
+    line-height:1.1;
+}
+.outside-scouting-meta, .outside-scouting-text {
+    color:#475569;
+    font-size:.88rem;
+    line-height:1.4;
+    margin-top:6px;
+}
+.outside-scouting-cta {
+    display:inline-flex;
+    margin-top:10px;
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border-radius:999px;
+    padding:6px 10px;
+    font-size:.78rem;
+    font-weight:900;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -1934,6 +2602,45 @@ def format_score(value):
         return "N/A"
 
 
+def get_first_valid_numeric(row, columns, default=np.nan):
+    """Return the first valid numeric value found in a row across candidate columns."""
+    for col in columns:
+        try:
+            if col in row.index:
+                value = pd.to_numeric(pd.Series([row[col]]), errors="coerce").iloc[0]
+                if pd.notna(value):
+                    return float(value)
+        except Exception:
+            continue
+    return default
+
+
+def format_age_metadata(row, lang: str = "ES") -> str:
+    """Format age metadata safely for scouting cards.
+
+    The Football Intelligence lookup can come from broader processed panels where
+    age may be stored under a non-standard name or may be unavailable. This helper
+    avoids rendering "nan años" and restores age when an alternate age column is
+    present.
+    """
+    age_value = get_first_valid_numeric(
+        row,
+        [
+            "age",
+            "player_age",
+            "age_years",
+            "age_at_season",
+            "age_latest",
+            "tm_age",
+            "transfermarkt_age",
+        ],
+    )
+    if pd.notna(age_value):
+        suffix = "years" if lang == "EN" else "años"
+        return f"{age_value:.1f} {suffix}"
+    return ""
+
+
 def safe_get(row, col, default="N/A"):
     try:
         value = row[col]
@@ -1956,7 +2663,7 @@ TEXT = {
         "search_label": "Buscar jugador, club, liga o posición",
         "search_placeholder": "Ej.: Amorim, Strasbourg, Ligue 1, MID...",
         "filters_title": "FILTROS",
-        "filters_caption": "Acota el universo antes de revisar rankings, matriz y perfiles.",
+        "filters_caption": "Define criterios de elegibilidad antes de revisar ranking, matriz y perfiles.",
         "preset": "Preset de scouting",
         "selected_preset": "Preset seleccionado",
         "max_age": "Edad máxima",
@@ -1985,7 +2692,7 @@ TEXT = {
         "search_label": "Search player, club, league or position",
         "search_placeholder": "e.g. Amorim, Strasbourg, Ligue 1, MID...",
         "filters_title": "FILTERS",
-        "filters_caption": "Narrow the scouting universe before reviewing rankings, matrix and profiles.",
+        "filters_caption": "Define eligibility criteria before reviewing rankings, matrix and profiles.",
         "preset": "Scouting preset",
         "selected_preset": "Selected preset",
         "max_age": "Maximum age",
@@ -2046,7 +2753,7 @@ def UI(text: object) -> str:
         return value
     translations = {
         "FILTROS": "FILTERS",
-        "Acota el universo antes de revisar rankings, matriz y perfiles.": "Narrow the scouting universe before reviewing rankings, matrix and profiles.",
+        "Define criterios de elegibilidad antes de revisar ranking, matriz y perfiles.": "Define eligibility criteria before reviewing rankings, matrix and profiles.",
         "Contexto activo": "Active context",
         "Universo modelado": "Modelled universe",
         "Shortlist ejecutiva": "Executive shortlist",
@@ -2423,6 +3130,219 @@ def enrich_shortlist_with_radar_features(shortlist_df: pd.DataFrame) -> pd.DataF
             best_enriched = merged
 
     return best_enriched
+
+def load_football_lookup_dataset() -> pd.DataFrame:
+    """Load the broadest available current player-season dataset for global lookup.
+
+    This intentionally prefers full processed panels over modeling/radar datasets,
+    because modeling datasets may already be restricted to the actionable scouting
+    age/minutes universe. The lookup layer must allow senior players to be found
+    without altering the Scouting Universe, rankings or recommendations.
+    """
+    lookup_candidates = [
+        "player_season_panel.parquet",
+        "player_season_modeling.parquet",
+        "player_season_modeling_advanced.parquet",
+        "player_season_modeling_growth.parquet",
+        "player_season_modeling_indices.parquet",
+    ]
+    for filename in lookup_candidates:
+        candidate_df = load_parquet(PROCESSED_PATH / filename)
+        if not candidate_df.empty:
+            return candidate_df.copy()
+    return pd.DataFrame()
+
+
+def build_football_universe_dataset(scored_df: pd.DataFrame) -> pd.DataFrame:
+    """Build a broader football universe from processed player-season data.
+
+    The Scouting Universe remains the methodological recommendation layer. The
+    Football Intelligence Layer is only used for informational lookup over the
+    widest available player set while preserving scouting scores only where they
+    exist.
+    """
+    lookup_source = load_football_lookup_dataset()
+    if lookup_source.empty:
+        football_df = scored_df.copy()
+    else:
+        football_df = lookup_source.copy()
+
+    if "player_name_fbref" not in football_df.columns and "player_name" in football_df.columns:
+        football_df = football_df.rename(columns={"player_name": "player_name_fbref"})
+    if "player_name" not in football_df.columns and "player_name_fbref" in football_df.columns:
+        football_df["player_name"] = football_df["player_name_fbref"]
+
+    # Canonicalise age for broader Football Intelligence lookup datasets. Some
+    # processed panels store age under alternative names, while the scouting
+    # model expects a standard `age` column for display and filtering.
+    age_aliases = [
+        "player_age",
+        "age_years",
+        "age_at_season",
+        "age_latest",
+        "tm_age",
+        "transfermarkt_age",
+    ]
+    if "age" not in football_df.columns:
+        for alias in age_aliases:
+            if alias in football_df.columns:
+                football_df["age"] = pd.to_numeric(football_df[alias], errors="coerce")
+                break
+    elif football_df["age"].isna().all():
+        for alias in age_aliases:
+            if alias in football_df.columns:
+                football_df["age"] = pd.to_numeric(football_df[alias], errors="coerce")
+                break
+
+    if "league" in football_df.columns:
+        football_df["league"] = football_df["league"].replace({"Liga Portugal": "Primeira Liga"})
+
+    # Football Intelligence is an informational lookup layer, but it must not
+    # surface stale historical club-season rows as if they were current. Keep
+    # the latest available season before de-duplicating players. This prevents
+    # old entries such as former clubs from appearing in the global search when
+    # a newer player-season panel exists.
+    if "season" in football_df.columns:
+        season_series = football_df["season"].dropna().astype(str)
+        if not season_series.empty:
+            latest_season = sorted(season_series.unique())[-1]
+            football_df = football_df[football_df["season"].astype(str) == latest_season].copy()
+
+    # Prefer the most recent player-season row when a processed panel contains
+    # several rows per player in the latest season.
+    name_col = get_player_name_column(football_df)
+    if name_col is not None:
+        sort_cols = []
+        if "season" in football_df.columns:
+            sort_cols.append("season")
+        if "minutes_played" in football_df.columns:
+            sort_cols.append("minutes_played")
+        if sort_cols:
+            ascending = [False] * len(sort_cols)
+            football_df = football_df.sort_values(sort_cols, ascending=ascending)
+        # One search result per player. Club and league are displayed as metadata
+        # from the selected latest-season row, not as additional identity keys.
+        football_df = football_df.drop_duplicates(subset=[name_col]).copy()
+
+    score_cols = [
+        "age",
+        "market_value_eur",
+        "predicted_market_value_eur",
+        "market_value_gap_eur",
+        "market_value_gap_pct",
+        "opportunity_score",
+        "growth_score",
+        "confidence_score",
+        "risk_score",
+        "risk_score_raw",
+        "risk_adjusted_opportunity_score",
+        "future_asset_score",
+        "asset_roi_3y_pct",
+        "projected_market_value_3y_eur",
+        "asset_upside_3y_eur",
+        "projected_value_multiplier_3y",
+        "executive_decision_score_v2",
+        "opportunity_tier",
+        "opportunity_tier_label",
+        "recommendation_action",
+        "undervalued_flag",
+    ]
+    merge_keys_options = [
+        ["player_name_fbref", "season", "club"],
+        ["player_name_fbref", "club"],
+        ["player_name_tm", "season", "club"],
+        ["player_name_tm", "club"],
+        ["player_name_fbref"],
+        ["player_name_tm"],
+    ]
+    enriched = football_df.copy()
+    for candidate_keys in merge_keys_options:
+        merge_keys = [col for col in candidate_keys if col in enriched.columns and col in scored_df.columns]
+        if not merge_keys:
+            continue
+        cols_to_merge = merge_keys + [col for col in score_cols if col in scored_df.columns and col not in merge_keys]
+        if len(cols_to_merge) <= len(merge_keys):
+            continue
+        right = scored_df[cols_to_merge].copy().drop_duplicates(subset=merge_keys)
+        merged = enriched.merge(right, on=merge_keys, how="left", suffixes=("", "_scouting"))
+        for col in score_cols:
+            scouting_col = f"{col}_scouting"
+            if scouting_col in merged.columns:
+                if col in merged.columns:
+                    merged[col] = merged[col].combine_first(merged[scouting_col])
+                else:
+                    merged[col] = merged[scouting_col]
+                merged = merged.drop(columns=[scouting_col])
+        enriched = merged
+        break
+
+    for col in numeric_cols:
+        if col in enriched.columns:
+            enriched[col] = pd.to_numeric(enriched[col], errors="coerce")
+
+    required_defaults = {
+        "market_value_eur": np.nan,
+        "predicted_market_value_eur": np.nan,
+        "market_value_gap_eur": np.nan,
+        "market_value_gap_pct": np.nan,
+        "opportunity_score": np.nan,
+        "growth_score": np.nan,
+        "confidence_score": np.nan,
+        "risk_score": np.nan,
+        "asset_roi_3y_pct": np.nan,
+        "projected_market_value_3y_eur": np.nan,
+        "asset_upside_3y_eur": np.nan,
+        "projected_value_multiplier_3y": np.nan,
+        "executive_decision_score_v2": np.nan,
+    }
+    for col, default in required_defaults.items():
+        if col not in enriched.columns:
+            enriched[col] = default
+
+    if "opportunity_tier_label" not in enriched.columns:
+        enriched["opportunity_tier_label"] = np.where(
+            enriched["opportunity_score"].notna(), "Exploratorio", "Fuera del universo scoreado"
+        )
+    else:
+        enriched["opportunity_tier_label"] = enriched["opportunity_tier_label"].fillna("Fuera del universo scoreado")
+
+    enriched["is_scouting_universe"] = enriched["opportunity_score"].notna()
+    enriched["universe_status"] = np.where(
+        enriched["is_scouting_universe"],
+        "Scouting opportunity universe",
+        "Football intelligence only",
+    )
+
+    # Add transparent asset-management projections for the wider football layer.
+    # Existing scouting values are preserved; missing values are filled only for
+    # informational profiles outside the recommendation universe.
+    try:
+        projected_enriched = add_projected_market_value_features(enriched.copy())
+        for col in [
+            "projected_market_value_3y_eur",
+            "asset_upside_3y_eur",
+            "projected_value_multiplier_3y",
+            "asset_roi_3y_pct",
+            "future_asset_score",
+        ]:
+            if col in projected_enriched.columns:
+                if col in enriched.columns:
+                    enriched[col] = enriched[col].combine_first(projected_enriched[col])
+                else:
+                    enriched[col] = projected_enriched[col]
+    except Exception:
+        pass
+
+    # Keep filters usable for non-scored players. These defaults do not create a
+    # recommendation; they simply prevent missing scores from breaking discovery.
+    enriched["confidence_score"] = pd.to_numeric(enriched["confidence_score"], errors="coerce").fillna(0)
+    enriched["opportunity_score"] = pd.to_numeric(enriched["opportunity_score"], errors="coerce").fillna(0)
+    enriched["risk_score"] = pd.to_numeric(enriched["risk_score"], errors="coerce").fillna(100)
+    enriched["asset_roi_3y_pct"] = pd.to_numeric(enriched["asset_roi_3y_pct"], errors="coerce").fillna(0)
+    enriched["executive_decision_score_v2"] = pd.to_numeric(enriched["executive_decision_score_v2"], errors="coerce").fillna(0)
+
+    return enriched.reset_index(drop=True)
+
 
 def get_available_radar_metrics(position_group: object, source_df: pd.DataFrame) -> list[tuple[str, str]]:
     """Return only position-specific football metrics available in the current data."""
@@ -4641,7 +5561,7 @@ def build_decision_drivers(row: pd.Series) -> str:
         positive.append("fit de plantilla")
 
     if pd.notna(risk) and risk >= 70:
-        caution.append("riesgo elevado")
+        caution.append("Riesgo elevado")
     elif pd.notna(risk) and risk <= 45:
         positive.append("riesgo bajo")
     if pd.notna(adaptation) and adaptation >= 9:
@@ -4891,6 +5811,7 @@ def render_executive_recommendation_engine(shortlist_df: pd.DataFrame) -> None:
         unsafe_allow_html=True,
     )
 
+    st.markdown('<div class="score-methodology-spacer"></div>', unsafe_allow_html=True)
     with st.expander(TXT("Ver explicación completa y metodología de scores"), expanded=False):
         st.markdown(rationale, unsafe_allow_html=True)
         st.markdown(
@@ -6322,6 +7243,10 @@ elif "opportunity_tier_label" in df.columns:
 else:
     df["opportunity_tier_label"] = "Exploratorio"
 
+scouting_df = df.copy()
+football_df = build_football_universe_dataset(scouting_df)
+FOOTBALL_UNIVERSE_SIZE = len(football_df)
+
 
 # =============================================================================
 # Sidebar
@@ -6343,9 +7268,9 @@ st.sidebar.markdown("---")
 _INITIAL_LANG = st.session_state.get("scouting_iq_language", "ES")
 st.sidebar.markdown(f"### {'FILTERS' if _INITIAL_LANG == 'EN' else 'FILTROS'}")
 st.sidebar.caption(
-    "Narrow the scouting universe before reviewing rankings, matrix and profiles."
+    "Define eligibility criteria before reviewing rankings, matrix and profiles."
     if _INITIAL_LANG == "EN"
-    else "Acota el universo antes de revisar rankings, matriz y perfiles."
+    else "Define criterios de elegibilidad antes de revisar ranking, matriz y perfiles."
 )
 
 LANG = st.sidebar.radio(
@@ -6356,12 +7281,19 @@ LANG = st.sidebar.radio(
     key="scouting_iq_language",
 )
 
+
+st.sidebar.markdown("---")
+# Product logic: the dashboard remains in the actionable Scouting Universe.
+# The global search can still detect players from the wider Football Intelligence layer
+# and explain why they are outside the recommendation universe.
+universe_mode = "Scouting Universe"
+
 TEXT = {
     "ES": {
         "search_label": "Buscar jugador, club, liga o posición",
         "search_placeholder": "Ej.: Amorim, Strasbourg, Ligue 1, MID...",
         "filters_title": "FILTROS",
-        "filters_caption": "Acota el universo antes de revisar rankings, matriz y perfiles.",
+        "filters_caption": "Define criterios de elegibilidad antes de revisar ranking, matriz y perfiles.",
         "preset": "Preset de scouting",
         "selected_preset": "Preset seleccionado",
         "max_age": "Edad máxima",
@@ -7027,26 +7959,64 @@ def _fmt_sidebar_number(value, suffix: str = "") -> str:
 
 
 def render_slider_range_hint(min_value, max_value, current_value, suffix: str = "") -> None:
-    """Render a persistent value-first slider card.
+    """Render a persistent selected-value hint above each sidebar slider.
 
-    Native Streamlit/BaseWeb slider labels are unreliable because several values
-    are only visible on hover. This custom card is the canonical source of truth:
-    it shows the selected value prominently and keeps the valid range visible.
+    The dashboard no longer relies on native Streamlit/BaseWeb hover labels.
+    This compact custom label is rendered before the slider and is independent
+    from previous .slider-range-hint CSS patches.
     """
     if isinstance(current_value, tuple):
         selected_text = f"{_fmt_sidebar_number(current_value[0], suffix)} – {_fmt_sidebar_number(current_value[1], suffix)}"
     else:
         selected_text = _fmt_sidebar_number(current_value, suffix)
 
-    range_text = f"{_fmt_sidebar_number(min_value, suffix)} – {_fmt_sidebar_number(max_value, suffix)}"
     selected_label = "Selected" if globals().get("LANG", "ES") == "EN" else "Seleccionado"
-    range_label = "Range" if globals().get("LANG", "ES") == "EN" else "Rango"
 
     st.markdown(
         f"""
-        <div class="sidebar-slider-state sidebar-slider-state-modern">
-            <div class="sidebar-slider-current"><span>{selected_label}</span><b>{selected_text}</b></div>
-            <div class="sidebar-slider-range"><span>{range_label}</span><b>{range_text}</b></div>
+        <div class="sidebar-slider-current-state">
+            <span>{html.escape(selected_label)}</span>
+            <b>{html.escape(selected_text)}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_filter_value(current_value, suffix: str = "", min_value=None, max_value=None) -> None:
+    """Render a compact persistent value badge for numeric sidebar filters."""
+    selected_label = "Selected" if globals().get("LANG", "ES") == "EN" else "Seleccionado"
+    range_label = "Allowed range" if globals().get("LANG", "ES") == "EN" else "Rango permitido"
+    selected_text = _fmt_sidebar_number(current_value, suffix)
+    range_html = ""
+    if min_value is not None and max_value is not None:
+        range_text = f"{_fmt_sidebar_number(min_value, suffix)} – {_fmt_sidebar_number(max_value, suffix)}"
+        range_html = f"<div class='sidebar-filter-badge-item'><span>{html.escape(range_label)}</span><b>{html.escape(range_text)}</b></div>"
+    st.markdown(
+        f"""
+        <div class="sidebar-filter-value-badge sidebar-filter-value-badge--two-col">
+            <div class="sidebar-filter-badge-item"><span>{html.escape(selected_label)}</span><b>{html.escape(selected_text)}</b></div>
+            {range_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_filter_range(selected_min, selected_max, global_min=None, global_max=None, suffix: str = "") -> None:
+    """Render selected interval plus the allowed global interval for paired numeric filters."""
+    selected_label = "Selected interval" if globals().get("LANG", "ES") == "EN" else "Intervalo seleccionado"
+    range_label = "Allowed range" if globals().get("LANG", "ES") == "EN" else "Rango permitido"
+    selected_text = f"{_fmt_sidebar_number(selected_min, suffix)} – {_fmt_sidebar_number(selected_max, suffix)}"
+    range_html = ""
+    if global_min is not None and global_max is not None:
+        range_text = f"{_fmt_sidebar_number(global_min, suffix)} – {_fmt_sidebar_number(global_max, suffix)}"
+        range_html = f"<div class='sidebar-filter-badge-item'><span>{html.escape(range_label)}</span><b>{html.escape(range_text)}</b></div>"
+    st.markdown(
+        f"""
+        <div class="sidebar-filter-value-badge sidebar-filter-value-badge--two-col sidebar-filter-value-badge--range">
+            <div class="sidebar-filter-badge-item"><span>{html.escape(selected_label)}</span><b>{html.escape(selected_text)}</b></div>
+            {range_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -7673,7 +8643,7 @@ st.markdown(
     background:#dbeafe !important;
     border-color:#93c5fd !important;
 }
-.active-search-chip, .search-clear-row, .clear-search-button { display:none !important; }
+.active-search-chip, .clear-search-button { display:none !important; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -7681,28 +8651,15 @@ st.markdown(
 
 
 def render_quick_guide() -> None:
-    """Top-level product guide with tabs, replacing the default Streamlit expander."""
-    title = "ℹ️ Quick Guide" if LANG == "EN" else "ℹ️ Guía rápida"
-    subtitle = (
-        "Use these tabs to understand ranking logic, filters and operating concepts."
+    """Compact contextual guide rendered as a popover near Contexto activo."""
+    guide_label = "📖 Quick Guide" if LANG == "EN" else "📖 Guía rápida"
+    guide_help = (
+        "Open ranking logic, filters and glossary."
         if LANG == "EN"
-        else "Consulta la lógica del ranking, la lectura de filtros y el glosario operativo."
+        else "Abrir lógica del ranking, filtros y glosario."
     )
 
-    with st.container(border=True):
-        st.markdown(
-            f"""
-            <div class="quick-guide-header">
-                <div class="quick-guide-title">{html.escape(title)}</div>
-                <div class="quick-guide-subtitle">{html.escape(subtitle)}</div>
-                <div class="quick-guide-chip-row">
-                    <span>Ranking</span><span>{'Filters' if LANG == 'EN' else 'Filtros'}</span><span>{'Glossary' if LANG == 'EN' else 'Glosario'}</span>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
+    with st.popover(guide_label, help=guide_help):
         tab_rank, tab_filters, tab_glossary = st.tabs(
             [
                 "Ranking",
@@ -7727,13 +8684,13 @@ El ranking no es una tabla de predicción de precio de mercado. Es una capa ejec
             if LANG == "EN":
                 st.markdown(
                     """
-The sidebar defines the active scouting universe. The most important operational filters are **maximum age**, **minimum minutes** and **minimum confidence**; they remain visible in large format to avoid relying on slider hover labels.
+The sidebar defines the active scouting universe. The most important operational filters are **maximum age**, **minimum minutes** and **minimum confidence**. Numeric controls are used to avoid hover-dependent slider labels.
                     """
                 )
             else:
                 st.markdown(
                     """
-La barra lateral define el universo activo de scouting. Los filtros operativos más importantes son **edad máxima**, **minutos mínimos** y **confianza mínima**; por eso se muestran en grande y no dependen del hover del slider.
+La barra lateral define el universo activo de scouting. Los filtros operativos más importantes son **edad máxima**, **minutos mínimos** y **confianza mínima**. Se usan controles numéricos para evitar etiquetas de slider dependientes del hover.
                     """
                 )
         with tab_glossary:
@@ -7794,7 +8751,7 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
             tmp = tmp.sort_values("executive_decision_score_v2", ascending=False)
         elif "opportunity_score" in tmp.columns:
             tmp = tmp.sort_values("opportunity_score", ascending=False)
-        for _, row in tmp.drop_duplicates(subset=[name_col]).head(350).iterrows():
+        for _, row in tmp.drop_duplicates(subset=[name_col]).iterrows():
             name = str(row[name_col])
             meta = " · ".join(str(x) for x in [safe_get(row, "club", ""), safe_get(row, "position_group", "")] if str(x).strip())
             add(f"👤 {name}" + (f" ({meta})" if meta else ""), name)
@@ -7819,61 +8776,930 @@ def render_action_badge(label: str) -> str:
     return f'<span class="{cls}">{icon} {html.escape(display)}</span>'
 
 
+
+
+# =============================================================================
+# Sprint 11 final visual polish v3: hierarchy, spacing and guide placement
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove excessive Streamlit chrome/blank space above the product header. */
+header[data-testid="stHeader"] {
+    height: 0 !important;
+    min-height: 0 !important;
+    background: transparent !important;
+}
+[data-testid="stDecoration"] { display: none !important; }
+.block-container {
+    padding-top: 0.20rem !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 18px !important;
+}
+.scouting-topbar-right {
+    gap: 16px !important;
+}
+.scouting-topbar-right span {
+    font-size: .80rem !important;
+    font-weight: 850 !important;
+    color: #dbeafe !important;
+}
+
+/* Search module: make the card and the writable control visually distinct. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #c7d8ee !important;
+    border-top: 4px solid #2563eb !important;
+    border-left: 1px solid #c7d8ee !important;
+    border-radius: 22px !important;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .075), 0 0 0 1px rgba(37,99,235,.035) !important;
+    padding: 18px 20px 20px 20px !important;
+    margin: 0 0 22px 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-title {
+    color: #0b2f5f !important;
+    font-size: .96rem !important;
+    letter-spacing: .085em !important;
+    margin-bottom: 8px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-caption {
+    color: #52657a !important;
+    font-size: .88rem !important;
+    margin-bottom: 14px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) label {
+    color: #334155 !important;
+    font-size: .82rem !important;
+    font-weight: 900 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    min-height: 58px !important;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, .11) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 12px 30px rgba(37,99,235,.14) !important;
+}
+
+/* Sidebar numeric filters: more separation between value/range card and control. */
+[data-testid="stSidebar"] .sidebar-slider-title {
+    margin: 1.28rem 0 .45rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge,
+[data-testid="stSidebar"] .sidebar-slider-state-modern,
+[data-testid="stSidebar"] .sidebar-slider-current-state {
+    margin-bottom: .72rem !important;
+    padding: 11px 12px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: 1.15rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    min-height: 42px !important;
+    font-size: .92rem !important;
+    font-weight: 850 !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    min-width: 36px !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-group-title {
+    margin-top: 1.25rem !important;
+    margin-bottom: .70rem !important;
+}
+
+/* Keep the clear-search action close to Contexto activo, with less dead air. */
+.search-clear-row {
+    margin: -1.05rem 0 .70rem 1.05rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] {
+    margin-top: -1.05rem !important;
+    margin-bottom: .70rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button {
+    border-radius: 999px !important;
+    border: 1px solid #93c5fd !important;
+    background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 34px !important;
+    padding: .34rem .86rem !important;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .12) !important;
+}
+
+/* Quick guide now belongs to Contexto activo: compact, pedagogical, not top-of-page. */
+div[data-testid="stExpander"] {
+    margin-top: -0.25rem !important;
+    margin-bottom: 22px !important;
+    border: 1px solid #dbeafe !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.040) !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"] details > summary {
+    min-height: 44px !important;
+    padding: 11px 15px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    color: #0f2f5f !important;
+    font-weight: 950 !important;
+    letter-spacing: .01em !important;
+}
+div[data-testid="stExpander"] details[open] > summary {
+    border-bottom: 1px solid #e5edf7 !important;
+}
+div[data-testid="stExpander"] div[data-testid="stTabs"] button {
+    border-radius: 999px !important;
+    font-weight: 900 !important;
+    color: #1e3a8a !important;
+}
+div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
+    color: #334155 !important;
+    font-size: .88rem !important;
+    line-height: 1.45 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Header + executive filters
 # =============================================================================
+
+
+# =============================================================================
+# UX final correction v4: top whitespace, search hierarchy, guide action row
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove accumulated vertical space from CSS-only markdown blocks. */
+div[data-testid="stElementContainer"]:has(style),
+div[data-testid="stMarkdownContainer"]:has(> style) {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+header[data-testid="stHeader"],
+[data-testid="stDecoration"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+}
+section.main > div,
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 0.10rem !important;
+    margin-top: 0 !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+}
+
+/* Search: product hero card + Google-like white input with blue focus. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-top: 4px solid #2563eb !important;
+    border-radius: 22px !important;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .07), 0 8px 24px rgba(37, 99, 235, .07) !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: 1.02rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .075em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 6px !important;
+}
+.final-search-caption {
+    color: #475569 !important;
+    font-size: .90rem !important;
+    margin-bottom: 6px !important;
+}
+.final-search-microcopy {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    margin: 2px 0 12px 0 !important;
+    padding: 5px 9px !important;
+    border-radius: 999px !important;
+    background: #eff6ff !important;
+    border: 1px solid #dbeafe !important;
+    color: #1e3a8a !important;
+    font-size: .76rem !important;
+    font-weight: 850 !important;
+}
+div[data-testid="stElementContainer"]:has(.final-search-title) + div[data-testid="stElementContainer"] div[data-baseweb="select"] > div,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    min-height: 58px !important;
+    box-shadow: 0 10px 26px rgba(37, 99, 235, .11) !important;
+}
+div[data-testid="stElementContainer"]:has(.final-search-title) + div[data-testid="stElementContainer"] div[data-baseweb="select"] > div:hover,
+div[data-testid="stElementContainer"]:has(.final-search-title) + div[data-testid="stElementContainer"] div[data-baseweb="select"] > div:focus-within,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 14px 30px rgba(37,99,235,.13) !important;
+}
+
+/* Sidebar filters: compact card, explicit gap between range card and numeric control. */
+[data-testid="stSidebar"] .sidebar-slider-title {
+    margin: 1.35rem 0 .48rem 0 !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-value-badge,
+[data-testid="stSidebar"] .sidebar-slider-current-state,
+[data-testid="stSidebar"] .sidebar-slider-state-modern {
+    padding: 8px 10px !important;
+    margin: 0 0 .82rem 0 !important;
+    border-radius: 10px !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-top: 0 !important;
+    margin-bottom: 1.45rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+    min-height: 39px !important;
+}
+
+/* Context actions row: no overlap, no layout jump. */
+.search-clear-row,
+.quick-guide-action-row {
+    margin-top: -0.35rem !important;
+    margin-bottom: 1.05rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button,
+.quick-guide-action-row + div[data-testid="stPopover"] button,
+div[data-testid="stPopover"] button[kind="secondary"] {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    min-height: 34px !important;
+    padding: .36rem .82rem !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, .08) !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 product polish v5: professional hierarchy and universe selector
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Aggressive top whitespace removal for app and print preview. */
+html, body, [data-testid="stAppViewContainer"], section.main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+.scouting-topbar {
+    margin-top: 0 !important;
+    margin-bottom: 18px !important;
+}
+/* Search module: white card, blue details, stronger hierarchy. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-top: 4px solid #2563eb !important;
+    border-radius: 22px !important;
+    padding: 18px 20px 20px 20px !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, .075), 0 8px 22px rgba(37, 99, 235, .08) !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: 1.08rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .085em !important;
+}
+.final-search-caption {
+    color: #475569 !important;
+    font-size: .90rem !important;
+}
+.final-search-microcopy {
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    font-weight: 900 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    min-height: 58px !important;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, .12) !important;
+}
+/* Sidebar filters: air between status card and numeric control, not inside the card. */
+[data-testid="stSidebar"] .sidebar-filter-value-badge {
+    padding: 8px 10px !important;
+    margin-bottom: 1.02rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: 1.65rem !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-title {
+    margin-top: 1.45rem !important;
+}
+/* Context actions: compact and aligned. */
+.search-clear-row, .quick-guide-action-row {
+    margin-top: -0.65rem !important;
+    margin-bottom: 1.00rem !important;
+}
+.search-clear-row + div[data-testid="stButton"] button,
+.quick-guide-action-row + div[data-testid="stPopover"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, .10) !important;
+}
+.universe-status-chip {
+    display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;
+    background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-size:.78rem;font-weight:900;
+}
+.universe-status-chip--football { background:#fff7ed;border-color:#fed7aa;color:#9a3412; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 v7 product coherence and visual hierarchy fixes
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Keep Streamlit toolbar accessible while preserving compact product spacing. */
+header[data-testid="stHeader"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: 2.0rem !important;
+    min-height: 2.0rem !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+}
+[data-testid="stToolbar"], [data-testid="stToolbar"] * {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 0.55rem !important;
+    margin-top: 0 !important;
+}
+.scouting-topbar {
+    margin-top: 0.65rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* Stronger, cleaner global search module. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #d7e5f7 !important;
+    border-radius: 20px !important;
+    padding: 18px 20px 18px 20px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.065) !important;
+    margin-bottom: 22px !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: 1.02rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .085em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 6px !important;
+}
+.final-search-caption {
+    color: #475569 !important;
+    font-size: .90rem !important;
+    margin-bottom: 12px !important;
+}
+.final-search-microcopy {
+    display: inline-flex !important;
+    width: fit-content !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    font-size: .78rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 10px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    border: 1.5px solid #93c5fd !important;
+    border-radius: 16px !important;
+    min-height: 58px !important;
+    box-shadow: 0 8px 22px rgba(37,99,235,.075) !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.12), 0 12px 28px rgba(37,99,235,.10) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input {
+    font-size: 1.02rem !important;
+    line-height: 1.3 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Sidebar: more space between descriptor card and numeric control, not inside the descriptor. */
+[data-testid="stSidebar"] .sidebar-filter-value-badge,
+[data-testid="stSidebar"] .sidebar-slider-state,
+[data-testid="stSidebar"] .sidebar-slider-state-modern,
+[data-testid="stSidebar"] .sidebar-slider-current-state {
+    padding: 8px 10px !important;
+    margin-bottom: .85rem !important;
+}
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] {
+    margin-bottom: 1.45rem !important;
+}
+[data-testid="stSidebar"] .sidebar-slider-title {
+    margin-top: 1.18rem !important;
+}
+
+/* Inline contextual actions inside Contexto activo. */
+.context-action-row {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top: 12px;
+}
+.quick-guide-inline {
+    border: 1px solid #bfdbfe;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .08);
+}
+.quick-guide-inline summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 8px 12px;
+    color: #1e3a8a;
+    font-weight: 950;
+    font-size: .82rem;
+}
+.quick-guide-inline summary::-webkit-details-marker { display:none; }
+.quick-guide-inline-body {
+    padding: 10px 12px 12px 12px;
+    border-top: 1px solid #dbeafe;
+    background: #ffffff;
+    color: #334155;
+    font-size: .82rem;
+    line-height: 1.4;
+    max-width: 760px;
+}
+.quick-guide-tabs {
+    display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;
+}
+.quick-guide-tabs span {
+    border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; border-radius:999px; padding:4px 8px; font-weight:900; font-size:.76rem;
+}
+.search-clear-inline {
+    display:inline-flex;
+}
+/* Hide old detached quick-guide popover rows if any remain from previous patches. */
+.quick-guide-action-row { display:none !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 v8 final visual polish: topbar, search, guide and methodology spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Give the Streamlit toolbar enough room while keeping the product header near the top. */
+header[data-testid="stHeader"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: 2.35rem !important;
+    min-height: 2.35rem !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+}
+[data-testid="stToolbar"], [data-testid="stToolbar"] * {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 0.85rem !important;
+    margin-top: 0 !important;
+}
+.scouting-topbar {
+    margin-top: 1.05rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* Search module: stronger product hierarchy and Google/CRM-like input. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #cfe0f6 !important;
+    border-radius: 22px !important;
+    padding: 18px 22px 20px 22px !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.070) !important;
+}
+.final-search-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    color: #08275a !important;
+    font-size: 1.06rem !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.11em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 8px !important;
+}
+.final-search-caption {
+    color: #42526b !important;
+    font-size: 0.91rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 10px !important;
+}
+.final-search-microcopy {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    max-width: 100% !important;
+    padding: 6px 12px !important;
+    border-radius: 999px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: 0.78rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 14px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: 0.15rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 62px !important;
+    padding-left: 18px !important;
+    padding-right: 14px !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10) !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:hover,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div:focus-within {
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14), 0 12px 30px rgba(37, 99, 235, 0.13) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] *,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    font-size: 1.02rem !important;
+    line-height: 1.35 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: #0f2f5f !important;
+    fill: #0f2f5f !important;
+}
+
+/* Context guide: keep it inside the active context card and make it read as an inline help module. */
+.context-action-row {
+    margin-top: 14px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+}
+.quick-guide-inline {
+    width: min(540px, 100%) !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 16px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.070) !important;
+    overflow: hidden !important;
+}
+.quick-guide-inline summary {
+    list-style: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 14px !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+    font-size: 0.88rem !important;
+    cursor: pointer !important;
+}
+.quick-guide-inline-body {
+    border-top: 1px solid #dbeafe !important;
+    padding: 12px 14px 14px 14px !important;
+    color: #334155 !important;
+    font-size: 0.86rem !important;
+    line-height: 1.48 !important;
+}
+.quick-guide-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+.quick-guide-tabs span {
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    font-weight: 900 !important;
+    font-size: 0.76rem !important;
+}
+
+/* Section spacing: methodology expanders should not touch their preceding cards. */
+.score-methodology-spacer,
+.model-drivers-expander-spacer {
+    height: 16px !important;
+    clear: both !important;
+}
+.pro-section-card {
+    margin-bottom: 12px !important;
+}
+div[data-testid="stExpander"] {
+    margin-top: 14px !important;
+    margin-bottom: 22px !important;
+}
+
+/* Decision-driver blocks: more breathing room inside and between the note and expander. */
+.driver-chip {
+    margin-bottom: 10px !important;
+}
+.compact-board-note {
+    margin-top: 8px !important;
+    line-height: 1.5 !important;
+}
+
+/* Sidebar numeric controls: keep current spacing but avoid over-compressed filter groups. */
+[data-testid="stSidebar"] .stNumberInput {
+    margin-top: 0.30rem !important;
+    margin-bottom: 1.25rem !important;
+}
+[data-testid="stSidebar"] .sidebar-filter-state,
+[data-testid="stSidebar"] .sidebar-slider-state-modern {
+    margin-bottom: 0.52rem !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# Sprint 11 closure hotfix: remove empty search spacer and preserve toolbar
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* The global search is now rendered without a bordered st.container; this final
+   guard hides any empty bordered wrapper left by previous visual passes. */
+div[data-testid="stVerticalBlockBorderWrapper"]:not(:has(.final-search-title)):empty,
+div[data-testid="stVerticalBlockBorderWrapper"]:not(:has(.final-search-title)):has(> div:empty) {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+.scouting-topbar { margin-bottom: 20px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# Sprint 11 final closure patch: search centering, layer badges, stale lookup UX
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final search select centering. Streamlit/BaseWeb renders the selected value in nested flex wrappers. */
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 58px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-baseweb="select"] div[role="combobox"],
+[data-testid="stAppViewContainer"] > .main div[data-baseweb="select"] div[role="button"],
+[data-testid="stAppViewContainer"] > .main div[data-baseweb="select"] input,
+[data-testid="stAppViewContainer"] > .main div[data-baseweb="select"] span {
+    min-height: 58px !important;
+    height: 58px !important;
+    display: flex !important;
+    align-items: center !important;
+    line-height: 58px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-baseweb="select"] svg {
+    align-self: center !important;
+}
+/* Keep global search clean and remove accidental empty bordered wrappers. */
+div[data-testid="stVerticalBlockBorderWrapper"]:empty,
+div[data-testid="stElementContainer"]:empty {
+    display: none !important;
+}
+.final-search-title {
+    margin-bottom: .35rem !important;
+}
+.final-search-caption {
+    margin-bottom: .55rem !important;
+}
+.final-search-microcopy {
+    margin-top: .65rem !important;
+}
+/* Product layer labels used to explain the dashboard architecture. */
+.layer-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    font-size: .74rem;
+    font-weight: 950;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .035);
+    margin: 6px 0 12px 0;
+}
+/* Prevent layer badges from looking like default markdown pills. */
+div[data-testid="stMarkdownContainer"]:has(.layer-badge) {
+    margin-bottom: 0 !important;
+}
+/* Football Intelligence card should stay compact and separated from context. */
+.outside-scouting-card {
+    margin-top: 34px !important;
+    margin-bottom: 22px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<style>
+/* Sprint 11 closure: robust search select vertical alignment. */
+div[data-baseweb="select"] > div {
+    align-items: center !important;
+}
+div[data-baseweb="select"] input,
+div[data-baseweb="select"] div[role="button"] {
+    line-height: 1.35 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """
     <div class="scouting-topbar">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
-        <div class="scouting-topbar-right"><span>Market Value Engine</span><span>Future Asset</span><span>Risk Layer</span><span class="scouting-avatar">DD</span></div>
+        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span></div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-render_quick_guide()
-
-base_df = add_executive_decision_features(df.copy())
+base_df = add_executive_decision_features(scouting_df.copy())
 
 # Clear the global search without external navigation.
 def clear_global_scouting_search() -> None:
     st.session_state["global_scouting_search"] = None
 
-try:
-    if st.query_params.get("clear_search") == "1":
-        clear_global_scouting_search()
-        st.query_params.clear()
-except Exception:
-    pass
-
 # CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
-search_options, search_label_to_raw = build_search_options(base_df)
+# Audit note: player suggestions are built from football_df, not from a hardcoded
+# demo dictionary. football_df is constrained to the latest available season in
+# build_football_universe_dataset() to avoid stale historical clubs in lookup.
+search_options, search_label_to_raw = build_search_options(football_df)
 
-with st.container(border=True):
-    st.markdown(
-        f"""
-        <div class="final-search-title">🔎 {html.escape('Search players, clubs, leagues and positions' if LANG == 'EN' else 'Buscar jugador, club, liga o posición')}</div>
-        <div class="final-search-caption">{html.escape('Type a name, club, league or position and select a CRM-style match.' if LANG == 'EN' else 'Escribe un jugador, club, liga o posición y selecciona una coincidencia tipo CRM.')}</div>
-        """,
-        unsafe_allow_html=True,
-    )
-    global_search_label = st.selectbox(
-        "Search" if LANG == "EN" else "Búsqueda global",
-        options=search_options,
-        index=None,
-        placeholder="e.g. Bundesliga, Bayern, Yan Diomandé, MID..." if LANG == "EN" else "Ej.: Bundesliga, Bayern, Yan Diomandé, MID...",
-        key="global_scouting_search",
-        help=(
-            "Suggestions are grouped by league, club, player and position."
-            if LANG == "EN"
-            else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
-        ),
-    )
+# Search header and input are intentionally rendered without an enclosing
+# Streamlit container. This avoids the empty rounded wrapper that appeared above
+# the search module in print/PDF mode.
+st.markdown(
+    f"""
+    <div class="final-search-shell">
+        <div class="final-search-title">🔎 {html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
+        <div class="final-search-caption">{html.escape('Search players, clubs, leagues or positions. The executive ranking remains anchored to the actionable Scouting Universe.' if LANG == 'EN' else 'Busca jugadores, clubes, ligas o posiciones. El ranking ejecutivo se mantiene anclado al universo accionable de scouting.')}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+current_global_search = st.session_state.get("global_scouting_search")
+if current_global_search is not None and str(current_global_search) not in search_options:
+    # Clear stale selections created before the latest-season Football Intelligence audit.
+    st.session_state["global_scouting_search"] = None
+
+global_search_label = st.selectbox(
+    "Search" if LANG == "EN" else "Búsqueda global",
+    options=search_options,
+    index=None,
+    placeholder="Search player, club, league or position..." if LANG == "EN" else "Buscar jugador, club, liga o posición...",
+    key="global_scouting_search",
+    label_visibility="collapsed",
+    help=(
+        "Suggestions are grouped by league, club, player and position."
+        if LANG == "EN"
+        else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
+    ),
+)
+st.markdown(
+    f"""
+    <div class="final-search-examples">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</div>
+    """,
+    unsafe_allow_html=True,
+)
 
 global_search_query = "" if global_search_label is None else search_label_to_raw.get(str(global_search_label), str(global_search_label))
 global_search_display = "" if global_search_label is None else str(global_search_label)
+
+
+# Search can target the wider football dataset, but only Scouting Universe results
+# are allowed to drive ranking, shortlist, Opportunity/Risk matrix and executive cards.
+search_entity_type = ""
+if global_search_display.startswith("👤"):
+    search_entity_type = "player"
+elif global_search_display.startswith("🏆"):
+    search_entity_type = "league"
+elif global_search_display.startswith("🏟️"):
+    search_entity_type = "club"
+elif global_search_display.startswith("📍"):
+    search_entity_type = "position"
+
+search_norm = str(global_search_query).strip().casefold()
+scouting_name_col = get_player_name_column(scouting_df)
+football_name_col = get_player_name_column(football_df)
+search_matches_scouting_universe = False
+search_is_outside_scouting_player = False
+outside_football_profile = pd.DataFrame()
+
+if search_norm and search_entity_type == "player":
+    if scouting_name_col is not None and scouting_name_col in scouting_df.columns:
+        scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).str.strip().str.casefold()
+        search_matches_scouting_universe = bool((scouting_names_norm == search_norm).any())
+    if not search_matches_scouting_universe and football_name_col is not None and football_name_col in football_df.columns:
+        outside_mask = football_df[football_name_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        outside_football_profile = football_df[outside_mask].head(1).copy()
+        search_is_outside_scouting_player = not outside_football_profile.empty
 
 PRESETS = {
     "full_exploration": {
@@ -7934,6 +9760,12 @@ preset_key = st.sidebar.radio(
     format_func=preset_label,
 )
 preset = PRESETS[preset_key]
+if universe_mode == "Football Universe":
+    preset = dict(preset)
+    preset["max_age"] = 35
+    preset["min_minutes"] = 0
+    preset["min_confidence"] = 0
+    preset["min_opportunity"] = 0
 selected_preset_label = T("selected_preset")
 preset_description = preset["description"].get(LANG, preset["description"]["ES"])
 st.sidebar.markdown(
@@ -7946,7 +9778,7 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
-preset_name = preset_key
+preset_name = f"{preset_key}_{universe_mode.replace(' ', '_').lower()}"
 
 st.sidebar.markdown(
     f"<div class='sidebar-filter-group-title'>{html.escape('Sporting profile' if LANG == 'EN' else 'Perfil deportivo')}</div>",
@@ -7960,24 +9792,50 @@ filter_row_3 = [st.sidebar, st.sidebar, st.sidebar]
 with filter_row_1[0]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_age'))}</div>", unsafe_allow_html=True)
     max_age_key = f"max_age_{preset_name}"
+    age_min_limit = 16 if universe_mode == "Football Universe" else 18
+    age_max_limit = 35 if universe_mode == "Football Universe" else 30
     max_age_default = int(preset["max_age"])
-    max_age_preview = st.session_state.get(max_age_key, max_age_default)
-    render_slider_range_hint(18, 30, max_age_preview, " years" if LANG == "EN" else " años")
-    max_age = st.slider(T("max_age"), min_value=18, max_value=30, value=max_age_default, step=1, format="", key=max_age_key, label_visibility="collapsed")
+    max_age_preview = int(st.session_state.get(max_age_key, max_age_default))
+    render_sidebar_filter_value(max_age_preview, " years" if LANG == "EN" else " años", age_min_limit, age_max_limit)
+    max_age = st.number_input(
+        T("max_age"),
+        min_value=age_min_limit,
+        max_value=age_max_limit,
+        value=max_age_default,
+        step=1,
+        key=max_age_key,
+        label_visibility="collapsed",
+    )
 with filter_row_1[1]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_minutes'))}</div>", unsafe_allow_html=True)
     min_minutes_key = f"min_minutes_{preset_name}"
     min_minutes_default = int(preset["min_minutes"])
-    min_minutes_preview = st.session_state.get(min_minutes_key, min_minutes_default)
-    render_slider_range_hint(0, 3000, min_minutes_preview)
-    min_minutes = st.slider(T("min_minutes"), min_value=0, max_value=3000, value=min_minutes_default, step=100, format="", key=min_minutes_key, label_visibility="collapsed")
+    min_minutes_preview = int(st.session_state.get(min_minutes_key, min_minutes_default))
+    render_sidebar_filter_value(min_minutes_preview, "", 0, 3000)
+    min_minutes = st.number_input(
+        T("min_minutes"),
+        min_value=0,
+        max_value=3000,
+        value=min_minutes_default,
+        step=100,
+        key=min_minutes_key,
+        label_visibility="collapsed",
+    )
 with filter_row_1[2]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_confidence'))}</div>", unsafe_allow_html=True)
     min_confidence_key = f"min_confidence_{preset_name}"
     min_confidence_default = int(preset["min_confidence"])
-    min_confidence_preview = st.session_state.get(min_confidence_key, min_confidence_default)
-    render_slider_range_hint(0, 100, min_confidence_preview)
-    min_confidence = st.slider(T("min_confidence"), min_value=0, max_value=100, value=min_confidence_default, step=5, format="", key=min_confidence_key, label_visibility="collapsed")
+    min_confidence_preview = int(st.session_state.get(min_confidence_key, min_confidence_default))
+    render_sidebar_filter_value(min_confidence_preview, "", 0, 100)
+    min_confidence = st.number_input(
+        T("min_confidence"),
+        min_value=0,
+        max_value=100,
+        value=min_confidence_default,
+        step=5,
+        key=min_confidence_key,
+        label_visibility="collapsed",
+    )
 
 st.sidebar.markdown(
     f"<div class='sidebar-filter-group-title'>{html.escape('Competitive context' if LANG == 'EN' else 'Contexto competitivo')}</div>",
@@ -8003,11 +9861,36 @@ with filter_row_2[3]:
     global_min_os = float(np.floor(base_df["opportunity_score"].min()))
     global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('opportunity_range'))}</div>", unsafe_allow_html=True)
-    os_range_key = f"opportunity_range_{preset_name}"
-    os_range_default = (float(preset["min_opportunity"]), global_max_os)
-    os_range_preview = st.session_state.get(os_range_key, os_range_default)
-    render_slider_range_hint(global_min_os, global_max_os, os_range_preview)
-    os_range = st.slider(T("opportunity_range"), min_value=global_min_os, max_value=global_max_os, value=os_range_default, format="", key=os_range_key, label_visibility="collapsed")
+    os_min_key = f"opportunity_min_{preset_name}"
+    os_max_key = f"opportunity_max_{preset_name}"
+    os_min_default = float(preset["min_opportunity"])
+    os_max_default = global_max_os
+    os_min_preview = float(st.session_state.get(os_min_key, os_min_default))
+    os_max_preview = float(st.session_state.get(os_max_key, os_max_default))
+    render_sidebar_filter_range(os_min_preview, os_max_preview, global_min_os, global_max_os)
+    os_cols = st.columns(2, gap="medium")
+    with os_cols[0]:
+        os_min_value = st.number_input(
+            "Min",
+            min_value=global_min_os,
+            max_value=global_max_os,
+            value=os_min_default,
+            step=1.0,
+            key=os_min_key,
+            label_visibility="collapsed",
+        )
+    with os_cols[1]:
+        os_max_value = st.number_input(
+            "Max",
+            min_value=global_min_os,
+            max_value=global_max_os,
+            value=os_max_default,
+            step=1.0,
+            key=os_max_key,
+            label_visibility="collapsed",
+        )
+    os_low, os_high = sorted((float(os_min_value), float(os_max_value)))
+    os_range = (os_low, os_high)
 
 st.sidebar.markdown(
     f"<div class='sidebar-filter-group-title'>{html.escape('Market and risk' if LANG == 'EN' else 'Mercado y riesgo')}</div>",
@@ -8019,31 +9902,62 @@ with filter_row_3[0]:
     max_value_limit_m = max(1.0, global_max_value_m)
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_value'))}</div>", unsafe_allow_html=True)
     max_value_key = f"max_value_{preset_name}"
-    max_value_preview = st.session_state.get(max_value_key, max_value_limit_m)
-    render_slider_range_hint(0.5, max_value_limit_m, max_value_preview, "M")
-    max_market_value_m = st.slider(T("max_value"), min_value=0.5, max_value=max_value_limit_m, value=max_value_limit_m, step=0.5, format="", key=max_value_key, label_visibility="collapsed")
+    max_value_preview = float(st.session_state.get(max_value_key, max_value_limit_m))
+    render_sidebar_filter_value(max_value_preview, "M", 0.5, max_value_limit_m)
+    max_market_value_m = st.number_input(
+        T("max_value"),
+        min_value=0.5,
+        max_value=max_value_limit_m,
+        value=max_value_limit_m,
+        step=0.5,
+        key=max_value_key,
+        label_visibility="collapsed",
+    )
 with filter_row_3[1]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_roi'))}</div>", unsafe_allow_html=True)
     min_roi_key = f"min_roi_{preset_name}"
-    min_roi_preview = st.session_state.get(min_roi_key, 0)
-    render_slider_range_hint(0, 400, min_roi_preview, "%")
-    min_roi = st.slider(T("min_roi"), min_value=0, max_value=400, value=0, step=25, format="", key=min_roi_key, label_visibility="collapsed")
+    min_roi_preview = int(st.session_state.get(min_roi_key, 0))
+    render_sidebar_filter_value(min_roi_preview, "%", 0, 400)
+    min_roi = st.number_input(
+        T("min_roi"),
+        min_value=0,
+        max_value=400,
+        value=0,
+        step=25,
+        key=min_roi_key,
+        label_visibility="collapsed",
+    )
 with filter_row_3[2]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_risk'))}</div>", unsafe_allow_html=True)
     max_risk_key = f"max_risk_{preset_name}"
-    max_risk_preview = st.session_state.get(max_risk_key, 100)
-    render_slider_range_hint(0, 100, max_risk_preview)
-    max_risk_filter = st.slider(T("max_risk"), min_value=0, max_value=100, value=100, step=5, format="", key=max_risk_key, label_visibility="collapsed")
+    max_risk_preview = int(st.session_state.get(max_risk_key, 100))
+    render_sidebar_filter_value(max_risk_preview, "", 0, 100)
+    max_risk_filter = st.number_input(
+        T("max_risk"),
+        min_value=0,
+        max_value=100,
+        value=100,
+        step=5,
+        key=max_risk_key,
+        label_visibility="collapsed",
+    )
 
 filtered_df = base_df.copy()
+age_filter = pd.to_numeric(filtered_df.get("age", np.nan), errors="coerce") <= max_age
+minutes_filter = pd.to_numeric(filtered_df.get("minutes_played", 0), errors="coerce").fillna(0) >= min_minutes
+confidence_filter = pd.to_numeric(filtered_df.get("confidence_score", 0), errors="coerce").fillna(0) >= min_confidence
+opportunity_filter = pd.to_numeric(filtered_df.get("opportunity_score", 0), errors="coerce").fillna(0).between(os_range[0], os_range[1])
+value_filter = pd.to_numeric(filtered_df.get("market_value_eur", 0), errors="coerce").fillna(0) <= max_market_value_m * 1_000_000
+roi_filter = pd.to_numeric(filtered_df.get("asset_roi_3y_pct", 0), errors="coerce").fillna(0) >= min_roi
+risk_filter = pd.to_numeric(filtered_df.get("risk_score", 100), errors="coerce").fillna(100) <= max_risk_filter
 filtered_df = filtered_df[
-    (filtered_df["age"] <= max_age)
-    & (filtered_df["minutes_played"] >= min_minutes)
-    & (filtered_df["confidence_score"] >= min_confidence)
-    & (filtered_df["opportunity_score"].between(os_range[0], os_range[1]))
-    & (pd.to_numeric(filtered_df.get("market_value_eur", 0), errors="coerce") <= max_market_value_m * 1_000_000)
-    & (pd.to_numeric(filtered_df.get("asset_roi_3y_pct", 0), errors="coerce").fillna(0) >= min_roi)
-    & (pd.to_numeric(filtered_df.get("risk_score", 100), errors="coerce").fillna(100) <= max_risk_filter)
+    age_filter
+    & minutes_filter
+    & confidence_filter
+    & opportunity_filter
+    & value_filter
+    & roi_filter
+    & risk_filter
 ].copy()
 
 if selected_league != T("all_f"):
@@ -8054,7 +9968,7 @@ if selected_tier != T("all_m"):
     filtered_df = filtered_df[filtered_df["opportunity_tier_label"].astype(str) == selected_tier]
 
 search_query_clean = str(global_search_query).strip().lower()
-if search_query_clean:
+if search_query_clean and not search_is_outside_scouting_player and not (search_entity_type == "player"):
     searchable_cols = [
         col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group"]
         if col in filtered_df.columns
@@ -8066,6 +9980,27 @@ if search_query_clean:
         )
         filtered_df = filtered_df[search_mask].copy()
 
+# If a selected player exists in the model universe but falls outside the active filters,
+# preserve the scouting ranking and explain the exclusion instead of collapsing the dashboard.
+search_is_outside_active_filters = False
+outside_active_profile = pd.DataFrame()
+if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player:
+    player_col = get_player_name_column(base_df)
+    if player_col is not None and player_col in base_df.columns:
+        base_player_mask = base_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
+        if bool(base_player_mask.any()) and not bool(active_player_mask.any()):
+            search_is_outside_active_filters = True
+            outside_active_profile = base_df[base_player_mask].head(1).copy()
+
+# If the selected player is inside the active criteria, focus the dashboard on that profile.
+if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player and not search_is_outside_active_filters:
+    player_col = get_player_name_column(filtered_df)
+    if player_col is not None and player_col in filtered_df.columns:
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        if bool(active_player_mask.any()):
+            filtered_df = filtered_df[active_player_mask].copy()
+
 filtered_df = filtered_df.sort_values("executive_decision_score_v2" if "executive_decision_score_v2" in filtered_df.columns else "opportunity_score", ascending=False).reset_index(drop=True)
 
 shortlist_universe = len(base_df)
@@ -8076,7 +10011,7 @@ st.sidebar.markdown(
     f"""
     <div class="sidebar-footer">
         <b>{filtered_universe:,}</b> {html.escape(UI("jugadores encontrados"))}<br>
-        {html.escape(UI("Universo modelado"))}: {SCORED_UNIVERSE_SIZE:,}<br>
+        {html.escape("Football Universe" if universe_mode == "Football Universe" else UI("Universo modelado"))}: {len(base_df):,}<br>
         {html.escape(UI("Actualizado con filtros activos"))}
     </div>
     """,
@@ -8103,17 +10038,30 @@ else:
         f"ROI 3Y ≥ {min_roi}%",
         f"Risk ≤ {max_risk_filter}",
     ]
-if selected_league != T("all_f"):
+search_matches_selected_league = (
+    selected_league != T("all_f")
+    and search_query_clean
+    and str(global_search_query).strip().casefold() == str(selected_league).strip().casefold()
+)
+
+if selected_league != T("all_f") and not search_matches_selected_league:
     active_filters.append(f"{T('league')}: {league_display_name(selected_league)}")
 if selected_position != T("all_f"):
     active_filters.append(f"{T('position')}: {selected_position}")
 if selected_tier != T("all_m"):
     active_filters.append(f"{T('tier')}: {tier_display_name(selected_tier)}")
-# Search is rendered as a clickable active chip inside the Contexto activo strip.
+
+# Search is shown as a visual chip. Clearing uses a Streamlit callback,
+# avoiding external navigation, query params and session_state mutation after widget instantiation.
 context_chip_items = []
 if search_query_clean:
+    search_chip_label = str(global_search_query)
+    search_chip_prefix = "🔎"
+    if search_is_outside_scouting_player:
+        search_chip_prefix = "ℹ️"
+        search_chip_label = ("Informative profile: " if LANG == "EN" else "Perfil informativo: ") + search_chip_label
     context_chip_items.append(
-        f"<a class='context-chip context-chip-search' href='?clear_search=1'>🔎 {html.escape(str(global_search_query))} ×</a>"
+        f"<span class='context-chip context-chip-search'>{search_chip_prefix} {html.escape(search_chip_label)}</span>"
     )
 for item in active_filters:
     item_text = str(item)
@@ -8131,19 +10079,128 @@ st.markdown(
             <div class="context-current-label">{html.escape(UI("Candidatos actuales"))}</div>
         </div>
         <div class="context-secondary-kpis">
-            <span class="context-chip">{html.escape(UI("Universo modelado"))} · {SCORED_UNIVERSE_SIZE:,}</span>
+            <span class="context-chip">{html.escape(UI("Universo modelado"))} · {len(base_df):,}</span>
             <span class="context-chip">{html.escape(UI("Shortlist ejecutiva"))} · {shortlist_universe:,}</span>
             <span class="context-chip context-chip-neutral">{filtered_pct_shortlist:.0%} {html.escape(UI("de la shortlist"))}</span>
         </div>
     </div>
     <div class="context-chip-row">{context_chips}</div>
+    <div class="context-action-row">
+        <details class="quick-guide-inline">
+            <summary>📖 {html.escape('Quick Guide' if LANG == 'EN' else 'Guía rápida')}</summary>
+            <div class="quick-guide-inline-body">
+                <div class="quick-guide-tabs"><span>Ranking</span><span>{html.escape('Filters' if LANG == 'EN' else 'Filtros')}</span><span>{html.escape('Glossary' if LANG == 'EN' else 'Glosario')}</span></div>
+                <div class="quick-guide-section"><b>{html.escape('Ranking' if LANG == 'EN' else 'Ranking')}:</b> {html.escape('Executive layer that orders players by Decision Score to prioritise scouting review without replacing domain judgement.' if LANG == 'EN' else 'Capa ejecutiva que ordena jugadores por Decision Score para priorizar la revisión de scouting sin sustituir el criterio deportivo.')}</div>
+                <div class="quick-guide-section"><b>{html.escape('Filters' if LANG == 'EN' else 'Filtros')}:</b> {html.escape('Eligibility criteria that define the actionable Scouting Universe: age, minutes, confidence, opportunity, value, ROI and risk.' if LANG == 'EN' else 'Criterios de elegibilidad que definen el Scouting Universe accionable: edad, minutos, confianza, oportunidad, valor, ROI y riesgo.')}</div>
+                <div class="quick-guide-section"><b>{html.escape('Glossary' if LANG == 'EN' else 'Glosario')}:</b></div>
+                <ul class="quick-guide-glossary">
+                    <li><b>Future Asset</b>: {html.escape('projected future player value/potential score.' if LANG == 'EN' else 'puntuación de potencial y valor futuro proyectado.')}</li>
+                    <li><b>Opportunity</b>: {html.escape('relative market opportunity or undervaluation signal.' if LANG == 'EN' else 'señal relativa de oportunidad o infravaloración de mercado.')}</li>
+                    <li><b>Risk</b>: {html.escape('estimated operation risk.' if LANG == 'EN' else 'riesgo estimado de la operación.')}</li>
+                    <li><b>ROI 3Y</b>: {html.escape('expected three-year return.' if LANG == 'EN' else 'retorno esperado a tres años.')}</li>
+                    <li><b>Confidence</b>: {html.escape('reliability of the analytical signal.' if LANG == 'EN' else 'fiabilidad de la señal analítica.')}</li>
+                    <li><b>Context Fit</b>: {html.escape('competitive fit with the evaluated context.' if LANG == 'EN' else 'encaje competitivo con el contexto evaluado.')}</li>
+                </ul>
+            </div>
+        </details>
+    </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
 
 
+if search_is_outside_scouting_player and not outside_football_profile.empty:
+    outside_row = outside_football_profile.iloc[0]
+    outside_name = html.escape(str(get_player_name(outside_row)))
+    outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
+    outside_league = html.escape(league_display_name(safe_get(outside_row, "league", "N/A")))
+    outside_position = html.escape(str(safe_get(outside_row, "position_group", "N/A")))
+    outside_age_text = format_age_metadata(outside_row, LANG)
+    outside_value = format_money_short(safe_get(outside_row, "market_value_eur", np.nan))
+    outside_projected_value = format_money_short(safe_get(outside_row, "projected_market_value_3y_eur", np.nan))
+    outside_upside_3y = format_signed_money_short(safe_get(outside_row, "asset_upside_3y_eur", np.nan))
+    outside_roi_3y = get_numeric_value(outside_row, "asset_roi_3y_pct", np.nan)
+    outside_future_asset = get_numeric_value(outside_row, "future_asset_score", np.nan)
+    outside_metrics = []
+    if outside_projected_value != "N/A":
+        outside_metrics.append(("Projected 3Y value" if LANG == "EN" else "Valor proyectado 3Y", outside_projected_value, ""))
+    if outside_upside_3y != "N/A":
+        outside_metrics.append(("3Y upside" if LANG == "EN" else "Upside 3Y", outside_upside_3y, ""))
+    if pd.notna(outside_roi_3y):
+        roi_caption = outside_upside_3y if outside_upside_3y != "N/A" else ""
+        outside_metrics.append(("ROI 3Y", f"{outside_roi_3y:.0f}%", roi_caption))
+    if pd.notna(outside_future_asset):
+        outside_metrics.append(("Future Asset", f"{outside_future_asset:.1f} / 100", ""))
+    outside_metrics_html = ""
+    if outside_metrics:
+        outside_metrics_html = "<div class='outside-scouting-metrics'>" + "".join(
+            f"<div><span>{html.escape(label)}</span><b>{html.escape(value)}</b>{('<small>' + html.escape(caption) + '</small>') if caption else ''}</div>" for label, value, caption in outside_metrics[:4]
+        ) + "</div>"
+    outside_title = "Player found outside the scouting universe" if LANG == "EN" else "Jugador encontrado fuera del universo de scouting"
+    outside_text = (
+        "The system has historical football information for this player, but he is not part of the opportunity universe defined for this version. Ranking, shortlist, Opportunity/Risk matrix and executive recommendations remain based on the Scouting Universe."
+        if LANG == "EN"
+        else "El sistema dispone de información histórica de este jugador, pero no forma parte del universo de oportunidades definido para esta versión. Ranking, shortlist, matriz Opportunity/Risk y recomendaciones ejecutivas se mantienen sobre el Scouting Universe."
+    )
+    st.markdown(
+        f"""
+<div class="outside-scouting-card">
+    <div class="outside-scouting-eyebrow">Football Intelligence Layer</div>
+    <div class="outside-scouting-title">{outside_title}</div>
+    <div class="outside-scouting-player">{outside_name}</div>
+    <div class="outside-scouting-meta">{" · ".join([part for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value] if str(part).strip() and str(part).strip() != "N/A"])}</div>
+    {outside_metrics_html}
+    <div class="outside-scouting-text">{html.escape(outside_text)}</div>
+    <div class="outside-scouting-cta">{'Informative profile' if LANG == 'EN' else 'Perfil informativo'} · {'ranking unchanged' if LANG == 'EN' else 'ranking sin alterar'}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
+
+if search_is_outside_active_filters and not outside_active_profile.empty:
+    outside_row = outside_active_profile.iloc[0]
+    outside_name = html.escape(str(get_player_name(outside_row)))
+    outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
+    outside_league = html.escape(league_display_name(safe_get(outside_row, "league", "N/A")))
+    outside_position = html.escape(str(safe_get(outside_row, "position_group", "N/A")))
+    outside_age_text = format_age_metadata(outside_row, LANG)
+    outside_value = format_money_short(safe_get(outside_row, "market_value_eur", np.nan))
+    title = "Player outside active scouting criteria" if LANG == "EN" else "Jugador fuera de los criterios activos de scouting"
+    text_msg = (
+        "The player exists in the analytical model universe, but does not enter the current active preset or filter set. The executive ranking, shortlist and Opportunity/Risk matrix remain based on the active Scouting Universe."
+        if LANG == "EN"
+        else "El jugador existe en el universo analítico del modelo, pero no entra en el preset o conjunto de filtros activo. El ranking ejecutivo, la shortlist y la matriz Opportunity/Risk se mantienen sobre el Scouting Universe activo."
+    )
+    st.markdown(
+        f"""
+<div class="outside-scouting-card">
+    <div class="outside-scouting-eyebrow">Scouting Universe · Eligibility Layer</div>
+    <div class="outside-scouting-title">{title}</div>
+    <div class="outside-scouting-player">{outside_name}</div>
+    <div class="outside-scouting-meta">{" · ".join([part for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value] if str(part).strip() and str(part).strip() != "N/A"])}</div>
+    <div class="outside-scouting-text">{html.escape(text_msg)}</div>
+    <div class="outside-scouting-cta">{'Review filters or preset' if LANG == 'EN' else 'Revisar filtros o preset'} · {'outside active criteria' if LANG == 'EN' else 'fuera de criterios activos'}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+# Contextual actions: clear search without detached guide duplication.
+if search_query_clean:
+    clear_col, _spacer_col = st.columns([0.16, 0.84])
+    with clear_col:
+        st.markdown('<div class="search-clear-row">', unsafe_allow_html=True)
+        st.button(
+            "Clear search" if LANG == "EN" else "Limpiar búsqueda",
+            key="clear_global_scouting_search_button",
+            on_click=clear_global_scouting_search,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n.pro-section-card .compact-board-note { margin-top: 14px !important; }\n.pro-section-card + div[data-testid="stExpander"] { margin-top: 14px !important; }\n</style>\n', unsafe_allow_html=True)
 
 # =============================================================================
 # Scouting IQ hero summary
@@ -8162,6 +10219,9 @@ if not hero_df.empty:
     hero_league = html.escape(league_display_name(safe_get(hero, "league", "N/A")))
     hero_age = format_score(safe_get(hero, "age", np.nan))
     hero_value = format_money_short(safe_get(hero, "market_value_eur", np.nan))
+    hero_is_scouting = bool(safe_get(hero, "is_scouting_universe", True))
+    hero_universe_status = ("Scouting opportunity" if LANG == "EN" else "Oportunidad scoreada") if hero_is_scouting else ("Football intelligence only" if LANG == "EN" else "Solo inteligencia futbolística")
+    hero_status_class = "universe-status-chip" if hero_is_scouting else "universe-status-chip universe-status-chip--football"
     hero_decision = get_numeric_value(hero, "executive_decision_score_v2", get_numeric_value(hero, "opportunity_score", np.nan))
     hero_future = get_numeric_value(hero, "future_asset_score", np.nan)
     hero_roi = get_numeric_value(hero, "asset_roi_3y_pct", np.nan)
@@ -8280,11 +10340,19 @@ No representa rentabilidad garantizada; es una simulación conservadora basada e
             )
 
 
+
+
+def render_layer_badge(label: str) -> None:
+    """Render compact product-layer labels for dashboard narrative sections."""
+    st.markdown(f"<div class='layer-badge'>{html.escape(label)}</div>", unsafe_allow_html=True)
+
+
 # =============================================================================
 # Main visual block
 # =============================================================================
 
 st.markdown("---")
+render_layer_badge("EXECUTIVE SCOUTING LAYER")
 st.markdown(f"## 🎯 {T('matrix_title')}", unsafe_allow_html=True)
 st.caption(T("matrix_caption"))
 
@@ -8339,7 +10407,7 @@ else:
 # =============================================================================
 
 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-
+render_layer_badge("OPERATIONAL SCOUTING LAYER")
 st.header(f"📋 {T('ranking_title')}")
 st.caption(T("ranking_caption"))
 
@@ -8386,6 +10454,7 @@ with pag_right:
 # Player Radar & Positional Benchmarking
 # =============================================================================
 
+render_layer_badge("PLAYER ANALYSIS LAYER")
 render_player_radar_benchmarking(table_df)
 
 
@@ -8501,6 +10570,7 @@ with reading_col:
 # =============================================================================
 
 st.markdown("### 🔍 Model Drivers")
+st.markdown('<div class="model-drivers-expander-spacer"></div>', unsafe_allow_html=True)
 with st.expander(TXT("Ver metodología técnica del modelo"), expanded=False):
     if LANG == "EN":
         st.markdown(
@@ -8580,3 +10650,661 @@ fig_shap.update_xaxes(showgrid=True, gridcolor="#e5e7eb", zeroline=True)
 fig_shap.update_yaxes(showgrid=False)
 with st.expander(TXT("Ver contribución técnica detallada"), expanded=False):
     st.plotly_chart(fig_shap, use_container_width=True)
+
+
+# =============================================================================
+# Sprint 11 v9 top polish: header spacing, search hierarchy and outside-card spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Keep Streamlit toolbar visible and give product header a little breathing room. */
+header[data-testid="stHeader"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: 2.45rem !important;
+    min-height: 2.45rem !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+}
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 1.15rem !important;
+}
+.scouting-topbar {
+    margin-top: 1.35rem !important;
+    margin-bottom: 16px !important;
+}
+
+/* Search module: cleaner top stack and a more professional CRM/search feel. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #d5e3f7 !important;
+    border-radius: 22px !important;
+    padding: 14px 18px 16px 18px !important;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.060) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) [data-testid="stMarkdownContainer"] {
+    margin-bottom: 0.35rem !important;
+}
+.final-search-title {
+    font-size: 1.04rem !important;
+    margin-bottom: 5px !important;
+}
+.final-search-caption {
+    font-size: 0.90rem !important;
+    margin-bottom: 7px !important;
+}
+.final-search-microcopy {
+    margin-bottom: 8px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 58px !important;
+    height: 58px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.10) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 58px !important;
+    line-height: 58px !important;
+    font-size: 1.04rem !important;
+}
+
+/* Outside-scouting informational card must never overlap the Contexto activo card. */
+.outside-scouting-card {
+    margin: 18px 0 22px 0 !important;
+    padding: 18px 20px !important;
+}
+
+/* Keep the quick guide visually inside Contexto activo without looking like a floating duplicate. */
+.context-action-row {
+    margin-top: 16px !important;
+    margin-bottom: 0 !important;
+}
+.quick-guide-inline {
+    max-width: 520px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 UX final micro-polish: topbar, search vertical rhythm and outside-card CTA
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Give Streamlit toolbar enough breathing room without creating a blank hero gap. */
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 1.55rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.25rem !important;
+    margin-bottom: 16px !important;
+}
+
+/* Compact the search card: title block and writable select must read as one module. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    padding: 14px 18px 14px 18px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) [data-testid="stMarkdownContainer"] {
+    margin-bottom: 0 !important;
+}
+.final-search-title {
+    margin-bottom: 3px !important;
+}
+.final-search-caption {
+    margin-bottom: 4px !important;
+}
+.final-search-microcopy {
+    margin-bottom: 2px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: -0.15rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 54px !important;
+    height: 54px !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"] {
+    min-height: 54px !important;
+    height: 54px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div {
+    line-height: 54px !important;
+    font-size: 1.02rem !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] svg {
+    align-self: center !important;
+}
+
+/* Outside-scouting card: clear separation and non-click-looking informational CTA. */
+.outside-scouting-card {
+    margin: 22px 0 24px 0 !important;
+    padding: 20px 22px !important;
+}
+.outside-scouting-cta {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    border: 1px solid #bfdbfe !important;
+    background: #eff6ff !important;
+    color: #1e3a8a !important;
+    border-radius: 999px !important;
+    padding: 7px 11px !important;
+    font-weight: 900 !important;
+    cursor: default !important;
+    pointer-events: none !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 v11 final polish: topbar breathing, compact search rhythm and outside profile metrics
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Keep Streamlit toolbar visible while giving the product topbar a clean, intentional offset. */
+header[data-testid="stHeader"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: 2.55rem !important;
+    min-height: 2.55rem !important;
+    background: transparent !important;
+}
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 1.85rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.55rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* Search card: tighter relation between the explanatory header and the actual input. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    padding: 12px 18px 13px 18px !important;
+    border-radius: 18px !important;
+}
+.final-search-title {
+    font-size: 1.02rem !important;
+    margin-bottom: 2px !important;
+}
+.final-search-caption {
+    font-size: 0.88rem !important;
+    margin-bottom: 3px !important;
+}
+.final-search-microcopy {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin-top: 1px !important;
+    margin-bottom: 0 !important;
+    padding: 6px 11px !important;
+}
+/* Reduce the large empty band between examples and the writable select. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: -0.55rem !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 56px !important;
+    height: 56px !important;
+    padding: 0 18px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"] > div {
+    min-height: 56px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    font-size: 1.02rem !important;
+    line-height: 1.2 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Football Intelligence card: metrics for non-recommendation profiles. */
+.outside-scouting-card {
+    margin-top: 24px !important;
+}
+.outside-scouting-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin: 14px 0 12px 0 !important;
+}
+.outside-scouting-metrics div {
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+}
+.outside-scouting-metrics span {
+    display: block !important;
+    color: #64748b !important;
+    font-size: 0.74rem !important;
+    margin-bottom: 4px !important;
+}
+.outside-scouting-metrics b {
+    display: block !important;
+    color: #0f172a !important;
+    font-size: 1.05rem !important;
+    font-weight: 950 !important;
+}
+@media (max-width: 1100px) {
+    .outside-scouting-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 v12 final rhythm polish: search spacing and Football Intelligence hierarchy
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Give the product header a slightly lower, deliberate position while preserving Streamlit toolbar. */
+header[data-testid="stHeader"] {
+    height: 2.85rem !important;
+    min-height: 2.85rem !important;
+}
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 2.05rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.75rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* Search module rhythm: keep title/explanation close to the search field, not to the card border. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    padding: 16px 18px 18px 18px !important;
+    border-radius: 18px !important;
+}
+.final-search-title {
+    margin-bottom: 4px !important;
+}
+.final-search-caption {
+    margin-bottom: 6px !important;
+}
+.final-search-microcopy {
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+    padding: 7px 12px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: 0.25rem !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 56px !important;
+    height: 56px !important;
+    padding: 0 18px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"] > div,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    min-height: 56px !important;
+    line-height: 1.25 !important;
+    display: flex !important;
+    align-items: center !important;
+    font-size: 1.02rem !important;
+}
+
+/* Separate the informative football layer from Contexto activo as a different conceptual layer. */
+.outside-scouting-card {
+    margin-top: 48px !important;
+    margin-bottom: 28px !important;
+}
+.context-chip-search {
+    max-width: fit-content !important;
+}
+.outside-scouting-metrics small {
+    display: block !important;
+    margin-top: 3px !important;
+    color: #64748b !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 v13 final top UX polish: single search card, richer guide and spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Topbar: keep Deploy visible but give the product header a few more pixels of intentional air. */
+header[data-testid="stHeader"] {
+    display: flex !important;
+    visibility: visible !important;
+    height: 2.60rem !important;
+    min-height: 2.60rem !important;
+    background: transparent !important;
+}
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-top: 1.95rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.72rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* Search: one premium white card, not nested grey boxes. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    background: #ffffff !important;
+    border: 1px solid #d7e6fb !important;
+    border-radius: 22px !important;
+    padding: 18px 20px 20px 20px !important;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.055) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) [data-testid="stMarkdownContainer"] {
+    margin-bottom: 10px !important;
+}
+.final-search-title {
+    font-size: 1.02rem !important;
+    letter-spacing: 0.11em !important;
+    color: #08275a !important;
+    margin: 0 0 5px 0 !important;
+}
+.final-search-caption {
+    font-size: 0.90rem !important;
+    color: #475569 !important;
+    margin: 0 0 10px 0 !important;
+}
+.final-search-microcopy {
+    margin: 0 0 10px 0 !important;
+    padding: 6px 12px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+}
+/* Reduce the dead band between the copy/examples and the input, while preserving inner margins. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"] {
+    margin-top: -0.20rem !important;
+    margin-bottom: 0 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 56px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 18px !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.10) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div > div,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"],
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] div[role="combobox"] > div {
+    min-height: 56px !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span {
+    font-size: 1.03rem !important;
+    line-height: 1.25 !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] svg {
+    align-self: center !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Richer quick guide inside Contexto activo. */
+.quick-guide-inline {
+    max-width: 650px !important;
+    width: min(650px, 100%) !important;
+}
+.quick-guide-inline summary {
+    padding: 11px 14px !important;
+}
+.quick-guide-inline-body {
+    font-size: 0.86rem !important;
+    line-height: 1.48 !important;
+    padding: 13px 15px 15px 15px !important;
+}
+.quick-guide-section {
+    margin: 8px 0 !important;
+}
+.quick-guide-glossary {
+    margin: 8px 0 0 1.1rem !important;
+    padding: 0 !important;
+}
+.quick-guide-glossary li {
+    margin: 4px 0 !important;
+    color: #334155 !important;
+}
+
+/* Cleaner informational chip for non-actionable searched profiles. */
+.context-chip-search {
+    max-width: 320px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* More deliberate separation between the active context card and Football Intelligence Layer. */
+.outside-scouting-card {
+    margin-top: 34px !important;
+    margin-bottom: 26px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Sprint 11 final closure patch: search centering, footer restore and compact ending
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final top rhythm: no blank rounded spacer above search, no excessive page-end whitespace. */
+[data-testid="stAppViewContainer"] .main .block-container,
+.block-container {
+    padding-bottom: 0.85rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.88rem !important;
+    margin-bottom: 18px !important;
+}
+
+/* New single search header shell. */
+.final-search-shell {
+    background: #ffffff !important;
+    border: 1px solid #d7e6fb !important;
+    border-radius: 22px !important;
+    padding: 18px 22px 16px 22px !important;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.055) !important;
+    margin: 0 0 14px 0 !important;
+}
+.final-search-shell .final-search-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    margin: 0 0 7px 0 !important;
+    color: #08275a !important;
+    font-size: 1.03rem !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.11em !important;
+    text-transform: uppercase !important;
+}
+.final-search-shell .final-search-caption {
+    margin: 0 !important;
+    color: #475569 !important;
+    font-size: 0.91rem !important;
+    line-height: 1.35 !important;
+}
+.final-search-examples {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    max-width: 100% !important;
+    padding: 6px 12px !important;
+    margin: 10px 0 18px 0 !important;
+    border-radius: 999px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: 0.78rem !important;
+    font-weight: 900 !important;
+}
+/* Main selectboxes: keep selected value vertically centered. This intentionally covers the dashboard's main selectboxes, not sidebar widgets. */
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] div[role="combobox"],
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] div[role="combobox"] > div,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] span,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] input {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 42px !important;
+    line-height: 1.25 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+/* The first main selectbox is the global search input. */
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"]:first-of-type div[data-baseweb="select"] > div,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:has(input[aria-autocomplete="list"]) {
+    min-height: 58px !important;
+    height: 58px !important;
+    padding: 0 18px !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.10) !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:has(input[aria-autocomplete="list"]) span,
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:has(input[aria-autocomplete="list"]) input {
+    min-height: 58px !important;
+    font-size: 1.02rem !important;
+}
+/* Hide accidental empty markdown wrappers if Streamlit leaves one after CSS patches. */
+div[data-testid="stMarkdownContainer"]:empty,
+div[data-testid="stMarkdownContainer"] p:empty {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* Final robust selectbox centering for the global search selected value. */
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 56px !important;
+}
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] [class*="singleValue"],
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] [class*="placeholder"],
+[data-testid="stAppViewContainer"] > .main div[data-testid="stSelectbox"] div[data-baseweb="select"] span {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 56px !important;
+    line-height: 56px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+.scouting-topbar-right span::first-letter {
+    color: #bfdbfe !important;
+}
+
+/* Footer restored and compact. */
+.scouting-iq-footer {
+    margin: 42px auto 4px auto !important;
+    padding: 18px 0 8px 0 !important;
+    border-top: 1px solid #dbe4f0 !important;
+    text-align: center !important;
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+}
+.scouting-iq-footer b {
+    display: block !important;
+    margin-bottom: 6px !important;
+    color: #0f172a !important;
+    font-size: 0.82rem !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<div class="scouting-iq-footer">
+    <b>SCOUTING IQ PLATFORM</b>
+    <div>Market Value Intelligence System · Version v1.1.0</div>
+    <div>Master Thesis · Sports Analytics &amp; Data Science</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
