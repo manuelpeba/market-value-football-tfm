@@ -1,0 +1,22 @@
+{
+  "status": "Optimal",
+  "risk_profile": "conservative",
+  "score_column": "portfolio_score_conservative",
+  "budget_millions": 30.0,
+  "budget_eur": 30000000.0,
+  "positions_needed": [
+    "DEF",
+    "MID",
+    "ATT"
+  ],
+  "max_players": 5,
+  "selected_players": 5,
+  "total_cost_eur": 23500000.0,
+  "budget_used_pct": 78.33,
+  "expected_upside_eur": 66383486.08214688,
+  "expected_roi_score": 22.43,
+  "average_risk": 8.53,
+  "average_confidence": 93.21,
+  "average_future_asset_score": 52.42,
+  "objective_value": 294.2547
+}
