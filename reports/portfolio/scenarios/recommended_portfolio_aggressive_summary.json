@@ -1,0 +1,21 @@
+{
+  "status": "Optimal",
+  "risk_profile": "aggressive",
+  "score_column": "portfolio_score_aggressive",
+  "budget_millions": 40.0,
+  "budget_eur": 40000000.0,
+  "positions_needed": [
+    "DEF",
+    "MID"
+  ],
+  "max_players": 5,
+  "selected_players": 5,
+  "total_cost_eur": 26000000.0,
+  "budget_used_pct": 65.0,
+  "expected_upside_eur": 39392327.85887871,
+  "expected_roi_score": 27.66,
+  "average_risk": 62.65,
+  "average_confidence": 82.73,
+  "average_future_asset_score": 46.31,
+  "objective_value": 204.9824
+}

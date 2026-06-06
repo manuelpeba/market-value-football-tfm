@@ -1,0 +1,45 @@
+{
+  "sprint": "Sprint 14.3",
+  "component": "Transfer Strategy Engine - Scenario Simulator",
+  "budget_millions": 40.0,
+  "positions_needed": [
+    "DEF",
+    "MID"
+  ],
+  "max_players": 5,
+  "scenarios": {
+    "conservative": {
+      "portfolio_output": "reports\\portfolio\\scenarios\\recommended_portfolio_conservative.csv",
+      "summary_output": "reports\\portfolio\\scenarios\\recommended_portfolio_conservative_summary.json",
+      "status": "Optimal",
+      "selected_players": 5,
+      "total_cost_eur": 39500000.0,
+      "budget_used_pct": 98.75,
+      "expected_upside_eur": 76936637.46478808,
+      "average_risk": 5.0,
+      "average_confidence": 94.03
+    },
+    "balanced": {
+      "portfolio_output": "reports\\portfolio\\scenarios\\recommended_portfolio_balanced.csv",
+      "summary_output": "reports\\portfolio\\scenarios\\recommended_portfolio_balanced_summary.json",
+      "status": "Optimal",
+      "selected_players": 5,
+      "total_cost_eur": 11500000.0,
+      "budget_used_pct": 28.75,
+      "expected_upside_eur": 44837622.29337551,
+      "average_risk": 13.09,
+      "average_confidence": 92.05
+    },
+    "aggressive": {
+      "portfolio_output": "reports\\portfolio\\scenarios\\recommended_portfolio_aggressive.csv",
+      "summary_output": "reports\\portfolio\\scenarios\\recommended_portfolio_aggressive_summary.json",
+      "status": "Optimal",
+      "selected_players": 5,
+      "total_cost_eur": 26000000.0,
+      "budget_used_pct": 65.0,
+      "expected_upside_eur": 39392327.85887871,
+      "average_risk": 62.65,
+      "average_confidence": 82.73
+    }
+  }
+}

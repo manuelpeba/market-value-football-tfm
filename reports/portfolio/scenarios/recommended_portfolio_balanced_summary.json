@@ -1,0 +1,21 @@
+{
+  "status": "Optimal",
+  "risk_profile": "balanced",
+  "score_column": "portfolio_score_balanced",
+  "budget_millions": 40.0,
+  "budget_eur": 40000000.0,
+  "positions_needed": [
+    "DEF",
+    "MID"
+  ],
+  "max_players": 5,
+  "selected_players": 5,
+  "total_cost_eur": 11500000.0,
+  "budget_used_pct": 28.75,
+  "expected_upside_eur": 44837622.29337551,
+  "expected_roi_score": 31.18,
+  "average_risk": 13.09,
+  "average_confidence": 92.05,
+  "average_future_asset_score": 51.79,
+  "objective_value": 263.2019
+}
