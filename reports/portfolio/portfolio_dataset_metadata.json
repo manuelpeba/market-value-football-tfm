@@ -1,0 +1,12 @@
+{
+  "sprint": "Sprint 14.1",
+  "component": "Transfer Strategy Engine - Portfolio Dataset",
+  "input": "reports\\rankings\\scouting_shortlist_with_risk.csv",
+  "outputs": [
+    "reports\\portfolio\\portfolio_candidates.csv",
+    "reports\\portfolio\\portfolio_candidates.parquet",
+    "reports\\portfolio\\portfolio_dataset_summary.csv"
+  ],
+  "rows": 68,
+  "optimization_candidates": 68
+}
