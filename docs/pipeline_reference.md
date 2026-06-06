@@ -2,7 +2,11 @@
 
 ## Objetivo
 
-Este documento describe la arquitectura de pipelines implementada en la versión v1.1.0 del proyecto.
+Este documento describe la arquitectura de pipelines implementada en la release:
+
+```text
+v1.1.0 — Strategic Recruitment & Decision Support System
+```
 
 Su objetivo es garantizar:
 
@@ -32,6 +36,9 @@ Su objetivo es garantizar:
 | Current Scouting Pipeline         | ✅      |
 | Player Intelligence Pipeline      | ✅      |
 | Recruitment Intelligence Pipeline | ✅      |
+| Transfer Strategy Pipeline        | ✅      |
+| Scenario Simulation Pipeline      | ✅      |
+| Portfolio Optimization Pipeline   | ✅      |
 | Decision Support Pipeline         | ✅      |
 | Internationalization Layer        | ✅      |
 
@@ -75,9 +82,13 @@ O --> P[Player Intelligence]
 
 P --> Q[Recruitment Intelligence]
 
-Q --> R[Decision Support System]
+Q --> R[Transfer Strategy Engine]
 
-R --> S[Sporting Decision]
+R --> S[Portfolio Optimization]
+
+S --> T[Decision Support System]
+
+T --> U[Sporting Decision]
 ```
 
 ---
@@ -267,28 +278,6 @@ Opportunity Score
 Risk Score
 ```
 
-## Scores implementados
-
-### Inefficiency Score
-
-Captura desviaciones entre valor observado y esperado.
-
-### Growth Score
-
-Captura potencial de desarrollo.
-
-### Confidence Score
-
-Captura robustez de la señal.
-
-### Opportunity Score
-
-Priorización multicriterio.
-
-### Risk Score
-
-Evaluación de incertidumbre asociada a cada recomendación.
-
 ---
 
 # 📋 Ranking Engine
@@ -311,10 +300,6 @@ Scouting Shortlists
 
 Introducido durante Sprint 10.
 
-## Objetivo
-
-Separar validación histórica y explotación operativa.
-
 ## Capacidades
 
 * Opportunity Detection.
@@ -327,10 +312,6 @@ Separar validación histórica y explotación operativa.
 # 🧠 Player Intelligence Pipeline
 
 Introducido durante Sprint 10.
-
-## Objetivo
-
-Transformar rankings en análisis individuales.
 
 ## Componentes
 
@@ -356,34 +337,14 @@ Introducido durante Sprint 11.
 
 Transformar análisis individuales en procesos operativos de recruitment.
 
-### Recruitment Board
+### Componentes
 
-Permite:
+* Recruitment Board.
+* Candidate Selection System.
+* Comparative Player Analysis.
+* Executive Scouting Workflow.
 
-* Construcción de shortlists.
-* Gestión de candidatos.
-* Selección múltiple.
-
-### Candidate Selection System
-
-Permite:
-
-* Comparación simultánea.
-* Selección dinámica.
-* Priorización operativa.
-
-### Comparative Player Analysis
-
-Comparación directa de:
-
-* Opportunity Score.
-* Risk Score.
-* Confidence Score.
-* Market Value.
-* Predicted Value.
-* Mispricing.
-
-### Executive Scouting Workflow
+### Flujo
 
 ```text
 Opportunity Detection
@@ -395,6 +356,97 @@ Shortlisting
 Comparative Analysis
 ↓
 Recruitment Decision
+```
+
+---
+
+# 📈 Transfer Strategy Pipeline
+
+Introducido durante Sprint 14.
+
+## Objetivo
+
+Transformar shortlists de scouting en estrategias óptimas de fichajes.
+
+---
+
+## Portfolio Dataset
+
+Construcción del universo optimizable.
+
+### Outputs
+
+```text
+reports/portfolio/portfolio_candidates.csv
+reports/portfolio/portfolio_candidates.parquet
+```
+
+---
+
+## Optimization Engine
+
+Implementación:
+
+```text
+0-1 Knapsack Optimization
+PuLP
+```
+
+### Restricciones
+
+* Presupuesto.
+* Posiciones.
+* Número máximo de fichajes.
+
+### Outputs
+
+```text
+recommended_portfolio.csv
+recommended_portfolio_summary.json
+```
+
+---
+
+# 📊 Scenario Simulation Pipeline
+
+Introducido durante Sprint 14.
+
+## Escenarios
+
+* Conservative.
+* Balanced.
+* Aggressive.
+
+### Outputs
+
+```text
+reports/portfolio/scenarios/
+```
+
+---
+
+# 💼 Portfolio Optimization Pipeline
+
+Objetivo:
+
+Transformar candidatos individuales en estrategias completas de asignación de recursos.
+
+### Inputs
+
+* Budget.
+* Positions.
+* Risk Profile.
+
+### Outputs
+
+* Recommended Portfolio.
+* Portfolio KPIs.
+* Scenario Comparison.
+
+### Resultado
+
+```text
+Strategic Recruitment Engine
 ```
 
 ---
@@ -413,51 +465,49 @@ app/streamlit_app.py
 
 ### Advanced Search Engine
 
-Búsqueda por:
-
 * Jugador.
 * Club.
 * Liga.
 * Posición.
 
-### Search Suggestions
+### UX Layer
 
-Autocompletado dinámico.
-
-### Search Chips
-
-Indicadores visuales de filtros activos.
-
-### UX Redesign
-
-Optimización de filtros y navegación.
+* Search Suggestions.
+* Search Chips.
+* Executive Navigation.
+* Quick Guide.
 
 ### Internationalization
 
-Idiomas disponibles:
-
 * Español.
 * Inglés.
+
+### Strategic Recruitment
+
+* Portfolio Builder.
+* Scenario Comparison.
+* Transfer Strategy Engine.
 
 ---
 
 # 🔄 Evolución de pipelines
 
-| Sprint    | Evolución                                 |
-| --------- | ----------------------------------------- |
-| Sprint 5  | Scoring Engine                            |
-| Sprint 6  | Evaluation Layer                          |
-| Sprint 7  | Executive Dashboard                       |
-| Sprint 9  | Decision Support Layer                    |
-| Sprint 10 | Player Intelligence Layer                 |
-| Sprint 11 | Recruitment Intelligence Layer            |
-| Sprint 12 | Productization, UX & Internationalization |
+| Sprint    | Evolución                                         |
+| --------- | ------------------------------------------------- |
+| Sprint 5  | Scoring Engine                                    |
+| Sprint 6  | Evaluation Layer                                  |
+| Sprint 7  | Executive Dashboard                               |
+| Sprint 9  | Decision Support Layer                            |
+| Sprint 10 | Player Intelligence Layer                         |
+| Sprint 11 | Recruitment Intelligence Layer                    |
+| Sprint 12 | Productization, UX & Internationalization         |
+| Sprint 14 | Transfer Strategy Engine & Portfolio Optimization |
 
 ---
 
 # 🏁 Conclusión
 
-La arquitectura de pipelines v1.1.0 consolida la evolución del proyecto desde un sistema predictivo hacia una plataforma DSS orientada a scouting y recruitment profesional.
+La arquitectura de pipelines v1.1.0 consolida la evolución del proyecto desde un sistema predictivo hacia una plataforma DSS orientada a scouting, recruitment y optimización de decisiones deportivas.
 
 La incorporación de:
 
@@ -470,8 +520,13 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
-permite transformar predicciones de valor de mercado en procesos operativos de captación de talento alineados con entornos profesionales de Football Analytics.
+permite transformar predicciones de valor de mercado en estrategias completas de captación de talento bajo restricciones reales de presupuesto, riesgo y necesidades deportivas.
 
+La principal contribución de la release consiste en extender el sistema desde la identificación de oportunidades individuales hacia la construcción de carteras óptimas de fichajes mediante técnicas de optimización y simulación de escenarios.

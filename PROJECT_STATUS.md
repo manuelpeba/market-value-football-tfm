@@ -13,7 +13,7 @@
 
 # 🧠 Resumen ejecutivo
 
-**Market Value Dynamics and Market Inefficiency Detection in Professional Football** desarrolla una plataforma integral de Football Analytics orientada a la identificación de jugadores infravalorados en el mercado europeo de fichajes.
+**Market Value Dynamics and Market Inefficiency Detection in Professional Football** desarrolla una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte a decisiones deportivas.
 
 El proyecto integra:
 
@@ -23,9 +23,11 @@ El proyecto integra:
 * Opportunity Detection.
 * Risk Assessment.
 * Recruitment Intelligence.
+* Transfer Strategy Engine.
+* Portfolio Optimization.
 * Decision Support Systems.
 
-La versión actual representa la evolución desde un sistema predictivo de valoración de mercado hacia una plataforma DSS orientada a scouting y recruitment profesional.
+La versión actual representa la evolución desde un sistema predictivo de valoración de mercado hacia una plataforma DSS orientada a procesos reales de captación y optimización de fichajes.
 
 ---
 
@@ -103,7 +105,9 @@ La versión actual representa la evolución desde un sistema predictivo de valor
 ### Deployment
 
 * Dashboard interactivo.
-* Visual Analytics.
+* Recruitment Intelligence.
+* Transfer Strategy Engine.
+* Portfolio Optimization.
 * Decision Support System.
 
 ---
@@ -120,6 +124,10 @@ Opportunity Detection
 Risk Assessment
 ↓
 Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
 ↓
 Decision Support System
 ```
@@ -149,6 +157,10 @@ Risk Assessment
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
@@ -156,20 +168,24 @@ Decision Support System
 
 ## Componentes implementados
 
-| Componente                 | Estado |
-| -------------------------- | ------ |
-| Data Pipelines             | ✅      |
-| Matching Pipeline          | ✅      |
-| Feature Engineering        | ✅      |
-| Econometric Pipeline       | ✅      |
-| Machine Learning Pipeline  | ✅      |
-| MLflow Tracking            | ✅      |
-| Explainability             | ✅      |
-| Opportunity Score          | ✅      |
-| Risk Framework             | ✅      |
-| Dashboard DSS              | ✅      |
-| Recruitment Intelligence   | ✅      |
-| Internationalization EN/ES | ✅      |
+| Componente                   | Estado |
+| ---------------------------- | ------ |
+| Data Pipelines               | ✅      |
+| Matching Pipeline            | ✅      |
+| Feature Engineering          | ✅      |
+| Econometric Pipeline         | ✅      |
+| Machine Learning Pipeline    | ✅      |
+| MLflow Tracking              | ✅      |
+| Explainability               | ✅      |
+| Opportunity Score            | ✅      |
+| Risk Framework               | ✅      |
+| Dashboard DSS                | ✅      |
+| Recruitment Intelligence     | ✅      |
+| Transfer Strategy Engine     | ✅      |
+| Scenario Simulator           | ✅      |
+| Portfolio Optimization       | ✅      |
+| Strategic Recruitment Engine | ✅      |
+| Internationalization EN/ES   | ✅      |
 
 ---
 
@@ -207,57 +223,52 @@ Evaluación del riesgo asociado a cada recomendación mediante:
 
 Funcionalidades incorporadas durante Sprint 11:
 
-### Recruitment Board
+* Recruitment Board.
+* Comparative Player Analysis.
+* Candidate Selection System.
+* Executive Scouting Workflow.
+* Global Search Engine.
+* Executive UX Layer.
 
-* Construcción dinámica de shortlists.
-* Selección múltiple de candidatos.
-* Vista ejecutiva de recruitment.
+---
 
-### Comparative Player Analysis
+## Transfer Strategy Engine
 
-Comparación simultánea de:
+Funcionalidades incorporadas durante Sprint 14:
 
-* Opportunity Score.
-* Risk Score.
-* Confidence Score.
-* Market Value.
-* Predicted Value.
-* Mispricing.
+### Portfolio Dataset
 
-### Candidate Selection System
+* Portfolio Cost.
+* Future Asset Score.
+* ROI Score.
+* Executive Decision Score.
 
-* Selección multijugador.
-* Comparación dinámica.
-* Priorización operativa.
+### Optimization Engine
+
+* Programación lineal entera.
+* Formulación 0-1 Knapsack.
+* Optimización bajo restricciones.
+
+### Scenario Simulator
+
+* Conservative.
+* Balanced.
+* Aggressive.
+
+### Strategic Recruitment Engine
+
+* Configuración de presupuesto.
+* Restricciones posicionales.
+* Perfil de riesgo.
+* Optimización de cartera.
+* Comparación de escenarios.
+* Selection Rationale.
 
 ---
 
 ## Decision Support System
 
-Funcionalidades incorporadas durante Sprint 12:
-
-### Advanced Search Engine
-
-Búsqueda por:
-
-* Jugador.
-* Club.
-* Liga.
-* Posición.
-
-### UX Improvements
-
-* Rediseño de filtros.
-* Search Suggestions.
-* Search Chips.
-* Range Sliders mejorados.
-
-### Internationalization
-
-Dashboard bilingüe:
-
-* Español.
-* Inglés.
+La plataforma integra todas las capas anteriores dentro de un entorno único de soporte a decisiones deportivas.
 
 ---
 
@@ -320,19 +331,35 @@ Incorpora:
 * Comparative Analysis.
 * Candidate Selection.
 * Executive Scouting Workflow.
+* Global Search Engine.
+* UX Refinement.
 
 ---
 
 ## Sprint 12
 
-Productization, UX & Internationalization Layer
+Productization & Internationalization Layer
 
 Incorpora:
 
-* Advanced Search.
-* UX Redesign.
-* EN/ES Internationalization.
 * Dashboard Productization.
+* EN/ES Internationalization.
+* Executive UX Layer.
+* Consolidación DSS.
+
+---
+
+## Sprint 14
+
+Transfer Strategy Engine
+
+Incorpora:
+
+* Portfolio Dataset.
+* Optimization Engine.
+* Scenario Simulator.
+* Strategic Recruitment Engine.
+* Portfolio Optimization.
 
 ---
 
@@ -354,16 +381,15 @@ Incorpora:
 
 * Opportunity Detection validado.
 * Precision@K elevada.
-* Scouting workflows operativos.
 * Recruitment Intelligence integrada.
+* Portfolio Optimization operativa.
+* Strategic Recruitment Engine funcional.
 
 ---
 
 # ⚖️ Trade-offs metodológicos
 
 ## Interpretabilidad vs rendimiento
-
-La arquitectura combina:
 
 ```text
 Econometría
@@ -409,29 +435,60 @@ El proyecto prioriza calidad del matching y consistencia temporal frente a maxim
 Ligas candidatas:
 
 * Championship.
-* Segunda División.
+* Segunda División española.
 * Belgian Pro League.
+* Austrian Bundesliga.
+* Danish Superliga.
 
 Objetivo:
 
-Ampliar la capacidad de detección de ineficiencias en mercados de desarrollo de talento.
+Ampliar la capacidad de detección de ineficiencias de mercado fuera de las principales ligas europeas.
 
 ---
 
-## Sprint 14 — Transfer Strategy Engine
+## Sprint 15 — Advanced Recruitment Intelligence
+
+Líneas futuras:
+
+* Benchmarking avanzado.
+* Comparación posicional enriquecida.
+* Radar multicriterio ampliado.
+* Explicabilidad avanzada.
+
+---
+
+## Sprint 16 — Transfer Replacement Engine
 
 Líneas futuras:
 
 * Replacement Analysis.
-* Portfolio Construction.
-* Investment Optimization.
-* Transfer Strategy Simulation.
+* Similarity Matching.
+* Budget-Constrained Replacements.
+* Tactical Compatibility.
+
+---
+
+## Investigación futura
+
+* Incorporación de TabPFN.
+* Incorporación de CatBoost.
+* Nuevas fuentes de datos deportivas.
+* Métricas avanzadas de FBref.
+* Tracking data.
+* Optimización multiobjetivo.
+* Simulación económica de carteras.
 
 ---
 
 # 🏁 Conclusión
 
-La versión v1.1.0 consolida la evolución del proyecto desde un sistema de predicción de valor de mercado hacia una plataforma integral de apoyo a decisiones para scouting y recruitment.
+La versión:
+
+```text
+v1.1.0 — Strategic Recruitment & Decision Support System
+```
+
+consolida la evolución del proyecto desde un sistema de predicción de valor de mercado hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte a decisiones deportivas.
 
 La combinación de:
 
@@ -448,8 +505,33 @@ Risk Assessment
 +
 Recruitment Intelligence
 +
+Transfer Strategy Engine
++
+Portfolio Optimization
++
 Decision Support System
 ```
 
 permite transformar datos futbolísticos en recomendaciones accionables para departamentos deportivos profesionales.
+
+La evolución metodológica puede resumirse mediante:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
+La plataforma ya no se limita a detectar oportunidades de mercado, sino que permite apoyar decisiones estratégicas de fichajes bajo restricciones reales de presupuesto, riesgo y necesidades deportivas.
+
 

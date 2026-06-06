@@ -23,6 +23,10 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
@@ -82,9 +86,13 @@ P --> Q[Player Intelligence Layer]
 
 Q --> R[Recruitment Intelligence Layer]
 
-R --> S[Decision Support System]
+R --> S[Transfer Strategy Engine]
 
-S --> T[Sporting Decision]
+S --> T[Portfolio Optimization Layer]
+
+T --> U[Decision Support System]
+
+U --> V[Sporting Decision]
 ```
 
 ---
@@ -322,7 +330,86 @@ Recruitment Decision
 
 ---
 
-## 10. Decision Support System Layer
+## 10. Transfer Strategy Engine Layer
+
+Introducida durante Sprint 14.
+
+Objetivo:
+
+Transformar recomendaciones individuales en estrategias completas de asignación de recursos bajo restricciones reales de mercado.
+
+### Portfolio Dataset
+
+Construcción de un universo optimizable de candidatos a partir de la shortlist ejecutiva.
+
+Variables incorporadas:
+
+* Portfolio Cost.
+* Future Asset Score.
+* ROI Score.
+* Executive Decision Score.
+* Portfolio Scores por perfil de riesgo.
+
+### Optimization Engine
+
+Implementación basada en programación lineal entera.
+
+Formulación utilizada:
+
+```text
+0-1 Knapsack Optimization
+```
+
+Implementación:
+
+```text
+PuLP
+```
+
+### Restricciones soportadas
+
+* Presupuesto disponible.
+* Posiciones requeridas.
+* Número máximo de fichajes.
+
+### Scenario Simulator
+
+Permite generar simultáneamente estrategias:
+
+* Conservative.
+* Balanced.
+* Aggressive.
+
+### Strategic Recruitment Engine
+
+Integrado dentro del dashboard DSS.
+
+Capacidades:
+
+* Configuración de presupuesto.
+* Configuración de posiciones objetivo.
+* Selección de perfil de riesgo.
+* Comparación de escenarios.
+* Construcción automática de carteras óptimas.
+* Selection Rationale.
+
+### Flujo operativo
+
+```text
+Recruitment Intelligence
+↓
+Portfolio Construction
+↓
+Scenario Optimization
+↓
+Transfer Strategy
+↓
+Sporting Decision
+```
+
+---
+
+## 11. Decision Support System Layer
 
 Consolidada durante Sprint 12.
 
@@ -390,6 +477,7 @@ Idiomas soportados:
 | Sprint 10 | Player Intelligence Layer                 |
 | Sprint 11 | Recruitment Intelligence Layer            |
 | Sprint 12 | Productization, UX & Internationalization |
+| Sprint 14 | Transfer Strategy Engine & Portfolio Optimization |
 
 ---
 
@@ -406,7 +494,24 @@ market-value-football-tfm/
 ├── mlruns/
 ├── notebooks/
 ├── reports/
+│   ├── rankings/
+│   ├── scouting_reports/
+│   ├── portfolio/
+│   │   ├── portfolio_candidates.csv
+│   │   ├── portfolio_candidates.parquet
+│   │   ├── recommended_portfolio.csv
+│   │   ├── recommended_portfolio_summary.json
+│   │   └── scenarios/
+│   └── figures/
 ├── src/
+│   ├── data/
+│   ├── features/
+│   ├── models/
+│   ├── strategy/
+│   │   ├── build_portfolio_dataset.py
+│   │   ├── optimize_transfer_strategy.py
+│   │   └── simulate_transfer_scenarios.py
+│   └── utils/
 └── tests/
 ```
 
@@ -414,7 +519,7 @@ market-value-football-tfm/
 
 # 🏁 Conclusión
 
-La arquitectura v1.1.0 consolida la evolución del proyecto desde un sistema de estimación de valor de mercado hacia una plataforma DSS orientada a scouting y recruitment profesional.
+La arquitectura v1.1.0 consolida la evolución del proyecto desde un sistema de estimación de valor de mercado hacia una plataforma DSS orientada a scouting, recruitment y optimización de decisiones deportivas.
 
 La incorporación de las capas de:
 
@@ -423,8 +528,30 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
-permite transformar modelos predictivos en procesos de decisión accionables alineados con las necesidades reales de departamentos deportivos.
+permite transformar modelos predictivos en estrategias completas de captación de talento bajo restricciones reales de presupuesto, riesgo y necesidades deportivas.
+
+La plataforma deja de responder únicamente a la pregunta:
+
+```text
+¿Qué jugador parece infravalorado?
+```
+
+para responder también:
+
+```text
+¿Qué combinación de jugadores maximiza el valor esperado bajo restricciones reales de mercado?
+```
+
+constituyendo el principal salto metodológico introducido en la release:
+
+```text
+v1.1.0 — Strategic Recruitment & Decision Support System
+```
 

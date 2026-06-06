@@ -2,7 +2,11 @@
 
 ## Objetivo
 
-Este documento recoge las decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release v1.1.0 — Recruitment Intelligence & Decision Support System.
+Este documento recoge las decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release:
+
+```text
+v1.1.0 — Strategic Recruitment & Decision Support System
+```
 
 El objetivo es justificar las decisiones desde una perspectiva:
 
@@ -12,7 +16,8 @@ El objetivo es justificar las decisiones desde una perspectiva:
 * Scoring multicriterio.
 * Evaluación de negocio.
 * Football Analytics.
-* Scouting cuantitativo.
+* Recruitment Intelligence.
+* Portfolio Optimization.
 
 ---
 
@@ -20,7 +25,7 @@ El objetivo es justificar las decisiones desde una perspectiva:
 
 El proyecto adopta una arquitectura híbrida donde la precisión predictiva no constituye el objetivo final.
 
-La finalidad última es generar recomendaciones accionables para scouting y recruitment.
+La finalidad última es generar recomendaciones accionables para scouting, recruitment y toma de decisiones deportivas.
 
 Arquitectura conceptual:
 
@@ -31,11 +36,13 @@ Evaluación
 ↓
 Scoring
 ↓
-Ranking
-↓
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
 ↓
 Decision Support System
 ```
@@ -68,7 +75,7 @@ position FE
 
 ### Decisiones adoptadas
 
-* Transformación logarítmica de la variable objetivo.
+* Transformación logarítmica del target.
 * Efectos fijos por liga.
 * Efectos fijos por posición.
 * Covarianza robusta HC3.
@@ -101,6 +108,8 @@ OLS permanece como benchmark explicativo del sistema.
 * LightGBM.
 * XGBoost.
 
+---
+
 ## Diseño experimental
 
 El pipeline incorpora:
@@ -113,13 +122,15 @@ El pipeline incorpora:
 * RandomizedSearchCV.
 * MLflow.
 
+---
+
 ## Resultado final
 
 | Modelo        |        MAE |       RMSE |         R² |
 | ------------- | ---------: | ---------: | ---------: |
 | Tuned XGBoost | **0.7120** | **0.8892** | **0.5414** |
 
-## Decisión
+### Decisión
 
 ```text
 Tuned XGBoost = modelo productivo
@@ -257,14 +268,6 @@ Risk Score
 
 Cuantificar incertidumbre asociada a cada recomendación.
 
-### Interpretación
-
-| Riesgo | Significado           |
-| ------ | --------------------- |
-| Bajo   | Perfil estable        |
-| Medio  | Riesgo moderado       |
-| Alto   | Elevada incertidumbre |
-
 ### Resultado
 
 ```text
@@ -274,80 +277,6 @@ Risk Score
 =
 Priorización más realista
 ```
-
----
-
-# 📋 Ranking Engine
-
-Objetivo:
-
-Transformar scores en recomendaciones priorizadas.
-
-### Principio metodológico
-
-Los rankings no sustituyen al scout.
-
-Su función es:
-
-```text
-Reducir espacio de búsqueda
-```
-
-y facilitar procesos posteriores de análisis.
-
----
-
-# 📊 Decisiones de evaluación
-
-El proyecto adopta una visión más amplia que la evaluación tradicional.
-
-## Métricas utilizadas
-
-### Técnicas
-
-* RMSE.
-* MAE.
-* R².
-
-### Negocio
-
-* Precision@K.
-* Positive ROI Rate.
-* Métricas de priorización.
-
-### Principio
-
-```text
-Un modelo útil
-no es únicamente
-el que predice mejor
-sino el que genera mejores decisiones
-```
-
----
-
-# 🔄 Historical Evaluation Layer
-
-Objetivo:
-
-Separar evaluación metodológica de explotación operativa.
-
-### Funciones
-
-* Comparación de modelos.
-* Validación temporal.
-* Backtesting.
-* Análisis académico.
-
-### Contribución
-
-```text
-Evaluación histórica
-≠
-Scouting operativo
-```
-
-Esta separación constituye una de las decisiones metodológicas más importantes del proyecto.
 
 ---
 
@@ -404,6 +333,65 @@ Recruitment Intelligence Layer
 
 ---
 
+# 📈 Transfer Strategy Engine
+
+Introducido durante Sprint 14.
+
+Problema identificado:
+
+```text
+Ranking de jugadores
+≠
+Estrategia óptima de fichajes
+```
+
+### Solución
+
+* Portfolio Dataset.
+* Optimization Engine.
+* Scenario Simulator.
+* Strategic Recruitment Engine.
+
+---
+
+## Formulación
+
+```text
+0-1 Knapsack Optimization
+```
+
+Implementación:
+
+```text
+PuLP
+```
+
+---
+
+## Restricciones soportadas
+
+* Presupuesto disponible.
+* Posiciones requeridas.
+* Número máximo de fichajes.
+
+---
+
+## Escenarios
+
+* Conservative.
+* Balanced.
+* Aggressive.
+
+---
+
+## Resultado
+
+```text
+Portfolio Optimization Layer
+```
+
+---
+
 # 🖥️ Decision Support System
 
 Consolidado durante Sprint 12.
@@ -423,6 +411,7 @@ Adopción por usuarios finales
 * Search Suggestions.
 * Search Chips.
 * Internationalization EN/ES.
+* Strategic Recruitment Engine.
 
 ### Resultado
 
@@ -432,17 +421,70 @@ Decision Support System
 
 ---
 
+# 📊 Decisiones de evaluación
+
+El proyecto adopta una visión más amplia que la evaluación tradicional.
+
+## Métricas utilizadas
+
+### Técnicas
+
+* RMSE.
+* MAE.
+* R².
+
+### Negocio
+
+* Precision@K.
+* Positive ROI Rate.
+* Métricas de priorización.
+
+### Principio
+
+```text
+Un modelo útil
+no es únicamente
+el que predice mejor
+sino el que genera mejores decisiones
+```
+
+---
+
+# 🔄 Historical Evaluation Layer
+
+Objetivo:
+
+Separar evaluación metodológica de explotación operativa.
+
+### Funciones
+
+* Comparación de modelos.
+* Validación temporal.
+* Backtesting.
+* Análisis académico.
+
+### Contribución
+
+```text
+Evaluación histórica
+≠
+Scouting operativo
+```
+
+---
+
 # ⚖️ Trade-offs metodológicos
 
-| Trade-off                         | Decisión             |
-| --------------------------------- | -------------------- |
-| Interpretabilidad vs precisión    | OLS + XGBoost        |
-| Econometría vs ML                 | Arquitectura híbrida |
-| Cobertura vs matching estricto    | Priorizar calidad    |
-| Complejidad vs reproducibilidad   | Modularización       |
-| Métrica técnica vs utilidad       | Precision@K          |
-| Ranking automático vs scout       | Sistema de apoyo     |
-| Evaluación histórica vs operación | Separación explícita |
+| Trade-off                         | Decisión                     |
+| --------------------------------- | ---------------------------- |
+| Interpretabilidad vs precisión    | OLS + XGBoost                |
+| Econometría vs ML                 | Arquitectura híbrida         |
+| Cobertura vs matching estricto    | Priorizar calidad            |
+| Complejidad vs reproducibilidad   | Modularización               |
+| Métrica técnica vs utilidad       | Precision@K                  |
+| Ranking automático vs scout       | Sistema de apoyo             |
+| Evaluación histórica vs operación | Separación explícita         |
+| Optimización vs interpretabilidad | Portfolio Scores explicables |
 
 ---
 
@@ -492,22 +534,39 @@ de la decisión.
 
 ## Sprint 13 — Multi-League Expansion
 
-Ligas candidatas:
-
 * Championship.
 * Segunda División.
 * Belgian Pro League.
+* Austrian Bundesliga.
+* Danish Superliga.
 
 ---
 
-## Sprint 14 — Transfer Strategy Engine
+## Sprint 15 — Advanced Recruitment Intelligence
 
-Posibles extensiones:
+* Benchmarking avanzado.
+* Comparación posicional enriquecida.
+* Explainability avanzada.
+* Radar multicriterio ampliado.
+
+---
+
+## Sprint 16 — Transfer Replacement Engine
 
 * Replacement Analysis.
-* Portfolio Construction.
-* Investment Optimization.
-* Transfer Strategy Simulation.
+* Similarity Matching.
+* Tactical Compatibility.
+* Budget-Constrained Replacements.
+
+---
+
+## Investigación futura
+
+* TabPFN.
+* CatBoost.
+* Tracking Data.
+* Optimización multiobjetivo.
+* Simulación económica de carteras.
 
 ---
 
@@ -520,14 +579,17 @@ Predicción
 ↓
 Scoring
 ↓
-Ranking
-↓
 Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
-La combinación de econometría, Machine Learning, explainability y scoring multicriterio permite convertir modelos predictivos en herramientas operativas para scouting y recruitment profesional.
+La combinación de econometría, Machine Learning, explainability, scoring multicriterio y optimización permite convertir modelos predictivos en herramientas operativas para scouting, recruitment y planificación estratégica de fichajes.
 
+La principal contribución de la release v1.1.0 consiste en extender el sistema desde la identificación de oportunidades individuales hacia la construcción de estrategias completas de asignación de recursos bajo restricciones reales de mercado.

@@ -28,7 +28,7 @@
 | v0.7.0 | Dashboard |
 | v0.8.0 | Dashboard Productizado |
 | v1.0.0 | Scouting Intelligence Platform |
-| v1.1.0 | Recruitment Intelligence & Decision Support System |
+| v1.1.0 | Strategic Recruitment & Decision Support System |
 
 ---
 
@@ -82,11 +82,13 @@ La plataforma desarrollada permite:
 - Construir shortlists de scouting.
 - Comparar candidatos de forma simultánea.
 - Apoyar procesos de toma de decisiones mediante un sistema DSS interactivo.
+- Optimizar carteras de fichajes bajo restricciones de presupuesto y riesgo.
+- Simular estrategias de recruitment alternativas mediante escenarios.
 
 La versión actual corresponde a:
 
 ```text
-v1.1.0 — Recruitment Intelligence & Decision Support System
+v1.1.0 — Strategic Recruitment & Decision Support System
 ```
 
 y representa la evolución del proyecto desde un sistema predictivo de valoración de jugadores hacia una plataforma integral de soporte a decisiones para scouting profesional.
@@ -185,6 +187,8 @@ con potencial aplicación en departamentos de scouting profesional.
 - Recruitment Intelligence.
 - Candidate Comparison.
 - Recruitment Board.
+- Transfer Strategy Engine.
+- Portfolio Optimization.
 - Decision Support System.
 
 ---
@@ -214,6 +218,8 @@ Risk Assessment
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
 Decision Support System
 ```
 
@@ -231,6 +237,8 @@ Opportunity Detection
 Risk Assessment
 ↓
 Recruitment Intelligence
+↓
+Transfer Strategy Engine
 ↓
 Decision Support System
 ```
@@ -645,11 +653,11 @@ Predicción
 ↓
 Scoring
 ↓
-Ranking
-↓
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Transfer Strategy Engine
 ↓
 Decision Support System
 ```
@@ -886,15 +894,28 @@ Comparative Analysis
 Recruitment Decision
 ```
 
-#### Contribución
+### UX & Executive Workflow Refinement
 
-Nacimiento de la Recruitment Intelligence Layer.
+El Sprint 11 incorpora una fase adicional de refinamiento orientada a mejorar la experiencia de usuario y la eficiencia operativa del proceso de scouting.
+
+Funcionalidades incorporadas:
+
+- Buscador global de scouting.
+- Guía rápida integrada.
+- Contexto activo de filtros.
+- Mejora de navegación entre módulos.
+- Optimización visual del Recruitment Board.
+- Simplificación de flujos de comparación.
+
+Contribución:
+
+Reducción de fricción operativa y consolidación del dashboard como herramienta de trabajo para procesos de recruitment.
 
 ---
 
-### Sprint 12 — Productization, UX & Internationalization Layer
+### Sprint 12 — Productization & Internationalization Layer
 
-Sprint 12 se centra en convertir el dashboard en una aplicación analítica profesional orientada a usuarios finales.
+El Sprint 12 consolida y estandariza las mejoras de experiencia de usuario introducidas durante Sprint 11, ampliándolas mediante una capa de internacionalización y productización orientada a usuarios finales.
 
 #### Objetivos
 
@@ -902,12 +923,27 @@ Sprint 12 se centra en convertir el dashboard en una aplicación analítica prof
 - Reducir fricción operativa.
 - Incrementar accesibilidad.
 - Facilitar adopción internacional.
+- Consolidar la plataforma como un sistema DSS orientado a negocio.
 
 ---
 
-#### Advanced Search Engine
+#### Dashboard Productization
 
-Implementación de un buscador global con capacidad de búsqueda por:
+Refactorización de la interfaz para facilitar la interpretación y el consumo de resultados analíticos.
+
+Mejoras incorporadas:
+
+- Diseño orientado a perfiles ejecutivos.
+- Navegación estructurada por capas funcionales.
+- Jerarquización visual de métricas y recomendaciones.
+- Mejora de consistencia visual entre módulos.
+- Optimización de flujos de exploración y análisis.
+
+---
+
+#### Global Search Engine
+
+Implementación de un buscador global integrado con capacidad de búsqueda por:
 
 - Jugador.
 - Club.
@@ -919,59 +955,21 @@ Características:
 - Autocompletado.
 - Sugerencias dinámicas.
 - Filtrado inmediato.
+- Integración con el contexto activo del dashboard.
 
 ---
 
-#### Search Suggestions
+#### Executive UX Layer
 
-Sistema de sugerencias integrado dentro del propio componente de búsqueda.
+Incorporación de mejoras orientadas a la eficiencia operativa.
 
-Comportamiento tipo:
+Funcionalidades:
 
-```text
-Autocomplete
-Typeahead
-```
-
-sin necesidad de paneles auxiliares.
-
----
-
-#### Search Chip
-
-Incorporación de indicadores visuales de filtros activos.
-
-Ejemplo:
-
-```text
-✕ Búsqueda: Player Name
-```
-
-Permite eliminar filtros mediante un único clic.
-
----
-
-#### Filter UX Redesign
-
-Refactorización completa del sistema de filtros.
-
-Mejoras introducidas:
-
-- Mayor visibilidad.
-- Menor fricción de uso.
-- Consistencia visual.
-- Reducción de clics necesarios.
-
----
-
-#### Range Slider Improvements
-
-Los valores mínimo y máximo permanecen visibles permanentemente.
-
-Beneficios:
-
-- Mejor comprensión del rango disponible.
-- Mayor precisión durante la exploración.
+- Guía rápida integrada.
+- Chips de filtros activos.
+- Contexto de exploración persistente.
+- Simplificación de interacciones frecuentes.
+- Reducción de clics necesarios para acceder a información relevante.
 
 ---
 
@@ -992,22 +990,137 @@ La internacionalización se aplica a:
 - Tooltips.
 - Alertas.
 - Recruitment Board.
-- Componentes de comparación.
+- Transfer Strategy Engine.
 
 ---
 
-#### Dashboard Productization
+#### Contribución
 
-La plataforma deja de comportarse como un prototipo analítico y pasa a funcionar como un sistema DSS orientado a:
+La plataforma deja de comportarse como un prototipo analítico y pasa a funcionar como una aplicación DSS orientada a:
 
 - Departamentos de scouting.
 - Recruitment teams.
 - Directores deportivos.
 - Analistas de rendimiento.
 
+Sprint 12 consolida la capa de productización necesaria para transformar resultados analíticos en procesos de decisión utilizables por usuarios de negocio.
+
+---
+
+### Sprint 14 — Transfer Strategy Engine
+
+Sprint 14 introduce una nueva capa de optimización orientada a apoyar decisiones estratégicas de recruitment.
+
+El objetivo deja de ser únicamente identificar oportunidades individuales para responder a una pregunta más cercana a la realidad operativa de un club profesional:
+
+```text
+¿Qué combinación de jugadores maximiza el valor esperado
+bajo restricciones reales de presupuesto y riesgo?
+```
+
+Esta evolución desplaza el proyecto desde el scouting analítico hacia ámbitos propios de Decision Science, Portfolio Optimization y Sports Economics.
+
+---
+
+#### Sprint 14.1 — Portfolio Dataset
+
+Construcción de una capa específica de candidatos para optimización.
+
+Variables incorporadas:
+
+* Portfolio Cost.
+* Future Asset Score.
+* ROI Score.
+* Executive Decision Score.
+* Portfolio Scores por perfil de riesgo.
+
+Esta capa transforma las recomendaciones individuales en activos comparables dentro de un proceso de optimización.
+
+---
+
+#### Sprint 14.2 — Optimization Engine
+
+Implementación de un motor de optimización basado en programación lineal entera.
+
+Formulación utilizada:
+
+```text
+0-1 Knapsack Optimization
+```
+
+Implementación:
+
+```text
+PuLP
+```
+
+Restricciones incorporadas:
+
+* Presupuesto disponible.
+* Posiciones requeridas.
+* Número máximo de fichajes.
+
+La función objetivo maximiza un score de cartera ajustado al perfil estratégico seleccionado.
+
+---
+
+#### Sprint 14.3 — Scenario Simulator
+
+Desarrollo de un simulador de escenarios orientado a comparar estrategias alternativas de recruitment.
+
+Escenarios disponibles:
+
+* Conservative.
+* Balanced.
+* Aggressive.
+
+Cada escenario modifica la ponderación entre:
+
+* Opportunity.
+* Risk.
+* Confidence.
+* Future Asset.
+* ROI.
+
+permitiendo analizar diferentes perfiles de inversión deportiva.
+
+---
+
+#### Sprint 14.4 — Strategic Recruitment Engine
+
+Integración completa dentro del dashboard DSS.
+
+Funcionalidades incorporadas:
+
+* Optimización interactiva de carteras.
+* Configuración de presupuesto.
+* Selección de posiciones objetivo.
+* Configuración de perfil de riesgo.
+* Comparación simultánea de escenarios.
+* KPIs ejecutivos de cartera.
+* Explicabilidad mediante Selection Rationale.
+
+---
+
 #### Contribución
 
-Consolidación del proyecto como una plataforma de Decision Support System aplicada al mercado europeo de fichajes.
+Sprint 14 representa el mayor salto metodológico del proyecto.
+
+La evolución funcional puede resumirse mediante:
+
+```text
+Opportunity Detection
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
+La plataforma deja de limitarse a detectar oportunidades para pasar a recomendar estrategias completas de asignación de recursos dentro del mercado de fichajes.
 
 ---
 
@@ -1049,11 +1162,16 @@ Actualmente la plataforma incorpora:
 - Recruitment Intelligence Layer.
 - Internacionalización EN/ES.
 - Sistema DSS interactivo.
+- Transfer Strategy Engine.
+- Portfolio Optimization Layer.
+- Scenario Simulator.
+- Strategic Recruitment Engine.
+- Portfolio Recommendation Engine.
 
 Versión actual:
 
 ```text
-v1.1.0 — Recruitment Intelligence & Decision Support System
+v1.1.0 — Strategic Recruitment & Decision Support System
 ```
 
 ---
@@ -1082,32 +1200,68 @@ v1.1.0 — Recruitment Intelligence & Decision Support System
 
 ## 🛣️ Roadmap
 
-Las siguientes líneas de investigación representan posibles extensiones futuras y es posible que no formen parte de la versión evaluada en este TFM.
+Las siguientes líneas de investigación representan posibles extensiones futuras y no forman parte de la versión evaluada en este Trabajo Fin de Máster.
 
 ### Sprint 13 — Multi-League Expansion
 
-Ampliación progresiva de cobertura hacia ligas de desarrollo y exportación de talento:
+Ampliación progresiva de cobertura hacia ligas de desarrollo y exportación de talento.
 
-- Championship.
-- Segunda División española.
-- Belgian Pro League.
+Posibles incorporaciones:
+
+* Championship.
+* Segunda División española.
+* Belgian Pro League.
+* Austrian Bundesliga.
+* Danish Superliga.
 
 Objetivo:
 
-Incrementar la capacidad de detección de ineficiencias de mercado fuera de las grandes ligas europeas.
+Incrementar la capacidad de detección de ineficiencias de mercado fuera de las principales ligas europeas.
 
 ---
 
-### Sprint 14 — Transfer Strategy Engine
+### Sprint 15 — Advanced Recruitment Intelligence
 
-Evolución del DSS hacia un sistema de planificación estratégica de fichajes.
+Ampliación de las capacidades de comparación y evaluación de candidatos.
 
-Líneas de trabajo potenciales:
+Líneas potenciales:
 
-- Sustitución de jugadores.
-- Construcción de carteras de targets.
-- Optimización de inversión.
-- Estrategia de mercado.
+* Benchmarking avanzado.
+* Comparación posicional enriquecida.
+* Radar multicriterio ampliado.
+* Explicabilidad avanzada de recomendaciones.
+
+---
+
+### Sprint 16 — Transfer Replacement Engine
+
+Sistema orientado a la sustitución inteligente de jugadores.
+
+Objetivos:
+
+* Identificación automática de reemplazos.
+* Matching de perfiles deportivos.
+* Restricciones presupuestarias.
+* Compatibilidad táctica y competitiva.
+
+Pregunta objetivo:
+
+```text
+¿Qué jugadores pueden sustituir de forma eficiente
+a un activo que abandona el club?
+```
+
+---
+
+### Investigación futura
+
+* Incorporación de TabPFN.
+* Incorporación de CatBoost.
+* Nuevas fuentes de datos deportivas.
+* Métricas avanzadas de FBref.
+* Tracking data.
+* Optimización multiobjetivo.
+* Simulación económica de carteras de fichajes.
 
 ---
 
@@ -1177,12 +1331,25 @@ market-value-football-tfm/
 │   │   ├── dashboard/                     # Capturas del DSS y Scouting Intelligence Platform
 │   │   └── explainability/                # SHAP, feature importance y análisis interpretativo
 │   ├── model_diagnostics/                 # Diagnósticos econométricos y de Machine Learning
+│   ├── portfolio/                         # Outputs del Transfer Strategy Engine
+│   │   ├── portfolio_candidates.csv
+│   │   ├── portfolio_candidates.parquet
+│   │   ├── portfolio_dataset_metadata.json
+│   │   ├── portfolio_dataset_summary.csv
+│   │   ├── recommended_portfolio.csv
+│   │   ├── recommended_portfolio_summary.json
+│   │   └── scenarios/
+│   │       ├── recommended_portfolio_conservative.csv
+│   │       ├── recommended_portfolio_balanced.csv
+│   │       ├── recommended_portfolio_aggressive.csv
+│   │       ├── recommended_portfolio_conservative_summary.json
+│   │       ├── recommended_portfolio_balanced_summary.json
+│   │       ├── recommended_portfolio_aggressive_summary.json
+│   │       ├── scenario_simulation_summary.csv
+│   │       └── scenario_simulation_metadata.json
 │   ├── rankings/                          # Rankings de scouting y oportunidades de mercado
 │   ├── scouting_reports/                  # Informes individuales de scouting
 │   └── tables/                            # Métricas, tablas y resultados exportados
-│
-├── scripts/                               # Scripts auxiliares de setup, descarga y mantenimiento
-│   └── download_data.sh                   # Descarga reproducible del dataset base externo
 │
 ├── src/                                   # Lógica principal del sistema
 │   ├── data/                              # Ingesta, matching y datasets
@@ -1192,6 +1359,10 @@ market-value-football-tfm/
 │   │   ├── evaluation/                    # Métricas y comparación
 │   │   ├── machine_learning/              # Pipelines ML
 │   │   └── scoring/                       # Inefficiency scoring
+│   ├── strategy/                          # Transfer Strategy Engine
+│   │   ├── build_portfolio_dataset.py     # Construcción del universo optimizable
+│   │   ├── optimize_transfer_strategy.py  # Optimización 0-1 Knapsack
+│   │   └── simulate_transfer_scenarios.py # Simulación de escenarios estratégicos
 │   └── utils/                             # Utilidades compartidas
 │       ├── config.py                      # Loader centralizado de configuración YAML
 │       ├── dataset_versioning.py          # Versionado y hashing de datasets
@@ -1304,13 +1475,13 @@ Predicciones
 ↓
 Scoring
 ↓
-Rankings
+Recruitment Intelligence
 ↓
-Evaluación de negocio
+Transfer Strategy Engine
 ↓
-Outputs de scouting
+Portfolio Optimization
 ↓
-Dashboard ejecutivo
+Dashboard DSS
 ```
 
 garantizando la reproducibilidad integral de los resultados presentados en este Trabajo Fin de Máster.
@@ -1335,6 +1506,7 @@ garantizando la reproducibilidad integral de los resultados presentados en este 
 - DuckDB
 - Pandas
 - Statsmodels
+- PuLP
 
 ### Metodologías
 
@@ -1376,13 +1548,13 @@ La plataforma desarrollada permite transformar grandes volúmenes de informació
 
 El sistema no pretende sustituir el scouting tradicional, sino complementarlo mediante evidencia cuantitativa reproducible, interpretable y escalable.
 
-La combinación de modelos predictivos, scoring multicriterio, evaluación de riesgo y herramientas de recruitment permite reducir el universo de análisis inicial y priorizar oportunidades con potencial de creación de valor.
+La combinación de modelos predictivos, scoring multicriterio, evaluación de riesgo, inteligencia de recruitment y optimización de carteras permite reducir el universo de análisis inicial y apoyar decisiones estratégicas de fichajes bajo restricciones reales de mercado.
 
 ---
 
 ## 🏁 Conclusión
 
-El proyecto evoluciona desde un ejercicio de modelización predictiva hacia una plataforma integral de Football Analytics orientada a scouting profesional.
+El proyecto evoluciona desde un ejercicio de modelización predictiva hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte a decisiones deportivas.
 
 La combinación de:
 
@@ -1399,15 +1571,42 @@ Risk Assessment
 +
 Recruitment Intelligence
 +
+Transfer Strategy Engine
++
+Portfolio Optimization
++
 Decision Support System
 ```
 
 permite transformar datos deportivos en recomendaciones accionables para procesos reales de captación de talento.
 
+La evolución metodológica desarrollada a lo largo del proyecto puede resumirse mediante:
+
+```text
+Predicción
+↓
+Scoring
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
 La release:
 
 ```text
-v1.1.0 — Recruitment Intelligence & Decision Support System
+v1.1.0 — Strategic Recruitment & Decision Support System
 ```
 
-representa la consolidación del proyecto como una plataforma DSS aplicada al mercado europeo de fichajes y constituye la culminación de la evolución metodológica desarrollada a lo largo del TFM.
+representa la consolidación del proyecto como una plataforma DSS aplicada al mercado europeo de fichajes.
+
+Más allá de la identificación de jugadores infravalorados, la plataforma permite apoyar decisiones estratégicas de recruitment mediante la combinación de valoración de mercado, evaluación de riesgo, análisis comparativo y optimización de carteras de fichajes bajo restricciones reales.
+
+El resultado final es una arquitectura reproducible, interpretable y orientada a negocio que conecta técnicas avanzadas de analítica deportiva con problemas reales de toma de decisiones dentro del fútbol profesional.
+
