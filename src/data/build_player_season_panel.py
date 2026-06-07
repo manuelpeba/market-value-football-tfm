@@ -1,4 +1,5 @@
 from pathlib import Path
+import argparse
 import numpy as np
 import pandas as pd
 from rapidfuzz import process, fuzz
@@ -8,13 +9,20 @@ from src.data.name_normalization import normalize_name
 
 ROOT = Path(__file__).resolve().parents[2]
 
-FBREF_PATH = ROOT / "data/processed/fbref_features.parquet"
-TM_PATH = ROOT / "data/processed/transfermarkt_features.parquet"
-OUTPUT_PATH = ROOT / "data/processed/player_season_panel.parquet"
+DEFAULT_FBREF_PATH = ROOT / "data" / "processed" / "fbref_features.parquet"
+DEFAULT_TM_PATH = ROOT / "data" / "processed" / "transfermarkt_features.parquet"
+DEFAULT_OUTPUT_PATH = ROOT / "data" / "processed" / "player_season_panel.parquet"
 
 MAX_AGE_DIFF = 1.5
 FUZZY_THRESHOLD = 92
 MIN_CLUB_SCORE = 70
+
+
+def resolve_path(path: str | Path) -> Path:
+    path = Path(path)
+    if not path.is_absolute():
+        path = ROOT / path
+    return path
 
 
 def get_first_existing_column(df: pd.DataFrame, candidates: list[str]) -> str:
@@ -225,7 +233,6 @@ def match_one_player(
     age_fbref = row.get("age_fbref", np.nan)
     club_fbref = row.get("club", None)
 
-    # 1. Exact name + season
     exact_candidates = tm_by_exact_name.get((season, name_norm))
 
     if exact_candidates is not None and not exact_candidates.empty:
@@ -256,7 +263,6 @@ def match_one_player(
                 "club_score": club_score,
             }
 
-    # 2. Fuzzy name only within season + first character block
     block_key = (season, first_char)
     block_candidates = tm_by_fuzzy_block.get(block_key)
 
@@ -306,14 +312,24 @@ def match_one_player(
     return empty_match()
 
 
-def build_player_season_panel() -> pd.DataFrame:
-    fbref = pd.read_parquet(FBREF_PATH)
-    tm = pd.read_parquet(TM_PATH)
+def build_player_season_panel(
+    fbref_path: str | Path = DEFAULT_FBREF_PATH,
+    tm_path: str | Path = DEFAULT_TM_PATH,
+    output_path: str | Path = DEFAULT_OUTPUT_PATH,
+) -> pd.DataFrame:
+    fbref_path = resolve_path(fbref_path)
+    tm_path = resolve_path(tm_path)
+    output_path = resolve_path(output_path)
+
+    fbref = pd.read_parquet(fbref_path)
+    tm = pd.read_parquet(tm_path)
 
     fbref = prepare_fbref(fbref)
     tm = prepare_transfermarkt(tm)
 
     print("Building validated player-season matching...")
+    print(f"FBref input: {fbref_path}")
+    print(f"Transfermarkt input: {tm_path}")
     print(f"FBref rows: {len(fbref):,}")
     print(f"Transfermarkt rows before filtering: {len(tm):,}")
     print(f"Max age diff: {MAX_AGE_DIFF}")
@@ -399,10 +415,7 @@ def build_player_season_panel() -> pd.DataFrame:
     panel["matching_status"] = panel["market_value_eur"].notna()
 
     panel = panel.drop(
-        columns=[
-            "name_first_char",
-            "name_first_token",
-        ],
+        columns=["name_first_char", "name_first_token"],
         errors="ignore",
     )
 
@@ -413,8 +426,8 @@ def build_player_season_panel() -> pd.DataFrame:
 
     panel = panel.drop_duplicates(subset=dedup_cols)
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    panel.to_parquet(OUTPUT_PATH, index=False)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    panel.to_parquet(output_path, index=False)
 
     print("\nPanel construido")
     print(f"Rows: {len(panel):,}")
@@ -443,10 +456,40 @@ def build_player_season_panel() -> pd.DataFrame:
         .sort_values("mean", ascending=False)
     )
 
-    print(f"\nOutput: {OUTPUT_PATH}")
+    print(f"\nOutput: {output_path}")
 
     return panel
 
 
+def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--fbref-input",
+        default="data/processed/fbref_features.parquet",
+        help="Input path for processed FBref features.",
+    )
+
+    parser.add_argument(
+        "--tm-input",
+        default="data/processed/transfermarkt_features.parquet",
+        help="Input path for processed Transfermarkt features.",
+    )
+
+    parser.add_argument(
+        "--output",
+        default="data/processed/player_season_panel.parquet",
+        help="Output path for the integrated player-season panel.",
+    )
+
+    args = parser.parse_args()
+
+    build_player_season_panel(
+        fbref_path=args.fbref_input,
+        tm_path=args.tm_input,
+        output_path=args.output,
+    )
+
+
 if __name__ == "__main__":
-    build_player_season_panel()
+    main()

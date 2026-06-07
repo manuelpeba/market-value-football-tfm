@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import pandas as pd
+import argparse
 
 from src.data.ingest_fbref import extract_fbref_player_table
 
@@ -8,7 +9,7 @@ from src.data.ingest_fbref import extract_fbref_player_table
 ROOT = Path(__file__).resolve().parents[2]
 
 RAW_PATH = ROOT / "data" / "raw" / "fbref" / "standard_html"
-OUTPUT_PATH = ROOT / "data" / "processed" / "fbref_features.parquet"
+DEFAULT_OUTPUT_PATH = ROOT / "data" / "processed" / "fbref_features.parquet"
 
 
 LEAGUE_MAP = {
@@ -19,6 +20,12 @@ LEAGUE_MAP = {
     "ligue_1": "Ligue 1",
     "eredivisie": "Eredivisie",
     "primeira_liga": "Liga Portugal",
+
+    # Sprint 13A — Multi-League Expansion
+    "championship": "Championship",
+    "belgian_pro_league": "Belgian Pro League",
+    "spanish_segunda": "Spanish Segunda División",
+    "austrian_bundesliga": "Austrian Bundesliga",
 }
 
 
@@ -185,7 +192,12 @@ def clean_fbref_table(df: pd.DataFrame, league: str, season: str) -> pd.DataFram
     return df
 
 
-def build_fbref_features() -> pd.DataFrame:
+def build_fbref_features(output_path: str | Path = DEFAULT_OUTPUT_PATH) -> pd.DataFrame:
+    output_path = Path(output_path)
+
+    if not output_path.is_absolute():
+        output_path = ROOT / output_path
+
     all_dfs = []
 
     html_files = sorted(RAW_PATH.glob("*.html"))
@@ -219,13 +231,13 @@ def build_fbref_features() -> pd.DataFrame:
         ]
     ).copy()
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    final_df.to_parquet(OUTPUT_PATH, index=False)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    final_df.to_parquet(output_path, index=False)
 
     print("\nFBref feature build completed")
     print(f"Rows: {len(final_df):,}")
     print(f"Columns: {len(final_df.columns):,}")
-    print(f"Output: {OUTPUT_PATH}")
+    print(f"Output: {output_path}")
 
     print("\nSeasons:")
     print(final_df["season"].value_counts().sort_index())
@@ -236,11 +248,28 @@ def build_fbref_features() -> pd.DataFrame:
     print("\nPosition groups:")
     print(final_df["position_group"].value_counts(dropna=False))
 
+    print("\nLeague x Season coverage:")
+    print(
+        final_df.groupby(["league", "season"])
+        .size()
+        .sort_index()
+        )--verbose
+
     return final_df
 
 
 def main():
-    build_fbref_features()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--output",
+        default="data/processed/fbref_features.parquet",
+        help="Output path for processed FBref features.",
+    )
+
+    args = parser.parse_args()
+
+    build_fbref_features(output_path=args.output)
 
 
 if __name__ == "__main__":
