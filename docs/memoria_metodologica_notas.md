@@ -9,7 +9,7 @@ Market Value Dynamics and Market Inefficiency Detection
 in Professional Football
 ```
 
-Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release v1.1.0 — Recruitment Intelligence & Decision Support System.
+Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release v1.1.0 — Strategic Recruitment & Decision Support System.
 
 ---
 
