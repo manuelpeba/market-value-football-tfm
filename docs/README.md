@@ -103,11 +103,16 @@ Scouting Intelligence
 | Métrica | Valor |
 |----------|----------:|
 | Observaciones modelizables | 3.916 |
-| Jugadores únicos | 2.136 |
+| Jugadores únicos | 2.138 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 | Ligas | 7 |
 | Modelo productivo | Tuned XGBoost |
 | R² final | 0.5414 |
+
+
+El universo modelizable utilizado por los modelos predictivos mantiene actualmente las siete ligas originales del proyecto.
+
+La expansión multi-liga de Sprint 13A se ha implementado sobre la capa de integración y panelización de datos, constituyendo la base para futuras ampliaciones del universo de modelización.
 
 ---
 

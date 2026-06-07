@@ -1,91 +1,106 @@
-# 🧪 Calidad de Datos
+# 🧪 Data Quality
 
 ## Objetivo
 
-Este documento describe los controles de calidad implementados en la versión v1.0.0 — Scouting Intelligence Platform.
+Este documento describe la estrategia de calidad de datos implementada en la release:
+
+v1.2.0 — Multi-League Expansion
 
 Su objetivo es garantizar:
 
-- robustez metodológica
-- reproducibilidad
-- consistencia temporal
-- auditabilidad
-- trazabilidad
-- prevención de leakage
+* robustez metodológica;
+* reproducibilidad;
+* consistencia temporal;
+* auditabilidad;
+* trazabilidad;
+* prevención de leakage;
+* calidad de matching;
+* validez externa.
+
+La calidad de datos constituye uno de los pilares fundamentales de la arquitectura analítica desarrollada.
 
 ---
 
-# Filosofía de calidad
+# 🧠 Filosofía de calidad
 
 Principio central:
 
-```text
 Calidad > Cobertura
-```
 
-El sistema prioriza:
+La arquitectura prioriza:
 
-- precisión del matching
-- coherencia temporal
-- fiabilidad de las observaciones
-- robustez estadística
+* precisión del matching;
+* coherencia temporal;
+* fiabilidad de observaciones;
+* robustez estadística;
+* consistencia metodológica.
 
 frente a maximizar artificialmente el tamaño del dataset.
 
 ---
 
-# Fuentes analizadas
+# Objetivos de calidad
 
-## FBref
+Los controles implementados persiguen cuatro objetivos principales.
 
-Información deportiva:
+## 1. Integridad
 
-- minutos
-- goles
-- asistencias
-- métricas por 90
-- estadísticas defensivas
+Garantizar que los registros utilizados sean válidos y consistentes.
 
 ---
 
-## Transfermarkt
+## 2. Consistencia
 
-Información económica:
+Garantizar coherencia entre:
 
-- valor de mercado
-- edad
-- posición
-- club
-- histórico temporal
+* fuentes;
+* temporadas;
+* clubes;
+* jugadores.
 
 ---
 
-# Riesgos principales
+## 3. Trazabilidad
+
+Permitir reconstruir el origen de cualquier observación utilizada durante la modelización.
+
+---
+
+## 4. Reproducibilidad
+
+Garantizar que todos los resultados puedan regenerarse mediante pipelines versionados.
+
+---
+
+# 🔍 Riesgos principales
 
 ## Matching incorrecto
 
 Problema:
 
-```text
-FBref y Transfermarkt no comparten identificador universal
-```
+FBref y Transfermarkt no comparten identificador universal.
 
-Riesgos:
+Riesgos potenciales:
 
-- nombres inconsistentes
-- transliteraciones
-- cambios de club
-- errores ortográficos
+* transliteraciones;
+* nombres inconsistentes;
+* cambios de club;
+* errores ortográficos;
+* duplicidades.
 
 ---
 
 ## Leakage temporal
 
-Riesgo:
+Problema:
 
-```text
-Utilizar información futura
-```
+Utilización de información futura durante entrenamiento o scoring.
+
+Posibles consecuencias:
+
+* optimismo artificial;
+* sobreestimación del rendimiento;
+* pérdida de validez operativa.
 
 ---
 
@@ -93,9 +108,10 @@ Utilizar información futura
 
 Ejemplos:
 
-- posiciones ambiguas
-- ligas distintas
-- temporadas incompletas
+* posiciones ambiguas;
+* ligas distintas;
+* temporadas incompletas;
+* cambios de nomenclatura.
 
 ---
 
@@ -103,50 +119,97 @@ Ejemplos:
 
 Posibles efectos:
 
-- pérdida de cobertura
-- sesgo muestral
-- menor estabilidad
+* pérdida de cobertura;
+* sesgo muestral;
+* menor estabilidad estadística.
 
 ---
 
-# Calidad del matching
+# 📚 Fuentes auditadas
 
-## Estrategia
+## FBref
 
-Pipeline jerárquico:
+Tipo:
 
-```text
+Performance Data Source
+
+Información utilizada:
+
+* minutos;
+* goles;
+* asistencias;
+* métricas por 90;
+* estadísticas defensivas;
+* contexto competitivo.
+
+---
+
+## Transfermarkt
+
+Tipo:
+
+Market Valuation Source
+
+Información utilizada:
+
+* valor de mercado;
+* edad;
+* posición;
+* club;
+* histórico temporal.
+
+---
+
+# 🔗 Calidad del Matching Pipeline
+
+## Objetivo
+
+Resolver la integración:
+
+FBref ↔ Transfermarkt
+
+manteniendo niveles elevados de precisión.
+
+---
+
+## Filosofía
+
+Principio aplicado:
+
+Perder cobertura antes que aceptar matching dudoso.
+
+---
+
+## Estrategia implementada
+
 Normalización
 ↓
-Matching exacto
+Exact Matching
 ↓
-Validación por club
+Club Validation
 ↓
-Matching fuzzy
+Fuzzy Matching
 ↓
-Validación por edad
-```
+Age Validation
 
 ---
 
 ## Variables utilizadas
 
-- player_name_normalized
-- age
-- club
-- season
+* player_name_normalized
+* age
+* club
+* season
 
 ---
 
-## Algoritmo
+## Tecnología
 
-```text
 RapidFuzz
-```
 
 ---
 
-## Thresholds
+## Thresholds operativos
 
 ```python
 MAX_AGE_DIFF = 1.5
@@ -154,46 +217,20 @@ MIN_CLUB_SCORE = 70
 FUZZY_THRESHOLD = 92
 ```
 
----
-
-# Resultados del matching
-
-## Panel completo
-
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones panel | 24.194 |
-| Observaciones emparejadas | 21.245 |
-| Match Rate | ≈ 88% |
+Estos umbrales fueron definidos para minimizar errores de emparejamiento sin comprometer excesivamente la cobertura disponible.
 
 ---
 
-## Decisión metodológica
-
-Principio:
-
-```text
-Perder cobertura antes que aceptar matching dudoso
-```
-
-Beneficios:
-
-- menor ruido
-- menor contaminación
-- menor probabilidad de false positives
-
----
-
-# Controles implementados
+# 🛡️ Controles implementados
 
 ## Validación de esquema
 
 Controles:
 
-- columnas obligatorias
-- tipos válidos
-- nombres consistentes
-- claves esperadas
+* columnas obligatorias;
+* tipos válidos;
+* nombres consistentes;
+* claves esperadas.
 
 ---
 
@@ -201,11 +238,11 @@ Controles:
 
 Controles:
 
-- market value positivo
-- edad válida
-- minutos válidos
-- temporada válida
-- posición válida
+* market value positivo;
+* edad válida;
+* minutos válidos;
+* temporada válida;
+* posición válida.
 
 ---
 
@@ -213,9 +250,9 @@ Controles:
 
 Controles:
 
-- coherencia cronológica
-- orden temporal
-- temporadas válidas
+* coherencia cronológica;
+* orden temporal;
+* temporadas válidas.
 
 ---
 
@@ -223,321 +260,485 @@ Controles:
 
 Controles:
 
-- edad máxima permitida
-- similitud de club
-- threshold fuzzy
-- trazabilidad del método
+* diferencia máxima de edad;
+* similitud mínima de club;
+* threshold fuzzy;
+* trazabilidad del método utilizado.
 
 ---
 
-# Calidad del dataset modelizable
+# 🚫 Prevención de leakage
+
+## Principio
+
+Toda variable debe existir en el momento real de la decisión.
+
+---
+
+## Leakage controlado
+
+### Temporal Leakage
+
+Uso accidental de información futura.
+
+---
+
+### Target Leakage
+
+Uso de variables derivadas de la variable objetivo.
+
+---
+
+### Train-Test Leakage
+
+Contaminación entre conjuntos de entrenamiento y evaluación.
+
+---
+
+### Scoring Leakage
+
+Uso de información posterior al momento operativo de scouting.
+
+---
+
+## Variables excluidas
+
+* market_value_next_eur
+* delta_log_market_value_1y
+* predicted_market_value_eur
+* inefficiency_score
+* opportunity_score
+* risk_score
+* rankings derivados
+
+Estas variables no participan en la construcción del dataset modelizable.
+
+---
+
+# 📊 Calidad del dataset modelizable
+
+La fase de modelización continúa centrándose en jugadores jóvenes con potencial de desarrollo y revalorización.
 
 ## Dataset final
 
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
-| Edad | 18–23 |
-| Ligas | 7 |
-| Temporadas | 2019-2020 → 2025-2026 |
+| Métrica            |                 Valor |
+| ------------------ | --------------------: |
+| Observaciones      |                 3.916 |
+| Jugadores únicos   |                 2.138 |
+| Edad               |                 18–23 |
+| Cobertura temporal | 2019-2020 → 2025-2026 |
+
+El universo modelizable utilizado por los modelos predictivos mantiene actualmente las siete ligas originales del proyecto.
+
+La expansión multi-liga de Sprint 13A se ha implementado sobre la capa de integración y panelización de datos, constituyendo la base para futuras ampliaciones del universo de modelización.
 
 ---
 
 ## Distribución temporal
 
 | Temporada | Observaciones |
-|----------|----------:|
-| 2019-2020 | 537 |
-| 2020-2021 | 536 |
-| 2021-2022 | 544 |
-| 2022-2023 | 542 |
-| 2023-2024 | 586 |
-| 2024-2025 | 552 |
-| 2025-2026 | 619 |
+| --------- | ------------: |
+| 2019-2020 |           537 |
+| 2020-2021 |           536 |
+| 2021-2022 |           544 |
+| 2022-2023 |           542 |
+| 2023-2024 |           586 |
+| 2024-2025 |           552 |
+| 2025-2026 |           619 |
 
 ---
 
 ## Filtros aplicados
 
-- matching válido
-- edad válida
-- market value disponible
-- minutos mínimos
-- posición válida
+* matching válido;
+* edad válida;
+* market value disponible;
+* minutos mínimos;
+* posición válida.
 
 ---
 
-# Sprint 10 — Impacto sobre calidad
-
-Sprint 10 introduce cambios relevantes en gobernanza y validación.
-
----
-
-## Sprint 10.1
-
-Player Intelligence Layer
-
-Nuevos controles:
-
-- consistencia de percentiles
-- validación de benchmarks
-- coherencia de radar
-
----
-
-## Sprint 10.2
-
-FBref Advanced Audit
-
-Tablas auditadas:
-
-- Shooting
-- Defense
-- Misc
-- Playing Time
-- Passing
-- Possession
-- Goal & Shot Creation
-
-Resultado:
-
-```text
-Evaluación de viabilidad antes de integración
-```
-
-Principio aplicado:
-
-```text
-Auditar antes de incorporar
-```
-
----
-
-## Sprint 10.3
-
-Current Scouting Layer
-
-Nueva separación:
-
-```text
-Historical Evaluation Layer
-≠
-Current Scouting Layer
-```
-
-Beneficios:
-
-- menor contaminación analítica
-- mayor validez externa
-- mayor claridad metodológica
-
----
-
-# Prevención de leakage
-
-## Principio
-
-```text
-Toda variable debe existir
-en el momento real de la decisión.
-```
-
----
-
-## Variables excluidas
-
-- market_value_next_eur
-- delta_log_market_value_1y
-- predicted_market_value_eur
-- inefficiency_score
-- opportunity_score
-- risk_score
-- rankings derivados
-
----
-
-## Leakage controlado
-
-- temporal leakage
-- target leakage
-- train-test leakage
-- scoring leakage
-
----
-
-# Calidad temporal
+# ⏳ Calidad temporal
 
 ## Estrategia histórica
 
-Validación temporal:
+Validación temporal estricta:
 
-| Split | Temporadas |
-|----------|------------|
-| Train | 2019-2020 → 2024-2025 |
-| Scouting | 2025-2026 |
+| Split            | Temporadas            |
+| ---------------- | --------------------- |
+| Train            | 2019-2020 → 2024-2025 |
+| Current Scouting | 2025-2026             |
 
 ---
 
 ## Justificación
 
-Se evita:
+Esta separación evita:
 
-- optimismo artificial
-- fuga temporal
-- sobreestimación de capacidad predictiva
+* fuga temporal;
+* optimismo artificial;
+* sobreestimación de capacidad predictiva.
+
+Además, aproxima de forma más realista el contexto operativo de utilización del sistema.
+
+# 🌍 Sprint 13A — Multi-League Quality Layer
+
+## Objetivo
+
+Sprint 13A introduce una nueva capa de control de calidad orientada a evaluar la robustez de la metodología en ecosistemas competitivos distintos.
+
+A diferencia de releases anteriores, esta fase no modifica:
+
+* modelos predictivos;
+* scoring multicriterio;
+* explainability;
+* dashboard;
+* Recruitment Intelligence;
+* Transfer Strategy Engine.
+
+Su objetivo principal consiste en evaluar la calidad de integración y la validez externa del sistema tras ampliar significativamente la cobertura competitiva.
 
 ---
 
-# Controles de arquitectura
+## Cobertura incorporada
 
-Separación explícita:
+Nuevas ligas:
 
-| Capa | Objetivo |
-|--------|----------|
-| Raw Data | Fuente original |
-| Processed Data | Features |
-| Modeling Dataset | Entrenamiento |
-| Historical Evaluation | Validación |
-| Current Scouting | Operación |
-| Player Intelligence | Benchmarking |
-| Dashboard | Consumo ejecutivo |
+* Championship
+* Belgian Pro League
+* Austrian Bundesliga
+* Spanish Segunda División
 
 ---
 
-# Tracking y auditoría
+## Resultado global
+
+| Métrica                        |  Valor |
+| ------------------------------ | -----: |
+| Observaciones FBref procesadas | 43.591 |
+| Ligas                          |     11 |
+| Temporadas                     |      7 |
+| Combinaciones liga-temporada   |     77 |
+
+---
+
+## Beneficio metodológico
+
+La expansión multi-liga permite:
+
+* reducir dependencia de ligas principales;
+* evaluar generalización del sistema;
+* incrementar diversidad competitiva;
+* reforzar la validez externa de la metodología.
+
+---
+
+# 📊 Coverage Diagnostics
+
+## Objetivo
+
+Medir calidad efectiva de integración tras la expansión multi-liga.
+
+Durante Sprint 13A se incorporó una capa específica de diagnósticos de cobertura.
+
+---
+
+## Artefactos generados
+
+```text id="7m1n0x"
+reports/data_quality/
+
+sprint_13a_matching_by_league.csv
+sprint_13a_matching_by_league_season.csv
+sprint_13a_coverage_summary.md
+```
+
+---
+
+## Match Rate global
+
+| Métrica           |  Valor |
+| ----------------- | -----: |
+| Match Rate global | 75,97% |
+
+---
+
+## Match Rate por liga
+
+| Liga                     | Match Rate |
+| ------------------------ | ---------: |
+| Bundesliga               |     92,75% |
+| Premier League           |     92,62% |
+| Serie A                  |     91,10% |
+| Eredivisie               |     89,95% |
+| Ligue 1                  |     89,70% |
+| LaLiga                   |     84,26% |
+| Belgian Pro League       |     79,68% |
+| Liga Portugal            |     75,10% |
+| Austrian Bundesliga      |     56,00% |
+| Championship             |     50,36% |
+| Spanish Segunda División |     43,03% |
+
+---
+
+## Interpretación
+
+Las principales ligas europeas mantienen niveles elevados de matching.
+
+La reducción del match rate global respecto a versiones anteriores se explica principalmente por la incorporación de competiciones secundarias con menor cobertura histórica disponible en Transfermarkt-Kaggle.
+
+La evidencia disponible no apunta a una degradación del algoritmo de matching.
+
+---
+
+# 🔍 Coverage Audit
+
+## Objetivo
+
+Determinar el origen de las pérdidas de matching observadas durante Sprint 13A.
+
+Pregunta de investigación:
+
+> ¿Las pérdidas de cobertura proceden del pipeline implementado o de limitaciones de las fuentes disponibles?
+
+---
+
+## Caso auditado
+
+Matt Grimes
+
+Hallazgos:
+
+* Transfermarkt-Kaggle contiene valoraciones hasta 2023-06-01.
+* Última temporada disponible: 2022-2023.
+* FBref contiene observaciones posteriores.
+
+---
+
+## Conclusión
+
+La evidencia obtenida durante Sprint 13A sugiere que una parte significativa de las pérdidas de matching observadas en ligas secundarias y temporadas recientes procede de limitaciones de cobertura en Transfermarkt-Kaggle.
+
+No se identifican indicios de fallo estructural en:
+
+* FBref;
+* Matching Pipeline;
+* Feature Engineering Pipeline.
+
+---
+
+# 🏗️ Controles de arquitectura
+
+La calidad del sistema se refuerza mediante una separación explícita de capas analíticas.
+
+| Capa                     | Objetivo             |
+| ------------------------ | -------------------- |
+| Raw Data                 | Fuente original      |
+| Processed Data           | Features             |
+| Modeling Dataset         | Entrenamiento        |
+| Historical Evaluation    | Validación           |
+| Current Scouting         | Operación            |
+| Player Intelligence      | Benchmarking         |
+| Recruitment Intelligence | Selección            |
+| Transfer Strategy        | Optimización         |
+| DSS                      | Soporte a decisiones |
+
+---
+
+## Beneficio
+
+Esta arquitectura reduce el riesgo de:
+
+* contaminación analítica;
+* mezcla de contextos;
+* reutilización indebida de información futura.
+
+---
+
+# 🔬 Tracking y auditoría
 
 ## MLflow
 
-Información registrada:
+El proyecto incorpora trazabilidad completa mediante MLflow.
+
+---
 
 ### Parámetros
 
-- features
-- hiperparámetros
-- split temporal
+* features utilizadas;
+* hiperparámetros;
+* configuraciones;
+* split temporal.
+
+---
 
 ### Métricas
 
-- RMSE
-- MAE
-- R²
+* MAE;
+* RMSE;
+* R²;
+* métricas de negocio.
+
+---
 
 ### Artefactos
 
-- modelos
-- predicciones
-- rankings
-- explainability
+* modelos;
+* predicciones;
+* rankings;
+* explainability;
+* visualizaciones.
 
 ---
 
-## Beneficios
+## Beneficio principal
 
-MLflow permite:
-
-```text
-Reconstruir exactamente
-qué configuración produjo cada resultado
-```
+MLflow permite reconstruir exactamente qué configuración produjo cada resultado publicado.
 
 ---
 
-# Trade-offs metodológicos
+# ⚖️ Trade-offs metodológicos
 
-| Trade-off | Decisión |
-|----------|-----------|
-| Cobertura vs precisión | Priorizar precisión |
-| Matching agresivo vs conservador | Conservador |
-| Dataset grande vs fiable | Fiable |
-| Complejidad vs reproducibilidad | Reproducibilidad |
-| Evaluación histórica vs operación | Separación Sprint 10 |
-
----
-
-# Limitaciones actuales
-
-## Datos
-
-Pendiente:
-
-- xG
-- xA
-- salarios
-- contratos
-- eventos avanzados
+| Trade-off                               | Decisión                  |
+| --------------------------------------- | ------------------------- |
+| Cobertura vs precisión                  | Priorizar precisión       |
+| Matching agresivo vs conservador        | Conservador               |
+| Dataset grande vs fiable                | Fiable                    |
+| Complejidad vs reproducibilidad         | Reproducibilidad          |
+| Cobertura competitiva vs homogeneidad   | Priorizar validez externa |
+| Cobertura máxima vs calidad de matching | Priorizar calidad         |
 
 ---
 
-## Matching
+# ⚠️ Limitaciones actuales
 
-Existe siempre:
+## Matching residual
 
-```text
-riesgo residual de matching imperfecto
-```
+Todo proceso de integración multi-fuente sin identificador universal mantiene un riesgo residual de emparejamiento imperfecto.
 
 ---
 
-## Mercado
+## Cobertura
 
-Transfermarkt incorpora:
-
-- subjetividad
-- ruido contextual
-- factores no observables
+Las ligas secundarias y determinadas temporadas recientes presentan menor cobertura disponible en Transfermarkt-Kaggle.
 
 ---
 
-# Roadmap de calidad
+## Valor de mercado
 
-## Sprint 11
+Transfermarkt incorpora factores no observables directamente en los datos deportivos:
 
-Advanced Football Radar
+* reputación;
+* percepción humana;
+* contexto mediático;
+* expectativas de mercado.
 
-Validación prevista:
+Por tanto:
 
-- shots_per90
-- shots_on_target_per90
-- tackles_won_per90
-- interceptions_per90
-- blocks_per90
-
----
-
-## Sprint 12
-
-Understat
-
-Nuevos controles:
-
-- xG
-- xA
-- consistencia de eventos
+Valor de mercado ≠ precio real de transferencia.
 
 ---
 
-## Futuras mejoras
+## Datos avanzados
 
-- monitorización automática
-- alertas de anomalías
-- robustness checks
-- rolling validation
+Actualmente no se incorporan:
+
+* tracking data;
+* salarios;
+* contratos;
+* datos espaciales;
+* eventos avanzados.
 
 ---
 
-# Conclusión
+# 🛣️ Roadmap de calidad
 
-La calidad de datos constituye uno de los pilares fundamentales del proyecto.
+## TM.1 — Transfermarkt Coverage Audit
 
-La arquitectura actual incorpora:
+Estado:
 
-- matching validado
-- controles de negocio
-- validación temporal
-- prevención de leakage
-- MLflow
-- auditoría FBref
-- separación Historical vs Current Scouting
+Backlog futuro.
 
-La principal mejora introducida durante Sprint 10 es la separación explícita entre evaluación histórica y scouting operativo, reforzando la robustez metodológica y la validez de las recomendaciones generadas por la plataforma.
+---
+
+### Objetivo
+
+Determinar si las limitaciones observadas durante Sprint 13A proceden de:
+
+* Transfermarkt-Kaggle;
+* Transfermarkt como fuente original;
+* pipeline de extracción.
+
+---
+
+## Sprint 13B — Advanced Data Expansion
+
+Objetivo:
+
+Incrementar profundidad analítica manteniendo estándares de calidad equivalentes.
+
+---
+
+### Nuevas fuentes previstas
+
+#### FBref avanzado
+
+* Shooting
+* Passing
+* Possession
+* Goal & Shot Creation
+* Defense
+
+#### Understat
+
+* xG
+* xA
+* xGChain
+* xGBuildup
+
+---
+
+### Nuevos controles previstos
+
+* consistencia de eventos;
+* validación cruzada de métricas;
+* auditoría de cobertura avanzada;
+* monitorización de calidad multi-fuente.
+
+---
+
+## Mejoras futuras
+
+* monitorización automática;
+* alertas de anomalías;
+* robustness checks;
+* rolling validation;
+* quality dashboards.
+
+---
+
+# 🏁 Conclusión
+
+La calidad de datos constituye uno de los pilares fundamentales de la arquitectura analítica desarrollada.
+
+La versión:
+
+v1.2.0 — Multi-League Expansion
+
+incorpora una capa adicional de control de calidad orientada a evaluar la robustez metodológica del sistema en múltiples ecosistemas competitivos.
+
+La arquitectura actual integra:
+
+* Matching validado.
+* Controles de negocio.
+* Validación temporal.
+* Prevención de leakage.
+* MLflow.
+* Coverage Diagnostics.
+* Coverage Audit.
+* Separación Historical vs Current Scouting.
+* Evaluación de validez externa.
+
+La principal contribución de Sprint 13A consiste en demostrar que la metodología mantiene niveles elevados de calidad e integridad incluso tras ampliar la cobertura desde siete hasta once ligas europeas.
+
+La calidad de datos deja de ser únicamente un mecanismo de control interno para convertirse en un elemento central de validación metodológica y generalización del sistema.

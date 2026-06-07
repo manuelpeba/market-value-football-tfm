@@ -69,7 +69,7 @@ Dashboard
 | Métrica | Valor |
 |----------|----------:|
 | Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
+| Jugadores únicos | 2.138 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 
 ---

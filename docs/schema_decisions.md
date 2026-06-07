@@ -293,7 +293,7 @@ data/processed/player_season_modeling.parquet
 | Métrica | Valor |
 |----------|----------:|
 | Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
+| Jugadores únicos | 2.138 |
 | Ligas | 7 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 

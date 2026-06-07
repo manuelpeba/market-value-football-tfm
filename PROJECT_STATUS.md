@@ -3,11 +3,12 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Validation](https://img.shields.io/badge/Validation-Temporal-important)
 ![Modeling](https://img.shields.io/badge/Modeling-OLS%20%2B%20ML-blue)
-![Matching](https://img.shields.io/badge/Matching-88%25-brightgreen)
+![Matching](https://img.shields.io/badge/Matching-75.97%25-yellow)
+![Coverage](https://img.shields.io/badge/Coverage-11%20Leagues-success)
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DSS](https://img.shields.io/badge/System-Decision%20Support-success)
-![Version](https://img.shields.io/badge/version-v1.1.0-blue)
+![Version](https://img.shields.io/badge/version-v1.2.0-blue)
 
 ---
 
@@ -27,7 +28,19 @@ El proyecto integra:
 * Portfolio Optimization.
 * Decision Support Systems.
 
-La versión actual representa la evolución desde un sistema predictivo de valoración de mercado hacia una plataforma DSS orientada a procesos reales de captación y optimización de fichajes.
+La versión actual incorpora **Sprint 13A — Multi-League Expansion**, una ampliación de cobertura competitiva orientada a evaluar la validez externa de la metodología en ecosistemas futbolísticos distintos.
+
+Sprint 13A no modifica los modelos predictivos, el scoring multicriterio, la explainability ni la lógica de recruitment implementada previamente.
+
+Su principal contribución consiste en:
+
+* ampliar la cobertura a 11 ligas europeas;
+* procesar 43.591 observaciones procedentes de FBref;
+* parametrizar los pipelines para generar artefactos reproducibles versionados;
+* auditar la calidad de matching por liga y temporada;
+* evaluar limitaciones de cobertura en fuentes de mercado.
+
+La versión actual representa la evolución desde un sistema predictivo de valoración de mercado hacia una plataforma DSS orientada a procesos reales de captación, optimización y planificación estratégica de fichajes.
 
 ---
 
@@ -35,14 +48,14 @@ La versión actual representa la evolución desde un sistema predictivo de valor
 
 ## Dataset
 
-| Métrica                  |                 Valor |
-| ------------------------ | --------------------: |
-| Observaciones integradas |                24.194 |
-| Observaciones modelables |                 3.916 |
-| Jugadores únicos         |                 2.136 |
-| Cobertura temporal       | 2019-2020 → 2025-2026 |
-| Ligas                    |                     7 |
-| Match Rate               |                   88% |
+| Métrica                        |                 Valor |
+| ------------------------------ | --------------------: |
+| Observaciones FBref procesadas |                43.591 |
+| Cobertura temporal             | 2019-2020 → 2025-2026 |
+| Temporadas                     |                     7 |
+| Ligas                          |                    11 |
+| Combinaciones liga-temporada   |                    77 |
+| Match Rate global              |                75,97% |
 
 ---
 
@@ -123,6 +136,8 @@ Opportunity Detection
 ↓
 Risk Assessment
 ↓
+Player Intelligence
+↓
 Recruitment Intelligence
 ↓
 Transfer Strategy Engine
@@ -130,6 +145,8 @@ Transfer Strategy Engine
 Portfolio Optimization
 ↓
 Decision Support System
+↓
+Multi-League Expansion
 ```
 
 ---
@@ -186,6 +203,9 @@ Decision Support System
 | Portfolio Optimization       | ✅      |
 | Strategic Recruitment Engine | ✅      |
 | Internationalization EN/ES   | ✅      |
+| Multi-League Expansion       | ✅      |
+| External Validity Audit      | ✅      |
+| League Coverage Diagnostics  | ✅      |
 
 ---
 
@@ -347,7 +367,38 @@ Incorpora:
 * Executive UX Layer.
 * Consolidación DSS.
 
----
+## Sprint 13A
+
+Multi-League Expansion
+
+Objetivo:
+
+Evaluar la generalización de la metodología a ecosistemas competitivos distintos mediante una ampliación de cobertura y una auditoría sistemática de calidad de matching.
+
+Nuevas ligas incorporadas:
+
+* Championship.
+* Belgian Pro League.
+* Austrian Bundesliga.
+* Spanish Segunda División.
+
+Resultados:
+
+| Métrica                      |  Valor |
+| ---------------------------- | -----: |
+| Ligas                        |     11 |
+| Temporadas                   |      7 |
+| Combinaciones liga-temporada |     77 |
+| Observaciones FBref          | 43.591 |
+| Match Rate global            | 75,97% |
+
+Contribuciones:
+
+* ampliación de cobertura competitiva;
+* parametrización reproducible de pipelines;
+* auditoría de matching por liga;
+* auditoría de matching por liga-temporada;
+* evaluación de validez externa.
 
 ## Sprint 14
 
@@ -367,15 +418,32 @@ Incorpora:
 
 ## Técnicos
 
-* Match Rate del 88%.
-* Dataset longitudinal multi-fuente.
-* Pipeline reproducible.
-* Tracking experimental completo.
+* Cobertura ampliada a 11 ligas europeas.
+* 43.591 observaciones FBref procesadas.
+* 77 combinaciones liga-temporada.
+* Pipeline reproducible y parametrizable.
+* Tracking experimental mediante MLflow.
+* Diagnóstico sistemático de calidad de matching.
+
+---
 
 ## Predictivos
 
 * Growth OLS como benchmark interpretable.
 * Tuned XGBoost como modelo productivo.
+* R² superior a 0.54 en el modelo final.
+* Rendimiento predictivo mantenido tras la expansión de cobertura.
+
+---
+
+## Validez externa
+
+* Generalización evaluada en ligas principales y secundarias.
+* Incorporación de mercados con estructuras competitivas distintas.
+* Diagnóstico de cobertura por liga.
+* Evidencia de limitaciones de cobertura en Transfermarkt-Kaggle para determinadas ligas secundarias y temporadas recientes.
+
+---
 
 ## Negocio
 
@@ -384,6 +452,7 @@ Incorpora:
 * Recruitment Intelligence integrada.
 * Portfolio Optimization operativa.
 * Strategic Recruitment Engine funcional.
+* Plataforma DSS plenamente operativa.
 
 ---
 
@@ -407,6 +476,8 @@ permitiendo equilibrar capacidad predictiva y justificación analítica.
 
 El proyecto prioriza calidad del matching y consistencia temporal frente a maximizar cobertura.
 
+La expansión a nuevas ligas incrementa la representatividad del universo analizado, aunque introduce retos adicionales de cobertura y disponibilidad de datos.
+
 ---
 
 # ⚠️ Limitaciones actuales
@@ -414,57 +485,128 @@ El proyecto prioriza calidad del matching y consistencia temporal frente a maxim
 ## Datos
 
 * Dependencia de Transfermarkt para valor de mercado.
-* Cobertura limitada a siete ligas europeas.
+* Menor cobertura en determinadas ligas secundarias.
+* Menor cobertura en temporadas recientes para algunas competiciones.
+* Posibles limitaciones de cobertura en Transfermarkt-Kaggle.
+* Ausencia de tracking data y datos event-based avanzados.
+
+---
 
 ## Modelización
 
 * Posible drift temporal.
 * Dependencia de variables observables.
+* Limitaciones inherentes a la estimación de valor de mercado como proxy de valoración económica.
+
+---
 
 ## Producto
 
 * Ausencia de API de scoring.
 * Ausencia de generación automática de informes PDF.
+* Dependencia de ejecución local mediante Streamlit.
 
 ---
 
 # 🛣️ Roadmap
 
-## Sprint 13 — Multi-League Expansion
+## TM.1 — Transfermarkt Coverage Audit
 
-Ligas candidatas:
+Estado:
 
-* Championship.
-* Segunda División española.
-* Belgian Pro League.
-* Austrian Bundesliga.
-* Danish Superliga.
+Backlog futuro.
 
 Objetivo:
 
-Ampliar la capacidad de detección de ineficiencias de mercado fuera de las principales ligas europeas.
+Determinar si las limitaciones observadas durante Sprint 13A proceden de:
+
+* Transfermarkt-Kaggle.
+* Transfermarkt como fuente original.
+* Pipeline de extracción.
+
+Esta investigación no forma parte de Sprint 13A.
 
 ---
 
-## Sprint 15 — Advanced Recruitment Intelligence
+## Sprint 13B
 
-Líneas futuras:
+Advanced Data Expansion
 
-* Benchmarking avanzado.
-* Comparación posicional enriquecida.
-* Radar multicriterio ampliado.
-* Explicabilidad avanzada.
+Objetivo:
+
+Incrementar la profundidad analítica del sistema mediante la incorporación de métricas avanzadas de rendimiento y nuevas fuentes de datos futbolísticos.
+
+Líneas de trabajo previstas:
+
+### FBref Advanced Metrics
+
+Incorporación de variables procedentes de tablas avanzadas de FBref:
+
+* Shooting
+* Passing
+* Pass Types
+* Goal & Shot Creation
+* Possession
+* Defensive Actions
+* Playing Time
+
+Objetivos:
+
+* enriquecer el Feature Engineering;
+* mejorar capacidad predictiva;
+* fortalecer la capa de Player Intelligence;
+* ampliar el Positional Benchmarking.
 
 ---
 
-## Sprint 16 — Transfer Replacement Engine
+### Understat Integration
 
-Líneas futuras:
+Incorporación de métricas basadas en expected goals.
 
-* Replacement Analysis.
-* Similarity Matching.
-* Budget-Constrained Replacements.
-* Tactical Compatibility.
+Variables previstas:
+
+* xG
+* xA
+* xGChain
+* xGBuildup
+
+Objetivos:
+
+* capturar calidad de acciones ofensivas;
+* mejorar evaluación de talento emergente;
+* incorporar señal independiente de la producción observada.
+
+---
+
+### Expected Contributions Layer
+
+Nueva familia de indicadores orientados a medir contribución subyacente.
+
+Ejemplos:
+
+* Finishing Efficiency
+* Chance Creation Efficiency
+* xG Overperformance
+* xA Contribution
+
+---
+
+### Advanced Scouting Intelligence
+
+Mejoras previstas:
+
+* radar multicriterio ampliado;
+* benchmarking avanzado;
+* comparación de perfiles tácticos;
+* evaluación ofensiva basada en xG/xA.
+
+---
+
+### Contribución esperada
+
+Sprint 13B ampliará la riqueza informativa del sistema manteniendo intacta la arquitectura DSS desarrollada en releases anteriores.
+
+La combinación de FBref avanzado y Understat permitirá evolucionar desde métricas descriptivas hacia indicadores más próximos al rendimiento subyacente y al potencial futuro del jugador.
 
 ---
 
@@ -473,10 +615,13 @@ Líneas futuras:
 * Incorporación de TabPFN.
 * Incorporación de CatBoost.
 * Nuevas fuentes de datos deportivas.
-* Métricas avanzadas de FBref.
+* FBref avanzado.
+* Understat.
+* Métricas xG/xA.
 * Tracking data.
 * Optimización multiobjetivo.
 * Simulación económica de carteras.
+* Evaluación causal de decisiones de fichaje.
 
 ---
 
@@ -485,7 +630,7 @@ Líneas futuras:
 La versión:
 
 ```text
-v1.1.0 — Strategic Recruitment & Decision Support System
+v1.2.0 — Multi-League Expansion
 ```
 
 consolida la evolución del proyecto desde un sistema de predicción de valor de mercado hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte a decisiones deportivas.
@@ -532,6 +677,6 @@ Portfolio Optimization
 Decision Support System
 ```
 
+Sprint 13A amplía la cobertura competitiva del proyecto desde siete hasta once ligas europeas y aporta evidencia inicial sobre la validez externa de la metodología, sin modificar la arquitectura analítica, los modelos predictivos ni la lógica DSS desarrollada en releases anteriores.
+
 La plataforma ya no se limita a detectar oportunidades de mercado, sino que permite apoyar decisiones estratégicas de fichajes bajo restricciones reales de presupuesto, riesgo y necesidades deportivas.
-
-

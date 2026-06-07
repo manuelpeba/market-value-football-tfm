@@ -11,7 +11,9 @@
 ![SHAP](https://img.shields.io/badge/Explainability-SHAP-success)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![Status](https://img.shields.io/badge/Status-Decision%20Support%20System-success)
-![Version](https://img.shields.io/badge/version-v1.1.0-blue)
+![Coverage](https://img.shields.io/badge/Coverage-11%20Leagues-success)
+![Matching](https://img.shields.io/badge/Matching-75.97%25-yellow)
+![Version](https://img.shields.io/badge/version-v1.2.0-blue)
 
 ---
 
@@ -29,6 +31,7 @@
 | v0.8.0 | Dashboard Productizado |
 | v1.0.0 | Scouting Intelligence Platform |
 | v1.1.0 | Strategic Recruitment & Decision Support System |
+| v1.2.0 | Multi-League Expansion |
 
 ---
 
@@ -88,10 +91,12 @@ La plataforma desarrollada permite:
 La versión actual corresponde a:
 
 ```text
-v1.1.0 — Strategic Recruitment & Decision Support System
+v1.2.0 — Multi-League Expansion
 ```
 
-y representa la evolución del proyecto desde un sistema predictivo de valoración de jugadores hacia una plataforma integral de soporte a decisiones para scouting profesional.
+Sprint 13A amplía la cobertura competitiva del sistema desde siete hasta once ligas europeas e incorpora una evaluación explícita de validez externa mediante expansión multi-liga.
+
+La release no modifica los modelos predictivos, el scoring, la explainability ni la lógica DSS implementada previamente.
 
 ---
 
@@ -99,12 +104,14 @@ y representa la evolución del proyecto desde un sistema predictivo de valoraci�
 
 | Indicador | Valor |
 |------------|------------:|
-| Match Rate FBref ↔ Transfermarkt | 88% |
-| Jugadores analizados | 2.136 |
-| Observaciones modelables | 3.916 |
+| Ligas cubiertas | 11 |
+| Temporadas | 7 |
+| Combinaciones liga-temporada | 77 |
+| Observaciones FBref procesadas | 43.591 |
+| Match Rate global | 75,97% |
 | R² modelo productivo (XGBoost) | 0.5414 |
 | Precision@10 | 90% |
-| Estado actual | DSS para scouting y recruitment |
+| Estado actual | DSS + Multi-League Coverage |
 
 ---
 
@@ -169,6 +176,7 @@ con potencial aplicación en departamentos de scouting profesional.
 - Validación temporal estricta para aproximar escenarios reales de uso.
 - Evaluación orientada a negocio mediante métricas de scouting.
 - Estudio aplicado de ineficiencias de mercado en fútbol europeo.
+- Evaluación de validez externa mediante expansión multi-liga.
 
 ### Contribuciones técnicas
 
@@ -179,6 +187,9 @@ con potencial aplicación en departamentos de scouting profesional.
 - Opportunity Score.
 - Risk Framework.
 - Decision Support System interactivo.
+- Multi-League Expansion.
+- League Coverage Diagnostics.
+- External Validity Assessment.
 
 ### Contribuciones de negocio
 
@@ -220,6 +231,8 @@ Recruitment Intelligence
 ↓
 Transfer Strategy Engine
 ↓
+Portfolio Optimization
+↓
 Decision Support System
 ```
 
@@ -240,7 +253,11 @@ Recruitment Intelligence
 ↓
 Transfer Strategy Engine
 ↓
+Portfolio Optimization
+↓
 Decision Support System
+↓
+Multi-League Expansion
 ```
 
 Esta evolución refleja la transición desde una investigación centrada exclusivamente en predicción de valor de mercado hacia una plataforma orientada a la toma de decisiones deportivas.
@@ -327,7 +344,7 @@ Variables utilizadas:
 
 ### Cobertura geográfica
 
-La versión actual incorpora siete ligas europeas:
+La versión actual incorpora once ligas europeas:
 
 - Premier League
 - LaLiga
@@ -336,6 +353,19 @@ La versión actual incorpora siete ligas europeas:
 - Ligue 1
 - Eredivisie
 - Liga Portugal
+- Championship
+- Belgian Pro League
+- Austrian Bundesliga
+- Segunda División de España
+
+Cobertura temporal:
+
+```text
+2019-2020 → 2025-2026
+
+11 ligas
+77 combinaciones liga-temporada
+```
 
 ---
 
@@ -363,11 +393,10 @@ Age Validation
 
 | Métrica | Valor |
 |----------|----------:|
-| Observaciones integradas | 24.194 |
-| Observaciones emparejadas | 21.245 |
-| Match Rate | 88% |
+| Observaciones FBref procesadas | 43.591 |
+| Match Rate global | 75,97% |
 
-La calidad del matching constituye una de las principales contribuciones técnicas del proyecto, ya que permite construir el panel longitudinal utilizado durante toda la investigación.
+La reducción del match rate global respecto a versiones anteriores se explica por la incorporación de ligas secundarias con menor cobertura histórica en Transfermarkt-Kaggle y no por modificaciones del algoritmo de matching.
 
 ---
 
@@ -379,9 +408,10 @@ Tras los procesos de integración, validación y preparación se construye un pa
 
 | Métrica | Valor |
 |----------|----------:|
-| Observaciones | 24.194 |
-| Temporadas | 2019-2020 → 2025-2026 |
-| Ligas | 7 |
+| Observaciones FBref procesadas | 43.591 |
+| Ligas | 11 |
+| Temporadas | 7 |
+| Combinaciones liga-temporada | 77 |
 
 ### Dataset modelizable
 
@@ -390,7 +420,7 @@ La fase de modelización se centra en jugadores jóvenes con potencial de desarr
 | Métrica | Valor |
 |----------|----------:|
 | Observaciones | 3.916 |
-| Jugadores únicos | 2.136 |
+| Jugadores únicos | 2.138 |
 | Rango de edad | 18–23 |
 
 ---
@@ -1007,6 +1037,38 @@ Sprint 12 consolida la capa de productización necesaria para transformar result
 
 ---
 
+### Sprint 13A — Multi-League Expansion
+
+Objetivo:
+
+Evaluar la generalización de la metodología a ecosistemas competitivos distintos mediante una ampliación sistemática de cobertura.
+
+Nuevas ligas incorporadas:
+
+- Championship
+- Belgian Pro League
+- Austrian Bundesliga
+- Segunda División de España
+
+Resultados:
+
+| Métrica | Valor |
+|----------|----------:|
+| Ligas | 11 |
+| Temporadas | 7 |
+| Combinaciones liga-temporada | 77 |
+| Observaciones FBref procesadas | 43.591 |
+| Match Rate global | 75,97% |
+
+Contribución:
+
+- Validación externa de la metodología.
+- Expansión multi-liga.
+- Auditoría de cobertura.
+- Diagnóstico de matching.
+
+---
+
 ### Sprint 14 — Transfer Strategy Engine
 
 Sprint 14 introduce una nueva capa de optimización orientada a apoyar decisiones estratégicas de recruitment.
@@ -1122,7 +1184,7 @@ Decision Support System
 
 La plataforma deja de limitarse a detectar oportunidades para pasar a recomendar estrategias completas de asignación de recursos dentro del mercado de fichajes.
 
----
+--- 
 
 ## ⚽ Valor para departamentos deportivos
 
@@ -1167,11 +1229,14 @@ Actualmente la plataforma incorpora:
 - Scenario Simulator.
 - Strategic Recruitment Engine.
 - Portfolio Recommendation Engine.
+- Multi-League Expansion.
+- League Coverage Diagnostics.
+- External Validity Assessment.
 
 Versión actual:
 
 ```text
-v1.1.0 — Strategic Recruitment & Decision Support System
+v1.2.0 — Multi-League Expansion
 ```
 
 ---
@@ -1182,7 +1247,8 @@ v1.1.0 — Strategic Recruitment & Decision Support System
 
 - Dependencia de Transfermarkt como fuente de valor de mercado.
 - Ausencia de identificador universal entre fuentes.
-- Cobertura limitada a siete ligas europeas.
+- Menor cobertura en determinadas ligas secundarias.
+- Posibles limitaciones de cobertura en Transfermarkt-Kaggle.
 
 ### Limitaciones deportivas
 
@@ -1202,21 +1268,19 @@ v1.1.0 — Strategic Recruitment & Decision Support System
 
 Las siguientes líneas de investigación representan posibles extensiones futuras y no forman parte de la versión evaluada en este Trabajo Fin de Máster.
 
-### Sprint 13 — Multi-League Expansion
+### TM.1 — Transfermarkt Coverage Audit
 
-Ampliación progresiva de cobertura hacia ligas de desarrollo y exportación de talento.
+Estado:
 
-Posibles incorporaciones:
-
-* Championship.
-* Segunda División española.
-* Belgian Pro League.
-* Austrian Bundesliga.
-* Danish Superliga.
+Backlog.
 
 Objetivo:
 
-Incrementar la capacidad de detección de ineficiencias de mercado fuera de las principales ligas europeas.
+Determinar si las limitaciones observadas durante Sprint 13A proceden de:
+
+- Transfermarkt-Kaggle.
+- Transfermarkt original.
+- Pipeline de extracción.
 
 ---
 
@@ -1399,7 +1463,8 @@ La ejecución completa del pipeline puede reproducirse siguiendo las etapas desc
 #### 1️⃣ Construir features FBref
 
 ```bash
-python -m src.data.build_fbref_features
+python -m src.data.build_fbref_features \
+  --output data/processed/fbref_features_v13a.parquet
 ```
 
 ---
@@ -1415,7 +1480,10 @@ python -m src.data.build_transfermarkt_features
 #### 3️⃣ Construir panel jugador-temporada
 
 ```bash
-python -m src.data.build_player_season_panel
+python -m src.data.build_player_season_panel \
+  --fbref-input data/processed/fbref_features_v13a.parquet \
+  --tm-input data/processed/transfermarkt_features_v13a.parquet \
+  --output data/processed/player_season_panel_v13a.parquet
 ```
 
 ---
@@ -1598,13 +1666,7 @@ Portfolio Optimization
 Decision Support System
 ```
 
-La release:
-
-```text
-v1.1.0 — Strategic Recruitment & Decision Support System
-```
-
-representa la consolidación del proyecto como una plataforma DSS aplicada al mercado europeo de fichajes.
+La release v1.2.0 — Multi-League Expansion amplía la cobertura competitiva del proyecto desde siete hasta once ligas europeas e incorpora una evaluación explícita de validez externa sin alterar la arquitectura analítica ni los modelos productivos desarrollados previamente.
 
 Más allá de la identificación de jugadores infravalorados, la plataforma permite apoyar decisiones estratégicas de recruitment mediante la combinación de valoración de mercado, evaluación de riesgo, análisis comparativo y optimización de carteras de fichajes bajo restricciones reales.
 
