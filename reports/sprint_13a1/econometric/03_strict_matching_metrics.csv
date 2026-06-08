@@ -1,0 +1,2 @@
+model,split,n,MAE_log,RMSE_log,R2
+M3_strict_matching,test,44,0.8549681427306886,1.1079241587506696,0.5130304569870219

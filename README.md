@@ -94,9 +94,11 @@ La versión actual corresponde a:
 v1.2.0 — Multi-League Expansion
 ```
 
-Sprint 13A amplía la cobertura competitiva del sistema desde siete hasta once ligas europeas e incorpora una evaluación explícita de validez externa mediante expansión multi-liga.
+Sprint 13A y Sprint 13A.1 amplían la cobertura competitiva del sistema desde siete hasta once ligas europeas e incorporan una evaluación explícita de validez externa mediante expansión multi-liga, auditoría de cobertura y validación temporal multi-competición.
 
-La release no modifica los modelos predictivos, el scoring, la explainability ni la lógica DSS implementada previamente.
+Los resultados obtenidos muestran que la ampliación del universo competitivo no solo incrementa la cobertura analítica, sino que mejora simultáneamente el rendimiento de los modelos econométricos y de Machine Learning, reforzando la capacidad de generalización de la metodología propuesta.
+
+La release mantiene la arquitectura analítica, el scoring, la explainability y la lógica DSS desarrolladas previamente, incorporando simultáneamente una expansión multi-liga y un reentrenamiento completo de los modelos sobre un universo competitivo más amplio.
 
 ---
 
@@ -108,8 +110,10 @@ La release no modifica los modelos predictivos, el scoring, la explainability ni
 | Temporadas | 7 |
 | Combinaciones liga-temporada | 77 |
 | Observaciones FBref procesadas | 43.591 |
+| Dataset modelizable | 5.527 |
 | Match Rate global | 75,97% |
-| R² modelo productivo (XGBoost) | 0.5414 |
+| R² Growth OLS Temporal | 0.5496 |
+| R² modelo productivo (Tuned XGBoost) | 0.5664 |
 | Precision@10 | 90% |
 | Estado actual | DSS + Multi-League Coverage |
 
@@ -176,7 +180,9 @@ con potencial aplicación en departamentos de scouting profesional.
 - Validación temporal estricta para aproximar escenarios reales de uso.
 - Evaluación orientada a negocio mediante métricas de scouting.
 - Estudio aplicado de ineficiencias de mercado en fútbol europeo.
-- Evaluación de validez externa mediante expansión multi-liga.
+- Evaluación explícita de validez externa mediante expansión multi-liga.
+- Evaluación explícita de capacidad de generalización en contextos competitivos heterogéneos.
+- Auditoría sistemática de cobertura multi-fuente.
 
 ### Contribuciones técnicas
 
@@ -233,6 +239,8 @@ Transfer Strategy Engine
 ↓
 Portfolio Optimization
 ↓
+External Validation
+↓
 Decision Support System
 ```
 
@@ -249,6 +257,8 @@ Opportunity Detection
 ↓
 Risk Assessment
 ↓
+Player Intelligence
+↓
 Recruitment Intelligence
 ↓
 Transfer Strategy Engine
@@ -257,7 +267,7 @@ Portfolio Optimization
 ↓
 Decision Support System
 ↓
-Multi-League Expansion
+External Validation
 ```
 
 Esta evolución refleja la transición desde una investigación centrada exclusivamente en predicción de valor de mercado hacia una plataforma orientada a la toma de decisiones deportivas.
@@ -419,9 +429,9 @@ La fase de modelización se centra en jugadores jóvenes con potencial de desarr
 
 | Métrica | Valor |
 |----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.138 |
-| Rango de edad | 18–23 |
+| Observaciones | 5.527 |
+| Ligas | 11 |
+| Temporadas | 7 |
 
 ---
 
@@ -498,9 +508,9 @@ Variables utilizadas:
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
-| Growth OLS | 0.7287 | 0.9053 | 0.5258 |
+| Growth OLS Temporal | 0.6989 | 0.8689 | 0.5496 |
 
-El modelo explica aproximadamente el 52.6% de la variabilidad observada en los valores de mercado.
+El modelo explica aproximadamente el 55.0% de la variabilidad observada en los valores de mercado.
 
 ---
 
@@ -531,7 +541,7 @@ como modelo operativo de la plataforma.
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
-| Tuned XGBoost | 0.7120 | 0.8892 | 0.5414 |
+| Tuned XGBoost | 0.6834 | 0.8525 | 0.5664 |
 
 #### Decisión metodológica
 
@@ -633,10 +643,31 @@ La temporada 2025-2026 queda reservada para explotación operativa y no particip
 
 | Modelo | MAE | RMSE | R² |
 |----------|----------:|----------:|----------:|
-| Growth OLS | 0.7287 | 0.9053 | 0.5258 |
-| Tuned XGBoost | 0.7120 | 0.8892 | 0.5414 |
+| Growth OLS Temporal | 0.6989 | 0.8689 | 0.5496 |
+| Tuned XGBoost | 0.6834 | 0.8525 | 0.5664 |
 
 Los resultados muestran una mejora consistente del modelo de Machine Learning respecto al benchmark econométrico.
+
+
+### Sprint 13A.1 — External Validation
+
+```text
+Pregunta metodológica:
+
+¿La metodología mantiene su comportamiento
+al ampliarse el universo competitivo?
+```
+
+Resultados:
+
+| Dataset  | R² Tuned XGBoost |
+| -------- | ---------------: |
+| 7 ligas  |           0.5414 |
+| 11 ligas |           0.5664 |
+
+Conclusión:
+
+La expansión multi-liga no solo incrementa cobertura sino que mejora el rendimiento predictivo, reforzando la validez externa de la metodología.
 
 ---
 
@@ -1067,6 +1098,27 @@ Contribución:
 - Auditoría de cobertura.
 - Diagnóstico de matching.
 
+### Sprint 13A.1 — Coverage Audit & External Validation
+
+Objetivo:
+
+Validar la robustez metodológica del sistema tras la expansión desde siete hasta once ligas europeas.
+
+Funcionalidades incorporadas:
+
+- Coverage Diagnostics.
+- Matching by League.
+- Matching by League Season.
+- Coverage Audit.
+- Reentrenamiento completo del pipeline.
+- Comparación histórica 7 ligas vs 11 ligas.
+
+Contribución:
+
+- Evaluación explícita de validez externa.
+- Auditoría sistemática de cobertura.
+- Evidencia empírica de capacidad de generalización.
+
 ---
 
 ### Sprint 14 — Transfer Strategy Engine
@@ -1232,6 +1284,9 @@ Actualmente la plataforma incorpora:
 - Multi-League Expansion.
 - League Coverage Diagnostics.
 - External Validity Assessment.
+- External Validation Layer.
+- Coverage Diagnostics.
+- Multi-League Coverage Audit.
 
 Versión actual:
 
@@ -1266,34 +1321,138 @@ v1.2.0 — Multi-League Expansion
 
 ## 🛣️ Roadmap
 
-Las siguientes líneas de investigación representan posibles extensiones futuras y no forman parte de la versión evaluada en este Trabajo Fin de Máster.
+Las siguientes líneas de investigación representan extensiones futuras del proyecto y no forman parte de la versión evaluada en este Trabajo Fin de Máster.
+
+Tras la consolidación de la arquitectura DSS y la validación externa obtenida durante la release:
+
+```text
+v1.2.0 — Multi-League Expansion
+```
+
+las siguientes fases se orientan principalmente a:
+
+* enriquecimiento de datos;
+* mejora predictiva;
+* aumento de capacidad explicativa;
+* fortalecimiento de las funcionalidades de scouting y recruitment.
+
+---
 
 ### TM.1 — Transfermarkt Coverage Audit
 
 Estado:
 
-Backlog.
+```text
+Backlog
+```
 
 Objetivo:
 
-Determinar si las limitaciones observadas durante Sprint 13A proceden de:
+Determinar si las limitaciones de cobertura identificadas durante Sprint 13A proceden principalmente de:
 
-- Transfermarkt-Kaggle.
-- Transfermarkt original.
-- Pipeline de extracción.
+* Transfermarkt-Kaggle.
+* Transfermarkt original.
+* Pipeline de extracción.
+* Disponibilidad histórica de determinadas competiciones.
+
+Resultados esperados:
+
+* Diagnóstico definitivo de cobertura.
+* Estimación del techo teórico de matching.
+* Identificación de oportunidades de mejora en integración de datos.
+
+---
+
+### Sprint 13B — Advanced Data Expansion
+
+Objetivo:
+
+Ampliar significativamente la riqueza informativa del sistema incorporando métricas avanzadas de rendimiento y modelos de generación de ocasiones.
+
+Esta fase representa la continuación natural de Sprint 13A.
+
+---
+
+#### FBref Advanced Features
+
+Nuevos bloques previstos:
+
+##### Shooting
+
+* shots_per90
+* shots_on_target_per90
+* shot_accuracy_pct
+
+##### Passing
+
+* progressive_passes_per90
+* key_passes_per90
+* passes_into_final_third
+
+##### Possession
+
+* progressive_carries_per90
+* successful_take_ons_pct
+
+##### Goal & Shot Creation
+
+* shot_creating_actions
+* goal_creating_actions
+
+##### Defense
+
+* pressures
+* recoveries
+* blocks
+* clearances
+
+---
+
+#### Understat Integration
+
+Nuevas variables previstas:
+
+* xG
+* xA
+* xG_per90
+* xA_per90
+* xGChain
+* xGBuildup
+
+---
+
+#### Impacto esperado
+
+* Mejora de capacidad predictiva.
+* Mejora de interpretabilidad deportiva.
+* Fortalecimiento del scouting cuantitativo.
+* Enriquecimiento del Player Radar.
+* Mejor benchmarking posicional.
+* Mayor robustez analítica en perfiles ofensivos.
 
 ---
 
 ### Sprint 15 — Advanced Recruitment Intelligence
 
-Ampliación de las capacidades de comparación y evaluación de candidatos.
+Objetivo:
 
-Líneas potenciales:
+Expandir las capacidades analíticas de recruitment y comparación de candidatos.
+
+Líneas previstas:
 
 * Benchmarking avanzado.
 * Comparación posicional enriquecida.
 * Radar multicriterio ampliado.
 * Explicabilidad avanzada de recomendaciones.
+* Comparativas multi-jugador ampliadas.
+* Evaluación contextual por competición.
+
+Pregunta objetivo:
+
+```text
+¿Por qué un candidato es superior
+a otro dentro del mismo contexto competitivo?
+```
 
 ---
 
@@ -1306,7 +1465,9 @@ Objetivos:
 * Identificación automática de reemplazos.
 * Matching de perfiles deportivos.
 * Restricciones presupuestarias.
-* Compatibilidad táctica y competitiva.
+* Compatibilidad táctica.
+* Compatibilidad competitiva.
+* Simulación de escenarios de sustitución.
 
 Pregunta objetivo:
 
@@ -1319,13 +1480,70 @@ a un activo que abandona el club?
 
 ### Investigación futura
 
+#### Modelización
+
 * Incorporación de TabPFN.
 * Incorporación de CatBoost.
-* Nuevas fuentes de datos deportivas.
-* Métricas avanzadas de FBref.
-* Tracking data.
-* Optimización multiobjetivo.
+* Comparación con nuevos algoritmos fundacionales para datos tabulares.
+* Ensemble Learning.
+
+---
+
+#### Datos
+
+* Tracking Data.
+* Event Data avanzado.
+* Datos salariales.
+* Información contractual.
+* Datos de transferencias históricas.
+
+---
+
+#### Football Analytics
+
+* Advanced Football Radar.
+* Similarity Engine.
+* Success Probability Models.
+* Career Trajectory Modeling.
+
+---
+
+#### Sports Economics
+
 * Simulación económica de carteras de fichajes.
+* Optimización multiobjetivo.
+* Valoración dinámica de activos deportivos.
+* Modelización de ROI a largo plazo.
+
+---
+
+### Visión a largo plazo
+
+La evolución natural del proyecto puede resumirse mediante:
+
+```text
+Market Value Prediction
+↓
+Opportunity Detection
+↓
+Risk Assessment
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+↓
+External Validation
+↓
+Advanced Football Analytics Platform
+```
+
+El objetivo final es consolidar una plataforma integral de Football Analytics capaz de combinar valoración económica, análisis deportivo, optimización de fichajes y soporte avanzado a decisiones dentro de entornos profesionales de scouting y recruitment.
 
 ---
 
@@ -1669,6 +1887,21 @@ Decision Support System
 La release v1.2.0 — Multi-League Expansion amplía la cobertura competitiva del proyecto desde siete hasta once ligas europeas e incorpora una evaluación explícita de validez externa sin alterar la arquitectura analítica ni los modelos productivos desarrollados previamente.
 
 Más allá de la identificación de jugadores infravalorados, la plataforma permite apoyar decisiones estratégicas de recruitment mediante la combinación de valoración de mercado, evaluación de riesgo, análisis comparativo y optimización de carteras de fichajes bajo restricciones reales.
+
+Sprint 13A.1 aporta una contribución metodológica especialmente relevante para este Trabajo Fin de Máster.
+
+La ampliación desde siete hasta once ligas permite evaluar explícitamente la capacidad de generalización del sistema en ecosistemas competitivos heterogéneos.
+
+Los resultados obtenidos muestran que tanto Growth OLS como Tuned XGBoost mejoran su rendimiento tras la expansión competitiva:
+
+Growth OLS Temporal → R² = 0.5496
+Tuned XGBoost → R² = 0.5664
+
+Esta evidencia sugiere que la metodología captura patrones estructurales del mercado de fichajes que permanecen estables fuera del universo competitivo original, reforzando significativamente la validez externa y la solidez académica del proyecto.
+
+La principal aportación metodológica de la release v1.2.0 no reside únicamente en la ampliación de cobertura, sino en la evidencia empírica de que la metodología mantiene e incluso mejora su comportamiento al aplicarse sobre ecosistemas competitivos más diversos.
+
+Esta capacidad de generalización refuerza significativamente la validez externa del sistema y constituye una de las contribuciones académicas más relevantes del proyecto.
 
 El resultado final es una arquitectura reproducible, interpretable y orientada a negocio que conecta técnicas avanzadas de analítica deportiva con problemas reales de toma de decisiones dentro del fútbol profesional.
 

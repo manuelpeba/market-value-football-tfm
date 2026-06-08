@@ -1,0 +1,32 @@
+feature,importance
+career_year,0.13752045
+league_Premier League,0.12845764
+league_Eredivisie,0.060844477
+league_Bundesliga,0.058646522
+league_LaLiga,0.05817787
+season_2019-2020,0.05474363
+league_Spanish Segunda División,0.051974803
+league_Serie A,0.045337975
+playmaking_index,0.03950351
+league_Ligue 1,0.038933113
+goals_position_percentile,0.037866253
+assists_position_percentile,0.029364191
+finishing_index,0.028400661
+assists_per90,0.028001314
+league_Belgian Pro League,0.024476761
+log_minutes_played,0.024391782
+league_Championship,0.022931239
+league_Austrian Bundesliga,0.017893158
+goals_per90,0.01584286
+age,0.011918038
+experience_index,0.011437275
+league_Liga Portugal,0.011424639
+season_2022-2023,0.01129073
+position_group_DEF,0.011198266
+breakout_indicator,0.009856236
+position_group_MID,0.00844395
+position_group_ATT,0.0075778407
+season_2021-2022,0.0072230455
+season_2020-2021,0.0063217985
+age_squared,0.0
+position_group_GK,0.0
