@@ -5,7 +5,7 @@
 Este documento describe la estrategia de Feature Engineering implementada en la release:
 
 ```text
-v1.1.0 — Strategic Recruitment & Decision Support System
+v1.2.1 — Advanced Data Expansion
 ```
 
 Su finalidad es documentar:
@@ -18,7 +18,9 @@ Su finalidad es documentar:
 * soporte a modelización
 * soporte a scoring
 * soporte a recruitment intelligence
-* soporte a portfolio optimization
+* soporte a decision support systems
+* validación externa
+* integración de métricas avanzadas
 
 ---
 
@@ -41,7 +43,7 @@ La estrategia de Feature Engineering se orienta a construir variables que captur
 * riesgo
 * valor estratégico
 
-El objetivo no es únicamente mejorar R² o RMSE, sino alimentar correctamente:
+El objetivo no es únicamente mejorar métricas predictivas, sino alimentar correctamente:
 
 ```text
 Modelización
@@ -51,8 +53,6 @@ Scoring
 Player Intelligence
 ↓
 Recruitment Intelligence
-↓
-Transfer Strategy Engine
 ↓
 Decision Support System
 ```
@@ -69,19 +69,21 @@ La plataforma incorpora actualmente:
 * variables longitudinales
 * growth features
 * composite indices
+* advanced football indices
 * scoring features
 * risk features
 * recruitment features
-* portfolio optimization features
 * business evaluation features
 
 Dataset actual:
 
-| Métrica            |                 Valor |
-| ------------------ | --------------------: |
-| Observaciones      |                 3.916 |
-| Jugadores únicos   |                 2.138 |
-| Cobertura temporal | 2019-2020 → 2025-2026 |
+| Métrica                        |                 Valor |
+| ------------------------------ | --------------------: |
+| Observaciones modelables       |                 5.527 |
+| Observaciones FBref procesadas |                43.591 |
+| Ligas                          |                    11 |
+| Temporadas                     |                     7 |
+| Cobertura temporal             | 2019-2020 → 2025-2026 |
 
 ---
 
@@ -99,19 +101,61 @@ C --> D[Growth Features]
 
 D --> E[Composite Indices]
 
-E --> F[Modeling Dataset]
+E --> F[Advanced Football Indices]
 
-F --> G[Predictions]
+F --> G[Modeling Dataset]
 
-G --> H[Scoring Features]
+G --> H[Predictions]
 
-H --> I[Risk Features]
+H --> I[Scoring Features]
 
-I --> J[Player Intelligence Features]
+I --> J[Risk Features]
 
-J --> K[Recruitment Intelligence Features]
+J --> K[Player Intelligence Features]
 
-K --> L[Portfolio Optimization Features]
+K --> L[Recruitment Intelligence Features]
+```
+
+---
+
+# Evolución metodológica
+
+La evolución real de la capa de Feature Engineering puede resumirse mediante:
+
+```text
+Base Features
+↓
+Derived Features
+↓
+Growth Features
+↓
+Composite Indices
+↓
+Scoring Features
+↓
+Risk Features
+↓
+Recruitment Features
+↓
+Multi-League Expansion
+↓
+Advanced Football Indices
+```
+
+Las principales contribuciones recientes corresponden a:
+
+```text
+Sprint 13A
+↓
+External Validation
+```
+
+y
+
+```text
+Sprint 13B
+↓
+Advanced Data Expansion
 ```
 
 ---
@@ -164,7 +208,7 @@ K --> L[Portfolio Optimization Features]
 * age_diff
 * club_score
 
-Estas variables alimentan directamente la construcción del Confidence Score.
+Estas variables alimentan directamente la construcción del Confidence Score y los procesos de auditoría de matching.
 
 ---
 
@@ -175,6 +219,8 @@ Estas variables alimentan directamente la construcción del Confidence Score.
 ### log_market_value_eur
 
 Target principal.
+
+---
 
 ### log_minutes_played
 
@@ -195,6 +241,8 @@ Captura relaciones no lineales asociadas al ciclo de vida del jugador.
 ### career_year
 
 Proxy de experiencia.
+
+---
 
 ### breakout_indicator
 
@@ -227,7 +275,9 @@ Variables:
 
 Conclusión:
 
-Las variables longitudinales representan una de las mejoras más relevantes de todo el proyecto.
+Las variables longitudinales representan una de las mejoras predictivas más importantes de todo el proyecto.
+
+Constituyen todavía hoy el núcleo explicativo principal de la arquitectura econométrica.
 
 ---
 
@@ -248,7 +298,88 @@ Objetivo principal:
 Interpretabilidad
 ```
 
+Estos índices permiten resumir múltiples dimensiones futbolísticas dentro de variables sintéticas más fácilmente interpretables por usuarios de negocio.
+
+Aunque su impacto predictivo inicial fue limitado, demostraron gran utilidad para:
+
+* explainability;
+* scouting reports;
+* player intelligence;
+* benchmarking posicional.
+
 ---
+
+# Sprint 13B — Advanced Football Indices
+
+Sprint 13B introduce una nueva generación de variables sintéticas construidas a partir de métricas avanzadas derivadas de FBref.
+
+Variables incorporadas:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+---
+
+## Objetivo
+
+Capturar dimensiones futbolísticas complejas que no estaban completamente representadas en la capa de features existente.
+
+---
+
+## Resultados observados
+
+### Econometría
+
+```text
+ΔR² = +0.0044
+```
+
+### Machine Learning
+
+```text
+XGBoost:
++0.0096
+
+Random Forest:
++0.0097
+
+HistGradientBoosting:
++0.0144
+
+LightGBM:
++0.0291
+```
+
+---
+
+## Hallazgo principal
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar estas variables.
+
+---
+
+## Variable más relevante
+
+Los análisis de importancia realizados durante Sprint 13B identifican:
+
+```text
+finishing_index_v2
+```
+
+como la variable avanzada con mayor relevancia predictiva agregada.
+
+---
+
+## Estado actual
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+han sido promovidas a producción y forman parte del conjunto oficial de features de la versión v1.2.1.
 
 # Sprint 5 — Scoring Features
 
@@ -256,7 +387,7 @@ Sprint 5 transforma predicciones en señales accionables.
 
 Flujo:
 
-```text
+```text id="0nmkzk"
 Predicción
 ↓
 Inefficiency Score
@@ -296,7 +427,7 @@ Opportunity Score
 
 Problema identificado:
 
-```text
+```text id="7v2u3m"
 Alta oportunidad
 ≠
 bajo riesgo
@@ -310,17 +441,21 @@ bajo riesgo
 
 Cuantificación de incertidumbre.
 
+---
+
 ### risk_level
 
 * Low
 * Medium
 * High
 
+---
+
 ### risk_adjusted_opportunity_score
 
 Combina:
 
-```text
+```text id="af67sx"
 Opportunity
 +
 Risk
@@ -387,58 +522,178 @@ Variables utilizadas:
 
 Objetivo:
 
-```text
+```text id="m5ih2v"
 Transformar análisis individuales
 en procesos operativos de recruitment.
 ```
 
 ---
 
-# Sprint 14 — Portfolio Optimization Features
+# Sprint 13A — Multi-League Expansion
 
-Introducidas para soportar el Transfer Strategy Engine.
+Sprint 13A no introduce nuevas familias de variables, pero amplía significativamente el universo competitivo sobre el que se construyen y validan las features existentes.
+
+Nuevas ligas incorporadas:
+
+* Championship
+* Belgian Pro League
+* Austrian Bundesliga
+* Segunda División de España
+
+Resultado:
+
+| Métrica             |  Valor |
+| ------------------- | -----: |
+| Observaciones FBref | 43.591 |
+| Dataset modelizable |  5.527 |
+| Ligas               |     11 |
+| Temporadas          |      7 |
+| Liga-temporada      |     77 |
 
 ---
 
-## Portfolio Features
+## Contribución metodológica
 
-* portfolio_cost_eur
-* portfolio_score_conservative
-* portfolio_score_balanced
-* portfolio_score_aggressive
+La expansión multi-liga permite evaluar explícitamente:
+
+* robustez de features;
+* estabilidad de relaciones predictivas;
+* capacidad de generalización.
+
+Sprint 13A constituye la primera validación externa formal de la arquitectura de Feature Engineering.
 
 ---
 
-## Future Asset Features
+# Sprint 13A.1 — Coverage Diagnostics
 
-* future_asset_score
+Variables introducidas para auditoría de cobertura:
+
+* match_rate
+* matched_records
+* unmatched_records
+* coverage_rate
 
 Objetivo:
 
-```text
-Capturar potencial futuro
-como activo deportivo y económico.
+```text id="ntt3mn"
+Evaluar calidad de integración
+por liga y temporada.
+```
+
+Artefactos generados:
+
+```text id="qic8hf"
+matching_by_league
+
+matching_by_league_season
+
+coverage_audit
+```
+
+Estas variables no participan en entrenamiento de modelos.
+
+Su finalidad es exclusivamente diagnóstica y metodológica.
+
+---
+
+# Sprint 13B — Advanced Football Metrics Integration
+
+Sprint 13B constituye la ampliación más importante de la capa de Feature Engineering desde Sprint 2.
+
+---
+
+## Hipótesis
+
+```text id="jjglj7"
+Las métricas avanzadas de rendimiento
+aportan información adicional capaz
+de mejorar la estimación del valor
+de mercado esperado.
 ```
 
 ---
 
-## ROI Features
+## Variables incorporadas
 
-* roi_score
+### finishing_index_v2
 
----
-
-## Strategic Recruitment Features
-
-* selection_rationale
-* scenario_type
-* recruitment_profile
+Captura información avanzada asociada a capacidad finalizadora y eficiencia ofensiva.
 
 ---
 
-## Objetivo
+### availability_index
 
-Transformar recomendaciones individuales en activos comparables dentro de procesos de optimización.
+Captura disponibilidad competitiva efectiva y continuidad de participación.
+
+---
+
+### defensive_activity_index
+
+Captura actividad defensiva agregada mediante métricas avanzadas derivadas de FBref.
+
+---
+
+## Resultados observados
+
+### Econometría
+
+```text id="rffwlk"
+ΔR² = +0.0044
+```
+
+---
+
+### Machine Learning
+
+```text id="9zstvk"
+XGBoost:
++0.0096
+
+Random Forest:
++0.0097
+
+HistGradientBoosting:
++0.0144
+
+LightGBM:
++0.0291
+```
+
+---
+
+## Hallazgo principal
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables.
+
+Este comportamiento aporta evidencia especialmente sólida sobre la utilidad de las métricas avanzadas incorporadas.
+
+---
+
+## Principal contribución analítica
+
+Los análisis de importancia identifican:
+
+```text id="4xajqt"
+finishing_index_v2
+```
+
+como la variable avanzada con mayor relevancia predictiva agregada.
+
+---
+
+## Promoción productiva
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+forman parte del conjunto oficial de features productivas de:
+
+```text id="vwjj3d"
+player_season_modeling_v13b_productive_candidate.parquet
+```
 
 ---
 
@@ -447,6 +702,8 @@ Transformar recomendaciones individuales en activos comparables dentro de proces
 Introducidas durante Sprint 6.
 
 No utilizadas para entrenamiento.
+
+---
 
 ## ROI Features
 
@@ -481,7 +738,7 @@ MLflow registra:
 
 Beneficio:
 
-```text
+```text id="2hpr2r"
 Reproducibilidad completa
 ```
 
@@ -505,7 +762,7 @@ Variables excluidas:
 
 ## Principio
 
-```text
+```text id="v5ym0s"
 Toda variable predictiva
 debe existir en el momento real
 de la decisión.
@@ -513,76 +770,169 @@ de la decisión.
 
 ---
 
+# Integración Scoring v13B
+
+Durante Sprint 13B se identificó una separación estructural entre:
+
+```text id="cc08o7"
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+El pipeline histórico de scoring requiere variables enriquecidas adicionales no presentes actualmente en la capa productiva de predicción.
+
+Por este motivo, la integración completa entre:
+
+```text id="mpzcyw"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Risk Score
+↓
+Rankings v13B
+```
+
+queda documentada como trabajo futuro independiente.
+
+Backlog asociado:
+
+```text id="afjlwm"
+TM.2 — Scoring & Ranking Integration v13B
+```
+
+La decisión metodológica fue no ejecutar esta integración dentro de Sprint 13B al no afectar a la validación de la hipótesis principal.
+
+---
+
 # Trade-offs metodológicos
 
-| Trade-off                            | Decisión                     |
-| ------------------------------------ | ---------------------------- |
-| Muchas features vs interpretabilidad | Equilibrio                   |
-| Complejidad vs estabilidad           | Modularización               |
-| Precisión vs explicabilidad          | Arquitectura híbrida         |
-| Cobertura vs robustez                | Quality First                |
-| Ranking agresivo vs fiabilidad       | Opportunity + Risk           |
-| Evaluación histórica vs operación    | Separación temporal          |
-| Optimización vs interpretabilidad    | Portfolio Scores explicables |
+| Trade-off                            | Decisión                |
+| ------------------------------------ | ----------------------- |
+| Muchas features vs interpretabilidad | Equilibrio              |
+| Complejidad vs estabilidad           | Modularización          |
+| Precisión vs explicabilidad          | Arquitectura híbrida    |
+| Cobertura vs robustez                | Quality First           |
+| Ranking agresivo vs fiabilidad       | Opportunity + Risk      |
+| Evaluación histórica vs operación    | Separación temporal     |
+| Expansión multi-liga vs consistencia | External Validation     |
+| Nuevas métricas vs sobreajuste       | Validación multi-modelo |
 
 ---
 
 # Roadmap
 
-## Sprint 13 — Multi-League Expansion
+## TM.1 — Transfermarkt Coverage Audit
 
-* Championship
-* Segunda División
-* Belgian Pro League
-* Austrian Bundesliga
-* Danish Superliga
+Objetivo:
 
----
-
-## Sprint 15 — Advanced Recruitment Intelligence
-
-* Benchmarking avanzado
-* Comparación enriquecida
-* Radar multicriterio ampliado
-* Explainability avanzada
+* diagnosticar limitaciones de cobertura;
+* estimar techo teórico de matching;
+* mejorar integración de datos.
 
 ---
 
-## Sprint 16 — Transfer Replacement Engine
+## TM.2 — Scoring & Ranking Integration v13B
 
-* Similarity Matching
-* Replacement Analysis
-* Tactical Compatibility
-* Budget-Constrained Replacements
+Objetivo:
+
+```text id="r4a7ma"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Opportunity Framework v13B
+↓
+Rankings v13B
+```
+
+---
+
+## Sprint 14 — Transfer Strategy Enhancement
+
+Líneas de trabajo previstas:
+
+* Transfer Strategy Engine
+* Portfolio Optimization
+* Scenario Simulation
+* Strategic Recruitment
 
 ---
 
 ## Investigación futura
 
+### Modelización
+
 * TabPFN
 * CatBoost
-* Métricas avanzadas FBref
+* Ensemble Learning
+
+### Datos
+
+* Nuevas métricas avanzadas FBref
+* Event Data avanzado
 * Tracking Data
-* Optimización multiobjetivo
+* Datos contractuales
+* Datos salariales
+
+### Football Analytics
+
+* Similarity Engine
+* Advanced Football Radar
+* Career Trajectory Modeling
 
 ---
 
 # Conclusión
 
-El Feature Engineering constituye uno de los principales vectores de mejora del sistema.
+El Feature Engineering constituye uno de los principales motores de mejora de la plataforma.
 
-La evolución observada durante los distintos sprints demuestra que:
+Los resultados acumulados durante el proyecto muestran que:
 
-* las variables longitudinales aportan la mayor ganancia predictiva
-* los índices compuestos aportan interpretabilidad
-* el scoring transforma predicciones en señales accionables
-* el Risk Framework mejora la priorización
-* el Recruitment Intelligence Layer transforma análisis en procesos operativos
-* el Transfer Strategy Engine transforma candidatos en estrategias de fichajes
+* las variables longitudinales aportan la mayor mejora predictiva estructural;
+* los índices compuestos aportan interpretabilidad;
+* el scoring transforma predicciones en señales accionables;
+* el Risk Framework mejora priorización;
+* Recruitment Intelligence transforma análisis en procesos operativos;
+* la expansión multi-liga fortalece la validez externa;
+* las métricas avanzadas mejoran simultáneamente econometría y Machine Learning.
+
+Las principales contribuciones recientes corresponden a:
+
+```text id="x8n4qn"
+Sprint 13A
+↓
+External Validation
+```
+
+y
+
+```text id="yp67px"
+Sprint 13B
+↓
+Advanced Data Expansion
+```
+
+La hipótesis principal de Sprint 13B queda validada.
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+aportan señal predictiva incremental consistente y pasan a formar parte del conjunto oficial de features productivas.
 
 La evolución funcional puede resumirse mediante:
 
-```text
+```text id="chzhgc"
 Modelización
 ↓
 Scoring
@@ -591,11 +941,11 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
 Decision Support System
+↓
+External Validation
+↓
+Advanced Football Metrics
 ```
 
-consolidando la transición desde un sistema predictivo hacia una plataforma integral de Football Analytics aplicada al scouting, recruitment y optimización de decisiones deportivas.
+consolidando la transición desde un sistema predictivo hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.

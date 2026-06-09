@@ -5,7 +5,7 @@
 Este documento describe las variables utilizadas en la versión:
 
 ```text
-v1.2.0 — Multi-League Expansion
+v1.2.1 — Advanced Data Expansion
 ```
 
 Su objetivo es garantizar:
@@ -44,6 +44,8 @@ Raw Sources
 ↓
 Feature Engineering
 ↓
+Advanced Metrics Layer
+↓
 Player Season Panel
 ↓
 Modeling Dataset
@@ -61,19 +63,26 @@ Decision Support System
 External Validation
 ```
 
+La capa:
+
+```text
+Advanced Metrics Layer
+```
+
+fue incorporada durante Sprint 13B para integrar métricas avanzadas derivadas de FBref dentro del pipeline de modelización.
+
 ---
 
 # Datasets principales
 
-| Dataset                   | Ruta                                                        |
-| ------------------------- | ----------------------------------------------------------- |
-| FBref Features            | data/processed/fbref_features_v13a.parquet                  |
-| Transfermarkt Features    | data/processed/transfermarkt_features_v13a.parquet          |
-| Player Season Panel       | data/processed/player_season_panel_v13a.parquet             |
-| Modeling Dataset          | data/processed/player_season_modeling_v13a.parquet          |
-| Advanced Features Dataset | data/processed/player_season_modeling_advanced_v13a.parquet |
-| Growth Features Dataset   | data/processed/player_season_modeling_growth_v13a.parquet   |
-| Composite Indices Dataset | data/processed/player_season_modeling_indices_v13a.parquet  |
+| Dataset                 | Ruta                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| FBref Features          | data/processed/fbref_features_v13a.parquet                              |
+| Transfermarkt Features  | data/processed/transfermarkt_features_v13a.parquet                      |
+| Player Season Panel     | data/processed/player_season_panel_v13a.parquet                         |
+| Modeling Dataset v13A   | data/processed/player_season_modeling_v13a.parquet                      |
+| Advanced Dataset v13B   | data/processed/player_season_modeling_v13b_advanced.parquet             |
+| Productive Dataset v13B | data/processed/player_season_modeling_v13b_productive_candidate.parquet |
 
 ---
 
@@ -125,10 +134,10 @@ log(market_value_eur)
 
 Justificación:
 
-* reducción de asimetría
-* reducción de heterocedasticidad
-* estabilidad estadística
-* mejora de capacidad predictiva
+* reducción de asimetría;
+* reducción de heterocedasticidad;
+* estabilidad estadística;
+* mejora de capacidad predictiva.
 
 ---
 
@@ -308,10 +317,6 @@ Contribuciones ofensivas por 90 minutos.
 ---
 
 # Variables defensivas
-
-Actualmente limitadas en el dataset operativo.
-
-Variables disponibles:
 
 ## tackles_per90
 
@@ -501,7 +506,7 @@ Percentil creativo relativo.
 
 # Variables compuestas
 
-Introducidas durante Sprint 3.
+Introducidas progresivamente entre Sprint 2, Sprint 3 y Sprint 13B.
 
 ---
 
@@ -529,6 +534,70 @@ Introducidas durante Sprint 3.
 
 ---
 
+# Advanced Football Indices (Sprint 13B)
+
+## finishing_index_v2
+
+Índice sintético avanzado de capacidad finalizadora.
+
+Origen:
+
+```text
+FBref Advanced Metrics
+```
+
+Objetivo:
+
+Capturar eficiencia ofensiva y calidad de finalización mediante información agregada procedente de métricas avanzadas.
+
+Resultado:
+
+Variable avanzada con mayor relevancia predictiva agregada durante Sprint 13B.
+
+---
+
+## availability_index
+
+Índice sintético de disponibilidad competitiva.
+
+Origen:
+
+```text
+FBref Advanced Metrics
+```
+
+Objetivo:
+
+Capturar continuidad competitiva, participación efectiva y disponibilidad del jugador durante la temporada.
+
+---
+
+## defensive_activity_index
+
+Índice sintético de actividad defensiva.
+
+Origen:
+
+```text
+FBref Advanced Metrics
+```
+
+Objetivo:
+
+Capturar contribución defensiva agregada mediante métricas avanzadas de rendimiento.
+
+---
+
+## Estado actual
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+fueron promovidas a producción tras la validación experimental de Sprint 13B y forman parte del conjunto oficial de features productivas de la versión v1.2.1.
+
 # Variables de modelización
 
 ## target_variable
@@ -543,10 +612,12 @@ log_market_value_eur
 
 Configuración actual:
 
-| Split         | Temporadas            |
-| ------------- | --------------------- |
-| Train         | 2019-2020 → 2022-2023 |
-| Test Temporal | 2023-2024 → 2025-2026 |
+| Split            | Temporadas            |
+| ---------------- | --------------------- |
+| Train            | 2019-2020 → 2024-2025 |
+| Current Scouting | 2025-2026             |
+
+La temporada 2025-2026 queda reservada para explotación operativa y no participa en el entrenamiento de modelos productivos.
 
 ---
 
@@ -562,7 +633,7 @@ Variables utilizadas en modelos econométricos:
 
 ## leakage_columns
 
-Variables explícitamente excluidas de entrenamiento para evitar fuga de información.
+Variables explícitamente excluidas del entrenamiento para evitar fuga de información.
 
 Principio:
 
@@ -570,6 +641,77 @@ Principio:
 Toda variable predictiva debe existir
 en el momento real de la decisión.
 ```
+
+---
+
+# Modelos oficiales
+
+## Benchmark econométrico
+
+Modelo oficial:
+
+```text
+Growth OLS v13B
+```
+
+Rol:
+
+```text
+Interpretabilidad
++
+Benchmark académico
+```
+
+---
+
+## Modelo productivo
+
+Modelo oficial:
+
+```text
+Tuned XGBoost v13B
+```
+
+Rol:
+
+```text
+Predicción operativa
+```
+
+---
+
+## Resultados Sprint 13B
+
+### Econometría
+
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
+
+Resultado:
+
+```text
+ΔR² = +0.0044
+```
+
+---
+
+### Machine Learning
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+Conclusión:
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables avanzadas.
+
+---
+
 # Variables de Scoring
 
 Introducidas progresivamente entre Sprint 5 y Sprint 10.
@@ -587,7 +729,7 @@ Valor de mercado estimado por el modelo productivo.
 Modelo actual:
 
 ```text
-Tuned XGBoost
+Tuned XGBoost v13B
 ```
 
 ---
@@ -866,8 +1008,8 @@ Modelo utilizado.
 Ejemplos:
 
 ```text
-Growth OLS
-Tuned XGBoost
+Growth OLS v13B
+Tuned XGBoost v13B
 LightGBM
 ```
 
@@ -907,13 +1049,10 @@ Validación académica
 
 ## Current Scouting Layer
 
-Artefactos:
+Artefactos principales:
 
 ```text
 tuned_xgboost_predictions.csv
-scoring_dataset.csv
-scouting_shortlist.csv
-scouting_shortlist_with_risk.csv
 ```
 
 Objetivo:
@@ -921,6 +1060,52 @@ Objetivo:
 ```text
 Scouting operativo
 ```
+
+---
+
+## Estado de integración de scoring
+
+Durante Sprint 13B se identificó una separación estructural entre:
+
+```text
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+El pipeline histórico de scoring requiere variables enriquecidas adicionales no presentes actualmente en la capa productiva de predicción.
+
+Por este motivo, la integración completa entre:
+
+```text
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Risk Score
+↓
+Rankings v13B
+```
+
+queda documentada como trabajo futuro independiente.
+
+Backlog asociado:
+
+```text
+TM.2 — Scoring & Ranking Integration v13B
+```
+
+Esta limitación no afecta a:
+
+* resultados econométricos;
+* resultados de Machine Learning;
+* validación de la hipótesis principal de Sprint 13B.
 
 ---
 
@@ -1118,56 +1303,6 @@ Las ligas secundarias presentan menor cobertura histórica disponible en Transfe
 
 ---
 
-# Sprint 13B — Variables futuras
-
-## FBref avanzado
-
-Variables previstas:
-
-### Shooting
-
-* shots_per90
-* shots_on_target_per90
-* shot_accuracy_pct
-
-### Passing
-
-* progressive_passes_per90
-* key_passes_per90
-* passes_into_final_third
-
-### Possession
-
-* progressive_carries_per90
-* successful_take_ons_pct
-
-### Goal & Shot Creation
-
-* shot_creating_actions
-* goal_creating_actions
-
-### Defense
-
-* pressures
-* recoveries
-* blocks
-* clearances
-
----
-
-## Understat
-
-Variables previstas:
-
-* xG
-* xA
-* xG_per90
-* xA_per90
-* xGChain
-* xGBuildup
-
----
-
 # Conclusión
 
 El diccionario de datos refleja la evolución completa del proyecto desde un sistema de estimación de valor de mercado hacia una plataforma integral de Football Analytics.
@@ -1184,10 +1319,28 @@ La arquitectura actual integra:
 * Recruitment Intelligence
 * Decision Support System
 * External Validation
+* Advanced Football Metrics
 
-La principal ampliación introducida durante Sprint 13A y Sprint 13A.1 no consiste únicamente en aumentar el número de observaciones disponibles.
+Las principales contribuciones metodológicas de la versión:
 
-La incorporación de once ligas europeas permite validar explícitamente la capacidad de generalización de la metodología y refuerza la validez externa del sistema.
+```text
+v1.2.1 — Advanced Data Expansion
+```
+
+son:
+
+### Sprint 13A
+
+* expansión a 11 ligas;
+* validación externa;
+* auditoría de cobertura.
+
+### Sprint 13B
+
+* integración de métricas avanzadas FBref;
+* Composite Football Indices v2;
+* mejora simultánea en econometría y Machine Learning;
+* promoción de nuevas variables productivas.
 
 El universo actual:
 
@@ -1197,7 +1350,7 @@ El universo actual:
 | Ligas         |    11 |
 | Temporadas    |     7 |
 
-constituye el mayor dataset utilizado por el proyecto hasta la fecha y sirve como base para las futuras integraciones previstas en Sprint 13B.
+constituye el mayor dataset utilizado por el proyecto hasta la fecha.
 
 La evolución metodológica del sistema puede resumirse mediante:
 
@@ -1208,7 +1361,7 @@ Market Data
 ↓
 Modeling
 ↓
-Scoring
+Opportunity Detection
 ↓
 Risk Assessment
 ↓
@@ -1219,6 +1372,8 @@ Recruitment Intelligence
 Decision Support System
 ↓
 External Validation
+↓
+Advanced Data Expansion
 ```
 
-lo que consolida la transición desde un proyecto de modelización predictiva hacia una plataforma completa de apoyo a decisiones deportivas basada en datos.
+lo que consolida la transición desde un proyecto de modelización predictiva hacia una plataforma integral de apoyo a decisiones deportivas basada en datos.

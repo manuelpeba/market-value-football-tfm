@@ -1,0 +1,119 @@
+scoring:
+  input_predictions_path: reports/sprint_13b/productive/predictions/04_ml_test_predictions_v13b.csv
+  output_path: reports/sprint_13b/productive/rankings/scoring_dataset.csv
+
+  columns:
+    observed_market_value: market_value_eur
+    observed_log_market_value: log_market_value_eur
+    predicted_log_market_value: predicted_log_market_value_ml
+
+  clipping:
+    min_predicted_market_value_eur: 100000
+    max_market_value_gap_pct: 5.0
+
+  normalization:
+    method: zscore
+    winsorize_lower: 0.01
+    winsorize_upper: 0.99
+
+  export:
+    top_n_preview: 50
+
+growth_score:
+  input_path: reports/sprint_13b/productive/rankings/scoring_dataset.csv
+  output_path: reports/sprint_13b/productive/rankings/scoring_dataset_growth.csv
+
+  variables:
+    positive:
+      - market_value_growth_prev
+      - delta_log_market_value_prev
+      - growth_index
+      - breakout_indicator
+
+    negative:
+      - career_year
+
+  weights:
+    market_value_growth_prev: 0.30
+    delta_log_market_value_prev: 0.30
+    growth_index: 0.25
+    breakout_indicator: 0.10
+    career_year: 0.05
+
+  normalization:
+    winsorize_lower: 0.01
+    winsorize_upper: 0.99
+
+confidence_score:
+  input_path: reports/sprint_13b/productive/rankings/scoring_dataset_growth.csv
+  output_path: reports/sprint_13b/productive/rankings/scoring_dataset_confidence.csv
+
+  weights:
+    matching_confidence: 0.35
+    minutes_reliability: 0.35
+    feature_completeness: 0.20
+    temporal_stability: 0.10
+
+  minutes:
+    full_reliability_minutes: 1800
+
+  required_features:
+    - age
+    - minutes_played
+    - log_minutes_played
+    - goals_per90
+    - assists_per90
+    - market_value_growth_prev
+    - delta_log_market_value_prev
+    - growth_index
+    - breakout_indicator
+  
+opportunity_score:
+  input_path: reports/sprint_13b/productive/rankings/scoring_dataset_confidence.csv
+  output_path: reports/sprint_13b/productive/rankings/scoring_dataset_opportunity.csv
+
+  weights:
+    inefficiency_score_z: 0.55
+    growth_score_z: 0.25
+    confidence_score_z: 0.20
+
+  tiers:
+    low: 20
+    interesting: 40
+    monitoring: 60
+    high_priority: 80
+
+rankings:
+  input_path: reports/sprint_13b/productive/rankings/scoring_dataset_opportunity.csv
+  output_dir: reports/sprint_13b/productive/rankings
+
+  top_n:
+    global: 50
+    by_group: 20
+    shortlist: 100
+
+  filters:
+    min_minutes_played: 300
+    min_confidence_score: 50
+    min_opportunity_score: 60
+
+  columns:
+    - player_name_fbref
+    - player_name_tm
+    - club
+    - league
+    - season
+    - position_group
+    - age
+    - minutes_played
+    - market_value_eur
+    - predicted_market_value_eur
+    - market_value_gap_eur
+    - market_value_gap_pct
+    - inefficiency_score_z
+    - growth_score
+    - confidence_score
+    - opportunity_score
+    - opportunity_tier
+    - matching_confidence
+    - matching_method

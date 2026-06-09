@@ -2,7 +2,11 @@
 
 ## Objetivo
 
-Este documento describe las fuentes de datos utilizadas en la versión **v1.2.0 — Multi-League Expansion**.
+Este documento describe las fuentes de datos utilizadas en la versión:
+
+```text
+v1.2.1 — Advanced Data Expansion
+```
 
 Su finalidad es documentar:
 
@@ -12,24 +16,42 @@ Su finalidad es documentar:
 * cobertura temporal y competitiva;
 * metodología de matching;
 * validación externa;
+* integración de métricas avanzadas;
 * limitaciones observadas;
-* líneas futuras de expansión.
+* líneas futuras de evolución.
 
 ---
 
 # Resumen ejecutivo
 
-La arquitectura de datos constituye uno de los elementos centrales del proyecto.
+La arquitectura de datos constituye uno de los pilares fundamentales del proyecto.
 
-El objetivo principal consiste en construir un panel longitudinal de futbolistas profesionales capaz de explicar y predecir el valor de mercado observado mediante la integración de información deportiva y económica procedente de múltiples fuentes.
+El objetivo principal consiste en construir un panel longitudinal de futbolistas profesionales capaz de explicar y estimar el valor de mercado observado mediante la integración de información deportiva y económica procedente de múltiples fuentes.
 
 Durante Sprint 13A se ejecutó una expansión sistemática de cobertura competitiva orientada a evaluar la capacidad de generalización de la metodología fuera del universo inicial de entrenamiento.
 
-La ampliación incorporó cuatro nuevas competiciones profesionales europeas y elevó la cobertura desde siete hasta once ligas, incrementando el dataset modelizable desde 3.916 hasta 5.527 observaciones jugador-temporada (+41,1%).
+Posteriormente, Sprint 13B amplió la profundidad informativa disponible mediante la integración de métricas avanzadas derivadas de FBref.
 
-Los resultados obtenidos muestran que la expansión competitiva no solo aumenta la representatividad del universo analizado, sino que mejora simultáneamente el rendimiento predictivo de los modelos econométricos y de Machine Learning.
+La combinación de ambas fases permitió:
 
-Esta evidencia constituye uno de los principales resultados metodológicos de la versión v1.2.0.
+* ampliar cobertura competitiva;
+* incrementar representatividad;
+* fortalecer validez externa;
+* enriquecer la señal predictiva disponible;
+* mejorar simultáneamente econometría y Machine Learning.
+
+---
+
+## Estado actual
+
+| Métrica                        |  Valor |
+| ------------------------------ | -----: |
+| Observaciones FBref procesadas | 43.591 |
+| Dataset modelizable            |  5.527 |
+| Ligas                          |     11 |
+| Temporadas                     |      7 |
+| Liga-temporada                 |     77 |
+| Match Rate global              | 75,97% |
 
 ---
 
@@ -43,26 +65,24 @@ Multi-Source Football Analytics
 
 Principio fundamental:
 
-> Ninguna fuente individual contiene toda la señal necesaria para modelizar el valor de mercado de un futbolista profesional.
+> Ninguna fuente individual contiene toda la información necesaria para modelizar el valor de mercado de un futbolista profesional.
 
-Por ello se combinan distintas fuentes con funciones complementarias:
+Por ello se combinan fuentes con funciones complementarias:
 
 * rendimiento deportivo;
 * contexto competitivo;
 * evolución temporal;
 * valoración económica.
 
-La integración multi-fuente permite capturar dimensiones distintas del fenómeno estudiado y reduce la dependencia de una única base de datos.
-
 ---
 
 # Objetivo metodológico
 
-La arquitectura de datos se diseñó para responder a la siguiente pregunta:
+La arquitectura de datos fue diseñada para responder a la pregunta central del proyecto:
 
 > ¿Qué jugadores presentan un valor de mercado observado inferior al valor que cabría esperar dadas sus características deportivas, edad, experiencia y rendimiento reciente?
 
-La respuesta requiere combinar:
+Responder a esta pregunta requiere combinar simultáneamente:
 
 * información deportiva;
 * información económica;
@@ -82,27 +102,27 @@ A[FBref]
 B[Transfermarkt]
 --> E
 
-E --> F[Player-Season Matching]
+E --> F[Advanced Metrics Layer]
 
-F --> G[Player-Season Panel]
+F --> G[Player-Season Matching]
 
-G --> H[Modeling Dataset]
+G --> H[Player-Season Panel]
 
-H --> I[Econometric Models]
+H --> I[Modeling Dataset]
 
-H --> J[Machine Learning Models]
+I --> J[Econometric Models]
 
-I --> K[Opportunity Detection]
+I --> K[Machine Learning Models]
 
-J --> K
+J --> L[Opportunity Detection]
 
-K --> L[Risk Assessment]
+K --> L
 
-L --> M[Recruitment Intelligence]
+L --> M[Risk Assessment]
 
-M --> N[Transfer Strategy Engine]
+M --> N[Player Intelligence]
 
-N --> O[Portfolio Optimization]
+N --> O[Recruitment Intelligence]
 
 O --> P[Decision Support System]
 ```
@@ -111,12 +131,12 @@ O --> P[Decision Support System]
 
 # Resumen de fuentes
 
-| Fuente              | Rol principal         | Estado    |
-| ------------------- | --------------------- | --------- |
-| FBref               | Rendimiento deportivo | Integrada |
-| Transfermarkt       | Valoración económica  | Integrada |
-| Understat           | xG / xA               | Roadmap   |
-| StatsBomb Open Data | Event Data            | Roadmap   |
+| Fuente              | Rol principal         | Estado               |
+| ------------------- | --------------------- | -------------------- |
+| FBref               | Rendimiento deportivo | Integrada            |
+| Transfermarkt       | Valoración económica  | Integrada            |
+| Understat           | xG / xA               | Investigación futura |
+| StatsBomb Open Data | Event Data            | Investigación futura |
 
 ---
 
@@ -124,7 +144,7 @@ O --> P[Decision Support System]
 
 ## Rol dentro del sistema
 
-FBref constituye la principal fuente de información deportiva del proyecto.
+FBref constituye la principal fuente deportiva del proyecto.
 
 Tipo:
 
@@ -132,13 +152,11 @@ Tipo:
 Performance Data Source
 ```
 
-Su función principal es proporcionar variables explicativas capaces de modelizar el valor de mercado esperado de cada futbolista.
+Su función principal consiste en proporcionar variables explicativas capaces de modelizar el valor de mercado esperado de cada futbolista.
 
 ---
 
-## Cobertura Sprint 13A.1
-
-La expansión multi-liga ejecutada durante Sprint 13A incrementó significativamente la cobertura competitiva del proyecto.
+## Cobertura actual
 
 | Métrica                  |                 Valor |
 | ------------------------ | --------------------: |
@@ -147,8 +165,6 @@ La expansión multi-liga ejecutada durante Sprint 13A incrementó significativam
 | Ligas                    |                    11 |
 | Liga-temporada           |                    77 |
 | Cobertura temporal       | 2019-2020 → 2025-2026 |
-
-La ampliación de cobertura constituye la principal fuente de mejora observada en los modelos predictivos de la versión v1.2.0.
 
 ---
 
@@ -164,7 +180,7 @@ La ampliación de cobertura constituye la principal fuente de mejora observada e
 * Eredivisie
 * Liga Portugal
 
-### Nuevas ligas incorporadas
+### Ligas incorporadas en Sprint 13A
 
 * Championship
 * Belgian Pro League
@@ -200,11 +216,15 @@ La ampliación de cobertura constituye la principal fuente de mejora observada e
 * goals_per90
 * assists_per90
 
+---
+
 ### Participación
 
 * minutes_played
 * starts
 * nineties
+
+---
 
 ### Defensa
 
@@ -212,11 +232,59 @@ La ampliación de cobertura constituye la principal fuente de mejora observada e
 * interceptions
 * blocks
 
+---
+
 ### Contexto competitivo
 
 * league
 * club
 * position_group
+
+---
+
+## Métricas avanzadas integradas en Sprint 13B
+
+Sprint 13B incorpora una nueva capa de información derivada de tablas avanzadas de FBref.
+
+Tablas auditadas:
+
+* Shooting
+* Passing
+* Possession
+* Goal & Shot Creation
+* Defense
+* Miscellaneous
+* Playing Time
+
+---
+
+### Variables promovidas a producción
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+---
+
+### Resultado observado
+
+Las nuevas variables producen mejoras simultáneas en:
+
+* econometría;
+* XGBoost;
+* Random Forest;
+* HistGradientBoosting;
+* LightGBM.
+
+---
+
+### Hallazgo principal
+
+```text
+finishing_index_v2
+```
+
+aparece como la variable avanzada con mayor relevancia predictiva agregada.
 
 ---
 
@@ -234,26 +302,8 @@ utilizadas por:
 * modelos de Machine Learning;
 * Opportunity Detection;
 * Risk Assessment;
-* Recruitment Intelligence;
-* Transfer Strategy Engine.
-
----
-
-## Auditoría avanzada de variables
-
-Durante Sprint 13A se realizó una auditoría técnica completa de las tablas avanzadas disponibles en FBref.
-
-Tablas evaluadas:
-
-* Shooting
-* Passing
-* Possession
-* Goal & Shot Creation
-* Defense
-* Miscellaneous
-* Playing Time
-
-Esta auditoría constituye la base metodológica de Sprint 13B — Advanced Data Expansion.
+* Player Intelligence;
+* Recruitment Intelligence.
 
 ---
 
@@ -269,7 +319,7 @@ Tipo:
 Market Valuation Source
 ```
 
-Su función principal es proporcionar la variable objetivo utilizada durante la modelización.
+Su función principal consiste en proporcionar la variable objetivo utilizada durante la modelización.
 
 ---
 
@@ -280,11 +330,15 @@ Su función principal es proporcionar la variable objetivo utilizada durante la 
 * market_value_eur
 * historical_market_value
 
+---
+
 ### Contexto
 
 * age
 * position
 * club
+
+---
 
 ### Información temporal
 
@@ -307,7 +361,7 @@ Transformación utilizada:
 log_market_value_eur
 ```
 
-La transformación logarítmica reduce la asimetría de la distribución y mejora la estabilidad de los modelos predictivos.
+La transformación logarítmica reduce la asimetría de la distribución y mejora la estabilidad estadística de los modelos.
 
 ---
 
@@ -318,7 +372,7 @@ Transfermarkt proporciona:
 * variable objetivo;
 * contexto económico;
 * evolución histórica;
-* referencia para la detección de ineficiencias de mercado.
+* referencia para detección de ineficiencias de mercado.
 
 ---
 
@@ -326,8 +380,8 @@ Transfermarkt proporciona:
 
 El valor de mercado publicado por Transfermarkt incorpora factores no observables directamente en los datos deportivos:
 
-* percepción humana;
 * reputación;
+* percepción humana;
 * contexto mediático;
 * potencial percibido;
 * expectativas de mercado.
@@ -338,9 +392,9 @@ Por tanto:
 Valor de mercado ≠ precio real de transferencia
 ```
 
-Esta limitación forma parte inherente del problema de investigación y constituye uno de los principales desafíos metodológicos del proyecto.
+Esta limitación constituye una característica inherente al problema de investigación y no un defecto de la fuente.
 
-# Matching Pipeline
+# 🔗 Matching Pipeline
 
 ## Problema de integración
 
@@ -354,7 +408,7 @@ Las dos fuentes utilizan estructuras independientes para identificar jugadores, 
 
 Las fuentes:
 
-```text
+```text id="q1jlwm"
 NO comparten identificador universal
 ```
 
@@ -383,7 +437,7 @@ Por este motivo se adopta una estrategia conservadora.
 
 Principio metodológico:
 
-```text
+```text id="2g3nkt"
 Calidad > Cobertura
 ```
 
@@ -393,7 +447,7 @@ Calidad > Cobertura
 
 El pipeline de matching sigue la siguiente secuencia:
 
-```text
+```text id="0rrr1l"
 Normalización
 ↓
 Exact Matching
@@ -411,7 +465,7 @@ Age Validation
 
 Tecnología utilizada:
 
-```text
+```text id="h7yq99"
 RapidFuzz
 ```
 
@@ -419,23 +473,23 @@ RapidFuzz
 
 ## Thresholds operativos
 
-```python
+```python id="5sbc6o"
 MAX_AGE_DIFF = 1.5
 MIN_CLUB_SCORE = 70
 FUZZY_THRESHOLD = 92
 ```
 
-Estos parámetros fueron definidos para minimizar errores de emparejamiento sin comprometer excesivamente la cobertura.
+Estos parámetros fueron definidos para minimizar errores de emparejamiento sin comprometer excesivamente la cobertura disponible.
 
 ---
 
-# Sprint 13A — Multi-League Expansion
+# 🌍 Sprint 13A — Multi-League Expansion
 
 ## Objetivo
 
 Evaluar la capacidad de generalización de la metodología mediante una ampliación sistemática de cobertura competitiva.
 
-La pregunta metodológica asociada es:
+Pregunta metodológica:
 
 > ¿La metodología mantiene su capacidad explicativa y predictiva cuando se aplica a ligas con diferentes niveles competitivos, estructuras salariales, perfiles de desarrollo y profundidad de mercado?
 
@@ -445,31 +499,35 @@ La pregunta metodológica asociada es:
 
 Sprint 13A amplía la cobertura competitiva del sistema y evalúa explícitamente la validez externa de la metodología.
 
-A diferencia de releases anteriores, esta fase permite comprobar si los resultados obtenidos dependen exclusivamente del universo inicial de entrenamiento o si generalizan correctamente a nuevos ecosistemas futbolísticos.
+Por primera vez se comprueba si los resultados obtenidos generalizan correctamente fuera del universo competitivo original.
 
 ---
 
 ## Parametrización de pipelines
 
-Durante Sprint 13A se introdujo parametrización explícita para permitir la generación de artefactos completamente reproducibles y versionados.
+Durante Sprint 13A se introdujo parametrización explícita para permitir la generación de artefactos completamente reproducibles.
 
 ### build_fbref_features.py
 
 Nuevo argumento:
 
-```text
+```text id="c0h44u"
 --output
 ```
+
+---
 
 ### build_player_season_panel.py
 
 Nuevos argumentos:
 
-```text
+```text id="kw0f5z"
 --fbref-input
 --tm-input
 --output
 ```
+
+---
 
 ### Beneficios
 
@@ -503,30 +561,94 @@ Nuevos argumentos:
 | 7 ligas  |     0.8892 |     0.7120 |     0.5414 |
 | 11 ligas | **0.8525** | **0.6834** | **0.5664** |
 
-### Growth OLS Temporal
-
-| Dataset  |   RMSE |    MAE |     R² |
-| -------- | -----: | -----: | -----: |
-| 11 ligas | 0.8689 | 0.6989 | 0.5496 |
-
 ---
 
-## Hallazgo principal
+### Hallazgo principal
 
-La ampliación multi-liga produce simultáneamente:
+La expansión multi-liga produce simultáneamente:
 
 * mayor cobertura;
 * mayor representatividad;
 * mejor rendimiento predictivo;
 * mayor capacidad de generalización.
 
-La mejora observada afecta tanto a modelos econométricos como a algoritmos de Machine Learning.
-
-Esto sugiere que el incremento de cobertura incorpora señal adicional útil para la estimación del valor de mercado.
+La mejora observada constituye una evidencia favorable de validez externa.
 
 ---
 
-# Resultados de matching
+# 🔬 Sprint 13B — Advanced Data Expansion
+
+## Objetivo
+
+Evaluar si la incorporación de métricas avanzadas derivadas de FBref aporta capacidad predictiva adicional a los modelos de valoración de mercado.
+
+---
+
+## Variables incorporadas
+
+Sprint 13B introduce tres nuevas variables productivas:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+Estas variables proceden de la nueva capa:
+
+```text id="f29z54"
+Advanced Metrics Layer
+```
+
+incorporada a la arquitectura de datos.
+
+---
+
+## Resultados econométricos
+
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
+
+Resultado:
+
+```text id="3bgc9i"
+ΔR² = +0.0044
+```
+
+---
+
+## Resultados Machine Learning
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+---
+
+## Hallazgo principal
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables.
+
+La variable avanzada con mayor relevancia predictiva agregada es:
+
+```text id="pl0sqt"
+finishing_index_v2
+```
+
+---
+
+## Conclusión
+
+La hipótesis principal de Sprint 13B queda validada.
+
+Las métricas avanzadas derivadas de FBref aportan señal predictiva incremental consistente tanto en econometría como en Machine Learning.
+
+---
+
+# 📊 Resultados de matching
 
 ## Resultado global
 
@@ -557,15 +679,15 @@ Esto sugiere que el incremento de cobertura incorpora señal adicional útil par
 
 ## Interpretación
 
-Las principales ligas europeas mantienen niveles de matching elevados, generalmente superiores al 84%.
+Las principales ligas europeas mantienen niveles elevados de matching.
 
-La reducción del match rate global respecto a versiones anteriores se explica principalmente por la incorporación de competiciones secundarias con menor cobertura histórica disponible en Transfermarkt-Kaggle.
+La reducción del match rate agregado se explica principalmente por limitaciones históricas de cobertura disponibles en Transfermarkt-Kaggle para determinadas competiciones secundarias.
 
-La evidencia disponible no apunta a un problema estructural del algoritmo de matching implementado.
+La evidencia disponible no apunta a degradación del algoritmo de matching.
 
 ---
 
-# Auditoría de cobertura
+# 🔍 Auditoría de cobertura
 
 ## Objetivo
 
@@ -584,19 +706,17 @@ Fuentes potenciales:
 
 Los análisis realizados durante Sprint 13A muestran que una parte relevante de las pérdidas observadas procede de limitaciones de cobertura presentes en Transfermarkt-Kaggle.
 
-El pipeline de matching mantiene niveles elevados de precisión incluso en escenarios de expansión competitiva.
-
 ---
 
 ## Conclusión
 
 Las limitaciones observadas no parecen derivar del algoritmo de matching ni de la integración FBref-Transfermarkt.
 
-La principal restricción identificada corresponde a la disponibilidad histórica de datos en determinadas competiciones y temporadas.
+La principal restricción identificada corresponde a disponibilidad histórica de datos.
 
 ---
 
-# Cobertura actual
+# 📦 Cobertura actual
 
 ## Cobertura temporal
 
@@ -618,25 +738,19 @@ La principal restricción identificada corresponde a la disponibilidad históric
 
 ## Universo modelizable
 
-La expansión multi-liga se encuentra plenamente integrada dentro del pipeline de modelización.
-
 | Métrica            |                 Valor |
 | ------------------ | --------------------: |
 | Observaciones      |                 5.527 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 | Ligas              |                    11 |
 
-El universo utilizado por los modelos predictivos incorpora actualmente todas las ligas integradas durante Sprint 13A.
-
-La mejora observada en los resultados de modelización constituye una evidencia favorable de validez externa para la metodología propuesta.
-
 ---
 
-# Arquitectura de almacenamiento
+# 🗄️ Arquitectura de almacenamiento
 
 ## Estructura general
 
-```text
+```text id="w8czrn"
 data/
 ├── raw/
 ├── interim/
@@ -650,78 +764,98 @@ data/
 
 ### Features deportivas
 
-```text
+```text id="wnol2o"
 fbref_features_v13a.parquet
-```
-
-### Player-Season Panel
-
-```text
-player_season_panel_v13a.parquet
-```
-
-### Modeling Dataset
-
-```text
-player_season_modeling_v13a.parquet
-player_season_modeling_indices_v13a.parquet
-```
-
-### Evaluación histórica
-
-```text
-tuned_xgboost_test_predictions.csv
-tuned_xgboost_full_predictions.csv
-```
-
-### Current Scouting Layer
-
-```text
-tuned_xgboost_predictions.csv
-scoring_dataset.csv
-scouting_shortlist.csv
-scouting_shortlist_with_risk.csv
 ```
 
 ---
 
-# Tracking y trazabilidad
+### Player-Season Panel
+
+```text id="p9gxts"
+player_season_panel_v13a.parquet
+```
+
+---
+
+### Modeling Datasets
+
+```text id="d75yc9"
+player_season_modeling_v13a.parquet
+
+player_season_modeling_v13b_advanced.parquet
+
+player_season_modeling_v13b_productive_candidate.parquet
+```
+
+---
+
+### Evaluación histórica
+
+```text id="j4jl0e"
+tuned_xgboost_test_predictions.csv
+
+tuned_xgboost_full_predictions.csv
+```
+
+---
+
+### Current Scouting Layer
+
+```text id="c5f7pb"
+tuned_xgboost_predictions.csv
+```
+
+---
+
+# 🔄 Tracking y trazabilidad
 
 ## MLflow
 
 El proyecto incorpora una capa completa de experiment tracking mediante MLflow.
 
-Información registrada:
+---
 
 ### Parámetros
 
 * hiperparámetros;
 * configuraciones;
-* semillas.
+* semillas;
+* versiones de datasets;
+* feature sets.
+
+---
 
 ### Métricas
 
 * MAE;
 * RMSE;
 * R²;
-* métricas de negocio.
+* métricas de negocio;
+* métricas de matching.
+
+---
 
 ### Artefactos
 
 * modelos;
 * gráficos;
 * tablas;
-* datasets.
+* predicciones;
+* explainability.
 
-Beneficio principal:
+---
 
-```text
-Reconstrucción completa de experimentos
+## Beneficio principal
+
+```text id="2hmygk"
+Reconstrucción completa
+de experimentos
 ```
 
 ---
 
-# Trade-offs metodológicos
+# ⚖️ Trade-offs metodológicos
 
 | Trade-off                             | Decisión                  |
 | ------------------------------------- | ------------------------- |
@@ -730,16 +864,15 @@ Reconstrucción completa de experimentos
 | Dataset grande vs fiable              | Fiable                    |
 | Nuevas fuentes vs robustez            | Integración progresiva    |
 | Cobertura competitiva vs homogeneidad | Priorizar validez externa |
+| Nuevas variables vs sobreajuste       | Validación multi-modelo   |
 
 ---
 
-# Limitaciones actuales
+# ⚠️ Limitaciones actuales
 
 ## Transfermarkt
 
 El valor de mercado no representa necesariamente un precio real de transferencia.
-
-La valoración incorpora factores no observables directamente en los datos deportivos.
 
 ---
 
@@ -751,7 +884,7 @@ Siempre existe riesgo residual de matching imperfecto en integraciones multi-fue
 
 ## Cobertura
 
-Las ligas secundarias y algunas temporadas recientes presentan menor cobertura disponible en Transfermarkt-Kaggle.
+Las ligas secundarias presentan menor cobertura disponible en Transfermarkt-Kaggle.
 
 ---
 
@@ -767,82 +900,103 @@ Actualmente no se incorporan:
 
 ---
 
-# Roadmap
+## Integración de scoring
+
+Durante Sprint 13B se identificó una separación estructural entre:
+
+```text id="qm3v55"
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+La integración completa queda documentada como:
+
+```text id="r85rdz"
+TM.2 — Scoring & Ranking Integration v13B
+```
+
+sin afectar a la validez metodológica de Sprint 13B.
+
+---
+
+# 🛣️ Roadmap
 
 ## TM.1 — Transfermarkt Coverage Audit
 
-Estado:
+Objetivo:
 
-Backlog futuro.
+* diagnosticar limitaciones de cobertura;
+* estimar techo teórico de matching;
+* mejorar integración de datos.
+
+---
+
+## TM.2 — Scoring & Ranking Integration v13B
 
 Objetivo:
 
-Determinar si las limitaciones observadas proceden de:
-
-* Transfermarkt-Kaggle;
-* Transfermarkt original;
-* pipeline de extracción.
-
----
-
-## Sprint 13B — Advanced Data Expansion
-
-Objetivo:
-
-Incrementar la profundidad analítica y la riqueza informativa del sistema.
-
-### FBref avanzado
-
-* Shooting
-* Passing
-* Possession
-* Goal & Shot Creation
-* Defense
-
-### Understat
-
-* xG
-* xA
-* xGChain
-* xGBuildup
-
-### Impacto esperado
-
-* mejora predictiva;
-* enriquecimiento del Feature Engineering;
-* fortalecimiento del scouting cuantitativo;
-* ampliación del benchmarking posicional.
+```text id="ycjxhh"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Opportunity Framework v13B
+↓
+Risk Framework v13B
+↓
+Rankings v13B
+```
 
 ---
 
-## Exploración futura
+## Sprint 14 — Transfer Strategy Enhancement
 
-### StatsBomb Open Data
+Próxima fase principal del proyecto.
 
-Posibles líneas:
+Líneas previstas:
 
-* pressures;
-* recoveries;
-* carries;
-* progressive actions;
-* contexto espacial.
+* Transfer Strategy Engine.
+* Portfolio Optimization.
+* Scenario Simulation.
+* Strategic Recruitment.
 
 ---
 
-# Conclusión
+## Investigación futura
+
+### Datos
+
+* nuevas métricas avanzadas FBref;
+* event data avanzado;
+* tracking data;
+* información contractual;
+* datos salariales.
+
+### Modelización
+
+* TabPFN;
+* CatBoost;
+* ensemble learning.
+
+---
+
+# 🏁 Conclusión
 
 La arquitectura de datos desarrollada combina información deportiva y económica para construir una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.
 
-Sprint 13A constituye un punto de inflexión metodológico dentro del proyecto.
+Sprint 13A constituye la principal contribución relacionada con cobertura y validez externa.
 
-La expansión competitiva desde siete hasta once ligas no solo incrementa la cobertura y representatividad del universo analizado, sino que mejora simultáneamente el rendimiento predictivo de los modelos econométricos y de Machine Learning.
+Sprint 13B constituye la principal contribución relacionada con profundidad analítica y calidad informativa.
 
-La arquitectura actual puede resumirse mediante:
+La evolución puede resumirse mediante:
 
-```text
+```text id="e1wlcn"
 Performance Data
 +
 Market Data
+↓
+Advanced Metrics Layer
 ↓
 Matching
 ↓
@@ -856,15 +1010,21 @@ Machine Learning Models
 ↓
 Opportunity Detection
 ↓
+Risk Assessment
+↓
+Player Intelligence
+↓
 Recruitment Intelligence
-↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
 ↓
 Decision Support System
 ```
 
-Los resultados obtenidos sugieren que la calidad y amplitud de los datos constituyen un factor tan relevante como la complejidad del modelo utilizado.
+Los resultados obtenidos muestran que la calidad y riqueza de los datos constituyen un factor tan relevante como la complejidad de los algoritmos utilizados.
 
-La prioridad futura no consiste únicamente en incorporar nuevas fuentes, sino en enriquecer la señal disponible manteniendo la trazabilidad, reproducibilidad y robustez metodológica de la arquitectura analítica.
+La release:
+
+```text id="i8j86o"
+v1.2.1 — Advanced Data Expansion
+```
+
+consolida una arquitectura de datos más amplia, más profunda y metodológicamente más robusta que cualquier versión anterior del proyecto.

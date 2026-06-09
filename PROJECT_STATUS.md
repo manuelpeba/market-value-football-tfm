@@ -8,7 +8,7 @@
 ![Tracking](https://img.shields.io/badge/Experiment%20Tracking-MLflow-success)
 ![Dashboard](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![DSS](https://img.shields.io/badge/System-Decision%20Support-success)
-![Version](https://img.shields.io/badge/version-v1.2.0-blue)
+![Version](https://img.shields.io/badge/version-v1.2.1-blue)
 
 ---
 
@@ -28,22 +28,38 @@ El proyecto integra:
 * Portfolio Optimization.
 * Decision Support Systems.
 
-La versión actual incorpora **Sprint 13A — Multi-League Expansion**, una ampliación sistemática de cobertura competitiva orientada a evaluar la robustez metodológica y la capacidad de generalización del sistema en ecosistemas futbolísticos heterogéneos.
+La versión actual incorpora los resultados consolidados de:
 
-La expansión desarrollada durante Sprint 13A incrementa la cobertura desde siete hasta once ligas europeas, elevando el dataset modelizable desde 3.916 hasta 5.527 observaciones jugador-temporada (+41,1%).
+```text id="8v7i6m"
+Sprint 13A — Multi-League Expansion
 
-Los resultados obtenidos muestran que la ampliación de cobertura no solo incrementa la representatividad del universo analizado, sino que mejora simultáneamente el rendimiento predictivo de los modelos econométricos y de Machine Learning.
+Sprint 13B — Advanced Data Expansion
+```
 
-Principales contribuciones de Sprint 13A:
+Sprint 13A amplió la cobertura competitiva del sistema desde siete hasta once ligas europeas, incrementando el dataset modelizable desde 3.916 hasta 5.527 observaciones jugador-temporada y proporcionando una validación explícita de la capacidad de generalización de la metodología.
+
+Sobre esta nueva base de datos ampliada, Sprint 13B evaluó el impacto de incorporar métricas avanzadas derivadas de FBref mediante la construcción de nuevas variables sintéticas orientadas a capturar dimensiones futbolísticas complejas relacionadas con finalización, disponibilidad competitiva y actividad defensiva.
+
+Las variables incorporadas fueron:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+Los resultados obtenidos muestran que estas nuevas variables mejoran simultáneamente el rendimiento de los modelos econométricos y de Machine Learning, aportando evidencia favorable sobre el valor incremental de las métricas avanzadas para la estimación del valor de mercado.
+
+Principales contribuciones de Sprint 13A y Sprint 13B:
 
 * ampliación de cobertura a 11 ligas europeas;
 * procesamiento de 43.591 observaciones procedentes de FBref;
 * auditoría sistemática de matching por liga y temporada;
 * validación externa de la metodología;
-* mejora empírica del rendimiento predictivo;
-* fortalecimiento de la capacidad de generalización del sistema.
+* integración de métricas avanzadas de rendimiento;
+* validación transversal multi-modelo;
+* mejora empírica de la capacidad predictiva;
+* fortalecimiento de la robustez metodológica del sistema.
 
-La versión actual representa la evolución desde un sistema de estimación de valor de mercado hacia una plataforma DSS completa orientada a scouting, recruitment y optimización estratégica de fichajes.
+La versión actual representa la evolución desde un sistema de estimación de valor de mercado hacia una plataforma DSS completa orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.
 
 ---
 
@@ -65,28 +81,97 @@ La versión actual representa la evolución desde un sistema de estimación de v
 
 ## Modelización
 
-### Benchmark principal (Sprint 13A.1)
+### Modelos oficiales (v1.2.1)
 
-| Modelo              |       RMSE |        MAE |         R² |
-| ------------------- | ---------: | ---------: | ---------: |
-| Growth OLS Temporal |     0.8689 |     0.6989 |     0.5496 |
-| Tuned XGBoost       | **0.8525** | **0.6834** | **0.5664** |
+| Capa             | Modelo oficial     |
+| ---------------- | ------------------ |
+| Econometría      | Growth OLS v13B    |
+| Machine Learning | Tuned XGBoost v13B |
 
-### Comparación con versión anterior
+---
 
-| Modelo        | Dataset  |         R² |
-| ------------- | -------- | ---------: |
-| Tuned XGBoost | 7 ligas  |     0.5414 |
-| Tuned XGBoost | 11 ligas | **0.5664** |
+### Sprint 13B — Evaluación econométrica
 
-Resultados observados:
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
 
-* mejora de RMSE (-4,1%);
-* mejora de MAE (-4,0%);
-* mejora de R² (+4,6%);
-* mejora consistente en todos los algoritmos evaluados.
+Resultado:
 
-La evidencia obtenida sugiere que la ampliación multi-liga aporta información adicional relevante para la estimación del valor de mercado y mejora la capacidad de generalización de la arquitectura analítica.
+```text id="7lfk9x"
+ΔR² = +0.0044
+```
+
+Mejoras observadas:
+
+* mejora de MAE;
+* mejora de RMSE;
+* mejora de AIC;
+* mejora de BIC.
+
+Conclusión:
+
+Las métricas avanzadas aportan capacidad explicativa incremental dentro de la especificación econométrica.
+
+---
+
+### Sprint 13B — Evaluación Machine Learning
+
+Comparación entre:
+
+```text id="h5e5in"
+Feature Set A (v13A)
+
+vs
+
+Feature Set B (v13B)
+```
+
+Resultados principales:
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+Hallazgo principal:
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables.
+
+Este comportamiento reduce el riesgo de dependencia de una única arquitectura y aporta robustez adicional a los resultados obtenidos.
+
+---
+
+### Variable avanzada más relevante
+
+Los análisis de importancia de variables realizados durante Sprint 13B identifican:
+
+```text id="pbvprn"
+finishing_index_v2
+```
+
+como la variable avanzada con mayor relevancia predictiva agregada.
+
+Este resultado constituye el principal hallazgo analítico de Sprint 13B.
+
+---
+
+### Estado actual de modelización
+
+```text id="j7fj72"
+Growth OLS v13B
+↓
+Benchmark interpretable
+
+Tuned XGBoost v13B
+↓
+Modelo productivo
+```
+
+La arquitectura mantiene la separación entre interpretabilidad econométrica y capacidad predictiva avanzada.
 
 ---
 
@@ -99,8 +184,21 @@ La evidencia obtenida sugiere que la ampliación multi-liga aporta información 
 | Precision@50  |   90% |
 | Precision@100 |   85% |
 
+Los resultados obtenidos continúan respaldando la utilidad operativa del sistema para procesos de scouting y priorización de oportunidades de mercado.
+
 ---
 
+## Estado general del proyecto
+
+```text id="g0s5mz"
+Sprint 13A — COMPLETADO
+
+Sprint 13B — COMPLETADO
+
+Release v1.2.1 — ACTIVE
+
+Sprint 14 — SIGUIENTE FASE
+```
 # 📚 Estado CRISP-DM
 
 ## Fases completadas
@@ -117,6 +215,8 @@ La evidencia obtenida sugiere que la ampliación multi-liga aporta información 
 * Análisis de calidad.
 * Cobertura temporal y competitiva.
 * Auditoría multi-liga.
+* Evaluación de cobertura por competición.
+* Diagnóstico de representatividad del universo analizado.
 
 ### Data Preparation
 
@@ -125,6 +225,8 @@ La evidencia obtenida sugiere que la ampliación multi-liga aporta información 
 * Construcción del panel longitudinal.
 * Control de leakage.
 * Expansión multi-liga parametrizada.
+* Construcción de métricas avanzadas derivadas de FBref.
+* Desarrollo de Composite Football Indices v2.
 
 ### Modeling
 
@@ -133,6 +235,8 @@ La evidencia obtenida sugiere que la ampliación multi-liga aporta información 
 * Experiment Tracking.
 * Explainability.
 * Validación multi-liga.
+* Evaluación de métricas avanzadas.
+* Comparación Feature Set A vs Feature Set B.
 
 ### Evaluation
 
@@ -140,20 +244,23 @@ La evidencia obtenida sugiere que la ampliación multi-liga aporta información 
 * Evaluación predictiva.
 * Evaluación orientada a negocio.
 * Validación externa.
+* Evaluación incremental de nuevas variables.
+* Comparación transversal multi-modelo.
 
 ### Deployment
 
 * Dashboard interactivo.
 * Recruitment Intelligence.
-* Transfer Strategy Engine.
-* Portfolio Optimization.
 * Decision Support System.
+* Modelos productivos v13B.
+* Integración DSS.
+* Internacionalización EN/ES.
 
 ---
 
 ## Estado actual
 
-```text
+```text id="e6e9aw"
 Econometric Model
 ↓
 Machine Learning
@@ -166,25 +273,27 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
 Decision Support System
 ↓
 Multi-League Expansion
 ↓
+Advanced Data Expansion
+↓
 External Validity Assessment
 ```
+
+La metodología ha superado satisfactoriamente las fases de ampliación competitiva y enriquecimiento analítico, consolidando una arquitectura reproducible y validada sobre múltiples entornos competitivos.
 
 ---
 
 # 🏗️ Arquitectura actual
 
-```text
+```text id="k5m9nk"
 Raw Sources
 ↓
 Feature Engineering
+↓
+Advanced Metrics Layer
 ↓
 Matching Layer
 ↓
@@ -202,10 +311,6 @@ Risk Assessment
 ↓
 Recruitment Intelligence
 ↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
 Decision Support System
 ```
 
@@ -213,28 +318,29 @@ Decision Support System
 
 ## Componentes implementados
 
-| Componente                   | Estado |
-| ---------------------------- | ------ |
-| Data Pipelines               | ✅      |
-| Matching Pipeline            | ✅      |
-| Feature Engineering          | ✅      |
-| Econometric Pipeline         | ✅      |
-| Machine Learning Pipeline    | ✅      |
-| MLflow Tracking              | ✅      |
-| Explainability               | ✅      |
-| Opportunity Score            | ✅      |
-| Risk Framework               | ✅      |
-| Dashboard DSS                | ✅      |
-| Recruitment Intelligence     | ✅      |
-| Transfer Strategy Engine     | ✅      |
-| Scenario Simulator           | ✅      |
-| Portfolio Optimization       | ✅      |
-| Strategic Recruitment Engine | ✅      |
-| Internationalization EN/ES   | ✅      |
-| Multi-League Expansion       | ✅      |
-| External Validity Assessment | ✅      |
-| League Coverage Diagnostics  | ✅      |
-| Multi-League Benchmarking    | ✅      |
+| Componente                    | Estado |
+| ----------------------------- | ------ |
+| Data Pipelines                | ✅      |
+| Matching Pipeline             | ✅      |
+| Feature Engineering           | ✅      |
+| Advanced Feature Engineering  | ✅      |
+| Econometric Pipeline          | ✅      |
+| Machine Learning Pipeline     | ✅      |
+| MLflow Tracking               | ✅      |
+| Explainability                | ✅      |
+| Opportunity Score             | ✅      |
+| Risk Framework                | ✅      |
+| Dashboard DSS                 | ✅      |
+| Recruitment Intelligence      | ✅      |
+| Internationalization EN/ES    | ✅      |
+| Multi-League Expansion        | ✅      |
+| External Validity Assessment  | ✅      |
+| League Coverage Diagnostics   | ✅      |
+| Multi-League Benchmarking     | ✅      |
+| Advanced Metrics Integration  | ✅      |
+| Composite Football Indices v2 | ✅      |
+
+---
 
 # ⚙️ Capacidades implementadas
 
@@ -246,11 +352,25 @@ La arquitectura combina interpretabilidad econométrica y capacidad predictiva a
 
 ---
 
+## Advanced Football Metrics Layer
+
+Sprint 13B incorpora una nueva capa analítica destinada a capturar dimensiones futbolísticas que no estaban completamente representadas en versiones anteriores del sistema.
+
+Variables productivas incorporadas:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+Estas variables amplían la capacidad descriptiva del sistema sin modificar la arquitectura conceptual del proyecto.
+
+---
+
 ## Opportunity Detection
 
 Identificación automática de jugadores potencialmente infravalorados mediante comparación entre:
 
-```text
+```text id="72cgcu"
 Predicted Market Value
 vs
 Observed Market Value
@@ -288,45 +408,11 @@ Esta capa transforma rankings analíticos en herramientas operativas para depart
 
 ---
 
-## Transfer Strategy Engine
-
-Funcionalidades incorporadas durante Sprint 14:
-
-### Portfolio Dataset
-
-* Portfolio Cost.
-* Future Asset Score.
-* ROI Score.
-* Executive Decision Score.
-
-### Optimization Engine
-
-* Programación lineal entera.
-* Formulación 0-1 Knapsack.
-* Optimización bajo restricciones.
-
-### Scenario Simulator
-
-* Conservative.
-* Balanced.
-* Aggressive.
-
-### Strategic Recruitment Engine
-
-* Configuración de presupuesto.
-* Restricciones posicionales.
-* Perfil de riesgo.
-* Optimización de cartera.
-* Comparación de escenarios.
-* Selection Rationale.
-
----
-
 ## Decision Support System
 
 La plataforma integra todas las capas anteriores dentro de un entorno único de soporte a decisiones deportivas.
 
-El sistema permite evolucionar desde la identificación de oportunidades individuales hasta la construcción de estrategias completas de fichajes bajo restricciones reales.
+El sistema permite evolucionar desde la identificación de oportunidades individuales hasta procesos estructurados de scouting y recruitment soportados por evidencia cuantitativa reproducible.
 
 ---
 
@@ -336,7 +422,7 @@ El sistema permite evolucionar desde la identificación de oportunidades individ
 
 Executive Dashboard
 
-```text
+```text id="m1h9o5"
 Predicción
 ↓
 Scoring
@@ -352,7 +438,7 @@ Dashboard
 
 Decision Support Layer
 
-```text
+```text id="zb5wb5"
 Predicción
 ↓
 Scoring
@@ -433,13 +519,6 @@ Evaluar la capacidad de generalización del sistema mediante la expansión de co
 | Dataset modelizable |  5.527 |
 | Match Rate global   | 75,97% |
 
-### Resultados predictivos
-
-| Modelo              |   RMSE |    MAE |     R² |
-| ------------------- | -----: | -----: | -----: |
-| Growth OLS Temporal | 0.8689 | 0.6989 | 0.5496 |
-| Tuned XGBoost       | 0.8525 | 0.6834 | 0.5664 |
-
 ### Contribuciones
 
 * ampliación de cobertura competitiva;
@@ -447,26 +526,110 @@ Evaluar la capacidad de generalización del sistema mediante la expansión de co
 * auditoría de matching por liga;
 * auditoría de matching por temporada;
 * validación temporal multi-liga;
-* validación externa de la metodología;
-* mejora del rendimiento predictivo.
+* validación externa de la metodología.
 
-Sprint 13A constituye la primera validación empírica de la robustez de la metodología fuera del universo inicial de ligas.
+Sprint 13A constituye la primera validación empírica de la robustez metodológica fuera del universo competitivo original.
+
+---
+
+## Sprint 13A.1
+
+Coverage Audit & External Validation
+
+### Objetivo
+
+Validar empíricamente la robustez de la metodología tras la expansión desde siete hasta once ligas europeas.
+
+### Resultados
+
+| Dataset  | R² Tuned XGBoost |
+| -------- | ---------------: |
+| 7 ligas  |           0.5414 |
+| 11 ligas |           0.5664 |
+
+### Contribuciones
+
+* auditoría sistemática de cobertura;
+* evaluación explícita de validez externa;
+* evidencia de capacidad de generalización;
+* mejora simultánea de cobertura y rendimiento predictivo.
 
 ---
 
-## Sprint 14
+## Sprint 13B
 
-Transfer Strategy Engine
+Advanced Data Expansion
 
-Incorpora:
+### Objetivo
 
-* Portfolio Dataset.
-* Optimization Engine.
-* Scenario Simulator.
-* Strategic Recruitment Engine.
-* Portfolio Optimization.
+Evaluar si la incorporación de métricas avanzadas derivadas de FBref mejora la capacidad predictiva de los modelos de valoración de mercado.
+
+### Variables incorporadas
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+### Resultados econométricos
+
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
+
+Resultado:
+
+```text id="d3cln9"
+ΔR² = +0.0044
+```
 
 ---
+
+### Resultados Machine Learning
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+---
+
+### Hallazgo principal
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables.
+
+Este comportamiento reduce el riesgo de dependencia de una única familia de modelos y fortalece la robustez metodológica de los resultados obtenidos.
+
+---
+
+### Principal contribución analítica
+
+Los análisis de importancia de variables identifican:
+
+```text id="ecp8pd"
+finishing_index_v2
+```
+
+como la variable avanzada con mayor relevancia predictiva agregada.
+
+---
+
+### Contribuciones
+
+* Advanced Football Metrics Integration.
+* Composite Football Indices v2.
+* Advanced Feature Engineering.
+* Validación transversal multi-modelo.
+* Promoción de nuevas variables productivas.
+* Mejora consistente de la capacidad explicativa.
+
+### Resultado metodológico
+
+La hipótesis de Sprint 13B queda validada.
+
+Las métricas avanzadas derivadas de FBref aportan señal predictiva adicional tanto en econometría como en Machine Learning y pasan a formar parte de la arquitectura productiva del proyecto.
 
 # 🎯 Resultados principales
 
@@ -480,6 +643,9 @@ Incorpora:
 * Tracking experimental mediante MLflow.
 * Diagnóstico sistemático de calidad de matching.
 * Auditoría multi-liga automatizada.
+* Integración de métricas avanzadas derivadas de FBref.
+* Composite Football Indices v2 promovidos a producción.
+* Validación transversal multi-modelo.
 
 ---
 
@@ -487,29 +653,76 @@ Incorpora:
 
 ### Econometría
 
-Growth OLS Temporal:
+#### Benchmark oficial
 
-* RMSE = 0.8689
-* MAE = 0.6989
-* R² = 0.5496
+```text id="r0kq4f"
+Growth OLS v13B
+```
+
+Resultados Sprint 13B:
+
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
+
+Resultado:
+
+```text id="h0zqlm"
+ΔR² = +0.0044
+```
+
+Adicionalmente se observan mejoras en:
+
+* RMSE.
+* MAE.
+* AIC.
+* BIC.
+
+---
 
 ### Machine Learning
 
-Tuned XGBoost:
+#### Modelo productivo oficial
 
-* RMSE = 0.8525
-* MAE = 0.6834
-* R² = 0.5664
+```text id="w4f0gh"
+Tuned XGBoost v13B
+```
+
+Resultados Sprint 13B:
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+---
 
 ### Hallazgo principal
 
-La expansión multi-liga genera simultáneamente:
+La incorporación de métricas avanzadas produce mejoras simultáneas en todas las arquitecturas evaluadas.
 
-* mayor cobertura;
-* mayor representatividad;
-* mejor capacidad predictiva.
+Este resultado constituye una evidencia especialmente relevante porque:
 
-Este resultado constituye una evidencia favorable de validez externa para la metodología propuesta.
+* reduce el riesgo de dependencia de una única arquitectura;
+* fortalece la robustez metodológica;
+* incrementa la confianza en la validez de los resultados obtenidos.
+
+---
+
+## Variable avanzada más relevante
+
+Los análisis de importancia de variables realizados durante Sprint 13B identifican:
+
+```text id="3hzw4r"
+finishing_index_v2
+```
+
+como la variable avanzada con mayor capacidad explicativa agregada.
+
+Este resultado representa la principal contribución analítica de Sprint 13B.
 
 ---
 
@@ -520,10 +733,10 @@ Sprint 13A aporta evidencia empírica de que el sistema mantiene e incluso mejor
 * ligas principales;
 * ligas secundarias;
 * mercados de distinto nivel competitivo;
-* estructuras salariales heterogéneas;
-* perfiles de desarrollo distintos.
+* estructuras competitivas heterogéneas;
+* perfiles de desarrollo diversos.
 
-La metodología demuestra capacidad de generalización más allá del universo inicial de entrenamiento.
+La metodología demuestra capacidad de generalización más allá del universo competitivo original.
 
 ---
 
@@ -532,9 +745,9 @@ La metodología demuestra capacidad de generalización más allá del universo i
 * Opportunity Detection validado.
 * Precision@K elevada.
 * Recruitment Intelligence integrada.
-* Portfolio Optimization operativa.
-* Strategic Recruitment Engine funcional.
-* Plataforma DSS plenamente operativa.
+* Decision Support System operativo.
+* Explainability integrada.
+* Arquitectura reproducible y escalable.
 
 ---
 
@@ -542,7 +755,7 @@ La metodología demuestra capacidad de generalización más allá del universo i
 
 ## Interpretabilidad vs rendimiento
 
-```text
+```text id="z1xw56"
 Econometría
 +
 Machine Learning
@@ -550,15 +763,27 @@ Machine Learning
 Explainable AI
 ```
 
-La coexistencia de modelos econométricos e inteligencia artificial permite combinar capacidad explicativa y precisión predictiva.
+La coexistencia de modelos econométricos y algoritmos avanzados de Machine Learning permite combinar:
+
+* capacidad explicativa;
+* robustez metodológica;
+* precisión predictiva.
 
 ---
 
 ## Cobertura vs calidad
 
-La expansión competitiva se ha realizado manteniendo criterios estrictos de matching y control de calidad.
+La expansión competitiva desarrollada durante Sprint 13A se realizó manteniendo criterios estrictos de matching y control de calidad.
 
-La mejora observada en los modelos sugiere que el incremento de cobertura ha añadido señal útil sin deteriorar la consistencia metodológica.
+Los resultados observados muestran que el incremento de cobertura añade señal útil sin deteriorar la consistencia metodológica.
+
+---
+
+## Complejidad vs robustez
+
+Sprint 13B incorpora nuevas variables avanzadas sin alterar la arquitectura conceptual del sistema.
+
+La mejora simultánea observada en múltiples modelos sugiere que la complejidad adicional introducida genera valor predictivo real y no únicamente sobreajuste.
 
 ---
 
@@ -568,10 +793,12 @@ La mejora observada en los modelos sugiere que el incremento de cobertura ha añ
 
 * Dependencia de Transfermarkt para valor de mercado.
 * Menor cobertura en determinadas ligas secundarias.
-* Cobertura desigual en temporadas recientes.
+* Cobertura desigual entre competiciones.
 * Posibles limitaciones derivadas de Transfermarkt-Kaggle.
 * Ausencia de tracking data.
 * Ausencia de event data avanzado.
+* Ausencia de información contractual completa.
+* Ausencia de información salarial.
 
 ---
 
@@ -580,13 +807,54 @@ La mejora observada en los modelos sugiere que el incremento de cobertura ha añ
 * Posible drift temporal.
 * Dependencia de variables observables.
 * Limitaciones inherentes al valor de mercado como proxy económico.
+* Necesidad de recalibración periódica de modelos.
+
+---
+
+## Arquitectura
+
+Durante Sprint 13B se identificó una separación estructural entre:
+
+```text id="q3v6wh"
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+El pipeline histórico de scoring requiere variables enriquecidas adicionales no presentes actualmente en la capa productiva de predicción.
+
+Por este motivo, la integración completa entre:
+
+```text id="n52s95"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Risk Score
+↓
+Rankings v13B
+```
+
+queda documentada como trabajo futuro independiente.
+
+Esta limitación no afecta a:
+
+* los resultados econométricos;
+* los resultados de Machine Learning;
+* la validación de la hipótesis principal de Sprint 13B.
 
 ---
 
 ## Producto
 
-* Ausencia de API de scoring.
-* Ausencia de generación automática de informes PDF.
+* Ausencia de API pública.
+* Ausencia de generación automática de informes.
 * Dependencia de ejecución local mediante Streamlit.
 
 ---
@@ -597,74 +865,130 @@ La mejora observada en los modelos sugiere que el incremento de cobertura ha añ
 
 Estado:
 
-Backlog futuro.
+```text id="5w7h2m"
+Backlog
+```
 
 Objetivo:
 
-Determinar si las limitaciones observadas durante Sprint 13A proceden de:
+Determinar si las limitaciones de cobertura observadas durante Sprint 13A proceden principalmente de:
 
-* Transfermarkt-Kaggle;
-* Transfermarkt como fuente original;
-* pipeline de extracción.
+* Transfermarkt-Kaggle.
+* Transfermarkt original.
+* Pipeline de extracción.
+* Disponibilidad histórica de determinadas competiciones.
+
+Contribución esperada:
+
+* diagnóstico definitivo de cobertura;
+* estimación del techo teórico de matching;
+* identificación de oportunidades de mejora.
 
 ---
 
-## Sprint 13B
+## TM.2 — Scoring & Ranking Integration v13B
 
-Advanced Data Expansion
+Estado:
 
-### Objetivo
+```text id="a0v8hx"
+Backlog prioritario
+```
 
-Incrementar la profundidad analítica del sistema mediante nuevas métricas de rendimiento y nuevas fuentes de datos.
+Objetivo:
 
-### FBref Advanced Metrics
+Reconstruir la integración completa entre la nueva capa de modelización v13B y el sistema histórico de scoring.
 
-Nuevas familias previstas:
+Flujo objetivo:
 
-* Shooting
-* Passing
-* Pass Types
-* Goal & Shot Creation
-* Possession
-* Defensive Actions
-* Playing Time
+```text id="eyyr4o"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Risk Score
+↓
+Rankings v13B
+↓
+Stability Analysis
+```
 
-### Understat Integration
+Justificación:
 
-Variables previstas:
+La integración no afecta a la validación de Sprint 13B pero constituye la evolución natural necesaria para alinear completamente la capa predictiva con la capa DSS.
 
-* xG
-* xA
-* xGChain
-* xGBuildup
+---
 
-### Expected Contributions Layer
+## Sprint 14 — Transfer Strategy Enhancement
 
-* Finishing Efficiency
-* Chance Creation Efficiency
-* xG Overperformance
-* xA Contribution
+Estado:
 
-### Impacto esperado
+```text id="yow0rd"
+Próxima fase principal
+```
 
-* mejora del Feature Engineering;
-* mejora predictiva;
-* enriquecimiento de Player Intelligence;
-* fortalecimiento del radar y benchmarking posicional.
+Objetivo:
+
+Expandir el sistema desde la identificación de oportunidades individuales hacia la recomendación de estrategias completas de captación.
+
+Pregunta objetivo:
+
+```text id="q8yct8"
+¿Qué combinación de jugadores
+maximiza el valor esperado
+bajo restricciones reales
+de presupuesto y riesgo?
+```
+
+Líneas de trabajo previstas:
+
+* Transfer Strategy Engine.
+* Portfolio Optimization.
+* Scenario Simulation.
+* Strategic Recruitment.
+* Decision Science aplicada al mercado de fichajes.
+
+Contribución esperada:
+
+Integrar scouting, valoración económica, riesgo y optimización dentro de una misma arquitectura de soporte a decisiones.
 
 ---
 
 ## Investigación futura
 
+### Modelización
+
 * TabPFN.
 * CatBoost.
-* Understat.
-* Métricas avanzadas FBref.
-* xG/xA.
+* Ensemble Learning.
+* Comparación con modelos fundacionales para datos tabulares.
+
+### Datos
+
+* Nuevas métricas avanzadas FBref.
+* Event Data avanzado.
 * Tracking Data.
+* Información contractual.
+* Datos salariales.
+
+### Football Analytics
+
+* Similarity Engine.
+* Career Trajectory Modeling.
+* Club Development Intelligence.
+* Success Probability Models.
+
+### Sports Economics
+
+* Simulación económica de carteras de fichajes.
 * Optimización multiobjetivo.
-* Simulación económica avanzada.
-* Evaluación causal de decisiones de fichaje.
+* Valoración dinámica de activos deportivos.
+* Modelización avanzada de ROI.
 
 ---
 
@@ -672,15 +996,15 @@ Variables previstas:
 
 La versión:
 
-```text
-v1.2.0 — Multi-League Expansion
+```text id="0l0n8k"
+v1.2.1 — Advanced Data Expansion
 ```
 
 representa la consolidación de una arquitectura integral de Football Analytics orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.
 
 La combinación de:
 
-```text
+```text id="tqt3x3"
 Econometría
 +
 Machine Learning
@@ -693,10 +1017,6 @@ Risk Assessment
 +
 Recruitment Intelligence
 +
-Transfer Strategy Engine
-+
-Portfolio Optimization
-+
 Decision Support System
 ```
 
@@ -704,24 +1024,50 @@ permite transformar grandes volúmenes de datos futbolísticos en recomendacione
 
 La evolución metodológica del proyecto puede resumirse mediante:
 
-```text
+```text id="h2j0d1"
 Predicción
-↓
-Scoring
 ↓
 Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
 Decision Support System
 ```
 
-Sprint 13A aporta una contribución especialmente relevante al demostrar que la ampliación del universo competitivo mejora simultáneamente la cobertura y el rendimiento predictivo.
+Sprint 13A aporta una contribución especialmente relevante al demostrar que la ampliación del universo competitivo mejora simultáneamente cobertura, representatividad y rendimiento predictivo.
 
-Los resultados obtenidos sugieren que la metodología propuesta captura patrones estructurales del mercado de fichajes que permanecen estables a través de ligas y contextos competitivos distintos.
+Sprint 13B aporta una segunda contribución metodológica fundamental al demostrar que las métricas avanzadas derivadas de FBref contienen información económicamente relevante para explicar el valor de mercado de futbolistas profesionales.
 
-La plataforma ya no se limita a identificar oportunidades de mercado, sino que proporciona una infraestructura analítica completa para apoyar decisiones estratégicas de captación, inversión y planificación deportiva bajo restricciones reales.
+Los resultados obtenidos muestran que:
+
+```text id="w9r1v3"
+Sprint 13A
+→ fortalece la validez externa
+
+Sprint 13B
+→ fortalece la capacidad explicativa
+```
+
+reforzando simultáneamente la robustez metodológica y el valor analítico de la plataforma.
+
+La hipótesis principal de Sprint 13B queda validada.
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+aportan mejoras consistentes tanto en econometría como en Machine Learning y pasan a formar parte de la arquitectura productiva del proyecto.
+
+El resultado final es una plataforma reproducible, interpretable y orientada a negocio capaz de conectar analítica deportiva avanzada con procesos reales de scouting, recruitment y toma de decisiones dentro del fútbol profesional.
+
+La siguiente fase de desarrollo corresponderá a:
+
+```text id="8ebq5m"
+Sprint 14
+↓
+Transfer Strategy Enhancement
+```
+
+centrada en extender el sistema desde la identificación de oportunidades hacia la optimización estratégica de decisiones de fichaje.

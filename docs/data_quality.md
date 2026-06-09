@@ -5,7 +5,7 @@
 Este documento describe la estrategia de calidad de datos implementada en la versión:
 
 ```text
-v1.2.0 — Multi-League Expansion
+v1.2.1 — Advanced Data Expansion
 ```
 
 Su objetivo es garantizar:
@@ -18,7 +18,8 @@ Su objetivo es garantizar:
 * prevención de leakage;
 * calidad de matching;
 * validez externa;
-* capacidad de generalización.
+* capacidad de generalización;
+* calidad de nuevas variables avanzadas.
 
 La calidad de datos constituye uno de los pilares fundamentales de la arquitectura analítica desarrollada y un requisito indispensable para la construcción de sistemas de soporte a decisiones basados en evidencia.
 
@@ -43,13 +44,13 @@ La arquitectura prioriza:
 
 frente a maximizar artificialmente el tamaño del dataset.
 
-La expansión multi-liga ejecutada durante Sprint 13A se diseñó bajo este mismo principio, manteniendo estándares de calidad equivalentes a los utilizados en las ligas originales del proyecto.
+La expansión multi-liga ejecutada durante Sprint 13A y la incorporación de métricas avanzadas durante Sprint 13B se desarrollaron bajo este mismo principio.
 
 ---
 
 # Objetivos de calidad
 
-Los controles implementados persiguen cuatro objetivos principales.
+Los controles implementados persiguen cinco objetivos principales.
 
 ## 1. Integridad
 
@@ -86,7 +87,7 @@ Garantizar que todos los resultados puedan regenerarse mediante pipelines versio
 
 Garantizar que la metodología mantenga su comportamiento al incorporar nuevos ecosistemas competitivos.
 
-Este objetivo adquiere especial relevancia durante Sprint 13A, donde la expansión de cobertura se utiliza como mecanismo explícito de validación metodológica.
+Este objetivo adquiere especial relevancia durante Sprint 13A y Sprint 13B.
 
 ---
 
@@ -147,9 +148,9 @@ Posibles efectos:
 
 Problema:
 
-Un modelo puede funcionar correctamente dentro del universo original de entrenamiento pero degradarse al incorporar nuevas competiciones.
+Un modelo puede funcionar correctamente dentro del universo original de entrenamiento pero degradarse al incorporar nuevas competiciones o nuevas variables.
 
-Este riesgo constituye una de las motivaciones principales de Sprint 13A.
+Este riesgo constituye una de las motivaciones principales de Sprint 13A y Sprint 13B.
 
 ---
 
@@ -170,9 +171,12 @@ Información utilizada:
 * asistencias;
 * métricas por 90;
 * estadísticas defensivas;
-* contexto competitivo.
+* contexto competitivo;
+* métricas avanzadas utilizadas en Sprint 13B.
 
-Cobertura actual:
+---
+
+### Cobertura actual
 
 | Métrica                  |  Valor |
 | ------------------------ | -----: |
@@ -362,23 +366,68 @@ Estas variables no participan en la construcción del dataset modelizable.
 
 # 📊 Calidad del dataset modelizable
 
-La versión actual incorpora completamente la expansión multi-liga ejecutada durante Sprint 13A.
+La versión actual incorpora:
+
+```text
+Sprint 13A
+↓
+Multi-League Expansion
+
+Sprint 13B
+↓
+Advanced Data Expansion
+```
+
+---
 
 ## Dataset final
 
 | Métrica            |                 Valor |
 | ------------------ | --------------------: |
 | Observaciones      |                 5.527 |
-| Jugadores únicos   |                >2.100 |
+| Jugadores únicos   |               > 2.100 |
 | Ligas              |                    11 |
 | Temporadas         |                     7 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 
-El universo modelizable constituye actualmente el mayor dataset utilizado por el proyecto desde su inicio.
+---
+
+## Variables avanzadas incorporadas
+
+Sprint 13B añade:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+Estas variables fueron sometidas a validación específica antes de su promoción a producción.
 
 ---
 
-## Resultados de validación predictiva
+## Estado actual
+
+Dataset productivo:
+
+```text
+player_season_modeling_v13b_productive_candidate.parquet
+```
+
+Modelos oficiales:
+
+```text
+Growth OLS v13B
+
+Tuned XGBoost v13B
+```
+# 📈 Resultados de validación predictiva
+
+La calidad de un dataset no debe evaluarse únicamente mediante cobertura o volumen de observaciones.
+
+También debe evaluarse mediante su capacidad para generar modelos robustos, estables y generalizables.
+
+---
+
+## Sprint 13A — External Validation
 
 La expansión multi-liga permitió evaluar si el incremento de cobertura mantenía la calidad metodológica del sistema.
 
@@ -389,37 +438,122 @@ La expansión multi-liga permitió evaluar si el incremento de cobertura manten�
 | 7 ligas  | 0.5414 |
 | 11 ligas | 0.5664 |
 
-### Growth OLS Temporal
+---
 
-| Dataset  |     R² |
-| -------- | -----: |
-| 11 ligas | 0.5496 |
+### Interpretación
 
-La mejora observada sugiere que la expansión competitiva incorpora señal útil adicional y no introduce deterioro en la calidad del dataset.
+La expansión multi-liga:
+
+* incrementa cobertura;
+* incrementa diversidad competitiva;
+* mejora capacidad predictiva;
+* fortalece validez externa.
+
+La evidencia observada sugiere que las nuevas competiciones incorporan señal útil adicional sin deteriorar la calidad del dataset.
 
 ---
 
-## Distribución temporal
+# 🔬 Sprint 13B — Advanced Features Validation
 
-| Temporada | Observaciones |
-| --------- | ------------: |
-| 2019-2020 |           537 |
-| 2020-2021 |           536 |
-| 2021-2022 |           544 |
-| 2022-2023 |           542 |
-| 2023-2024 |           586 |
-| 2024-2025 |           552 |
-| 2025-2026 |           811 |
+## Objetivo
+
+Evaluar si las nuevas métricas avanzadas derivadas de FBref mantienen los estándares de calidad exigidos por la arquitectura.
+
+Pregunta metodológica:
+
+```text id="wzpc1h"
+¿Las nuevas variables aportan señal útil
+o introducen ruido adicional?
+```
 
 ---
 
-## Filtros aplicados
+## Variables evaluadas
 
-* matching válido;
-* edad válida;
-* market value disponible;
-* minutos mínimos;
-* posición válida.
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+---
+
+## Evaluación econométrica
+
+Comparación principal:
+
+| Modelo                |     R² |
+| --------------------- | -----: |
+| M_A_v13A_base_spec_FE | 0.4505 |
+| M_B_v13B_advanced_FE  | 0.4549 |
+
+Resultado:
+
+```text id="a1r5uk"
+ΔR² = +0.0044
+```
+
+---
+
+### Métricas complementarias
+
+Se observan mejoras simultáneas en:
+
+* MAE;
+* RMSE;
+* AIC;
+* BIC.
+
+---
+
+## Evaluación Machine Learning
+
+Comparación:
+
+```text id="t3n7a7"
+Feature Set A (v13A)
+
+vs
+
+Feature Set B (v13B)
+```
+
+Resultados:
+
+| Modelo               | Mejora observada |
+| -------------------- | ---------------: |
+| XGBoost              |          +0.0096 |
+| Random Forest        |          +0.0097 |
+| HistGradientBoosting |          +0.0144 |
+| LightGBM             |          +0.0291 |
+
+---
+
+## Evidencia de calidad
+
+Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables.
+
+Este comportamiento constituye una evidencia especialmente favorable porque:
+
+* reduce la probabilidad de ruido aleatorio;
+* reduce el riesgo de sobreajuste;
+* aumenta la confianza en la calidad de las variables incorporadas.
+
+---
+
+## Hallazgo principal
+
+Los análisis de importancia muestran que:
+
+```text id="lkxxsk"
+finishing_index_v2
+```
+
+es la variable avanzada con mayor relevancia predictiva agregada.
+
+---
+
+## Conclusión
+
+Las nuevas variables superan satisfactoriamente los controles de calidad metodológica y son promovidas a producción.
 
 ---
 
@@ -452,7 +586,7 @@ Además, aproxima de forma realista el contexto operativo de utilización del si
 
 ## Objetivo
 
-Sprint 13A introduce una nueva capa de control de calidad orientada a evaluar la robustez metodológica del sistema tras ampliar significativamente la cobertura competitiva.
+Sprint 13A introduce una capa específica orientada a evaluar la robustez metodológica del sistema tras ampliar significativamente la cobertura competitiva.
 
 A diferencia de releases anteriores, esta fase permite medir explícitamente:
 
@@ -461,17 +595,6 @@ A diferencia de releases anteriores, esta fase permite medir explícitamente:
 * estabilidad predictiva;
 * validez externa;
 * capacidad de generalización.
-
----
-
-## Cobertura incorporada
-
-Nuevas ligas:
-
-* Championship
-* Belgian Pro League
-* Austrian Bundesliga
-* Spanish Segunda División
 
 ---
 
@@ -495,8 +618,10 @@ La expansión multi-liga permite:
 * reducir dependencia de ligas principales;
 * evaluar generalización del sistema;
 * incrementar diversidad competitiva;
-* reforzar la validez externa de la metodología;
-* mejorar la capacidad predictiva de los modelos.
+* reforzar validez externa;
+* mejorar capacidad predictiva.
+
+---
 
 # 📊 Coverage Diagnostics
 
@@ -504,27 +629,27 @@ La expansión multi-liga permite:
 
 Medir la calidad efectiva de integración tras la expansión multi-liga.
 
-Durante Sprint 13A se incorporó una capa específica de diagnósticos de cobertura orientada a cuantificar:
+Durante Sprint 13A se incorporó una capa específica de diagnósticos orientada a cuantificar:
 
 * cobertura efectiva;
 * calidad del matching;
 * estabilidad temporal;
 * diferencias entre ligas;
-* impacto sobre la modelización.
+* impacto sobre modelización.
 
 ---
 
 ## Artefactos generados
 
-```text
+```text id="0l8p3o"
 reports/data_quality/
 
 sprint_13a_matching_by_league.csv
+
 sprint_13a_matching_by_league_season.csv
+
 sprint_13a_coverage_summary.md
 ```
-
-Estos artefactos permiten auditar la cobertura alcanzada por cada competición y cada temporada de forma completamente reproducible.
 
 ---
 
@@ -536,53 +661,11 @@ Estos artefactos permiten auditar la cobertura alcanzada por cada competición y
 
 ---
 
-## Match Rate por liga
-
-| Liga                     | Match Rate |
-| ------------------------ | ---------: |
-| Bundesliga               |     92,75% |
-| Premier League           |     92,62% |
-| Serie A                  |     91,10% |
-| Eredivisie               |     89,95% |
-| Ligue 1                  |     89,70% |
-| LaLiga                   |     84,26% |
-| Belgian Pro League       |     79,68% |
-| Liga Portugal            |     75,10% |
-| Austrian Bundesliga      |     56,00% |
-| Championship             |     50,36% |
-| Spanish Segunda División |     43,03% |
-
----
-
 ## Interpretación
 
-Las principales ligas europeas mantienen niveles elevados de matching, generalmente superiores al 84%.
+Las principales ligas europeas mantienen niveles elevados de matching.
 
-Las reducciones observadas en determinadas competiciones secundarias se concentran principalmente en contextos donde la cobertura histórica disponible en Transfermarkt-Kaggle es limitada.
-
-Los resultados obtenidos sugieren que la degradación observada en determinadas ligas no procede del algoritmo de matching implementado.
-
----
-
-## Evidencia indirecta de calidad
-
-La expansión multi-liga genera simultáneamente:
-
-* aumento de cobertura;
-* aumento de diversidad competitiva;
-* mejora predictiva.
-
-Si el matching incorporase un volumen significativo de errores sistemáticos, cabría esperar un deterioro de los modelos.
-
-Sin embargo:
-
-| Modelo                         |     R² |
-| ------------------------------ | -----: |
-| Tuned XGBoost (7 ligas)        | 0.5414 |
-| Tuned XGBoost (11 ligas)       | 0.5664 |
-| Growth OLS Temporal (11 ligas) | 0.5496 |
-
-La mejora simultánea observada constituye evidencia favorable de la calidad del proceso de integración.
+Las reducciones observadas en determinadas competiciones secundarias se explican principalmente por limitaciones históricas de cobertura en Transfermarkt-Kaggle y no por degradación del algoritmo de matching.
 
 ---
 
@@ -592,41 +675,18 @@ La mejora simultánea observada constituye evidencia favorable de la calidad del
 
 Determinar el origen de las pérdidas de matching observadas durante Sprint 13A.
 
-Pregunta de investigación:
+Pregunta principal:
 
-> ¿Las pérdidas de cobertura proceden del pipeline implementado o de limitaciones inherentes a las fuentes disponibles?
-
----
-
-## Metodología
-
-Se realizó una auditoría específica sobre observaciones no emparejadas en distintas ligas y temporadas.
-
-El análisis incluyó:
-
-* validación manual de registros;
-* comprobación de cobertura histórica;
-* análisis temporal;
-* inspección de identificadores y nombres.
+```text id="wb0s1m"
+¿Las pérdidas proceden del pipeline
+o de limitaciones de las fuentes?
+```
 
 ---
 
-## Caso auditado
+## Resultado
 
-### Matt Grimes
-
-Hallazgos:
-
-* FBref contiene temporadas posteriores.
-* Transfermarkt-Kaggle detiene la cobertura histórica en determinados periodos.
-* El pipeline identifica correctamente el jugador.
-* El matching no puede completarse por ausencia de referencia económica equivalente.
-
----
-
-## Resultado de auditoría
-
-La evidencia acumulada durante Sprint 13A sugiere que una parte significativa de las pérdidas de matching observadas procede de limitaciones de cobertura en Transfermarkt-Kaggle.
+La evidencia acumulada sugiere que una parte significativa de las pérdidas observadas procede de limitaciones de cobertura en Transfermarkt-Kaggle.
 
 No se identifican evidencias de fallo estructural en:
 
@@ -641,13 +701,11 @@ No se identifican evidencias de fallo estructural en:
 
 La principal restricción observada no corresponde a calidad del pipeline sino a disponibilidad de datos.
 
-Este hallazgo justifica la creación del backlog:
+Este hallazgo justifica la existencia del backlog:
 
-```text
+```text id="ffv3qx"
 TM.1 — Transfermarkt Coverage Audit
 ```
-
-como futura línea de investigación.
 
 ---
 
@@ -664,7 +722,6 @@ La calidad del sistema se refuerza mediante una separación explícita de capas 
 | Current Scouting         | Operación            |
 | Player Intelligence      | Benchmarking         |
 | Recruitment Intelligence | Selección            |
-| Transfer Strategy Engine | Optimización         |
 | DSS                      | Soporte a decisiones |
 
 ---
@@ -737,6 +794,7 @@ Este requisito resulta especialmente relevante en un contexto académico orienta
 | Complejidad vs reproducibilidad         | Reproducibilidad          |
 | Cobertura competitiva vs homogeneidad   | Priorizar validez externa |
 | Cobertura máxima vs calidad de matching | Priorizar calidad         |
+| Nuevas variables vs sobreajuste         | Validación multi-modelo   |
 
 ---
 
@@ -765,8 +823,10 @@ Transfermarkt incorpora factores no observables directamente en los datos deport
 
 Por tanto:
 
-```text
-Valor de mercado ≠ precio real de transferencia
+```text id="i8kjmx"
+Valor de mercado
+≠
+precio real de transferencia
 ```
 
 ---
@@ -783,61 +843,51 @@ Actualmente no se incorporan:
 
 ---
 
+## Integración de scoring
+
+Durante Sprint 13B se identificó una separación estructural entre:
+
+```text id="jlwm7r"
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+La integración completa queda documentada como:
+
+```text id="ykyr8z"
+TM.2 — Scoring & Ranking Integration v13B
+```
+
+sin afectar a la validez metodológica de Sprint 13B.
+
+---
+
 # 🛣️ Roadmap de calidad
 
 ## TM.1 — Transfermarkt Coverage Audit
 
-Estado:
+Objetivo:
 
-```text
-Backlog futuro
-```
-
-### Objetivo
-
-Determinar si las limitaciones observadas proceden de:
-
-* Transfermarkt-Kaggle;
-* Transfermarkt original;
-* pipeline de extracción.
+* diagnosticar limitaciones de cobertura;
+* estimar techo teórico de matching;
+* mejorar integración de datos.
 
 ---
 
-## Sprint 13B — Advanced Data Expansion
+## TM.2 — Scoring & Ranking Integration v13B
 
 Objetivo:
 
-Incrementar profundidad analítica manteniendo estándares equivalentes de calidad y reproducibilidad.
-
----
-
-### Nuevas fuentes previstas
-
-#### FBref avanzado
-
-* Shooting
-* Passing
-* Possession
-* Goal & Shot Creation
-* Defense
-* Playing Time
-
-#### Understat
-
-* xG
-* xA
-* xGChain
-* xGBuildup
-
----
-
-### Nuevos controles previstos
-
-* consistencia de eventos;
-* validación cruzada de métricas;
-* auditoría multi-fuente;
-* monitorización avanzada de calidad;
-* robustness checks.
+```text id="r3qz2v"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Opportunity Framework v13B
+↓
+Rankings v13B
+```
 
 ---
 
@@ -857,38 +907,36 @@ La calidad de datos constituye uno de los pilares fundamentales de la arquitectu
 
 La versión:
 
-```text
-v1.2.0 — Multi-League Expansion
+```text id="vgzwz0"
+v1.2.1 — Advanced Data Expansion
 ```
 
-incorpora una capa adicional de control de calidad orientada a evaluar explícitamente la robustez metodológica del sistema fuera del universo competitivo original.
+incorpora dos contribuciones metodológicas especialmente relevantes.
 
-La arquitectura actual integra:
+### Sprint 13A
 
-* Matching validado.
-* Controles de negocio.
-* Validación temporal.
-* Prevención de leakage.
-* MLflow.
-* Coverage Diagnostics.
-* Coverage Audit.
-* Evaluación de validez externa.
-* Auditoría multi-liga.
+* expansión a 11 ligas;
+* auditoría de cobertura;
+* validación externa;
+* evaluación explícita de generalización.
 
-La principal contribución de Sprint 13A no consiste únicamente en ampliar cobertura.
+### Sprint 13B
 
-La evidencia obtenida demuestra que la metodología mantiene e incluso mejora su capacidad predictiva tras incorporar nuevos ecosistemas competitivos.
+* validación de métricas avanzadas;
+* integración de nuevas variables productivas;
+* mejora simultánea en econometría y Machine Learning;
+* fortalecimiento de la robustez metodológica.
 
-Los resultados observados:
+Los resultados obtenidos muestran que:
 
-| Modelo                         |     R² |
-| ------------------------------ | -----: |
-| Tuned XGBoost (7 ligas)        | 0.5414 |
-| Tuned XGBoost (11 ligas)       | 0.5664 |
-| Growth OLS Temporal (11 ligas) | 0.5496 |
+```text id="xn9hhn"
+Sprint 13A
+→ fortalece la validez externa
 
-sugieren que la ampliación competitiva aporta información útil adicional sin comprometer la integridad de los datos ni la estabilidad metodológica.
+Sprint 13B
+→ fortalece la calidad explicativa
+```
 
-La calidad de datos deja de ser únicamente un mecanismo de control interno para convertirse en una evidencia empírica de generalización y validez externa del sistema propuesto.
+reforzando simultáneamente la solidez de los datos, la calidad de las variables y la confianza en los resultados obtenidos.
 
-Esta conclusión constituye uno de los principales resultados metodológicos de la versión v1.2.0 y refuerza significativamente la solidez académica del proyecto.
+La calidad de datos deja de ser únicamente un mecanismo de control interno para convertirse en una evidencia empírica de robustez, generalización y reproducibilidad de la metodología propuesta.

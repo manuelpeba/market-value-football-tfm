@@ -7,7 +7,7 @@
 ![Modeling](https://img.shields.io/badge/Modeling-Football%20Analytics-orange)
 ![Validation](https://img.shields.io/badge/Validation-Leakage%20Aware-important)
 ![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
-![Version](https://img.shields.io/badge/Version-v1.0.0-purple)
+![Version](https://img.shields.io/badge/Version-v1.2.1-purple)
 
 </div>
 
@@ -15,19 +15,25 @@
 
 # 🧠 Objetivo
 
-Este documento describe las decisiones de diseño del esquema de datos utilizadas en la release v1.0.0 — Scouting Intelligence Platform.
+Este documento describe las decisiones de diseño del esquema de datos utilizadas en la release:
+
+```text
+v1.2.1 — Advanced Data Expansion
+```
 
 Su objetivo es documentar:
 
-- unidad de análisis
-- arquitectura de datos
-- diseño del dataset
-- separación de capas
-- prevención de leakage
-- tracking experimental
-- diseño temporal
-- integración con scoring
-- integración con player intelligence
+* unidad de análisis;
+* arquitectura de datos;
+* diseño del dataset;
+* separación de capas;
+* prevención de leakage;
+* tracking experimental;
+* diseño temporal;
+* integración con scoring;
+* integración con player intelligence;
+* validación externa;
+* integración de métricas avanzadas.
 
 ---
 
@@ -35,17 +41,17 @@ Su objetivo es documentar:
 
 El esquema se ha construido siguiendo principios de:
 
-- modularidad
-- reproducibilidad
-- trazabilidad
-- auditabilidad
-- mantenibilidad
-- escalabilidad
+* modularidad;
+* reproducibilidad;
+* trazabilidad;
+* auditabilidad;
+* mantenibilidad;
+* escalabilidad.
 
 Principio fundamental:
 
 ```text
-Separar explícitamente:
+Separar explícitamente
 
 Datos
 ↓
@@ -57,7 +63,9 @@ Scoring
 ↓
 Player Intelligence
 ↓
-Decision Support
+Recruitment Intelligence
+↓
+Decision Support System
 ```
 
 ---
@@ -72,9 +80,9 @@ Jugador – Temporada
 
 Cada fila representa:
 
-- un jugador
-- una temporada concreta
-- un contexto competitivo específico
+* un jugador;
+* una temporada concreta;
+* un contexto competitivo específico.
 
 ---
 
@@ -82,11 +90,12 @@ Cada fila representa:
 
 Permite:
 
-- integración multi-fuente
-- comparabilidad
-- modelización longitudinal
-- benchmarking
-- scouting reproducible
+* integración multi-fuente;
+* comparabilidad;
+* modelización longitudinal;
+* benchmarking;
+* scouting reproducible;
+* validación externa.
 
 ---
 
@@ -98,33 +107,37 @@ flowchart TD
 A[Raw Sources]
 --> B[Processed Features]
 
-B --> C[Matching Layer]
+B --> C[Advanced Metrics Layer]
 
-C --> D[Player Season Panel]
+C --> D[Matching Layer]
 
-D --> E[Modeling Dataset]
+D --> E[Player Season Panel]
 
-E --> F[Econometric Pipeline]
-E --> G[Machine Learning Pipeline]
+E --> F[Modeling Dataset]
 
-F --> H[Historical Evaluation Layer]
-G --> H
+F --> G[Econometric Pipeline]
+F --> H[Machine Learning Pipeline]
 
-G --> I[Operational Predictions]
+G --> I[Historical Evaluation Layer]
+H --> I
 
-I --> J[Scoring Layer]
+H --> J[Operational Predictions]
 
-J --> K[Opportunity Score]
-J --> L[Risk Score]
+J --> K[Scoring Layer]
 
-K --> M[Current Scouting Layer]
-L --> M
+K --> L[Opportunity Score]
+K --> M[Risk Score]
 
-M --> N[Player Intelligence Layer]
+L --> N[Current Scouting Layer]
+M --> N
 
-N --> O[Decision Support Layer]
+N --> O[Player Intelligence Layer]
 
-O --> P[Scouting Intelligence]
+O --> P[Recruitment Intelligence Layer]
+
+P --> Q[Decision Support Layer]
+
+Q --> R[Scouting Intelligence]
 ```
 
 ---
@@ -144,21 +157,21 @@ data/
 
 ## Separación de responsabilidades
 
-| Elemento | Directorio |
-|----------|------------|
-| Datos | data/ |
-| Lógica | src/ |
-| Artefactos | artifacts/ |
-| Outputs | reports/ |
-| Tracking | mlruns/ |
-| Configuración | config/ |
-| Dashboard | app/ |
+| Elemento      | Directorio |
+| ------------- | ---------- |
+| Datos         | data/      |
+| Lógica        | src/       |
+| Artefactos    | artifacts/ |
+| Outputs       | reports/   |
+| Tracking      | mlruns/    |
+| Configuración | config/    |
+| Dashboard     | app/       |
 
 ---
 
 # 📦 Separación de capas
 
-La release v1.0.0 introduce una separación explícita entre capas analíticas.
+La arquitectura actual incorpora una separación explícita entre:
 
 ```text
 Historical Evaluation Layer
@@ -166,6 +179,8 @@ Historical Evaluation Layer
 Current Scouting Layer
 ↓
 Player Intelligence Layer
+↓
+Recruitment Intelligence Layer
 ↓
 Decision Support Layer
 ```
@@ -176,9 +191,11 @@ Decision Support Layer
 
 Evita mezclar:
 
-- evaluación académica
-- recomendaciones operativas
-- visualización ejecutiva
+* evaluación académica;
+* recomendaciones operativas;
+* inteligencia de scouting;
+* procesos de recruitment;
+* visualización ejecutiva.
 
 ---
 
@@ -188,14 +205,18 @@ Objetivo:
 
 Preservar los datos originales.
 
-Fuentes:
+---
+
+## Fuentes
 
 ```text
 data/raw/fbref/
 data/raw/transfermarkt/
 ```
 
-Principio:
+---
+
+## Principio
 
 ```text
 Los datos raw nunca se modifican manualmente.
@@ -207,14 +228,18 @@ Los datos raw nunca se modifican manualmente.
 
 Datasets principales:
 
-| Dataset | Descripción |
-|----------|-------------|
-| fbref_features.parquet | Features deportivas |
-| transfermarkt_features.parquet | Variables de mercado |
-| player_season_panel.parquet | Dataset integrado |
-| player_season_modeling.parquet | Dataset modelizable |
+| Dataset                                                  | Descripción                     |
+| -------------------------------------------------------- | ------------------------------- |
+| fbref_features_v13a.parquet                              | Features deportivas             |
+| transfermarkt_features_v13a.parquet                      | Variables de mercado            |
+| player_season_panel_v13a.parquet                         | Dataset integrado               |
+| player_season_modeling_v13a.parquet                      | Dataset modelizable v13A        |
+| player_season_modeling_v13b_advanced.parquet             | Dataset experimental Sprint 13B |
+| player_season_modeling_v13b_productive_candidate.parquet | Dataset productivo Sprint 13B   |
 
-Formato:
+---
+
+## Formato
 
 ```text
 Apache Parquet
@@ -224,7 +249,7 @@ Apache Parquet
 
 # 🔗 Esquema de integración y matching
 
-Problema:
+## Problema
 
 ```text
 FBref y Transfermarkt no comparten identificador universal
@@ -234,19 +259,19 @@ FBref y Transfermarkt no comparten identificador universal
 
 ## Variables utilizadas
 
-- player_name_normalized
-- age
-- club
-- season
+* player_name_normalized
+* age
+* club
+* season
 
 ---
 
 ## Variables de auditoría
 
-- matching_method
-- matching_confidence
-- age_diff
-- club_score
+* matching_method
+* matching_confidence
+* age_diff
+* club_score
 
 ---
 
@@ -262,11 +287,12 @@ fuzzy_threshold: 92
 
 ## Resultado actual
 
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones panel | 24.194 |
-| Observaciones emparejadas | 21.245 |
-| Match Rate | ≈ 88% |
+| Métrica                        |  Valor |
+| ------------------------------ | -----: |
+| Observaciones FBref procesadas | 43.591 |
+| Match Rate global              | 75,97% |
+| Ligas                          |     11 |
+| Temporadas                     |      7 |
 
 ---
 
@@ -280,42 +306,64 @@ Calidad > Cobertura
 
 # 📊 Esquema del Modeling Dataset
 
-Dataset principal:
+Dataset principal actual:
 
 ```text
-data/processed/player_season_modeling.parquet
+data/processed/player_season_modeling_v13b_productive_candidate.parquet
 ```
 
 ---
 
 ## Cobertura actual
 
-| Métrica | Valor |
-|----------|----------:|
-| Observaciones | 3.916 |
-| Jugadores únicos | 2.138 |
-| Ligas | 7 |
+| Métrica            |                 Valor |
+| ------------------ | --------------------: |
+| Observaciones      |                 5.527 |
+| Ligas              |                    11 |
+| Temporadas         |                     7 |
 | Cobertura temporal | 2019-2020 → 2025-2026 |
 
 ---
 
 ## Incluye
 
-- variables deportivas
-- variables demográficas
-- variables contextuales
-- growth features
-- matching quality features
+* variables deportivas;
+* variables demográficas;
+* variables contextuales;
+* growth features;
+* matching quality features;
+* composite indices;
+* advanced football indices.
+
+---
+
+## Variables avanzadas Sprint 13B
+
+### finishing_index_v2
+
+Índice avanzado de finalización.
+
+---
+
+### availability_index
+
+Índice avanzado de disponibilidad competitiva.
+
+---
+
+### defensive_activity_index
+
+Índice avanzado de actividad defensiva.
 
 ---
 
 ## Excluye
 
-- predicciones
-- scoring
-- rankings
-- outputs derivados
-- variables futuras
+* predicciones;
+* scoring;
+* rankings;
+* outputs derivados;
+* variables futuras.
 
 ---
 
@@ -323,22 +371,22 @@ data/processed/player_season_modeling.parquet
 
 Variables principales:
 
-| Variable | Tipo |
-|----------|------|
-| league | Category |
-| season | Category |
+| Variable       | Tipo     |
+| -------------- | -------- |
+| league         | Category |
+| season         | Category |
 | position_group | Category |
 
 ---
 
 ## Position Group
 
-| Grupo | Posiciones |
-|----------|------------|
-| GK | Porteros |
-| DEF | Defensas |
-| MID | Centrocampistas |
-| ATT | Atacantes |
+| Grupo | Posiciones      |
+| ----- | --------------- |
+| GK    | Porteros        |
+| DEF   | Defensas        |
+| MID   | Centrocampistas |
+| ATT   | Atacantes       |
 
 ---
 
@@ -362,12 +410,12 @@ Encoding categórico
 
 Variables principales:
 
-- age
-- minutes_played
-- log_minutes_played
-- goals_per90
-- assists_per90
-- g_a_per90
+* age
+* minutes_played
+* log_minutes_played
+* goals_per90
+* assists_per90
+* g_a_per90
 
 ---
 
@@ -377,11 +425,11 @@ Introducidas durante Sprint 2.
 
 Variables:
 
-- market_value_growth_prev
-- delta_log_market_value_prev
-- breakout_indicator
-- growth_index
-- career_year
+* market_value_growth_prev
+* delta_log_market_value_prev
+* breakout_indicator
+* growth_index
+* career_year
 
 ---
 
@@ -391,10 +439,34 @@ Introducidas durante Sprint 3.
 
 Variables:
 
-- finishing_index
-- playmaking_index
-- growth_index
-- experience_index
+* finishing_index
+* playmaking_index
+* growth_index
+* experience_index
+
+---
+
+## Advanced Football Indices
+
+Introducidos durante Sprint 13B.
+
+Variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+---
+
+## Hallazgo metodológico
+
+La variable:
+
+```text
+finishing_index_v2
+```
+
+aparece como la métrica avanzada con mayor relevancia predictiva agregada.
 
 ---
 
@@ -418,9 +490,10 @@ log_market_value_eur
 
 Mejora:
 
-- estabilidad
-- linealidad
-- robustez frente a outliers
+* estabilidad;
+* linealidad;
+* robustez frente a outliers;
+* comportamiento econométrico.
 
 ---
 
@@ -434,27 +507,52 @@ Valor esperado de mercado
 
 No modela:
 
-- precio de transferencia
-- salario
-- valor contractual
-
----
+* precio real de transferencia;
+* salario;
+* valor contractual.
 
 # 📂 Separación Dataset vs Outputs
 
-Dataset base:
+## Principio fundamental
 
-```text
-Información disponible antes de modelizar
+El dataset modelizable debe contener únicamente información disponible antes del proceso de estimación.
+
+---
+
+## Dataset base
+
+Contiene:
+
+```text id="2h6hy0"
+Información observable
+antes de modelizar
 ```
 
-Outputs:
+Incluye:
 
-- predicciones
-- scores
-- rankings
-- explainability
-- scouting reports
+* variables deportivas;
+* variables económicas;
+* variables demográficas;
+* variables contextuales;
+* growth features;
+* composite indices;
+* advanced football indices;
+* variables de calidad de matching.
+
+---
+
+## Outputs derivados
+
+Generados posteriormente al proceso de modelización.
+
+Ejemplos:
+
+* predicciones;
+* scores;
+* rankings;
+* explainability;
+* scouting reports;
+* recruitment outputs.
 
 ---
 
@@ -462,56 +560,123 @@ Outputs:
 
 Evita:
 
-- leakage
-- contaminación analítica
-- dependencia circular
+* leakage;
+* dependencia circular;
+* contaminación analítica;
+* optimismo artificial.
 
 ---
 
 # 💡 Variables derivadas
 
-Variables derivadas:
+Variables generadas mediante transformaciones sobre información observada.
 
-- log_market_value_eur
-- log_minutes_played
-- g_a_per90
+---
+
+## Transformaciones logarítmicas
+
+* log_market_value_eur
+* log_minutes_played
+
+---
+
+## Ratios
+
+* goals_per90
+* assists_per90
+* g_a_per90
+
+---
+
+## Variables longitudinales
+
+* market_value_growth_prev
+* delta_log_market_value_prev
+* breakout_indicator
+* growth_index
+* career_year
+
+---
+
+## Composite Indices
+
+* finishing_index
+* playmaking_index
+* growth_index
+* experience_index
+
+---
+
+## Advanced Football Indices
+
+Introducidos durante Sprint 13B.
+
+Variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+---
+
+## Resultado Sprint 13B
+
+Estas variables aportan mejoras consistentes en:
+
+* econometría;
+* XGBoost;
+* Random Forest;
+* HistGradientBoosting;
+* LightGBM.
 
 ---
 
 # 🎯 Variables de Scoring
 
-Introducidas desde Sprint 5.
+Introducidas progresivamente desde Sprint 5.
 
-Variables:
-
-- predicted_market_value_eur
-- market_value_gap_eur
-- inefficiency_score
-- growth_score
-- confidence_score
-- opportunity_score
+Estas variables no forman parte del dataset modelizable.
 
 ---
 
-## Sprint 10
+## Variables principales
 
-Nuevas variables:
+* predicted_market_value_eur
+* predicted_log_market_value
+* market_value_gap_eur
+* market_value_gap_pct
+* inefficiency_score
+* growth_score
+* confidence_score
+* opportunity_score
 
-### risk_score
+---
 
-Cuantificación de incertidumbre.
+# ⚠️ Sprint 10 — Risk Framework
 
-### risk_level
+Variables incorporadas:
+
+---
+
+## risk_score
+
+Cuantificación explícita de incertidumbre.
+
+---
+
+## risk_level
 
 Clasificación:
 
-```text
+```text id="d0r6j7"
 Low
 Medium
 High
 ```
 
-### risk_adjusted_opportunity_score
+---
+
+## risk_adjusted_opportunity_score
 
 Priorización ajustada por riesgo.
 
@@ -521,63 +686,105 @@ Priorización ajustada por riesgo.
 
 Las variables de scoring:
 
-```text
-NO forman parte del dataset base
+```text id="hz47vw"
+NO forman parte
+del dataset base
 ```
 
 ---
 
 # 🧠 Player Intelligence Schema
 
-Introducido en Sprint 10.1.
+Introducido durante Sprint 10.
 
 Objetivo:
 
-Transformar scoring en análisis individuales.
+Transformar scoring en análisis individuales de jugadores.
 
 ---
 
 ## Radar Features
 
-MID / ATT
+### MID / ATT
 
-- minutes_played
-- goals_per90
-- assists_per90
-- g_a_per90
-- growth_score
-- confidence_score
-
----
-
-DEF
-
-- tackles_per90
-- interceptions_per90
-- blocks_per90
+* minutes_played
+* goals_per90
+* assists_per90
+* g_a_per90
+* growth_score
+* confidence_score
 
 ---
 
-GK
+### DEF
 
-- save_pct
-- clean_sheets
+* tackles_per90
+* interceptions_per90
+* blocks_per90
+* growth_score
+* confidence_score
+
+---
+
+### GK
+
+* save_pct
+* clean_sheets
+* growth_score
+* confidence_score
 
 ---
 
 ## Benchmarking Features
 
-- radar_percentile
-- benchmark_group
+* radar_percentile
+* benchmark_group
 
 ---
 
 ## Narrative Features
 
-- opportunity_score
-- risk_score
-- growth_score
-- confidence_score
+* opportunity_score
+* risk_score
+* growth_score
+* confidence_score
+
+---
+
+# 🎯 Recruitment Intelligence Schema
+
+Introducido durante Sprint 11.
+
+Objetivo:
+
+Transformar análisis individuales en procesos operativos de recruitment.
+
+---
+
+## Variables principales
+
+* shortlist_status
+* recruitment_priority
+* candidate_rank
+* comparative_score
+
+---
+
+## Inputs utilizados
+
+* opportunity_score
+* risk_score
+* confidence_score
+* market_value_gap_pct
+* risk_adjusted_opportunity_score
+
+---
+
+## Resultado
+
+```text id="kn2jlwm"
+Recruitment Intelligence Layer
+```
 
 ---
 
@@ -585,13 +792,15 @@ GK
 
 Herramienta:
 
-```text
+```text id="uhpr79"
 MLflow
 ```
 
-Directorio:
+---
 
-```text
+## Directorio
+
+```text id="j2yqck"
 mlruns/
 ```
 
@@ -601,83 +810,125 @@ mlruns/
 
 ### Parámetros
 
-- features
-- target
-- hyperparameters
-
-### Métricas
-
-- RMSE
-- MAE
-- R²
-
-### Artefactos
-
-- modelos
-- predicciones
-- explainability
+* features;
+* target;
+* hiperparámetros;
+* configuración temporal;
+* versiones de datasets.
 
 ---
 
-# ⚙️ Configuración Centralizada
+### Métricas
 
-Directorio:
+* RMSE;
+* MAE;
+* R²;
+* métricas de negocio;
+* métricas de matching.
 
-```text
+---
+
+### Artefactos
+
+* modelos;
+* predicciones;
+* explainability;
+* rankings;
+* tablas.
+
+---
+
+## Beneficio
+
+```text id="mltqgo"
+Reproducibilidad completa
+```
+
+---
+
+# ⚙️ Configuración centralizada
+
+## Directorio
+
+```text id="d79dwr"
 config/
 ```
 
-Archivos:
+---
 
-- config.yaml
-- paths.yaml
-- project.yaml
-- matching.yaml
-- features.yaml
-- modeling.yaml
+## Archivos principales
+
+* config.yaml
+* paths.yaml
+* project.yaml
+* matching.yaml
+* features.yaml
+* modeling.yaml
 
 ---
 
 ## Beneficios
 
-- reproducibilidad
-- mantenibilidad
-- auditoría
-- comparación de experimentos
+* mantenibilidad;
+* reproducibilidad;
+* trazabilidad;
+* auditoría;
+* comparación entre releases.
 
 ---
 
 # 🛡️ Prevención de Leakage
 
-Principio:
+## Principio
 
-```text
+```text id="mjlwmj"
 Toda variable debe existir
-en el momento real de decisión.
+en el momento real
+de la decisión
 ```
 
 ---
 
 ## Variables excluidas
 
-- market_value_next_eur
-- future_minutes
-- future_xG
-- predicted_market_value_eur
-- inefficiency_score
-- opportunity_score
-- risk_score
-- run_id
-- experiment_id
+### Leakage temporal
+
+* market_value_next_eur
+* future_minutes
+* future_performance_metrics
+
+---
+
+### Leakage predictivo
+
+* predicted_market_value_eur
+* predicted_log_market_value
+
+---
+
+### Leakage de scoring
+
+* inefficiency_score
+* growth_score
+* confidence_score
+* opportunity_score
+* risk_score
+
+---
+
+### Leakage experimental
+
+* run_id
+* experiment_id
 
 ---
 
 ## Leakage controlado
 
-- temporal leakage
-- target leakage
-- train-test leakage
-- scoring leakage
+* temporal leakage;
+* target leakage;
+* train-test leakage;
+* scoring leakage.
 
 ---
 
@@ -685,24 +936,85 @@ en el momento real de decisión.
 
 ## Validación histórica
 
-| Split | Temporadas |
-|----------|------------|
-| Train | 2019-2020 → 2024-2025 |
-| Current Scouting | 2025-2026 |
+| Split            | Temporadas            |
+| ---------------- | --------------------- |
+| Train            | 2019-2020 → 2024-2025 |
+| Current Scouting | 2025-2026             |
 
 ---
 
 ## Sprint 10.3
 
-Nueva separación:
+Se introduce una separación explícita:
 
-```text
+```text id="lgdbnb"
 Historical Evaluation Layer
 ≠
 Current Scouting Layer
 ```
 
-Esta decisión constituye uno de los cambios metodológicos más relevantes del proyecto.
+---
+
+## Beneficio
+
+Evita mezclar:
+
+* evaluación académica;
+* explotación operativa;
+* análisis histórico;
+* scouting actual.
+
+---
+
+# ⚠️ Hallazgo arquitectónico Sprint 13B
+
+Durante Sprint 13B se identifica una nueva separación estructural:
+
+```text id="ykvxjn"
+Modeling Pipeline
+≠
+Scoring Pipeline
+```
+
+---
+
+## Situación observada
+
+El pipeline histórico de scoring requiere variables enriquecidas adicionales:
+
+* market_value_growth_prev
+* delta_log_market_value_prev
+* growth_index
+* career_year
+* breakout_indicator
+* matching_confidence
+
+Mientras que la capa productiva genera principalmente:
+
+* predicted_log_market_value_ml
+* predicted_market_value_ml_eur
+* inefficiency_score_ml
+
+---
+
+## Decisión metodológica
+
+No integrar esta capa dentro de Sprint 13B.
+
+Justificación:
+
+1. No afecta a la hipótesis principal.
+2. No altera resultados econométricos.
+3. No altera resultados de Machine Learning.
+4. Constituye un trabajo de integración independiente.
+
+---
+
+## Backlog asociado
+
+```text id="fkrfms"
+TM.2 — Scoring & Ranking Integration v13B
+```
 
 ---
 
@@ -712,10 +1024,11 @@ Esta decisión constituye uno de los cambios metodológicos más relevantes del 
 
 Contiene:
 
-- modelos
-- predicciones
-- feature importance
-- encoders
+* modelos;
+* predicciones;
+* feature importance;
+* encoders;
+* explainability.
 
 ---
 
@@ -723,10 +1036,11 @@ Contiene:
 
 Contiene:
 
-- tablas
-- rankings
-- scouting reports
-- visualizaciones
+* tablas;
+* rankings;
+* scouting reports;
+* visualizaciones;
+* auditorías de cobertura.
 
 ---
 
@@ -734,76 +1048,166 @@ Contiene:
 
 Contiene:
 
-- runs
-- métricas
-- parámetros
-- artefactos experimentales
+* runs;
+* métricas;
+* parámetros;
+* artefactos experimentales.
 
 ---
 
 # ⚖️ Trade-offs metodológicos
 
-| Trade-off | Decisión |
-|----------|-----------|
-| Cobertura vs precisión | Priorizar precisión |
-| Matching agresivo vs conservador | Conservador |
-| Dataset grande vs fiable | Fiable |
-| Complejidad vs interpretabilidad | Equilibrio |
-| Evaluación histórica vs operación | Separación Sprint 10 |
+| Trade-off                         | Decisión                |
+| --------------------------------- | ----------------------- |
+| Cobertura vs precisión            | Priorizar precisión     |
+| Matching agresivo vs conservador  | Conservador             |
+| Dataset grande vs fiable          | Fiable                  |
+| Complejidad vs interpretabilidad  | Equilibrio              |
+| Evaluación histórica vs operación | Separación explícita    |
+| Cobertura vs validez externa      | Expansión controlada    |
+| Nuevas variables vs sobreajuste   | Validación multi-modelo |
 
 ---
 
-# 🚀 Evolución prevista
+# 🛣️ Roadmap
 
-## Sprint 11
+## TM.1 — Transfermarkt Coverage Audit
 
-Advanced Football Radar
+Objetivo:
 
-Nuevos bloques:
-
-- Shooting
-- Defense
-- Misc
-- Playing Time
+* diagnosticar limitaciones de cobertura;
+* estimar techo teórico de matching;
+* mejorar integración de datos.
 
 ---
 
-## Sprint 12
+## TM.2 — Scoring & Ranking Integration v13B
 
-Understat
+Objetivo:
 
-Nuevas variables:
-
-- xG
-- xA
-- xGChain
+```text id="zj0p2n"
+Predictions v13B
+↓
+Scoring Dataset v13B
+↓
+Opportunity Framework v13B
+↓
+Risk Framework v13B
+↓
+Rankings v13B
+↓
+Stability Analysis
+```
 
 ---
 
-## Sprint 13
+## Sprint 14 — Transfer Strategy Enhancement
 
-Advanced Modeling
+Próxima evolución principal del proyecto.
 
-- position-specific models
-- ensemble models
-- similarity engine
+Objetivo:
+
+```text id="fjq0kh"
+Transformar oportunidades individuales
+en estrategias óptimas de fichajes
+bajo restricciones reales
+de presupuesto y riesgo
+```
+
+---
+
+## Investigación futura
+
+### Modelización
+
+* TabPFN
+* CatBoost
+* Ensemble Learning
+
+### Datos
+
+* nuevas métricas avanzadas FBref;
+* event data avanzado;
+* tracking data;
+* información contractual;
+* datos salariales.
 
 ---
 
 # 🧠 Conclusión
 
-La principal evolución introducida en Sprint 10 consiste en transformar un esquema orientado exclusivamente a modelización en una arquitectura preparada para Scouting Intelligence.
+La evolución del esquema de datos puede resumirse mediante:
 
-La separación explícita entre:
-
-```text
-Historical Evaluation Layer
+```text id="g1ujl8"
+Datos
 ↓
-Current Scouting Layer
+Modelización
 ↓
-Player Intelligence Layer
+Evaluación
 ↓
-Decision Support Layer
+Scoring
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Decision Support System
+↓
+External Validation
+↓
+Advanced Metrics Layer
 ```
 
-permite mantener rigor metodológico, evitar contaminación entre etapas y aproximar el sistema a arquitecturas utilizadas en departamentos profesionales de Football Analytics.
+Las principales contribuciones estructurales recientes corresponden a:
+
+### Sprint 13A
+
+* expansión a 11 ligas;
+* validación externa;
+* auditoría de cobertura;
+* generalización multi-liga.
+
+### Sprint 13B
+
+* integración de métricas avanzadas;
+* nuevas variables productivas;
+* validación incremental de features;
+* mejora simultánea en econometría y Machine Learning.
+
+---
+
+## Estado actual
+
+Dataset productivo:
+
+```text id="p8w8mf"
+player_season_modeling_v13b_productive_candidate.parquet
+```
+
+Modelos oficiales:
+
+```text id="hdx4zd"
+Growth OLS v13B
+
+Tuned XGBoost v13B
+```
+
+---
+
+## Resultado metodológico
+
+La hipótesis principal de Sprint 13B queda validada.
+
+Las variables:
+
+* finishing_index_v2
+* availability_index
+* defensive_activity_index
+
+aportan señal predictiva incremental consistente y pasan a formar parte del esquema oficial de la release:
+
+```text id="wuxz87"
+v1.2.1 — Advanced Data Expansion
+```
+
+La arquitectura resultante mantiene rigor metodológico, separación explícita de responsabilidades y capacidad de evolución futura hacia sistemas avanzados de scouting, recruitment y soporte estratégico a decisiones deportivas.
