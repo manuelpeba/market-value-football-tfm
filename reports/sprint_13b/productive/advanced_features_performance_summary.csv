@@ -1,0 +1,12 @@
+item,value,metric,numeric_value
+best_delta_r2_model,LightGBM,delta_R2_B_minus_A,0.029096133849650596
+best_delta_rmse_model,LightGBM,delta_RMSE_B_minus_A,-0.02454940059091515
+best_delta_mae_model,LightGBM,delta_MAE_B_minus_A,-0.01931060623097025
+any_advanced_feature_top15,True,boolean,1.0
+xgboost_delta_r2,XGBoost,delta_R2_B_minus_A,0.009575967827443077
+xgboost_delta_rmse,XGBoost,delta_RMSE_B_minus_A,-0.008284711141544054
+xgboost_delta_mae,XGBoost,delta_MAE_B_minus_A,-0.007501333307257996
+lightgbm_delta_r2,LightGBM,delta_R2_B_minus_A,0.029096133849650596
+lightgbm_delta_rmse,LightGBM,delta_RMSE_B_minus_A,-0.02454940059091515
+lightgbm_delta_mae,LightGBM,delta_MAE_B_minus_A,-0.01931060623097025
+top_advanced_feature_by_importance,finishing_index_v2,mean_normalized_importance,0.4573492794091309

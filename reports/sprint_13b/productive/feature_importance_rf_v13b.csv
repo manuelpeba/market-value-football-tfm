@@ -1,0 +1,12 @@
+model,feature_set,original_feature,importance,max_component_importance,n_components,rank
+RandomForest,B_v13B_advanced,league,0.5843445325088044,0.23343756697998905,11,1
+RandomForest,B_v13B_advanced,finishing_index_v2,0.11564168075943743,0.11564168075943743,1,2
+RandomForest,B_v13B_advanced,g_a_per90,0.07328543665818767,0.07328543665818767,1,3
+RandomForest,B_v13B_advanced,availability_index,0.06714903669875028,0.06714903669875028,1,4
+RandomForest,B_v13B_advanced,minutes_played,0.03197170716080312,0.03197170716080312,1,5
+RandomForest,B_v13B_advanced,assists_per90,0.03155301027065552,0.03155301027065552,1,6
+RandomForest,B_v13B_advanced,log_minutes_played,0.031211362463751474,0.031211362463751474,1,7
+RandomForest,B_v13B_advanced,age,0.030524363528095375,0.030524363528095375,1,8
+RandomForest,B_v13B_advanced,defensive_activity_index,0.015132578947898023,0.015132578947898023,1,9
+RandomForest,B_v13B_advanced,goals_per90,0.01448468707781788,0.01448468707781788,1,10
+RandomForest,B_v13B_advanced,position_group,0.00470160392579882,0.002493584645684948,4,11

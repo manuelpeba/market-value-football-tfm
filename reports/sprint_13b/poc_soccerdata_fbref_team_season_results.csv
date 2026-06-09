@@ -1,0 +1,10 @@
+﻿level,stat_type,status,rows,columns,output_path,error
+team_season,standard,ok,20.0,21.0,data\raw\fbref\sprint_13b\soccerdata\team\fbref_team_standard_premier_league_2025_2026.parquet,
+team_season,shooting,ok,20.0,13.0,data\raw\fbref\sprint_13b\soccerdata\team\fbref_team_shooting_premier_league_2025_2026.parquet,
+team_season,playing_time,ok,20.0,19.0,data\raw\fbref\sprint_13b\soccerdata\team\fbref_team_playing_time_premier_league_2025_2026.parquet,
+team_season,misc,ok,20.0,15.0,data\raw\fbref\sprint_13b\soccerdata\team\fbref_team_misc_premier_league_2025_2026.parquet,
+team_season,passing,error,,,,"ValueError(""Invalid argument: stat_type should be in ['standard', 'keeper', 'shooting', 'playing_time', 'misc']"")"
+team_season,passing_types,error,,,,"ValueError(""Invalid argument: stat_type should be in ['standard', 'keeper', 'shooting', 'playing_time', 'misc']"")"
+team_season,gca,error,,,,"ValueError(""Invalid argument: stat_type should be in ['standard', 'keeper', 'shooting', 'playing_time', 'misc']"")"
+team_season,defense,error,,,,"ValueError(""Invalid argument: stat_type should be in ['standard', 'keeper', 'shooting', 'playing_time', 'misc']"")"
+team_season,possession,error,,,,"ValueError(""Invalid argument: stat_type should be in ['standard', 'keeper', 'shooting', 'playing_time', 'misc']"")"

@@ -1,0 +1,41 @@
+                             OLS Regression Results                             
+================================================================================
+Dep. Variable:     log_market_value_eur   R-squared:                       0.422
+Model:                              OLS   Adj. R-squared:                  0.420
+Method:                   Least Squares   F-statistic:                     185.9
+Date:                  Tue, 09 Jun 2026   Prob (F-statistic):               0.00
+Time:                          01:52:29   Log-Likelihood:                -5396.5
+No. Observations:                  3854   AIC:                         1.083e+04
+Df Residuals:                      3836   BIC:                         1.094e+04
+Df Model:                            17                                         
+Covariance Type:                    HC3                                         
+===================================================================================================
+                                      coef    std err          z      P>|z|      [0.025      0.975]
+---------------------------------------------------------------------------------------------------
+const                              10.5361      0.332     31.760      0.000       9.886      11.186
+age                                 0.0129      0.014      0.936      0.349      -0.014       0.040
+log_minutes_played                  0.4428      0.027     16.542      0.000       0.390       0.495
+goals_per90                         1.2489      0.110     11.393      0.000       1.034       1.464
+assists_per90                       1.7601      0.151     11.654      0.000       1.464       2.056
+league_Belgian Pro League           0.1137      0.092      1.230      0.219      -0.067       0.295
+league_Bundesliga                   1.4336      0.092     15.630      0.000       1.254       1.613
+league_Championship                 0.2712      0.086      3.166      0.002       0.103       0.439
+league_Eredivisie                  -0.0046      0.087     -0.053      0.958      -0.175       0.166
+league_LaLiga                       1.4974      0.098     15.224      0.000       1.305       1.690
+league_Liga Portugal                0.3012      0.096      3.138      0.002       0.113       0.489
+league_Ligue 1                      1.0857      0.087     12.453      0.000       0.915       1.257
+league_Premier League               2.1424      0.087     24.585      0.000       1.972       2.313
+league_Serie A                      1.2790      0.090     14.258      0.000       1.103       1.455
+league_Spanish Segunda División    -0.2496      0.092     -2.718      0.007      -0.430      -0.070
+position_group_DEF                  0.0861      0.066      1.312      0.190      -0.043       0.215
+position_group_GK                   0.0270      0.104      0.259      0.796      -0.177       0.231
+position_group_MID                  0.0214      0.058      0.367      0.714      -0.093       0.136
+==============================================================================
+Omnibus:                       27.064   Durbin-Watson:                   1.813
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):               21.198
+Skew:                           0.095   Prob(JB):                     2.49e-05
+Kurtosis:                       2.691   Cond. No.                         461.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)

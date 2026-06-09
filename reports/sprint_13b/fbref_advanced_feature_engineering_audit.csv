@@ -1,0 +1,12 @@
+﻿feature,exists,non_null,coverage_pct
+adv_shots,True,5440,0.9843
+adv_shots_on_target,True,5440,0.9843
+adv_shots_per90,True,5440,0.9843
+adv_shots_on_target_per90,True,5440,0.9843
+adv_starts,True,5522,0.9991
+adv_complete_matches,True,5522,0.9991
+adv_interceptions,True,5440,0.9843
+adv_tackles_won,True,5440,0.9843
+finishing_index_v2,True,5440,0.9843
+availability_index,True,5522,0.9991
+defensive_activity_index,True,5440,0.9843

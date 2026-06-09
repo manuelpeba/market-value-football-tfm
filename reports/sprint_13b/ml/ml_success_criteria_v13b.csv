@@ -1,0 +1,6 @@
+criterion,satisfied,sprint_13b5_success
+xgboost_improves,True,True
+lightgbm_improves,True,True
+any_r2_improves,True,True
+any_rmse_improves,True,True
+any_mae_improves,True,True

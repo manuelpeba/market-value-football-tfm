@@ -1,0 +1,12 @@
+model,feature_set,original_feature,importance,max_component_importance,n_components,rank
+XGBoost,B_v13B_advanced,league,0.8132233,0.23387845,11,1
+XGBoost,B_v13B_advanced,position_group,0.037931293,0.0107718175,4,2
+XGBoost,B_v13B_advanced,g_a_per90,0.026510311,0.026510311,1,3
+XGBoost,B_v13B_advanced,finishing_index_v2,0.022577655,0.022577655,1,4
+XGBoost,B_v13B_advanced,assists_per90,0.018944547,0.018944547,1,5
+XGBoost,B_v13B_advanced,minutes_played,0.017540745,0.017540745,1,6
+XGBoost,B_v13B_advanced,availability_index,0.017220544,0.017220544,1,7
+XGBoost,B_v13B_advanced,log_minutes_played,0.015969928,0.015969928,1,8
+XGBoost,B_v13B_advanced,age,0.01065952,0.01065952,1,9
+XGBoost,B_v13B_advanced,goals_per90,0.010212414,0.010212414,1,10
+XGBoost,B_v13B_advanced,defensive_activity_index,0.009209729,0.009209729,1,11

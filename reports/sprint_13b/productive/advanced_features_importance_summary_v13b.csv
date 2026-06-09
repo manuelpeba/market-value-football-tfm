@@ -1,0 +1,10 @@
+model,advanced_feature,importance,rank,top_15,top_10
+LightGBM,availability_index,1982.0,2,True,True
+LightGBM,defensive_activity_index,1927.0,3,True,True
+LightGBM,finishing_index_v2,1900.0,4,True,True
+RandomForest,finishing_index_v2,0.11564168075943743,2,True,True
+RandomForest,availability_index,0.06714903669875028,4,True,True
+RandomForest,defensive_activity_index,0.015132578947898023,9,True,True
+XGBoost,finishing_index_v2,0.02257765457034111,4,True,True
+XGBoost,availability_index,0.017220543697476387,7,True,True
+XGBoost,defensive_activity_index,0.009209728799760342,11,True,False

@@ -1,0 +1,73 @@
+model,feature_set,transformed_feature,feature,importance,rank
+RandomForest,B_v13B_advanced,cat__league_Premier League,league_Premier League,0.23343756697998905,1
+RandomForest,B_v13B_advanced,num__finishing_index_v2,finishing_index_v2,0.11564168075943743,2
+RandomForest,B_v13B_advanced,cat__league_Ligue 1,league_Ligue 1,0.07690769793357569,3
+RandomForest,B_v13B_advanced,cat__league_Bundesliga,league_Bundesliga,0.07478310811080634,4
+RandomForest,B_v13B_advanced,num__g_a_per90,g_a_per90,0.07328543665818767,5
+RandomForest,B_v13B_advanced,cat__league_Serie A,league_Serie A,0.07290526509234527,6
+RandomForest,B_v13B_advanced,cat__league_LaLiga,league_LaLiga,0.07137123611392635,7
+RandomForest,B_v13B_advanced,num__availability_index,availability_index,0.06714903669875028,8
+RandomForest,B_v13B_advanced,num__minutes_played,minutes_played,0.03197170716080312,9
+RandomForest,B_v13B_advanced,num__assists_per90,assists_per90,0.03155301027065552,10
+RandomForest,B_v13B_advanced,num__log_minutes_played,log_minutes_played,0.031211362463751474,11
+RandomForest,B_v13B_advanced,num__age,age,0.030524363528095375,12
+RandomForest,B_v13B_advanced,cat__league_Spanish Segunda División,league_Spanish Segunda División,0.027152508576908787,13
+RandomForest,B_v13B_advanced,num__defensive_activity_index,defensive_activity_index,0.015132578947898023,14
+RandomForest,B_v13B_advanced,num__goals_per90,goals_per90,0.01448468707781788,15
+RandomForest,B_v13B_advanced,cat__league_Eredivisie,league_Eredivisie,0.012418543015285872,16
+RandomForest,B_v13B_advanced,cat__league_Championship,league_Championship,0.004774752482317006,17
+RandomForest,B_v13B_advanced,cat__league_Belgian Pro League,league_Belgian Pro League,0.004379756853026046,18
+RandomForest,B_v13B_advanced,cat__league_Liga Portugal,league_Liga Portugal,0.003435438409007009,19
+RandomForest,B_v13B_advanced,cat__league_Austrian Bundesliga,league_Austrian Bundesliga,0.002778658941617001,20
+RandomForest,B_v13B_advanced,cat__position_group_MID,position_group_MID,0.002493584645684948,21
+RandomForest,B_v13B_advanced,cat__position_group_DEF,position_group_DEF,0.0020451301771239436,22
+RandomForest,B_v13B_advanced,cat__position_group_ATT,position_group_ATT,0.00015316344459343794,23
+RandomForest,B_v13B_advanced,cat__position_group_GK,position_group_GK,9.725658396490745e-06,24
+LightGBM,B_v13B_advanced,num__age,age,2361.0,1
+LightGBM,B_v13B_advanced,num__availability_index,availability_index,1982.0,2
+LightGBM,B_v13B_advanced,num__defensive_activity_index,defensive_activity_index,1927.0,3
+LightGBM,B_v13B_advanced,num__finishing_index_v2,finishing_index_v2,1900.0,4
+LightGBM,B_v13B_advanced,num__minutes_played,minutes_played,1708.0,5
+LightGBM,B_v13B_advanced,num__g_a_per90,g_a_per90,1204.0,6
+LightGBM,B_v13B_advanced,num__assists_per90,assists_per90,995.0,7
+LightGBM,B_v13B_advanced,num__goals_per90,goals_per90,978.0,8
+LightGBM,B_v13B_advanced,num__log_minutes_played,log_minutes_played,462.0,9
+LightGBM,B_v13B_advanced,cat__position_group_DEF,position_group_DEF,149.0,10
+LightGBM,B_v13B_advanced,cat__league_Serie A,league_Serie A,146.0,11
+LightGBM,B_v13B_advanced,cat__position_group_MID,position_group_MID,141.0,12
+LightGBM,B_v13B_advanced,cat__league_LaLiga,league_LaLiga,133.0,13
+LightGBM,B_v13B_advanced,cat__league_Ligue 1,league_Ligue 1,122.0,14
+LightGBM,B_v13B_advanced,cat__league_Premier League,league_Premier League,120.0,15
+LightGBM,B_v13B_advanced,cat__league_Spanish Segunda División,league_Spanish Segunda División,113.0,16
+LightGBM,B_v13B_advanced,cat__league_Bundesliga,league_Bundesliga,109.0,17
+LightGBM,B_v13B_advanced,cat__league_Eredivisie,league_Eredivisie,109.0,18
+LightGBM,B_v13B_advanced,cat__league_Austrian Bundesliga,league_Austrian Bundesliga,94.0,19
+LightGBM,B_v13B_advanced,cat__league_Belgian Pro League,league_Belgian Pro League,93.0,20
+LightGBM,B_v13B_advanced,cat__position_group_ATT,position_group_ATT,53.0,21
+LightGBM,B_v13B_advanced,cat__league_Liga Portugal,league_Liga Portugal,50.0,22
+LightGBM,B_v13B_advanced,cat__league_Championship,league_Championship,42.0,23
+LightGBM,B_v13B_advanced,cat__position_group_GK,position_group_GK,9.0,24
+XGBoost,B_v13B_advanced,cat__league_Premier League,league_Premier League,0.23387844860553741,1
+XGBoost,B_v13B_advanced,cat__league_Bundesliga,league_Bundesliga,0.09769846498966217,2
+XGBoost,B_v13B_advanced,cat__league_LaLiga,league_LaLiga,0.08473683893680573,3
+XGBoost,B_v13B_advanced,cat__league_Spanish Segunda División,league_Spanish Segunda División,0.08160756528377533,4
+XGBoost,B_v13B_advanced,cat__league_Serie A,league_Serie A,0.07645218074321747,5
+XGBoost,B_v13B_advanced,cat__league_Ligue 1,league_Ligue 1,0.07286050915718079,6
+XGBoost,B_v13B_advanced,cat__league_Eredivisie,league_Eredivisie,0.06077416241168976,7
+XGBoost,B_v13B_advanced,cat__league_Belgian Pro League,league_Belgian Pro League,0.044116582721471786,8
+XGBoost,B_v13B_advanced,num__g_a_per90,g_a_per90,0.026510311290621758,9
+XGBoost,B_v13B_advanced,cat__league_Austrian Bundesliga,league_Austrian Bundesliga,0.024554498493671417,10
+XGBoost,B_v13B_advanced,cat__league_Championship,league_Championship,0.022940203547477722,11
+XGBoost,B_v13B_advanced,num__finishing_index_v2,finishing_index_v2,0.02257765457034111,12
+XGBoost,B_v13B_advanced,num__assists_per90,assists_per90,0.018944546580314636,13
+XGBoost,B_v13B_advanced,num__minutes_played,minutes_played,0.017540745437145233,14
+XGBoost,B_v13B_advanced,num__availability_index,availability_index,0.017220543697476387,15
+XGBoost,B_v13B_advanced,num__log_minutes_played,log_minutes_played,0.015969928354024887,16
+XGBoost,B_v13B_advanced,cat__league_Liga Portugal,league_Liga Portugal,0.013603844679892063,17
+XGBoost,B_v13B_advanced,cat__position_group_MID,position_group_MID,0.010771817527711391,18
+XGBoost,B_v13B_advanced,num__age,age,0.010659519582986832,19
+XGBoost,B_v13B_advanced,cat__position_group_DEF,position_group_DEF,0.010654591955244541,20
+XGBoost,B_v13B_advanced,num__goals_per90,goals_per90,0.010212413966655731,21
+XGBoost,B_v13B_advanced,num__defensive_activity_index,defensive_activity_index,0.009209728799760342,22
+XGBoost,B_v13B_advanced,cat__position_group_ATT,position_group_ATT,0.008253837935626507,23
+XGBoost,B_v13B_advanced,cat__position_group_GK,position_group_GK,0.00825104583054781,24
