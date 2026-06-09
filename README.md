@@ -2053,3 +2053,7 @@ reforzando simultáneamente la solidez metodológica y el valor analítico de la
 El resultado final es una arquitectura reproducible, interpretable y orientada a negocio que conecta técnicas avanzadas de analítica deportiva con problemas reales de toma de decisiones dentro del fútbol profesional.
 
 La siguiente etapa del proyecto se centrará en Sprint 14 — Transfer Strategy Enhancement, ampliando el sistema desde la identificación de oportunidades hacia la recomendación optimizada de estrategias de fichajes.
+
+## License
+
+Copyright © 2026 Manuel Peba. All Rights Reserved.
