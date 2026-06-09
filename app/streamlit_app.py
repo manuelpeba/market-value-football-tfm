@@ -1,6 +1,7 @@
 from pathlib import Path
 from math import ceil
 import html
+import sys
 
 import numpy as np
 import pandas as pd
@@ -27,6 +28,8 @@ RANKINGS_PATH = ROOT / "reports" / "rankings"
 BUSINESS_PATH = ROOT / "reports" / "business"
 EVALUATION_PATH = ROOT / "reports" / "evaluation"
 PROCESSED_PATH = ROOT / "data" / "processed"
+STRATEGY_REPORTS_PATH = ROOT / "reports" / "strategy"
+STRATEGY_SRC_PATH = ROOT / "src" / "strategy"
 
 SCORED_UNIVERSE_SIZE = 1_138
 
@@ -3161,6 +3164,140 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+
+# =============================================================================
+# Sprint 14 final UX patch: strategy metric tooltips and clean portfolio map
+# =============================================================================
+st.markdown(
+    """
+<style>
+.strategy-info-details {
+    position: relative !important;
+    display: inline-block !important;
+    margin-left: 6px !important;
+    vertical-align: 1px !important;
+}
+.strategy-info-details summary {
+    list-style: none !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 999px !important;
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 950 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+.strategy-info-details summary::-webkit-details-marker { display: none !important; }
+.strategy-info-details div {
+    position: absolute !important;
+    right: 0 !important;
+    top: 24px !important;
+    z-index: 9999 !important;
+    min-width: 260px !important;
+    max-width: 320px !important;
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    color: #334155 !important;
+    font-size: .76rem !important;
+    line-height: 1.38 !important;
+    box-shadow: 0 20px 44px rgba(15,23,42,.22) !important;
+}
+.metric-card:has(.strategy-info-details[open]) {
+    position: relative !important;
+    z-index: 9998 !important;
+    overflow: visible !important;
+}
+.strategy-glossary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 2px 2px 12px 2px;
+    margin-bottom: 6px;
+}
+.strategy-glossary-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fbff;
+    padding: 11px 12px 12px 12px;
+    min-height: 82px;
+    box-sizing: border-box;
+}
+.strategy-glossary-item b {
+    display: block;
+    color: #0f172a;
+    font-size: 0.82rem;
+    margin-bottom: 5px;
+}
+.strategy-glossary-item span {
+    display: block;
+    color: #475569;
+    font-size: 0.76rem;
+    line-height: 1.38;
+}
+div[data-testid="stExpander"]:has(.strategy-glossary-grid) {
+    overflow: visible !important;
+    padding-bottom: 8px !important;
+}
+
+.strategy-glossary-details {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(15,23,42,.035);
+    margin: 12px 0 16px 0;
+    overflow: hidden;
+}
+.strategy-glossary-details summary {
+    list-style: none;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    color: #0f172a;
+    font-weight: 850;
+    cursor: pointer;
+    user-select: none;
+}
+.strategy-glossary-details summary::-webkit-details-marker {
+    display: none;
+}
+.strategy-glossary-details summary::before {
+    content: "›";
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 950;
+    line-height: 1;
+    margin-right: 4px;
+}
+.strategy-glossary-details[open] summary::before {
+    transform: rotate(90deg);
+}
+.strategy-glossary-details summary,
+.strategy-glossary-details summary * {
+    background-color: transparent !important;
+}
+.strategy-glossary-details[open] summary {
+    border-bottom: 1px solid #e5edf7;
+}
+@media (max-width: 1200px) {
+    .strategy-glossary-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -3177,6 +3314,239 @@ def load_parquet(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return pd.read_parquet(path)
+
+
+def load_transfer_strategy_optimizer():
+    """Load the Sprint 14 transfer portfolio optimizer from src/strategy.
+
+    The import is intentionally lazy so the dashboard can still render a clear
+    error message if the strategy module or PuLP dependency is missing.
+    """
+    if str(STRATEGY_SRC_PATH) not in sys.path:
+        sys.path.append(str(STRATEGY_SRC_PATH))
+
+    from optimize_transfer_portfolio import optimize_portfolio
+
+    return optimize_portfolio
+
+
+def optimize_transfer_portfolio_with_style(
+    budget: float,
+    positions_needed: list[str],
+    scenario: str = "balanced",
+    max_signings: int = 5,
+    min_budget_utilization: float = 0.70,
+    portfolio_style: str = "balanced_portfolio",
+) -> pd.DataFrame:
+    """Optimize a transfer portfolio with optional concentration constraints.
+
+    This dashboard-side wrapper keeps Sprint 14C self-contained: it preserves the
+    existing ILP formulation and adds a portfolio-style layer to avoid overly
+    concentrated outputs such as several micro-bets plus one very expensive asset.
+    """
+    try:
+        import pulp
+    except ModuleNotFoundError:
+        # Fallback for environments where PuLP is not available but the project
+        # optimizer exists. The external optimizer may not support style constraints.
+        optimize_portfolio = load_transfer_strategy_optimizer()
+        return optimize_portfolio(
+            budget=budget,
+            positions_needed=positions_needed,
+            scenario=scenario,
+            max_signings=max_signings,
+            min_budget_utilization=min_budget_utilization,
+        )
+
+    input_file = STRATEGY_REPORTS_PATH / "transfer_portfolio_dataset.csv"
+    if not input_file.exists():
+        raise FileNotFoundError(
+            f"Portfolio dataset not found: {input_file}. Run src/strategy/build_transfer_portfolio_dataset.py first."
+        )
+
+    scenario_config = {
+        "conservative": {
+            "min_confidence": 75,
+            "max_avg_risk_proxy": 25,
+            "value_weight": 0.75,
+            "roi_weight": 0.25,
+        },
+        "balanced": {
+            "min_confidence": 60,
+            "max_avg_risk_proxy": 40,
+            "value_weight": 0.65,
+            "roi_weight": 0.35,
+        },
+        "aggressive": {
+            "min_confidence": 45,
+            "max_avg_risk_proxy": 60,
+            "value_weight": 0.50,
+            "roi_weight": 0.50,
+        },
+    }
+
+    style_config = {
+        # Pure value hunting. Keeps the previous formulation for comparison.
+        "value_hunting": {
+            "max_player_budget_share": None,
+            "max_player_portfolio_cost_share": None,
+            "min_mid_tier_signings": 0,
+        },
+        # Balanced portfolio. Avoids the 4 cheap bets + 1 budget filler pattern.
+        "balanced_portfolio": {
+            "max_player_budget_share": 0.45,
+            "max_player_portfolio_cost_share": 0.60,
+            "min_mid_tier_signings": 2,
+        },
+        # Allows one larger strategic asset, but still prevents full concentration.
+        "star_prospects": {
+            "max_player_budget_share": 0.65,
+            "max_player_portfolio_cost_share": 0.75,
+            "min_mid_tier_signings": 1,
+        },
+    }
+
+    if scenario not in scenario_config:
+        raise ValueError(f"Invalid scenario: {scenario}")
+    if portfolio_style not in style_config:
+        raise ValueError(f"Invalid portfolio style: {portfolio_style}")
+
+    def _minmax(series: pd.Series) -> pd.Series:
+        s = pd.to_numeric(series, errors="coerce")
+        if s.dropna().empty:
+            return pd.Series(0.0, index=s.index)
+        if s.max() == s.min():
+            return pd.Series(50.0, index=s.index)
+        return 100 * (s - s.min()) / (s.max() - s.min())
+
+    df = pd.read_csv(input_file)
+
+    if "expected_roi" not in df.columns:
+        df["expected_roi"] = np.where(
+            pd.to_numeric(df["market_value_eur"], errors="coerce") > 0,
+            pd.to_numeric(df["expected_upside"], errors="coerce") / pd.to_numeric(df["market_value_eur"], errors="coerce"),
+            np.nan,
+        )
+
+    if "matching_confidence_norm" not in df.columns:
+        df["matching_confidence_norm"] = pd.to_numeric(df["matching_confidence"], errors="coerce").clip(0, 1) * 100
+
+    numeric_cols = [
+        "portfolio_cost",
+        "portfolio_value_score",
+        "expected_upside",
+        "expected_roi",
+        "matching_confidence_norm",
+    ]
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    candidates = df[df["is_eligible_portfolio"] == True].copy()
+    candidates = candidates[candidates["portfolio_cost"] <= budget].copy()
+
+    if positions_needed:
+        candidates = candidates[candidates["position_group"].isin(positions_needed)].copy()
+
+    config = scenario_config[scenario]
+    style = style_config[portfolio_style]
+
+    candidates = candidates[candidates["matching_confidence_norm"] >= config["min_confidence"]].copy()
+    candidates["risk_proxy"] = 100 - candidates["matching_confidence_norm"]
+    candidates["roi_score_norm"] = _minmax(candidates["expected_roi"])
+    candidates["optimization_score"] = (
+        config["value_weight"] * candidates["portfolio_value_score"]
+        + config["roi_weight"] * candidates["roi_score_norm"]
+    )
+
+    candidates = candidates.dropna(
+        subset=[
+            "portfolio_cost",
+            "portfolio_value_score",
+            "optimization_score",
+            "expected_upside",
+            "expected_roi",
+            "risk_proxy",
+        ]
+    ).reset_index(drop=True)
+
+    if candidates.empty:
+        raise ValueError("No eligible candidates found under current constraints.")
+
+    model = pulp.LpProblem("transfer_portfolio_optimization_with_style", pulp.LpMaximize)
+    x = {i: pulp.LpVariable(f"x_{i}", cat="Binary") for i in candidates.index}
+
+    selected_count = pulp.lpSum(x[i] for i in candidates.index)
+    selected_cost = pulp.lpSum(candidates.loc[i, "portfolio_cost"] * x[i] for i in candidates.index)
+
+    model += pulp.lpSum(candidates.loc[i, "optimization_score"] * x[i] for i in candidates.index)
+
+    model += selected_cost <= budget
+    model += selected_cost >= budget * min_budget_utilization
+    model += selected_count <= max_signings
+    model += selected_count >= 1
+
+    model += pulp.lpSum(candidates.loc[i, "risk_proxy"] * x[i] for i in candidates.index) <= config[
+        "max_avg_risk_proxy"
+    ] * selected_count
+
+    unique_positions = list(dict.fromkeys(positions_needed))
+    if unique_positions and max_signings >= len(unique_positions):
+        for pos in unique_positions:
+            available_pos = candidates[candidates["position_group"] == pos]
+            if not available_pos.empty:
+                model += pulp.lpSum(x[i] for i in available_pos.index) >= 1
+
+    max_budget_share = style["max_player_budget_share"]
+    if max_budget_share is not None:
+        for i in candidates.index:
+            model += candidates.loc[i, "portfolio_cost"] * x[i] <= budget * max_budget_share
+
+    max_portfolio_cost_share = style["max_player_portfolio_cost_share"]
+    if max_portfolio_cost_share is not None:
+        for i in candidates.index:
+            model += candidates.loc[i, "portfolio_cost"] * x[i] <= max_portfolio_cost_share * selected_cost
+
+    min_mid_tier_signings = int(style["min_mid_tier_signings"])
+    if min_mid_tier_signings > 0 and max_signings >= min_mid_tier_signings:
+        # Require a minimum number of players above a modest cost floor. This is
+        # a practical proxy for avoiding portfolios made almost entirely of very
+        # low-cost punts.
+        mid_tier_floor = max(1_500_000, budget * 0.05)
+        mid_tier_candidates = candidates[candidates["portfolio_cost"] >= mid_tier_floor]
+        if len(mid_tier_candidates) >= min_mid_tier_signings:
+            model += pulp.lpSum(x[i] for i in mid_tier_candidates.index) >= min_mid_tier_signings
+
+    solver = pulp.PULP_CBC_CMD(msg=False)
+    model.solve(solver)
+    status = pulp.LpStatus[model.status]
+
+    # If the selected style is too restrictive for a specific input combination,
+    # fall back to a feasible value-hunting solution instead of breaking the UI.
+    if status != "Optimal" and portfolio_style != "value_hunting":
+        return optimize_transfer_portfolio_with_style(
+            budget=budget,
+            positions_needed=positions_needed,
+            scenario=scenario,
+            max_signings=max_signings,
+            min_budget_utilization=min_budget_utilization,
+            portfolio_style="value_hunting",
+        )
+
+    if status != "Optimal":
+        raise ValueError(f"No optimal solution found. Solver status: {status}")
+
+    selected_idx = [i for i in candidates.index if pulp.value(x[i]) == 1]
+    portfolio = candidates.loc[selected_idx].copy()
+    portfolio["scenario"] = scenario
+    portfolio["budget"] = budget
+    portfolio["max_signings"] = max_signings
+    portfolio["solver_status"] = status
+    portfolio["portfolio_style"] = portfolio_style
+    portfolio["budget_utilization"] = portfolio["portfolio_cost"].sum() / budget
+    portfolio["player_budget_share"] = portfolio["portfolio_cost"] / budget
+    portfolio["player_portfolio_cost_share"] = portfolio["portfolio_cost"] / portfolio["portfolio_cost"].sum()
+
+    return portfolio.sort_values("optimization_score", ascending=False)
 
 
 def translate_tier(value):
@@ -3556,6 +3926,35 @@ def render_metric_card_with_caption(label, value, caption=None, show_info_icon=F
         unsafe_allow_html=True,
     )
 
+
+
+
+
+def render_strategy_metric_card(label, value, caption=None, tooltip=None):
+    """Render Sprint 14 KPI card with click-to-open info disclosure."""
+    tooltip_html = (
+        "<details class='strategy-info-details'>"
+        "<summary>i</summary>"
+        f"<div>{html.escape(str(tooltip))}</div>"
+        "</details>"
+        if tooltip
+        else ""
+    )
+    caption_html = (
+        f"<div class='helper-caption'>{html.escape(str(caption))}</div>"
+        if caption
+        else ""
+    )
+    st.markdown(
+        f"""
+        <div class="metric-card metric-card-info">
+            <div class="metric-label metric-label-with-info"><span>{html.escape(str(label))}</span>{tooltip_html}</div>
+            <div class="metric-value">{html.escape(str(value))}</div>
+            {caption_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_player_profile_header(row: pd.Series, name_col: str | None = None, title: str | None = None) -> None:
@@ -7974,17 +8373,6 @@ for _page_option in PAGE_OPTIONS:
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 dashboard_page = st.session_state.dashboard_navigation_page
 
-# Global scouting search is useful for exploration pages, but it is intentionally
-# hidden in Strategy and Methodology to avoid suggesting that it filters the
-# optimization engine or the methodological documentation.
-SHOW_GLOBAL_SEARCH_PAGES = {
-    "Executive Overview",
-    "Market Opportunities",
-    "Player Intelligence",
-    "Recruitment Board",
-}
-show_global_search_ui = dashboard_page in SHOW_GLOBAL_SEARCH_PAGES
-
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     f"""
@@ -10464,32 +10852,35 @@ st.markdown(
 
 base_df = add_executive_decision_features(scouting_df.copy())
 
-# Sprint 13.5 v2: compact command row. Search and active context share the first viewport row.
-# Hidden on Strategy and Methodology because those pages have their own decision/documentation flows.
-if show_global_search_ui:
+# Search/context panels are useful in scouting pages, but they create dead space
+# in Strategy and Methodology. Keep them out of those pages.
+SHOW_COMMAND_PANEL = dashboard_page not in {"Transfer Strategy", "Methodology"}
+
+# Sprint 13.5 v2: compact command row. Search and active context share the first viewport row
+# only where the command/search layer is relevant.
+if SHOW_COMMAND_PANEL:
     command_left_col, command_right_col = st.columns([0.52, 0.48], gap="medium")
     context_panel_placeholder = command_right_col.empty()
 else:
-    command_left_col = None
     context_panel_placeholder = st.empty()
 
 # Clear the global search without external navigation.
 def clear_global_scouting_search() -> None:
     st.session_state["global_scouting_search"] = None
 
-if show_global_search_ui:
-    # CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
-    # Audit note: player suggestions are built from football_df, not from a hardcoded
-    # demo dictionary. football_df is constrained to the latest available season in
-    # build_football_universe_dataset() to avoid stale historical clubs in lookup.
-    search_options, search_label_to_raw = build_search_options(football_df)
+# CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
+# Audit note: player suggestions are built from football_df, not from a hardcoded
+# demo dictionary. football_df is constrained to the latest available season in
+# build_football_universe_dataset() to avoid stale historical clubs in lookup.
+search_options, search_label_to_raw = build_search_options(football_df)
 
-    # Search header, input and examples are rendered as a single compact product card.
-    current_global_search = st.session_state.get("global_scouting_search")
-    if current_global_search is not None and str(current_global_search) not in search_options:
-        # Clear stale selections created before the latest-season Football Intelligence audit.
-        st.session_state["global_scouting_search"] = None
+# Search header, input and examples are rendered as a single compact product card.
+current_global_search = st.session_state.get("global_scouting_search")
+if current_global_search is not None and str(current_global_search) not in search_options:
+    # Clear stale selections created before the latest-season Football Intelligence audit.
+    st.session_state["global_scouting_search"] = None
 
+if SHOW_COMMAND_PANEL:
     with command_left_col:
         with st.container(border=True):
             st.markdown(
@@ -10550,11 +10941,8 @@ if show_global_search_ui:
                         """,
                         unsafe_allow_html=True,
                     )
-
 else:
     global_search_label = None
-    search_options = []
-    search_label_to_raw = {}
 
 global_search_query = "" if global_search_label is None else search_label_to_raw.get(str(global_search_label), str(global_search_label))
 global_search_display = "" if global_search_label is None else str(global_search_label)
@@ -10955,7 +11343,7 @@ for item in active_filters:
         f"<span class='context-chip context-chip-neutral'>{html.escape(item_text)}</span>"
     )
 context_chips = "".join(context_chip_items)
-if show_global_search_ui:
+if SHOW_COMMAND_PANEL:
     with context_panel_placeholder.container():
         st.markdown(
             f"""
@@ -10979,7 +11367,7 @@ if show_global_search_ui:
         )
 
 
-if search_is_outside_scouting_player and not outside_football_profile.empty:
+if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_football_profile.empty:
     outside_row = outside_football_profile.iloc[0]
     outside_name = html.escape(str(get_player_name(outside_row)))
     outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
@@ -11032,7 +11420,7 @@ if search_is_outside_scouting_player and not outside_football_profile.empty:
     )
 
 
-if search_is_outside_active_filters and not outside_active_profile.empty:
+if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_active_profile.empty:
     outside_row = outside_active_profile.iloc[0]
     outside_name = html.escape(str(get_player_name(outside_row)))
     outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
@@ -11061,7 +11449,7 @@ if search_is_outside_active_filters and not outside_active_profile.empty:
     )
 
 # Contextual actions: clear search without detached guide duplication.
-if search_query_clean:
+if SHOW_COMMAND_PANEL and search_query_clean:
     clear_col, _spacer_col = st.columns([0.16, 0.84])
     with clear_col:
         st.markdown('<div class="search-clear-row">', unsafe_allow_html=True)
@@ -11574,621 +11962,476 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
 
 
 def render_transfer_strategy_placeholder() -> None:
-    """Sprint 14.4 — Transfer Strategy Engine dashboard layer."""
+    """Render Sprint 14C Transfer Strategy Engine.
 
+    The section exposes the ILP portfolio optimizer implemented in src/strategy.
+    It turns player-level opportunity signals into an optimized transfer portfolio
+    under budget, positional, risk/scenario and squad-size constraints.
+    """
     render_product_page_header(
-        "Transfer Strategy Engine",
-        "⭐ Strategic Recruitment Engine",
-        "Build the optimal transfer portfolio under real market constraints."
-        if LANG == "EN"
-        else "Construye la cartera óptima de fichajes bajo restricciones reales de mercado.",
-    )
-
-    portfolio_path = ROOT / "reports" / "portfolio" / "portfolio_candidates.csv"
-
-    if not portfolio_path.exists():
-        st.warning(
-            "Portfolio candidates dataset not found. Run Sprint 14.1 first."
+        "Strategic Recruitment Engine",
+        "⭐ Transfer Strategy Engine",
+        (
+            "Optimize a transfer portfolio under budget, position, risk and squad-size constraints."
             if LANG == "EN"
-            else "No se encuentra el dataset de candidatos de cartera. Ejecuta primero el Sprint 14.1."
-        )
-        st.code("python src/strategy/build_portfolio_dataset.py")
-        return
-
-    try:
-        import pulp
-    except ImportError:
-        st.error(
-            "PuLP is required for this module. Install it with: pip install pulp"
-            if LANG == "EN"
-            else "PuLP es necesario para este módulo. Instálalo con: pip install pulp"
-        )
-        return
-
-    df = pd.read_csv(portfolio_path).copy()
-
-    if df.empty:
-        st.info("No portfolio candidates available." if LANG == "EN" else "No hay candidatos de cartera disponibles.")
-        return
-
-    score_columns = {
-        "Conservative": "portfolio_score_conservative",
-        "Balanced": "portfolio_score_balanced",
-        "Aggressive": "portfolio_score_aggressive",
-        "Conservador": "portfolio_score_conservative",
-        "Equilibrado": "portfolio_score_balanced",
-        "Agresivo": "portfolio_score_aggressive",
-    }
-
-    scenario_explanations = {
-        "Conservative": "Prioritizes confidence, low risk and analytical stability. Best suited for clubs with limited margin for transfer error.",
-        "Balanced": "Maximizes risk-adjusted value by combining opportunity, upside, ROI, confidence and risk control.",
-        "Aggressive": "Prioritizes growth, future asset potential and capital efficiency, accepting higher uncertainty.",
-        "Conservador": "Prioriza confianza, bajo riesgo y estabilidad analítica. Adecuado para clubes con poco margen de error en fichajes.",
-        "Equilibrado": "Maximiza valor ajustado por riesgo combinando oportunidad, upside, ROI, confianza y control de riesgo.",
-        "Agresivo": "Prioriza crecimiento, potencial de activo futuro y eficiencia de capital, aceptando mayor incertidumbre.",
-    }
-
-    metric_definitions = {
-        "Opportunity": "0–100. Higher values indicate stronger current market opportunity based on undervaluation, growth and confidence.",
-        "Risk": "0–100. Higher values indicate greater uncertainty. Lower is better.",
-        "Confidence": "0–100. Higher values indicate stronger analytical reliability of the signal.",
-        "Future Asset": "0–100. Composite asset potential based on ROI, upside, opportunity, confidence and risk.",
-        "ROI Score": "0–100. Normalized capital-efficiency proxy derived from the estimated market gap relative to current market value.",
-        "Portfolio Score": "Scenario-specific 0–100-style utility score used by the optimizer as the objective function.",
-    } if LANG == "EN" else {
-        "Opportunity": "0–100. Valores más altos indican mayor oportunidad actual de mercado según infravaloración, crecimiento y confianza.",
-        "Risk": "0–100. Valores más altos indican mayor incertidumbre. Menor es mejor.",
-        "Confidence": "0–100. Valores más altos indican mayor fiabilidad analítica de la señal.",
-        "Future Asset": "0–100. Potencial compuesto de activo basado en ROI, upside, oportunidad, confianza y riesgo.",
-        "ROI Score": "0–100. Proxy normalizada de eficiencia de capital derivada del gap estimado frente al valor de mercado actual.",
-        "Portfolio Score": "Score de utilidad específico por escenario, en escala tipo 0–100, usado por el optimizador como función objetivo.",
-    }
-
-    required_cols = [
-        "player_name_fbref",
-        "club",
-        "league",
-        "position_group",
-        "portfolio_cost_eur",
-        "opportunity_score",
-        "risk_score",
-        "confidence_score",
-        "future_asset_score",
-        "roi_score",
-        "upside_eur",
-        "portfolio_score_conservative",
-        "portfolio_score_balanced",
-        "portfolio_score_aggressive",
-    ]
-
-    missing_cols = [c for c in required_cols if c not in df.columns]
-    if missing_cols:
-        st.error(
-            ("Missing columns in portfolio dataset: " if LANG == "EN" else "Faltan columnas en el dataset de cartera: ")
-            + ", ".join(missing_cols)
-        )
-        return
-
-    for col in [
-        "portfolio_cost_eur",
-        "opportunity_score",
-        "risk_score",
-        "confidence_score",
-        "future_asset_score",
-        "roi_score",
-        "upside_eur",
-        "portfolio_score_conservative",
-        "portfolio_score_balanced",
-        "portfolio_score_aggressive",
-    ]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    if "is_optimization_candidate" in df.columns:
-        df = df[df["is_optimization_candidate"].astype(str).str.lower().isin(["true", "1"])].copy()
-
-    df = df.dropna(subset=["portfolio_cost_eur", "position_group"]).copy()
-    df = df[df["portfolio_cost_eur"] > 0].copy()
-
-    if df.empty:
-        st.info("No valid optimization candidates available." if LANG == "EN" else "No hay candidatos válidos para optimización.")
-        return
-
-    st.markdown(
-        """
-<style>
-.strategy-explain-card {
-    background: #ffffff;
-    border: 1px solid #dbeafe;
-    border-radius: 16px;
-    padding: 13px 15px;
-    box-shadow: 0 8px 22px rgba(15,23,42,.045);
-    margin: 10px 0 14px 0;
-    color: #334155;
-    font-size: .86rem;
-    line-height: 1.45;
-}
-.strategy-insight-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid #bfdbfe;
-    border-left: 4px solid #2563eb;
-    border-radius: 16px;
-    padding: 13px 15px;
-    margin: 12px 0 16px 0;
-    color: #334155;
-    font-size: .87rem;
-    line-height: 1.45;
-    box-shadow: 0 8px 22px rgba(37,99,235,.055);
-}
-.strategy-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
-    font-size: .88rem;
-}
-.strategy-table th {
-    background: #f8fafc;
-    color: #475569;
-    font-size: .76rem;
-    font-weight: 950;
-    padding: 12px 11px;
-    border-bottom: 1px solid #e2e8f0;
-    text-align: left;
-}
-.strategy-table td {
-    padding: 12px 11px;
-    border-bottom: 1px solid #edf2f7;
-    color: #0f172a;
-    vertical-align: middle;
-}
-.strategy-table tr:hover td { background: #f8fbff; }
-.strategy-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-.strategy-score-pill {
-    display: inline-block;
-    border-radius: 999px;
-    padding: 4px 9px;
-    background: #eff6ff;
-    color: #1e3a8a;
-    border: 1px solid #bfdbfe;
-    font-weight: 900;
-}
-.strategy-scenario-card-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin: 12px 0 16px 0;
-}
-.strategy-scenario-card {
-    background: #ffffff;
-    border: 1px solid #dbeafe;
-    border-radius: 16px;
-    padding: 13px 15px;
-    box-shadow: 0 8px 22px rgba(15,23,42,.045);
-}
-.strategy-scenario-name {
-    color: #0f172a;
-    font-size: .92rem;
-    font-weight: 950;
-    margin-bottom: 5px;
-}
-.strategy-scenario-desc {
-    color: #475569;
-    font-size: .82rem;
-    line-height: 1.35;
-}
-.strategy-score-help {
-    border-bottom: 1px dotted #64748b;
-    cursor: help;
-}
-.strategy-rationale {
-    color: #334155;
-    font-size: .78rem;
-    line-height: 1.42;
-}
-@media (max-width: 1100px) {
-    .strategy-scenario-card-grid { grid-template-columns: 1fr; }
-}
-</style>
-""",
-        unsafe_allow_html=True,
+            else "Optimiza una cartera de fichajes bajo restricciones de presupuesto, posición, riesgo y tamaño de plantilla."
+        ),
     )
 
     st.markdown(
         f"""
 <div class="strategy-banner">
-    <div class="strategy-eyebrow">{html.escape('Transfer Strategy Engine' if LANG == 'EN' else 'Transfer Strategy Engine')}</div>
-    <div class="strategy-title">{html.escape('Build the optimal transfer portfolio under real market constraints.' if LANG == 'EN' else 'Construye la cartera óptima de fichajes bajo restricciones reales de mercado.')}</div>
-    <div class="strategy-copy">{html.escape('The engine maximizes a scenario-specific portfolio score subject to budget, squad needs and maximum number of signings.' if LANG == 'EN' else 'El motor maximiza un score de cartera específico por escenario sujeto a presupuesto, necesidades de plantilla y número máximo de fichajes.')}</div>
+    <div class="strategy-eyebrow">{html.escape('Sprint 14 · Portfolio Optimization Layer' if LANG == 'EN' else 'Sprint 14 · Capa de optimización de cartera')}</div>
+    <div class="strategy-title">{html.escape('From player ranking to portfolio decision.' if LANG == 'EN' else 'Del ranking de jugadores a la decisión de cartera.')}</div>
+    <div class="strategy-copy">{html.escape('This module formulates transfer planning as a Binary Integer Programming problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo formula la planificación de fichajes como un problema de Programación Entera Binaria: seleccionar la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
-    with st.expander("📘 " + ("Score and scenario definitions" if LANG == "EN" else "Definición de scores y escenarios"), expanded=False):
-        scenario_text = "<br>".join(
-            f"<b>{html.escape(k)}:</b> {html.escape(v)}"
-            for k, v in scenario_explanations.items()
-            if (LANG == "EN" and k in {"Conservative", "Balanced", "Aggressive"})
-            or (LANG == "ES" and k in {"Conservador", "Equilibrado", "Agresivo"})
-        )
-        metric_text = "<br>".join(
-            f"<b>{html.escape(k)}:</b> {html.escape(v)}"
-            for k, v in metric_definitions.items()
-        )
-        st.markdown(
-            f"""
-<div class="strategy-explain-card">
-    <b>{html.escape('Scenarios' if LANG == 'EN' else 'Escenarios')}</b><br>
-    {scenario_text}
-    <br><br>
-    <b>{html.escape('Main scores' if LANG == 'EN' else 'Scores principales')}</b><br>
-    {metric_text}
-</div>
-""",
-            unsafe_allow_html=True,
-        )
+    with st.expander(
+        "🧠 " + ("Optimization methodology" if LANG == "EN" else "Metodología de optimización"),
+        expanded=False,
+    ):
+        if LANG == "EN":
+            st.markdown(
+                """
+                The engine uses the Sprint 14 portfolio dataset and solves a 0-1 selection problem.
 
-    c1, c2, c3, c4 = st.columns([1, 1.25, 1, 1])
+                **Decision variable:** `x_i = 1` if player `i` is selected, `0` otherwise.
 
-    with c1:
-        budget_millions = st.number_input(
+                **Objective:** maximize portfolio optimization score.
+
+                **Main constraints:** budget ceiling, minimum budget utilization, maximum signings, average risk threshold, positional coverage and portfolio concentration depending on the selected style.
+                """
+            )
+        else:
+            st.markdown(
+                """
+                El motor utiliza el dataset de cartera del Sprint 14 y resuelve un problema de selección 0-1.
+
+                **Variable de decisión:** `x_i = 1` si el jugador `i` es seleccionado, `0` en caso contrario.
+
+                **Objetivo:** maximizar el score de optimización de la cartera.
+
+                **Restricciones principales:** presupuesto máximo, utilización mínima del presupuesto, número máximo de fichajes, umbral medio de riesgo, cobertura posicional y concentración de cartera según el estilo seleccionado.
+                """
+            )
+
+    controls_top = st.columns([1.00, 1.00, 1.00, 1.15, 1.00, 1.00], gap="large")
+
+    with controls_top[0]:
+        budget_m = st.slider(
             "Budget (€M)" if LANG == "EN" else "Presupuesto (€M)",
-            min_value=1.0,
-            max_value=150.0,
-            value=40.0,
-            step=1.0,
+            min_value=5,
+            max_value=100,
+            value=30,
+            step=5,
+            key="transfer_strategy_budget_m",
         )
 
-    with c2:
-        positions_needed = st.multiselect(
-            "Required positions" if LANG == "EN" else "Posiciones requeridas",
-            ["GK", "DEF", "MID", "ATT"],
-            default=["DEF", "MID"],
-        )
-
-    with c3:
-        risk_profile_label = st.selectbox(
-            "Risk profile" if LANG == "EN" else "Perfil de riesgo",
-            ["Conservative", "Balanced", "Aggressive"] if LANG == "EN" else ["Conservador", "Equilibrado", "Agresivo"],
+    with controls_top[1]:
+        scenario_labels = {
+            "conservative": "Conservative" if LANG == "EN" else "Conservador",
+            "balanced": "Balanced" if LANG == "EN" else "Equilibrado",
+            "aggressive": "Aggressive" if LANG == "EN" else "Agresivo",
+        }
+        scenario_display = st.selectbox(
+            "Scenario" if LANG == "EN" else "Escenario",
+            list(scenario_labels.values()),
             index=1,
+            key="transfer_strategy_scenario_display",
         )
+        scenario = {v: k for k, v in scenario_labels.items()}[scenario_display]
 
-    with c4:
-        max_players = st.number_input(
-            "Max players" if LANG == "EN" else "Máx. fichajes",
+    with controls_top[2]:
+        risk_profile_labels = {
+            "low": "Low" if LANG == "EN" else "Bajo",
+            "medium": "Medium" if LANG == "EN" else "Medio",
+            "high": "High" if LANG == "EN" else "Alto",
+        }
+        risk_profile_display = st.selectbox(
+            "Risk Profile" if LANG == "EN" else "Perfil de riesgo",
+            list(risk_profile_labels.values()),
+            index={"conservative": 0, "balanced": 1, "aggressive": 2}.get(scenario, 1),
+            key="transfer_strategy_risk_profile_display",
+            help=(
+                "Used as an executive label. The optimization thresholds are driven by the selected scenario."
+                if LANG == "EN"
+                else "Se usa como etiqueta ejecutiva. Los umbrales de optimización los determina el escenario seleccionado."
+            ),
+        )
+        risk_profile = {v: k for k, v in risk_profile_labels.items()}[risk_profile_display]
+
+    with controls_top[3]:
+        portfolio_style_labels = {
+            "value_hunting": "Value Opportunities",
+            "balanced_portfolio": "Balanced Squad Building",
+            "star_prospects": "Star + Prospects",
+        }
+        portfolio_style_display = st.selectbox(
+            "Portfolio Style" if LANG == "EN" else "Estilo cartera",
+            list(portfolio_style_labels.values()),
+            index=1,
+            key="transfer_strategy_portfolio_style_display",
+            help=(
+                "Controls concentration and squad-building logic. Balanced Squad Building prevents one player from absorbing too much of the budget."
+                if LANG == "EN"
+                else "Controla la concentración y la lógica de construcción de plantilla. Balanced Squad Building evita que un jugador absorba demasiado presupuesto."
+            ),
+        )
+        portfolio_style = {v: k for k, v in portfolio_style_labels.items()}[portfolio_style_display]
+
+    with controls_top[4]:
+        max_signings = st.slider(
+            "Max Signings" if LANG == "EN" else "Máx. fichajes",
             min_value=1,
-            max_value=8,
+            max_value=10,
             value=5,
             step=1,
+            key="transfer_strategy_max_signings",
         )
 
-    strict_positions = st.checkbox(
-        "Restrict portfolio only to selected positions"
-        if LANG == "EN"
-        else "Limitar la cartera únicamente a las posiciones seleccionadas",
-        value=False,
-        help=(
-            "If disabled, selected positions are minimum requirements. If enabled, the optimizer can only select players from those positions."
-            if LANG == "EN"
-            else "Si está desactivado, las posiciones seleccionadas son requisitos mínimos. Si está activado, el optimizador solo puede elegir jugadores de esas posiciones."
-        ),
-    )
-
-    score_col = score_columns[risk_profile_label]
-
-    def _solve_strategy(
-        candidate_df: pd.DataFrame,
-        score_column: str,
-        budget_m: float,
-        required_positions: list[str],
-        max_n: int,
-        strict: bool,
-    ) -> tuple[pd.DataFrame, dict]:
-        work = candidate_df.copy()
-
-        if strict and required_positions:
-            work = work[work["position_group"].isin(required_positions)].copy()
-
-        work = work.dropna(subset=["portfolio_cost_eur", score_column, "position_group"]).reset_index(drop=True)
-
-        if work.empty:
-            return work, {
-                "status": "No candidates",
-                "selected_players": 0,
-                "total_cost_eur": 0.0,
-                "budget_used_pct": 0.0,
-                "expected_upside_eur": 0.0,
-                "expected_roi_score": None,
-                "average_risk": None,
-                "average_confidence": None,
-                "average_future_asset_score": None,
-                "objective_value": None,
-            }
-
-        budget_eur = float(budget_m) * 1_000_000
-
-        problem = pulp.LpProblem("transfer_strategy_dashboard", pulp.LpMaximize)
-        x = {i: pulp.LpVariable(f"x_{i}", cat="Binary") for i in work.index}
-
-        problem += pulp.lpSum(work.loc[i, score_column] * x[i] for i in work.index)
-        problem += pulp.lpSum(work.loc[i, "portfolio_cost_eur"] * x[i] for i in work.index) <= budget_eur
-        problem += pulp.lpSum(x[i] for i in work.index) <= int(max_n)
-
-        for pos in required_positions:
-            problem += pulp.lpSum(x[i] for i in work.index if work.loc[i, "position_group"] == pos) >= 1
-
-        status_code = problem.solve(pulp.PULP_CBC_CMD(msg=False))
-        status = pulp.LpStatus[status_code]
-
-        selected_idx = [i for i in work.index if pulp.value(x[i]) == 1]
-        selected = work.loc[selected_idx].copy().sort_values(score_column, ascending=False)
-
-        total_cost = float(selected["portfolio_cost_eur"].sum()) if not selected.empty else 0.0
-        expected_upside = float(selected["upside_eur"].sum()) if not selected.empty else 0.0
-
-        summary = {
-            "status": status,
-            "selected_players": int(len(selected)),
-            "total_cost_eur": total_cost,
-            "budget_used_pct": round(total_cost / budget_eur * 100, 2) if budget_eur else 0.0,
-            "expected_upside_eur": expected_upside,
-            "expected_roi_score": round(float(selected["roi_score"].mean()), 2) if not selected.empty else None,
-            "average_risk": round(float(selected["risk_score"].mean()), 2) if not selected.empty else None,
-            "average_confidence": round(float(selected["confidence_score"].mean()), 2) if not selected.empty else None,
-            "average_future_asset_score": round(float(selected["future_asset_score"].mean()), 2) if not selected.empty else None,
-            "objective_value": round(float(pulp.value(problem.objective)), 4) if pulp.value(problem.objective) is not None else None,
-        }
-
-        return selected, summary
-
-    selected, summary = _solve_strategy(
-        candidate_df=df,
-        score_column=score_col,
-        budget_m=budget_millions,
-        required_positions=positions_needed,
-        max_n=max_players,
-        strict=strict_positions,
-    )
-
-    if summary["status"] != "Optimal":
-        st.warning(
-            f"Optimization status: {summary['status']}"
-            if LANG == "EN"
-            else f"Estado de la optimización: {summary['status']}"
-        )
-        st.info(
-            "Try increasing the budget, reducing required positions or increasing max players."
-            if LANG == "EN"
-            else "Prueba a aumentar presupuesto, reducir posiciones requeridas o aumentar el máximo de fichajes."
-        )
-        return
-
-    k1, k2, k3, k4, k5 = st.columns(5)
-
-    with k1:
-        st.metric("Total Cost" if LANG == "EN" else "Coste total", f"€{summary['total_cost_eur'] / 1_000_000:.1f}M")
-    with k2:
-        st.metric("Budget Used" if LANG == "EN" else "Presupuesto usado", f"{summary['budget_used_pct']:.1f}%")
-    with k3:
-        st.metric("Expected Upside" if LANG == "EN" else "Upside esperado", f"€{summary['expected_upside_eur'] / 1_000_000:.1f}M")
-    with k4:
-        st.metric("Average Risk" if LANG == "EN" else "Riesgo medio", f"{summary['average_risk']:.1f}")
-    with k5:
-        st.metric("Avg Confidence" if LANG == "EN" else "Confianza media", f"{summary['average_confidence']:.1f}")
-
-    st.markdown(
-        f"""
-<div class="strategy-insight-card">
-    <b>{html.escape('Budget interpretation' if LANG == 'EN' else 'Lectura del presupuesto')}</b><br>
-    {html.escape('The optimizer is not forced to spend the full budget. It maximizes portfolio utility under the budget ceiling, so unused budget means no additional candidate improves the objective enough under the current constraints.' if LANG == 'EN' else 'El optimizador no está obligado a gastar todo el presupuesto. Maximiza la utilidad de la cartera bajo un techo presupuestario, por lo que el presupuesto no utilizado indica que ningún candidato adicional mejora suficientemente la función objetivo bajo las restricciones actuales.')}
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("### " + ("Scenario Comparison" if LANG == "EN" else "Comparación de escenarios"))
-
-    scenario_rows = []
-    scenario_details = {}
-
-    scenario_labels = (
-        ["Conservative", "Balanced", "Aggressive"]
-        if LANG == "EN"
-        else ["Conservador", "Equilibrado", "Agresivo"]
-    )
-
-    for label in scenario_labels:
-        scen_score_col = score_columns[label]
-        scen_selected, scen_summary = _solve_strategy(
-            candidate_df=df,
-            score_column=scen_score_col,
-            budget_m=budget_millions,
-            required_positions=positions_needed,
-            max_n=max_players,
-            strict=strict_positions,
+    with controls_top[5]:
+        min_budget_utilization = st.slider(
+            "Min Budget Use" if LANG == "EN" else "Uso mín. presupuesto",
+            min_value=0.50,
+            max_value=0.95,
+            value=0.70,
+            step=0.05,
+            key="transfer_strategy_min_budget_utilization",
+            help=(
+                "Minimum percentage of budget that the optimized portfolio must spend."
+                if LANG == "EN"
+                else "Porcentaje mínimo del presupuesto que debe consumir la cartera optimizada."
+            ),
         )
 
-        scenario_details[label] = scen_summary
-
-        scenario_rows.append({
-            "Scenario" if LANG == "EN" else "Escenario": label,
-            "Status" if LANG == "EN" else "Estado": scen_summary["status"],
-            "Players" if LANG == "EN" else "Jugadores": scen_summary["selected_players"],
-            "Cost (€M)" if LANG == "EN" else "Coste (€M)": round(scen_summary["total_cost_eur"] / 1_000_000, 2),
-            "Budget Used %" if LANG == "EN" else "Presupuesto usado %": scen_summary["budget_used_pct"],
-            "Upside (€M)" if LANG == "EN" else "Upside (€M)": round(scen_summary["expected_upside_eur"] / 1_000_000, 2),
-            "Avg Risk" if LANG == "EN" else "Riesgo medio": scen_summary["average_risk"],
-            "Avg Confidence" if LANG == "EN" else "Confianza media": scen_summary["average_confidence"],
-            "Future Asset" if LANG == "EN" else "Future Asset": scen_summary["average_future_asset_score"],
-        })
-
-    scenario_df = pd.DataFrame(scenario_rows)
-    st.dataframe(scenario_df, use_container_width=True, hide_index=True)
-
-    scenario_cards_html = (
-        """
-<div class="strategy-scenario-card-grid">
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🟢 Conservative</div>
-        <div class="strategy-scenario-desc">Lower risk and greater portfolio stability.</div>
-    </div>
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🟡 Balanced</div>
-        <div class="strategy-scenario-desc">Trade-off between upside, risk control and decision robustness.</div>
-    </div>
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🔴 Aggressive</div>
-        <div class="strategy-scenario-desc">Higher uncertainty exposure in search of superior returns.</div>
-    </div>
-</div>
-"""
-        if LANG == "EN"
-        else """
-<div class="strategy-scenario-card-grid">
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🟢 Conservador</div>
-        <div class="strategy-scenario-desc">Menor riesgo y mayor estabilidad.</div>
-    </div>
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🟡 Equilibrado</div>
-        <div class="strategy-scenario-desc">Compromiso entre upside, control del riesgo y robustez de decisión.</div>
-    </div>
-    <div class="strategy-scenario-card">
-        <div class="strategy-scenario-name">🔴 Agresivo</div>
-        <div class="strategy-scenario-desc">Mayor exposición a incertidumbre buscando retornos superiores.</div>
-    </div>
-</div>
-"""
+    positions_needed = st.multiselect(
+        "Positions Needed" if LANG == "EN" else "Posiciones necesarias",
+        ["DEF", "MID", "ATT"],
+        default=["DEF", "MID", "ATT"],
+        key="transfer_strategy_positions_needed",
     )
-    st.markdown(scenario_cards_html, unsafe_allow_html=True)
-
-    st.markdown("### " + ("Recommended Portfolio" if LANG == "EN" else "Cartera recomendada"))
-
-    def _selection_rationale(row: pd.Series, active_profile_label: str, cost_reference: float) -> str:
-        reasons = []
-
-        opportunity = get_numeric_value(row, "opportunity_score", 0)
-        risk = get_numeric_value(row, "risk_score", 100)
-        confidence = get_numeric_value(row, "confidence_score", 0)
-        future_asset = get_numeric_value(row, "future_asset_score", 0)
-        cost = get_numeric_value(row, "portfolio_cost_eur", np.nan)
-
-        if opportunity >= 85:
-            reasons.append("High opportunity" if LANG == "EN" else "Alta oportunidad")
-        elif opportunity >= 75:
-            reasons.append("Solid opportunity signal" if LANG == "EN" else "Señal de oportunidad sólida")
-
-        if pd.notna(cost) and pd.notna(cost_reference) and cost <= cost_reference:
-            reasons.append("Efficient cost" if LANG == "EN" else "Coste eficiente")
-
-        normalized_profile = str(active_profile_label).lower()
-        if normalized_profile in {"aggressive", "agresivo"}:
-            if future_asset >= 45 or opportunity >= 80:
-                reasons.append("Aggressive profile fit" if LANG == "EN" else "Encaje con perfil agresivo")
-        elif normalized_profile in {"conservative", "conservador"}:
-            if risk <= 25:
-                reasons.append("Low uncertainty" if LANG == "EN" else "Baja incertidumbre")
-            if confidence >= 90:
-                reasons.append("High confidence" if LANG == "EN" else "Alta confianza")
-        else:
-            if risk <= 45 and confidence >= 80:
-                reasons.append("Balanced fit" if LANG == "EN" else "Encaje equilibrado")
-            elif confidence >= 90:
-                reasons.append("High confidence" if LANG == "EN" else "Alta confianza")
-
-        if not reasons:
-            reasons.append("Optimizes portfolio objective" if LANG == "EN" else "Optimiza la función objetivo")
-
-        return "<br>".join(f"✓ {html.escape(reason)}" for reason in reasons[:3])
-
-    def _portfolio_html_table(portfolio_df: pd.DataFrame, active_score_col: str) -> str:
-        score_tooltip = (
-            "Score used by the optimizer to select the portfolio. It depends on the selected scenario and does not represent a probability."
-            if LANG == "EN"
-            else "Score utilizado por el optimizador para seleccionar la cartera. Depende del escenario elegido y no representa una probabilidad."
-        )
-        cost_reference = pd.to_numeric(df["portfolio_cost_eur"], errors="coerce").median()
-
-        table_cols = [
-            ("player_name_fbref", "Player" if LANG == "EN" else "Jugador"),
-            ("club", "Club"),
-            ("league", "League" if LANG == "EN" else "Liga"),
-            ("position_group", "Position" if LANG == "EN" else "Posición"),
-            ("portfolio_cost_eur", "Cost" if LANG == "EN" else "Coste"),
-            ("opportunity_score", "Opp."),
-            ("risk_score", "Risk"),
-            ("future_asset_score", "Future Asset"),
-            (active_score_col, "Portfolio Score"),
-            ("selection_rationale", "Selection Rationale" if LANG == "EN" else "Razón de inclusión"),
-        ]
-
-        header_cells = []
-        for col, label in table_cols:
-            if col == active_score_col:
-                header_cells.append(
-                    f"<th><span class='strategy-score-help' title='{html.escape(score_tooltip)}'>{html.escape(label)} ⓘ</span></th>"
-                )
-            else:
-                header_cells.append(f"<th>{html.escape(label)}</th>")
-        header = "".join(header_cells)
-        rows = []
-
-        for _, row in portfolio_df.iterrows():
-            cells = []
-            for col, _ in table_cols:
-                if col == "selection_rationale":
-                    cells.append(
-                        f"<td><div class='strategy-rationale'>{_selection_rationale(row, risk_profile_label, cost_reference)}</div></td>"
-                    )
-                    continue
-
-                value = safe_get(row, col, "")
-                if col == "portfolio_cost_eur":
-                    cells.append(f"<td class='num'>{html.escape(format_money_short(value))}</td>")
-                elif col in {"opportunity_score", "risk_score", "future_asset_score", active_score_col}:
-                    try:
-                        formatted = f"{float(value):.1f}"
-                    except Exception:
-                        formatted = "N/A"
-                    if col == active_score_col:
-                        cells.append(f"<td class='num'><span class='strategy-score-pill' title='{html.escape(score_tooltip)}'>{html.escape(formatted)}</span></td>")
-                    else:
-                        cells.append(f"<td class='num'>{html.escape(formatted)}</td>")
-                else:
-                    cells.append(f"<td>{html.escape(str(value))}</td>")
-            rows.append("<tr>" + "".join(cells) + "</tr>")
-
-        return f"""
-<div class="comparison-table-wrapper">
-    <table class="strategy-table">
-        <thead><tr>{header}</tr></thead>
-        <tbody>{''.join(rows)}</tbody>
-    </table>
-</div>
-"""
-
-    st.markdown(_portfolio_html_table(selected, score_col), unsafe_allow_html=True)
 
     st.caption(
-        "Scores are normalized decision-support indicators, not probabilities."
-        if LANG == "EN"
-        else "Los scores son indicadores normalizados de soporte a decisión, no probabilidades."
+        (
+            "Risk Profile is displayed as an executive interpretation layer. Portfolio Style controls concentration and balance."
+            if LANG == "EN"
+            else "El Perfil de riesgo se muestra como capa ejecutiva de interpretación. El Estilo de cartera controla concentración y equilibrio."
+        )
+    )
+
+    if LANG == "EN":
+        glossary_items = [
+            ("Expected Upside", "Estimated aggregate value gap versus current market value."),
+            ("Expected ROI", "Expected upside divided by total portfolio cost."),
+            ("Portfolio Score", "Composite value indicator based on inefficiency, upside, confidence and age potential."),
+            ("Average Confidence", "Average reliability of the analytical signal used by the optimizer."),
+            ("Risk Proxy", "Inverse confidence indicator used as a practical uncertainty proxy."),
+            ("Max Concentration", "Weight of the most expensive selected player over total portfolio cost."),
+        ]
+        glossary_title = "📚 Quick glossary"
+    else:
+        glossary_items = [
+            ("Upside esperado", "Gap de valor agregado estimado frente al valor de mercado actual."),
+            ("ROI esperado", "Upside esperado dividido por el coste total de la cartera."),
+            ("Score cartera", "Indicador compuesto de ineficiencia, upside, confianza y potencial por edad."),
+            ("Confianza media", "Fiabilidad media de la señal analítica utilizada por el optimizador."),
+            ("Proxy riesgo", "Indicador inverso de confianza usado como proxy operativo de incertidumbre."),
+            ("Concentración máxima", "Peso del jugador más caro sobre el coste total de la cartera."),
+        ]
+        glossary_title = "📚 Glosario rápido"
+
+    glossary_html = "".join(
+        f"<div class='strategy-glossary-item'><b>{html.escape(title)}</b><span>{html.escape(desc)}</span></div>"
+        for title, desc in glossary_items
     )
 
     st.markdown(
         f"""
-<div class="strategy-disabled-note">
-    <b>{html.escape('Methodological note' if LANG == 'EN' else 'Nota metodológica')}</b><br><br>
-    {html.escape('The Transfer Strategy Engine formulates recruitment as a 0-1 Knapsack optimization problem. Each candidate is represented by a binary decision variable and the objective maximizes the portfolio score subject to budget, positional and squad-size constraints.' if LANG == 'EN' else 'El Transfer Strategy Engine formula el recruitment como un problema de optimización tipo 0-1 Knapsack. Cada candidato se representa mediante una variable binaria y la función objetivo maximiza el score de cartera sujeto a restricciones de presupuesto, posiciones y tamaño máximo de plantilla.')}
+<details class="strategy-glossary-details">
+    <summary>{html.escape(glossary_title)}</summary>
+    <div class="strategy-glossary-grid">{glossary_html}</div>
+</details>
+""",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f"""
+<div class="radar-info-box" style="margin-top:-4px; margin-bottom:12px;">
+<b>{html.escape('Active constraints' if LANG == 'EN' else 'Restricciones activas')}:</b>
+{html.escape(f'Budget €{budget_m}M · Scenario {scenario_display} · Risk {risk_profile_display} · Style {portfolio_style_display} · Max signings {max_signings} · Min budget use {min_budget_utilization:.0%}')}
+<br><span style="color:#64748b;">{html.escape('Portfolio recalculates automatically when inputs change.' if LANG == 'EN' else 'La cartera se recalcula automáticamente al cambiar los parámetros.')}</span>
 </div>
 """,
         unsafe_allow_html=True,
     )
+
+    try:
+        portfolio = optimize_transfer_portfolio_with_style(
+            budget=budget_m * 1_000_000,
+            positions_needed=positions_needed,
+            scenario=scenario,
+            max_signings=max_signings,
+            min_budget_utilization=min_budget_utilization,
+            portfolio_style=portfolio_style,
+        )
+
+        if portfolio.empty:
+            st.warning(
+                "No feasible portfolio was returned by the optimizer."
+                if LANG == "EN"
+                else "El optimizador no ha devuelto una cartera factible."
+            )
+            return
+
+        total_cost = float(portfolio["portfolio_cost"].sum())
+        expected_upside = float(portfolio["expected_upside"].sum())
+        expected_roi = expected_upside / total_cost if total_cost > 0 else np.nan
+        budget_utilization = total_cost / (budget_m * 1_000_000)
+        avg_portfolio_score = float(portfolio["portfolio_value_score"].mean())
+        avg_confidence = float(portfolio["matching_confidence_norm"].mean()) if "matching_confidence_norm" in portfolio.columns else np.nan
+        avg_risk_proxy = float(portfolio["risk_proxy"].mean()) if "risk_proxy" in portfolio.columns else np.nan
+        max_player_share = float((portfolio["portfolio_cost"] / total_cost).max()) if total_cost > 0 else np.nan
+
+        st.success(
+            "Optimal transfer portfolio generated."
+            if LANG == "EN"
+            else "Cartera óptima de fichajes generada."
+        )
+
+        kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+        with kpi1:
+            render_metric_card_with_caption(
+                "Total Cost" if LANG == "EN" else "Coste total",
+                f"€{total_cost / 1_000_000:.1f}M",
+                "Selected portfolio cost" if LANG == "EN" else "Coste de la cartera seleccionada",
+            )
+        with kpi2:
+            render_metric_card_with_caption(
+                "Budget Utilization" if LANG == "EN" else "Uso presupuesto",
+                f"{budget_utilization:.1%}",
+                "Budget consumed" if LANG == "EN" else "Presupuesto consumido",
+            )
+        with kpi3:
+            render_strategy_metric_card(
+                "Expected Upside" if LANG == "EN" else "Upside esperado",
+                f"€{expected_upside / 1_000_000:.1f}M",
+                "Aggregated expected value gap" if LANG == "EN" else "Gap esperado agregado",
+                "Estimated aggregate value gap versus current market value." if LANG == "EN" else "Gap de valor agregado estimado frente al valor de mercado actual.",
+            )
+        with kpi4:
+            render_strategy_metric_card(
+                "Expected ROI" if LANG == "EN" else "ROI esperado",
+                f"{expected_roi:.1%}" if pd.notna(expected_roi) else "N/A",
+                "Upside / total cost" if LANG == "EN" else "Upside / coste total",
+                "Expected upside divided by total portfolio cost." if LANG == "EN" else "Upside esperado dividido por el coste total de la cartera.",
+            )
+        with kpi5:
+            render_strategy_metric_card(
+                "Avg Portfolio Score" if LANG == "EN" else "Score medio cartera",
+                f"{avg_portfolio_score:.1f}",
+                "Mean portfolio value score" if LANG == "EN" else "Score medio de valor de cartera",
+                "Composite value indicator based on inefficiency, upside, confidence and age potential." if LANG == "EN" else "Indicador compuesto de ineficiencia, upside, confianza y potencial por edad.",
+            )
+
+        st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+
+        if pd.notna(avg_confidence) and pd.notna(avg_risk_proxy):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                render_strategy_metric_card(
+                    "Average Confidence" if LANG == "EN" else "Confianza media",
+                    f"{avg_confidence:.1f}",
+                    "Mean matching confidence" if LANG == "EN" else "Confianza media del matching",
+                    "Average reliability of the analytical signal used by the optimizer." if LANG == "EN" else "Fiabilidad media de la señal analítica utilizada por el optimizador.",
+                )
+            with c2:
+                render_strategy_metric_card(
+                    "Average Risk Proxy" if LANG == "EN" else "Proxy riesgo medio",
+                    f"{avg_risk_proxy:.1f}",
+                    "100 - confidence" if LANG == "EN" else "100 - confianza",
+                    "Inverse confidence indicator used as a practical uncertainty proxy." if LANG == "EN" else "Indicador inverso de confianza usado como proxy operativo de incertidumbre.",
+                )
+            with c3:
+                render_strategy_metric_card(
+                    "Max Player Share" if LANG == "EN" else "Concentración máxima",
+                    f"{max_player_share:.1%}" if pd.notna(max_player_share) else "N/A",
+                    "Largest player / portfolio cost" if LANG == "EN" else "Mayor jugador / coste cartera",
+                    "Weight of the most expensive selected player over total portfolio cost." if LANG == "EN" else "Peso del jugador más caro sobre el coste total de la cartera.",
+                )
+
+        st.subheader("📋 " + ("Recommended Portfolio" if LANG == "EN" else "Cartera recomendada"))
+
+        display_cols = [
+            "player_name_fbref",
+            "club",
+            "league",
+            "position_group",
+            "age",
+            "market_value_eur",
+            "player_portfolio_cost_share",
+            "expected_upside",
+            "expected_roi",
+            "portfolio_value_score",
+            "optimization_score",
+        ]
+        available_cols = [col for col in display_cols if col in portfolio.columns]
+        display = portfolio[available_cols].copy()
+
+        rename_map = {
+            "player_name_fbref": "Player" if LANG == "EN" else "Jugador",
+            "club": "Club",
+            "league": "League" if LANG == "EN" else "Liga",
+            "position_group": "Position" if LANG == "EN" else "Posición",
+            "age": "Age" if LANG == "EN" else "Edad",
+            "market_value_eur": "Market Value" if LANG == "EN" else "Valor mercado",
+            "player_portfolio_cost_share": "Portfolio Share" if LANG == "EN" else "Peso cartera",
+            "expected_upside": "Expected Upside" if LANG == "EN" else "Upside esperado",
+            "expected_roi": "Expected ROI" if LANG == "EN" else "ROI esperado",
+            "portfolio_value_score": "Portfolio Score" if LANG == "EN" else "Score cartera",
+            "optimization_score": "Optimization Score" if LANG == "EN" else "Score optimización",
+        }
+        display = display.rename(columns=rename_map)
+
+        money_cols = [
+            col
+            for col in ["Market Value", "Valor mercado", "Expected Upside", "Upside esperado"]
+            if col in display.columns
+        ]
+        for col in money_cols:
+            display[col] = display[col].apply(format_money_short)
+
+        roi_cols = [col for col in ["Expected ROI", "ROI esperado"] if col in display.columns]
+        for col in roi_cols:
+            display[col] = pd.to_numeric(display[col], errors="coerce").map(
+                lambda x: f"{x:.1%}" if pd.notna(x) else "N/A"
+            )
+
+        share_cols = [col for col in ["Portfolio Share", "Peso cartera"] if col in display.columns]
+        for col in share_cols:
+            display[col] = pd.to_numeric(display[col], errors="coerce").map(
+                lambda x: f"{x:.1%}" if pd.notna(x) else "N/A"
+            )
+
+
+        age_cols = [col for col in ["Age", "Edad"] if col in display.columns]
+        for col in age_cols:
+            display[col] = pd.to_numeric(display[col], errors="coerce").map(
+                lambda x: f"{x:.1f}" if pd.notna(x) else "N/A"
+            )
+
+        score_cols = [
+            col
+            for col in ["Portfolio Score", "Score cartera", "Optimization Score", "Score optimización"]
+            if col in display.columns
+        ]
+        for col in score_cols:
+            display[col] = pd.to_numeric(display[col], errors="coerce").map(
+                lambda x: f"{x:.1f}" if pd.notna(x) else "N/A"
+            )
+
+        st.dataframe(
+            display,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        if {"portfolio_cost", "expected_upside", "portfolio_value_score", "position_group"}.issubset(portfolio.columns):
+            st.subheader("📈 " + ("Portfolio Map" if LANG == "EN" else "Mapa de cartera"))
+            st.caption(
+                "Hover each bubble to inspect player, club, cost, upside, ROI and portfolio score."
+                if LANG == "EN"
+                else "Pasa el ratón por cada burbuja para consultar jugador, club, coste, upside, ROI y score de cartera."
+            )
+            fig = go.Figure()
+            for position_group, group_df in portfolio.groupby("position_group"):
+                fig.add_trace(
+                    go.Scatter(
+                        x=group_df["portfolio_cost"] / 1_000_000,
+                        y=group_df["expected_upside"] / 1_000_000,
+                        mode="markers",
+                        customdata=np.stack(
+                            [
+                                group_df["player_name_fbref"].astype(str),
+                                group_df["club"].astype(str) if "club" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
+                                group_df["position_group"].astype(str),
+                                pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                            ],
+                            axis=-1,
+                        ),
+                        marker=dict(
+                            size=(pd.to_numeric(group_df["portfolio_value_score"], errors="coerce").fillna(50) / 4).clip(13, 30),
+                            opacity=0.85,
+                            line=dict(color="white", width=2),
+                        ),
+                        name=str(position_group),
+                        hovertemplate=(
+                            "<b>%{customdata[0]}</b><br>"
+                            + ("Club" if LANG == "EN" else "Club")
+                            + ": %{customdata[1]}<br>"
+                            + ("Position" if LANG == "EN" else "Posición")
+                            + ": %{customdata[2]}<br>"
+                            + ("Age" if LANG == "EN" else "Edad")
+                            + ": %{customdata[3]:.1f}<br>"
+                            + ("Cost" if LANG == "EN" else "Coste")
+                            + ": €%{x:.1f}M<br>"
+                            + ("Upside" if LANG == "EN" else "Upside")
+                            + ": €%{y:.1f}M<br>"
+                            + ("ROI" if LANG == "EN" else "ROI")
+                            + ": %{customdata[4]:.1%}<br>"
+                            + ("Portfolio Score" if LANG == "EN" else "Score cartera")
+                            + ": %{customdata[5]:.1f}<extra></extra>"
+                        ),
+                    )
+                )
+            fig.update_layout(
+                xaxis_title="Cost (€M)" if LANG == "EN" else "Coste (€M)",
+                yaxis_title="Expected Upside (€M)" if LANG == "EN" else "Upside esperado (€M)",
+                height=540,
+                paper_bgcolor="white",
+                plot_bgcolor="white",
+                margin=dict(l=70, r=90, t=42, b=70),
+                legend_title="Position" if LANG == "EN" else "Posición",
+            )
+            fig.update_xaxes(
+                rangemode="tozero",
+                automargin=True,
+                showgrid=True,
+                zeroline=False,
+            )
+            fig.update_yaxes(
+                rangemode="tozero",
+                automargin=True,
+                showgrid=True,
+                zeroline=False,
+            )
+            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+
+    except ModuleNotFoundError as exc:
+        st.error(
+            (
+                "The strategy optimizer module or one of its dependencies is missing. "
+                "Check that `src/strategy/optimize_transfer_portfolio.py` exists and that PuLP is installed."
+            )
+            if LANG == "EN"
+            else (
+                "Falta el módulo del optimizador estratégico o alguna dependencia. "
+                "Comprueba que existe `src/strategy/optimize_transfer_portfolio.py` y que PuLP está instalado."
+            )
+        )
+        st.exception(exc)
+    except Exception as exc:
+        st.error(
+            "No feasible portfolio found with the selected constraints."
+            if LANG == "EN"
+            else "No se ha encontrado una cartera factible con las restricciones seleccionadas."
+        )
+        st.exception(exc)
 
 def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     render_product_page_header(
@@ -12590,7 +12833,7 @@ st.markdown(
     """
 <div class="scouting-iq-footer">
     <b>SCOUTING IQ PLATFORM</b>
-    <div>Market Value Intelligence System · Version v1.1.0</div>
+    <div>Market Value Intelligence System · Version v1.2.1 · Sprint 14</div>
     <div>Master Thesis · Sports Analytics &amp; Data Science</div>
 </div>
 """,

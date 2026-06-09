@@ -1,0 +1,4 @@
+scenario,budget,max_signings,positions_needed,players_selected,total_cost,budget_utilization,expected_upside,expected_roi,avg_portfolio_score,avg_optimization_score,avg_confidence,avg_risk_proxy,selected_players
+conservative,10000000,4,"DEF,MID,ATT",4,7100000.0,0.71,46561023.39797139,6.55789061943259,95.26048197790183,89.56384176295641,88.75,11.25,Ayoube Amaimouni Echghouyab | Pedro Santos | Pablo | Filippo Terracciano
+balanced,30000000,5,"DEF,MID,ATT",5,23100000.0,0.77,54564516.99873403,2.362100302975499,92.83293950390375,83.03814224330368,88.0,12.0,Ayoube Amaimouni Echghouyab | Pedro Santos | Pablo | Kareem Tunde | Michael Kayode
+aggressive,50000000,6,"DEF,MID,ATT",6,36100000.0,0.722,50647145.27077817,1.4029680130409465,92.05482732169368,76.2155865940216,87.5,12.5,Ayoube Amaimouni Echghouyab | Pedro Santos | Pablo | Kareem Tunde | Ousmane Camara | Mateus Fernandes
