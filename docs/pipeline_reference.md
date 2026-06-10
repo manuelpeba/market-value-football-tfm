@@ -5,7 +5,7 @@
 Este documento describe la arquitectura completa de pipelines implementada en la release:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v1.2.1 — Transfer Strategy Engine
 ```
 
 Su finalidad es garantizar:
@@ -18,7 +18,8 @@ Su finalidad es garantizar:
 * escalabilidad analítica;
 * validez externa;
 * generalización multi-liga;
-* integración de métricas avanzadas.
+* integración de métricas avanzadas;
+* optimización estratégica de fichajes.
 
 La arquitectura actual transforma información deportiva y económica procedente de múltiples fuentes en recomendaciones accionables para scouting, recruitment y soporte avanzado a decisiones deportivas.
 
@@ -26,7 +27,7 @@ La arquitectura actual transforma información deportiva y económica procedente
 
 # 🧠 Filosofía de diseño
 
-La arquitectura sigue cuatro principios fundamentales.
+La arquitectura sigue seis principios fundamentales.
 
 ---
 
@@ -39,18 +40,21 @@ Todos los resultados pueden regenerarse a partir de:
 * configuraciones explícitas;
 * artefactos parametrizados.
 
+La reproducibilidad constituye un requisito fundamental tanto para investigación académica como para aplicaciones operativas.
+
 ---
 
 ## Modularidad
 
-Cada pipeline implementa una responsabilidad concreta dentro del sistema.
+Cada pipeline implementa una responsabilidad específica dentro del sistema.
 
 Beneficios:
 
 * mantenimiento simplificado;
 * extensibilidad;
 * reutilización;
-* testing independiente.
+* testing independiente;
+* evolución incremental.
 
 ---
 
@@ -59,6 +63,8 @@ Beneficios:
 ### Analytical Layer
 
 * Data Engineering
+* Feature Engineering
+* Advanced Metrics
 * Econometrics
 * Machine Learning
 * Explainability
@@ -69,7 +75,11 @@ Beneficios:
 * Risk Assessment
 * Player Intelligence
 * Recruitment Intelligence
-* Decision Support System
+* Transfer Strategy
+* Portfolio Optimization
+* Decision Support
+
+Esta separación permite desacoplar la generación de conocimiento analítico de la toma de decisiones deportivas.
 
 ---
 
@@ -79,11 +89,13 @@ Introducida durante Sprint 13A.
 
 Principio:
 
-```text id="5m4t8v"
+```text
 External Validation by Expansion
 ```
 
 La robustez metodológica se evalúa mediante ampliación sistemática de cobertura competitiva.
+
+La metodología debe demostrar capacidad de generalización fuera del universo competitivo original.
 
 ---
 
@@ -93,11 +105,41 @@ Introducida durante Sprint 13B.
 
 Principio:
 
-```text id="rkw0lw"
+```text
 Feature Validation by Incremental Contribution
 ```
 
 Toda nueva variable debe demostrar capacidad explicativa adicional antes de ser promovida a producción.
+
+Las métricas avanzadas incorporadas durante Sprint 13B siguen este principio.
+
+---
+
+## Decision Science & Operations Research
+
+Introducida durante Sprint 14.
+
+Principio:
+
+```text
+Decision Optimization under Real Constraints
+```
+
+La plataforma no se limita a identificar oportunidades individuales.
+
+El objetivo final consiste en construir estrategias óptimas de captación considerando simultáneamente:
+
+* restricciones presupuestarias;
+* necesidades posicionales;
+* calidad mínima requerida;
+* perfiles estratégicos;
+* utilización eficiente de recursos.
+
+Este principio introduce formalmente conceptos procedentes de:
+
+* Decision Science;
+* Operations Research;
+* Portfolio Optimization.
 
 ---
 
@@ -120,6 +162,8 @@ Toda nueva variable debe demostrar capacidad explicativa adicional antes de ser 
 | Current Scouting Pipeline         | ✅      |
 | Player Intelligence Pipeline      | ✅      |
 | Recruitment Intelligence Pipeline | ✅      |
+| Transfer Strategy Pipeline        | ✅      |
+| Portfolio Optimization Pipeline   | ✅      |
 | Decision Support Pipeline         | ✅      |
 | Internationalization Layer        | ✅      |
 | Multi-League Expansion Layer      | ✅      |
@@ -159,8 +203,8 @@ I --> L[Operational Predictions]
 
 L --> M[Scoring Engine]
 
-M --> N[Opportunity Score]
-M --> O[Risk Score]
+M --> N[Opportunity Framework]
+M --> O[Risk Framework]
 
 N --> P[Ranking Engine]
 O --> P
@@ -171,16 +215,20 @@ Q --> R[Player Intelligence]
 
 R --> S[Recruitment Intelligence]
 
-S --> T[Decision Support System]
+S --> T[Transfer Strategy Engine]
 
-T --> U[Sporting Decision]
+T --> U[Portfolio Optimization]
+
+U --> V[Decision Support System]
+
+V --> W[Sporting Decision]
 ```
 
 ---
 
 # 🔄 Evolución funcional
 
-```text id="w0v94h"
+```text
 Econometric Model
 ↓
 Machine Learning
@@ -193,22 +241,81 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
-↓
-External Validation
-↓
-Advanced Data Expansion
 ```
 
-Sprint 13A fortalece la validez externa.
+Contribuciones principales por fase:
 
-Sprint 13B fortalece la capacidad explicativa mediante nuevas métricas avanzadas.
+### Sprint 13A
+
+* Multi-League Expansion.
+* External Validation.
+* Coverage Diagnostics.
+* Coverage Audit.
+
+### Sprint 13B
+
+* Advanced Metrics Layer.
+* Feature Set Evaluation.
+* Incremental Feature Validation.
+* Explainability Enhancement.
+
+### Sprint 14
+
+* Transfer Strategy Engine.
+* Binary Integer Programming.
+* Portfolio Optimization.
+* Scenario Simulation.
+
+### Sprint 14.1
+
+* Player Level Layer.
+* Quality-Constrained Optimization.
+* Strategic Recruitment Segmentation.
 
 ---
 
+# 🎯 Arquitectura DSS actual
+
+La plataforma ha evolucionado desde un sistema de estimación de valor de mercado hacia un DSS (Decision Support System) completo para procesos de scouting y recruitment.
+
+La cadena de valor actual puede resumirse mediante:
+
+```text
+Data Engineering
+↓
+Advanced Metrics Layer
+↓
+Econometrics
++
+Machine Learning
+↓
+Opportunity Detection
+↓
+Risk Assessment
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
+Esta arquitectura constituye el estado productivo oficial del proyecto tras la finalización de Sprint 14 y Sprint 14.1.
+
 # 📦 Data Ingestion Pipeline
 
-Responsable de la adquisición y organización de datos fuente.
+## Objetivo
+
+Responsable de la adquisición, normalización y organización de las fuentes de datos utilizadas por el sistema.
 
 ---
 
@@ -218,16 +325,16 @@ Responsable de la adquisición y organización de datos fuente.
 
 Tipo:
 
-```text id="x3xmpv"
+```text
 Performance Data Source
 ```
 
 Proporciona:
 
-* rendimiento deportivo;
-* métricas por 90;
-* contexto competitivo;
-* métricas avanzadas.
+* estadísticas deportivas;
+* métricas avanzadas;
+* rendimiento por 90 minutos;
+* contexto competitivo.
 
 ---
 
@@ -235,23 +342,23 @@ Proporciona:
 
 Tipo:
 
-```text id="8cx7kt"
+```text
 Market Valuation Source
 ```
 
 Proporciona:
 
 * valor de mercado;
+* evolución temporal;
 * edad;
 * posición;
-* contexto económico;
-* evolución temporal.
+* contexto económico.
 
 ---
 
 ## Outputs
 
-```text id="uqcvks"
+```text
 data/raw/
 data/interim/
 ```
@@ -260,57 +367,29 @@ data/interim/
 
 # ⚙️ Feature Engineering Pipeline
 
-Responsable de construir variables deportivas, económicas y temporales.
+## Objetivo
+
+Transformar datos deportivos y económicos en variables analíticas utilizables por los modelos.
 
 ---
 
-## Inputs
+## Transformaciones principales
 
-```text id="cbgk5n"
-FBref Features
-Transfermarkt Features
-```
-
----
-
-## Outputs principales
-
-```text id="m91bxh"
-fbref_features_v13a.parquet
-
-transfermarkt_features_v13a.parquet
-
-player_season_panel_v13a.parquet
-
-player_season_modeling_v13a.parquet
-
-player_season_modeling_v13b_advanced.parquet
-
-player_season_modeling_v13b_productive_candidate.parquet
-```
-
----
-
-## Transformaciones deportivas
+### Deportivas
 
 * métricas por 90;
-* normalización posicional;
-* percentiles por posición;
-* índices compuestos;
-* variables de rendimiento relativo.
+* percentiles posicionales;
+* normalización por posición;
+* métricas relativas;
+* índices compuestos.
 
----
-
-## Transformaciones económicas
+### Económicas
 
 * log_market_value_eur;
 * market_value_growth_prev;
-* delta_log_market_value_prev;
-* variables longitudinales.
+* delta_log_market_value_prev.
 
----
-
-## Transformaciones temporales
+### Temporales
 
 * career_year;
 * breakout_indicator;
@@ -323,13 +402,7 @@ player_season_modeling_v13b_productive_candidate.parquet
 
 Introducido durante Sprint 13B.
 
-Objetivo:
-
-Integrar métricas avanzadas derivadas de FBref dentro del pipeline productivo.
-
----
-
-## Variables incorporadas
+## Variables productivas
 
 * finishing_index_v2
 * availability_index
@@ -337,68 +410,17 @@ Integrar métricas avanzadas derivadas de FBref dentro del pipeline productivo.
 
 ---
 
-## Resultado observado
+## Resultado metodológico
 
-Las nuevas variables mejoran simultáneamente:
+Las tres variables aportan capacidad predictiva incremental y fueron promovidas a producción tras superar validación econométrica y Machine Learning.
 
-* econometría;
-* XGBoost;
-* Random Forest;
-* HistGradientBoosting;
-* LightGBM.
+Hallazgo principal:
 
----
-
-## Hallazgo principal
-
-```text id="6jrlm8"
+```text
 finishing_index_v2
 ```
 
-aparece como la variable avanzada con mayor relevancia predictiva agregada.
-
----
-
-## Estado
-
-Las tres variables fueron promovidas a producción tras Sprint 13B.
-
----
-
-# 📈 Modeling Dataset Pipeline
-
-Responsable de generar el dataset final utilizado por modelos predictivos.
-
----
-
-## Dataset actual
-
-| Métrica            |                 Valor |
-| ------------------ | --------------------: |
-| Observaciones      |                 5.527 |
-| Ligas              |                    11 |
-| Temporadas         |                     7 |
-| Liga-temporada     |                    77 |
-| Cobertura temporal | 2019-2020 → 2025-2026 |
-
----
-
-## Beneficio metodológico
-
-La combinación:
-
-```text id="o8h50u"
-Sprint 13A
-+
-Sprint 13B
-```
-
-incrementa simultáneamente:
-
-* representatividad;
-* diversidad competitiva;
-* capacidad explicativa;
-* robustez metodológica.
+representa la métrica avanzada con mayor relevancia predictiva agregada.
 
 ---
 
@@ -408,27 +430,17 @@ incrementa simultáneamente:
 
 Resolver la integración:
 
-```text id="r6mjlwm"
+```text
 FBref ↔ Transfermarkt
 ```
 
-mediante una estrategia conservadora orientada a maximizar calidad de emparejamiento.
+manteniendo un enfoque conservador orientado a maximizar calidad de matching.
 
 ---
 
-## Filosofía
+## Estrategia
 
-Principio metodológico:
-
-```text id="r6gdhv"
-Calidad > Cobertura
-```
-
----
-
-## Estrategia implementada
-
-```text id="r8r8v8"
+```text
 Normalización
 ↓
 Exact Matching
@@ -442,25 +454,7 @@ Age Validation
 
 ---
 
-## Tecnología
-
-```text id="n1s4fy"
-RapidFuzz
-```
-
----
-
-## Parámetros operativos
-
-```python
-MAX_AGE_DIFF = 1.5
-MIN_CLUB_SCORE = 70
-FUZZY_THRESHOLD = 92
-```
-
----
-
-## Resultado Sprint 13A
+## Resultado actual
 
 | Métrica           |  Valor |
 | ----------------- | -----: |
@@ -468,32 +462,28 @@ FUZZY_THRESHOLD = 92
 
 ---
 
-## Interpretación
-
-La reducción del match rate agregado se explica principalmente por limitaciones de cobertura presentes en competiciones secundarias y no por degradación del algoritmo de matching.
-
----
-
 # 📈 Player-Season Panel Pipeline
 
-Responsable de construir el panel longitudinal jugador-temporada utilizado por todas las capas posteriores.
+## Objetivo
+
+Construir el panel longitudinal jugador-temporada utilizado por todas las capas posteriores.
 
 ---
 
 ## Resultado actual
 
-| Métrica                        |  Valor |
-| ------------------------------ | -----: |
-| Observaciones FBref procesadas | 43.591 |
-| Ligas                          |     11 |
-| Temporadas                     |      7 |
-| Liga-temporada                 |     77 |
+| Métrica             |  Valor |
+| ------------------- | -----: |
+| Observaciones FBref | 43.591 |
+| Ligas               |     11 |
+| Temporadas          |      7 |
+| Liga-temporada      |     77 |
 
 ---
 
 ## Cobertura competitiva
 
-### Ligas originales
+### Ligas principales
 
 * Premier League
 * LaLiga
@@ -512,492 +502,151 @@ Responsable de construir el panel longitudinal jugador-temporada utilizado por t
 
 ---
 
-## Contribución
-
-Esta capa constituye la base sobre la que se construyen:
-
-* modelos econométricos;
-* modelos ML;
-* Opportunity Detection;
-* Player Intelligence;
-* Recruitment Intelligence.
-
-# 🌍 Multi-League Expansion Pipeline
-
-## Sprint 13A — Multi-League Expansion
-
-Introduce una nueva capa arquitectónica orientada a evaluar explícitamente la validez externa de la metodología.
-
-Pregunta de investigación:
-
-> ¿La metodología mantiene su rendimiento cuando se aplica a ligas con estructuras competitivas y económicas distintas?
-
----
-
-## Resultado estructural
-
-| Métrica                        |  Valor |
-| ------------------------------ | -----: |
-| Observaciones FBref procesadas | 43.591 |
-| Dataset modelizable            |  5.527 |
-| Ligas                          |     11 |
-| Temporadas                     |      7 |
-| Liga-temporada                 |     77 |
-
----
-
-## Parametrización introducida
-
-### build_fbref_features.py
-
-```text id="s2k1ab"
---output
-```
-
-### build_player_season_panel.py
-
-```text id="a7m4zf"
---fbref-input
---tm-input
---output
-```
-
-### build_modeling_dataset.py
-
-Versionado explícito de datasets.
-
----
-
-## Beneficios
-
-* reproducibilidad académica;
-* comparación entre releases;
-* auditoría de resultados;
-* trazabilidad completa;
-* experimentación controlada.
-
----
-
-# 📊 Coverage Diagnostics Pipeline
-
-Introducido durante Sprint 13A.
-
-Objetivo:
-
-Evaluar calidad de matching y cobertura efectiva por competición y temporada.
-
----
-
-## Artefactos generados
-
-```text id="y0z5oq"
-reports/data_quality/
-
-sprint_13a_matching_by_league.csv
-
-sprint_13a_matching_by_league_season.csv
-
-sprint_13a_coverage_summary.md
-```
-
----
-
-## Resultado global
-
-| Métrica           |  Valor |
-| ----------------- | -----: |
-| Match Rate global | 75,97% |
-
----
-
-## Interpretación
-
-La reducción del match rate agregado se explica por la incorporación de competiciones secundarias con menor cobertura histórica disponible en Transfermarkt-Kaggle.
-
-Los resultados obtenidos no sugieren deterioro del algoritmo de matching.
-
----
-
-# 🔍 Coverage Audit Pipeline
+# 📈 Modeling Dataset Pipeline
 
 ## Objetivo
 
-Investigar el origen de las pérdidas de matching observadas durante Sprint 13A.
+Generar el dataset final utilizado por los modelos predictivos.
 
 ---
 
-## Hallazgo principal
+## Dataset productivo actual
 
-La evidencia obtenida apunta a limitaciones de cobertura presentes en Transfermarkt-Kaggle y no a fallos estructurales en:
-
-* Matching Pipeline;
-* Feature Engineering Pipeline;
-* Player-Season Panel Pipeline.
+| Métrica        | Valor |
+| -------------- | ----: |
+| Observaciones  | 5.527 |
+| Ligas          |    11 |
+| Temporadas     |     7 |
+| Liga-temporada |    77 |
 
 ---
 
-## Resultado metodológico
+## Beneficio metodológico
 
-Sprint 13A no solo amplía cobertura.
+La combinación de:
 
-También aporta evidencia favorable de:
+```text
+Sprint 13A
++
+Sprint 13B
+```
 
-* calidad de integración;
-* robustez metodológica;
-* validez externa;
-* capacidad de generalización.
+incrementa simultáneamente:
+
+* representatividad;
+* diversidad competitiva;
+* capacidad explicativa;
+* robustez metodológica.
 
 ---
 
 # 📈 Econometric Pipeline
 
-## Ubicación
-
-```text id="i4szdo"
-src/models/econometric/
-```
-
----
-
-## Objetivo
-
-Construir benchmarks interpretables capaces de explicar el valor de mercado observado mediante relaciones económicas y deportivas observables.
-
-La capa econométrica cumple una doble función:
-
-* benchmark académico;
-* mecanismo de validación metodológica.
-
----
-
-## Evolución de modelos
-
-### Baseline OLS
-
-Modelo explicativo inicial.
-
----
-
-### Advanced Positional OLS
-
-Incorpora normalización posicional.
-
----
-
-### Growth OLS
-
-Introduce dinámica temporal y desarrollo profesional.
-
----
-
-### Growth OLS v13B
-
-Incorpora:
-
-* variables longitudinales;
-* efectos fijos;
-* métricas avanzadas Sprint 13B.
-
----
-
 ## Modelo oficial
 
-```text id="w7q9cr"
+```text
 Growth OLS v13B
 ```
 
 ---
 
-## Resultado Sprint 13B
+## Objetivo
+
+Actuar como benchmark interpretable para explicar los determinantes económicos y deportivos del valor de mercado.
+
+---
+
+## Resultado oficial
 
 | Métrica |  Valor |
 | ------- | -----: |
 | R²      | 0.4549 |
 
-Comparación principal:
-
-| Modelo                |     R² |
-| --------------------- | -----: |
-| M_A_v13A_base_spec_FE | 0.4505 |
-| M_B_v13B_advanced_FE  | 0.4549 |
-
-Resultado:
-
-```text id="yb7s9w"
-ΔR² = +0.0044
-```
-
----
-
-## Interpretación
-
-Las nuevas métricas avanzadas aportan capacidad explicativa incremental y mejoran simultáneamente:
-
-* MAE;
-* RMSE;
-* AIC;
-* BIC.
-
 ---
 
 ## Rol dentro del sistema
 
-Growth OLS v13B continúa actuando como:
-
-```text id="zlm99v"
+```text
 Academic Benchmark Model
 ```
-
-aportando interpretabilidad económica y capacidad explicativa.
 
 ---
 
 # 🤖 Machine Learning Pipeline
 
-## Ubicación
+## Modelo oficial
 
-```text id="a8q77o"
-src/models/machine_learning/
-```
-
----
-
-## Objetivo
-
-Maximizar capacidad predictiva mediante algoritmos no lineales capaces de capturar relaciones complejas entre rendimiento deportivo y valoración económica.
-
----
-
-## Algoritmos evaluados
-
-* Random Forest
-* HistGradientBoosting
-* LightGBM
-* XGBoost
-
----
-
-# 🔬 Sprint 13B — Feature Set Evaluation
-
-Comparación:
-
-```text id="uv8j1x"
-Feature Set A (v13A)
-
-vs
-
-Feature Set B (v13B)
-```
-
----
-
-## Resultados
-
-| Modelo               | Mejora observada |
-| -------------------- | ---------------: |
-| XGBoost              |          +0.0096 |
-| Random Forest        |          +0.0097 |
-| HistGradientBoosting |          +0.0144 |
-| LightGBM             |          +0.0291 |
-
----
-
-## Hallazgo principal
-
-Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar:
-
-* finishing_index_v2
-* availability_index
-* defensive_activity_index
-
----
-
-## Modelo productivo oficial
-
-```text id="zz4r6l"
+```text
 Tuned XGBoost v13B
 ```
 
 ---
 
+## Objetivo
+
+Maximizar capacidad predictiva mediante modelos no lineales capaces de capturar relaciones complejas entre rendimiento deportivo y valoración económica.
+
+---
+
 ## Rol dentro del sistema
 
-```text id="snwwym"
+```text
 Production Prediction Engine
 ```
-
-utilizado para:
-
-* estimación de valor esperado;
-* detección de ineficiencias;
-* scoring operativo;
-* scouting actual.
-
----
-
-# 📊 Historical Evaluation Pipeline
-
-Responsable de la validación metodológica de modelos.
-
----
-
-## Funciones
-
-* validación temporal;
-* comparación de algoritmos;
-* backtesting;
-* evaluación académica;
-* evaluación incremental de features.
-
----
-
-## Artefactos principales
-
-```text id="8hpxkp"
-test_predictions
-
-full_predictions
-
-model_comparison
-
-feature_set_comparison
-```
-
----
-
-## Evolución Sprint 13B
-
-La evaluación histórica deja de centrarse exclusivamente en algoritmos para incorporar también:
-
-```text id="nzzq6u"
-Feature Set Evaluation
-```
-
-permitiendo medir explícitamente el valor incremental aportado por nuevas variables.
 
 ---
 
 # 🔬 Explainability Pipeline
 
-Responsable de interpretar el comportamiento de los modelos predictivos.
+## Componentes
+
+* Feature Importance
+* SHAP Analysis
+* Player-Level Explainability
 
 ---
 
-## Componentes
+## Objetivo
 
-```text id="6gk3b7"
-Feature Importance
+Transformar modelos complejos en conocimiento interpretable para scouting y recruitment.
 
-SHAP Analysis
+---
 
-Player SHAP Reports
+# 🎯 Opportunity & Risk Pipeline
+
+## Opportunity Framework
+
+```text
+Predicted Market Value
+↓
+Observed Market Value
+↓
+Inefficiency Detection
+↓
+Opportunity Score
+```
+
+---
+
+## Risk Framework
+
+```text
+Risk Score
+↓
+Risk Category
+↓
+Risk-adjusted Opportunity
 ```
 
 ---
 
 ## Objetivo
 
-Transformar modelos predictivos complejos en conocimiento interpretable para procesos de scouting y recruitment.
-
----
-
-## Hallazgo Sprint 13B
-
-La nueva capa de explainability permite evaluar explícitamente la contribución de las métricas avanzadas.
-
-Resultado principal:
-
-```text id="4xxm4n"
-finishing_index_v2
-```
-
-como variable avanzada más relevante.
-
----
-
-# 🎯 Scoring Pipeline
-
-Transforma predicciones en señales accionables.
-
----
-
-## Flujo actual
-
-```text id="f7mbpi"
-Predictions
-↓
-Inefficiency Score
-↓
-Growth Score
-↓
-Confidence Score
-↓
-Opportunity Score
-↓
-Risk Score
-```
-
----
-
-## Limitación identificada
-
-Durante Sprint 13B se detectó una separación estructural entre:
-
-```text id="m4hv5l"
-Modeling Pipeline
-≠
-Scoring Pipeline
-```
-
----
-
-## Situación actual
-
-El pipeline histórico de scoring requiere variables enriquecidas adicionales no presentes actualmente en la capa productiva de predicción.
-
-Por este motivo, la integración completa queda documentada como:
-
-```text id="qklb3i"
-TM.2 — Scoring & Ranking Integration v13B
-```
-
-sin afectar a la validez metodológica de Sprint 13B.
-
----
-
-# 📋 Ranking Pipeline
-
-Transforma scores en rankings priorizados.
-
----
-
-## Outputs
-
-```text id="7sh0z3"
-Global Rankings
-
-League Rankings
-
-Position Rankings
-
-Risk Rankings
-
-Scouting Shortlists
-```
+Priorizar oportunidades considerando simultáneamente upside esperado y nivel de incertidumbre asociado.
 
 ---
 
 # ⚽ Player Intelligence Pipeline
-
-Introducido durante Sprint 10.
-
----
-
-## Objetivo
-
-Transformar rankings en análisis individuales de jugadores.
-
----
 
 ## Componentes
 
@@ -1008,41 +657,117 @@ Transformar rankings en análisis individuales de jugadores.
 
 ---
 
-# 🎯 Recruitment Intelligence Pipeline
-
-Introducido durante Sprint 11.
-
----
-
 ## Objetivo
 
-Transformar análisis individuales en procesos operativos de recruitment.
+Transformar resultados analíticos en conocimiento accionable a nivel individual.
 
 ---
+
+# 🎯 Recruitment Intelligence Pipeline
 
 ## Componentes
 
 * Recruitment Board
-* Candidate Selection System
-* Comparative Player Analysis
+* Candidate Selection
+* Comparative Analysis
 * Executive Scouting Workflow
 * Global Search Engine
 
 ---
 
-## Flujo
+## Objetivo
 
-```text id="f4pjh3"
-Opportunity Detection
-↓
-Filtering
-↓
-Shortlisting
-↓
-Comparative Analysis
-↓
-Recruitment Decision
+Transformar análisis individuales en procesos estructurados de recruitment.
+
+---
+
+# 🧠 Transfer Strategy Pipeline
+
+Introducido durante Sprint 14.
+
+## Pregunta objetivo
+
+```text
+¿Qué cartera de fichajes maximiza
+el valor esperado bajo restricciones
+reales de club?
 ```
+
+---
+
+## Inputs
+
+* Budget
+* Positions Needed
+* Scenario
+* Portfolio Style
+* Minimum Player Level
+* Maximum Signings
+
+---
+
+## Outputs
+
+* Recommended Portfolio
+* Total Cost
+* Budget Utilization
+* Expected Upside
+* Expected ROI
+* Average Portfolio Score
+
+---
+
+# 📊 Portfolio Optimization Pipeline
+
+Introducido durante Sprint 14.
+
+## Metodología
+
+```text
+Binary Integer Programming
+(PuLP)
+```
+
+---
+
+## Restricciones implementadas
+
+* presupuesto máximo;
+* utilización mínima del presupuesto;
+* restricciones posicionales;
+* número máximo de incorporaciones;
+* nivel mínimo de jugador;
+* escenarios estratégicos.
+
+---
+
+## Escenarios
+
+### Conservative
+
+Prioriza estabilidad y robustez.
+
+### Balanced
+
+Equilibrio entre upside y riesgo.
+
+### Aggressive
+
+Maximización de upside esperado.
+
+---
+
+## Player Level Layer (Sprint 14.1)
+
+Niveles implementados:
+
+* Development Prospect
+* Rotation Profile
+* First Team Ready
+* Key Player Profile
+* Elite Target
+
+Esta capa permite incorporar restricciones explícitas de calidad mínima dentro de los procesos de optimización.
 
 ---
 
@@ -1050,40 +775,25 @@ Recruitment Decision
 
 ## Aplicación principal
 
-```text id="mjlwmu"
+```text
 app/streamlit_app.py
 ```
 
 ---
 
-## Componentes
+## Capacidades actuales
 
-### Advanced Search Engine
-
-* jugador;
-* club;
-* liga;
-* posición.
-
-### Player Intelligence
-
-* benchmarking;
-* comparativas;
-* scouting reports.
-
-### Recruitment Intelligence
-
-* filtros avanzados;
-* shortlist management.
-
-### Internationalization
-
-* español;
-* inglés.
+* Executive Dashboard.
+* Opportunity Detection.
+* Risk Assessment.
+* Recruitment Intelligence.
+* Transfer Strategy Engine.
+* Portfolio Optimization.
+* EN/ES Internationalization.
 
 ---
 
-# 🔄 Evolución histórica de pipelines
+# 🔄 Evolución histórica
 
 | Sprint       | Evolución                             |
 | ------------ | ------------------------------------- |
@@ -1091,54 +801,26 @@ app/streamlit_app.py
 | Sprint 6     | Business Evaluation Layer             |
 | Sprint 7     | Executive Dashboard                   |
 | Sprint 9     | Decision Support Layer                |
-| Sprint 10    | Player Intelligence Layer             |
-| Sprint 11    | Recruitment Intelligence Layer        |
+| Sprint 10    | Player Intelligence                   |
+| Sprint 11    | Recruitment Intelligence              |
 | Sprint 12    | Productization & Internationalization |
 | Sprint 13A   | Multi-League Expansion                |
-| Sprint 13A.1 | External Validation & Coverage Audit  |
+| Sprint 13A.1 | External Validation                   |
 | Sprint 13B   | Advanced Metrics Layer                |
+| Sprint 14    | Transfer Strategy Engine              |
+| Sprint 14.1  | Player Level Layer                    |
 
 ---
 
 # 🔁 Reproducibilidad
 
-La arquitectura actual permite reconstruir completamente cualquier resultado publicado.
-
-Principios:
+La arquitectura permite reconstruir completamente cualquier resultado publicado mediante:
 
 * código versionado;
 * datasets versionados;
 * MLflow;
-* trazabilidad de artefactos;
-* pipelines parametrizados.
-
----
-
-## Capacidad de regeneración
-
-```text id="v9h6x5"
-Raw Sources
-↓
-Feature Engineering
-↓
-Advanced Metrics Layer
-↓
-Matching
-↓
-Player-Season Panel
-↓
-Modeling Dataset
-↓
-Econometric Models
-+
-Machine Learning Models
-↓
-Scoring
-↓
-Recruitment Intelligence
-↓
-Decision Support System
-```
+* pipelines parametrizados;
+* trazabilidad completa de artefactos.
 
 ---
 
@@ -1148,58 +830,40 @@ Decision Support System
 
 Estado:
 
-```text id="w2l8c3"
+```text
 Backlog
 ```
 
 Objetivo:
 
-Determinar si las limitaciones observadas durante Sprint 13A proceden de:
-
-* Transfermarkt-Kaggle;
-* Transfermarkt original;
-* cobertura histórica disponible.
+Determinar el origen de las limitaciones de cobertura observadas tras la expansión multi-liga.
 
 ---
 
 ## TM.2 — Scoring & Ranking Integration v13B
 
+Estado:
+
+```text
+Backlog prioritario
+```
+
 Objetivo:
 
-```text id="dx0khf"
-Predictions v13B
-↓
-Scoring Dataset v13B
-↓
-Opportunity Framework v13B
-↓
-Risk Framework v13B
-↓
-Rankings v13B
-↓
-Stability Analysis
-```
+Alinear completamente la capa de modelización v13B con el sistema histórico de scoring y rankings.
 
 ---
 
-## Sprint 14 — Transfer Strategy Enhancement
-
-Próxima fase principal del proyecto.
+## Sprint 15 — Strategic Optimization Refinement
 
 Objetivo:
 
-```text id="w54ht5"
-Transformar oportunidades individuales
-en estrategias óptimas de fichajes
-bajo restricciones reales.
-```
+Refinar la capa de optimización incorporando:
 
-Líneas previstas:
-
-* Transfer Strategy Engine
-* Portfolio Optimization
-* Scenario Simulation
-* Strategic Recruitment
+* simplificación de restricciones estratégicas;
+* revisión de escenarios;
+* evolución del perfil de riesgo;
+* optimización multicriterio.
 
 ---
 
@@ -1207,47 +871,39 @@ Líneas previstas:
 
 ### Modelización
 
-* TabPFN
-* CatBoost
-* Ensemble Learning
+* CatBoost.
+* TabPFN.
+* Ensemble Learning.
 
 ### Datos
 
-* nuevas métricas avanzadas FBref;
-* event data avanzado;
+* nuevas métricas FBref;
+* event data;
 * tracking data;
 * información contractual;
-* datos salariales.
+* información salarial.
+
+### Football Analytics
+
+* Similarity Engine.
+* Career Trajectory Modeling.
+* Club Development Intelligence.
+
+### Sports Economics
+
+* Dynamic Asset Valuation.
+* Multi-Objective Optimization.
+* Portfolio Simulation.
 
 ---
 
 # 🏁 Conclusión
 
-La arquitectura de pipelines de la release:
+La arquitectura actual representa la evolución desde un sistema de predicción de valor de mercado hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte cuantitativo a decisiones deportivas.
 
-```text id="o3ocpl"
-v1.2.1 — Advanced Data Expansion
-```
+La cadena de valor actual puede resumirse mediante:
 
-representa la evolución del proyecto desde un sistema predictivo hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.
-
-Sprint 13A aporta una contribución metodológica centrada en:
-
-* ampliación de cobertura;
-* validación externa;
-* auditoría de cobertura;
-* capacidad de generalización.
-
-Sprint 13B aporta una contribución metodológica centrada en:
-
-* integración de métricas avanzadas;
-* validación incremental de features;
-* mejora simultánea de econometría y Machine Learning;
-* fortalecimiento de la capacidad explicativa.
-
-La arquitectura actual puede resumirse mediante:
-
-```text id="uhzrqg"
+```text
 Data Engineering
 ↓
 Advanced Metrics Layer
@@ -1264,27 +920,11 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
 Decision Support System
-↓
-External Validation
 ```
 
-La hipótesis principal de Sprint 13B queda validada.
-
-Las variables:
-
-* finishing_index_v2
-* availability_index
-* defensive_activity_index
-
-aportan señal predictiva incremental consistente y pasan a formar parte de la arquitectura productiva oficial.
-
-La siguiente evolución natural del proyecto corresponde a:
-
-```text id="z8vxgk"
-Sprint 14
-↓
-Transfer Strategy Enhancement
-```
-
-orientada a transformar inteligencia de scouting en decisiones estratégicas de construcción de plantilla.
+La incorporación de Sprint 14 y Sprint 14.1 constituye la transición desde la identificación de oportunidades individuales hacia la optimización estratégica de decisiones de fichaje bajo restricciones reales de club, incorporando formalmente conceptos de Decision Science y Operations Research dentro de la arquitectura del proyecto.
