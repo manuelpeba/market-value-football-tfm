@@ -5,7 +5,7 @@
 Este documento recoge las principales decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 Su finalidad es justificar las decisiones desde una perspectiva de:

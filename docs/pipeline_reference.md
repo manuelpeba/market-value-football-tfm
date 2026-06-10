@@ -5,7 +5,7 @@
 Este documento describe la arquitectura completa de pipelines implementada en la release:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 Su finalidad es garantizar:

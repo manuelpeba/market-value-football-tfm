@@ -12,7 +12,7 @@ in Professional Football
 Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 ---
@@ -1009,7 +1009,7 @@ Las restricciones explícitas de calidad mejoran el realismo deportivo del siste
 Release actual:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 Estado:

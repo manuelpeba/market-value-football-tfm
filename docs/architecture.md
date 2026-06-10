@@ -7,7 +7,7 @@ La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centr
 La versión actual:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 implementa una arquitectura multicapa capaz de transformar información deportiva y económica procedente de múltiples competiciones europeas en recomendaciones accionables para departamentos deportivos profesionales.

@@ -369,7 +369,7 @@ Sprint 13B — COMPLETADO
 Sprint 14 — COMPLETADO
 Sprint 14.1 — COMPLETADO
 
-Release v1.2.1 — ACTIVE
+Release v1.2.2 — ACTIVE
 ```
 
 ---

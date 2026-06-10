@@ -105,7 +105,7 @@ La principal aportación de la versión actual consiste en extender la analític
 ## Release actual
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 Sprint completados:
@@ -1392,7 +1392,7 @@ Permite:
 Release actual:
 
 ```text
-v1.2.1 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine
 ```
 
 ---
