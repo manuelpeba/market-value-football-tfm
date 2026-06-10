@@ -14,6 +14,42 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE = OUTPUT_DIR / "transfer_portfolio_dataset.csv"
 
 
+PLAYER_LEVEL_ORDER = {
+    "Development Prospect": 1,
+    "Rotation Profile": 2,
+    "First Team Ready": 3,
+    "Key Player Profile": 4,
+    "Elite Target": 5,
+}
+
+
+def classify_player_level(score: object) -> str:
+    """Classify candidates into executive recruitment quality tiers.
+
+    This is a post-model decision-support layer. It does not retrain the
+    valuation model; it translates the portfolio value score into a minimum
+    competitive-quality filter for recruitment planning.
+    """
+    value = pd.to_numeric(pd.Series([score]), errors="coerce").iloc[0]
+
+    if pd.isna(value):
+        return "Unclassified"
+    if value >= 94:
+        return "Elite Target"
+    if value >= 88:
+        return "Key Player Profile"
+    if value >= 82:
+        return "First Team Ready"
+    if value >= 75:
+        return "Rotation Profile"
+    return "Development Prospect"
+
+
+def player_level_rank(level: object) -> float:
+    """Return ordered rank for player-level tiers."""
+    return PLAYER_LEVEL_ORDER.get(str(level), np.nan)
+
+
 def minmax(series: pd.Series) -> pd.Series:
     """Scale numeric series to 0-100. Constant series receive neutral score 50."""
     s = pd.to_numeric(series, errors="coerce")
@@ -116,6 +152,17 @@ def build_portfolio_dataset() -> pd.DataFrame:
     )
 
     # --------------------------------------------------
+    # Player Level Layer v1
+    # --------------------------------------------------
+
+    portfolio["player_level_tier"] = portfolio["portfolio_value_score"].apply(
+        classify_player_level
+    )
+    portfolio["player_level_rank"] = portfolio["player_level_tier"].apply(
+        player_level_rank
+    )
+
+    # --------------------------------------------------
     # Cost
     # --------------------------------------------------
 
@@ -168,6 +215,8 @@ def build_portfolio_dataset() -> pd.DataFrame:
         "matching_confidence_norm",
         "age_potential_score",
         "portfolio_value_score",
+        "player_level_tier",
+        "player_level_rank",
         "portfolio_cost",
         "is_eligible_portfolio",
     ]

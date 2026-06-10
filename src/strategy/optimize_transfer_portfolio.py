@@ -14,6 +14,16 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE = OUTPUT_DIR / "optimized_transfer_portfolio.csv"
 
 
+PLAYER_LEVEL_ORDER = {
+    "Development Prospect": 1,
+    "Rotation Profile": 2,
+    "First Team Ready": 3,
+    "Key Player Profile": 4,
+    "Elite Target": 5,
+}
+
+
+
 SCENARIO_CONFIG = {
     "conservative": {
         "min_confidence": 75,
@@ -52,6 +62,7 @@ def prepare_candidates(
     budget: float,
     positions_needed: list[str],
     scenario: str,
+    minimum_player_level: str = "Development Prospect",
 ) -> pd.DataFrame:
     df = pd.read_csv(INPUT_FILE)
 
@@ -65,12 +76,19 @@ def prepare_candidates(
     if "matching_confidence_norm" not in df.columns:
         df["matching_confidence_norm"] = df["matching_confidence"].clip(0, 1) * 100
 
+    if "player_level_tier" not in df.columns:
+        df["player_level_tier"] = "Development Prospect"
+
+    if "player_level_rank" not in df.columns:
+        df["player_level_rank"] = df["player_level_tier"].map(PLAYER_LEVEL_ORDER)
+
     numeric_cols = [
         "portfolio_cost",
         "portfolio_value_score",
         "expected_upside",
         "expected_roi",
         "matching_confidence_norm",
+        "player_level_rank",
     ]
 
     for col in numeric_cols:
@@ -81,6 +99,13 @@ def prepare_candidates(
 
     if positions_needed:
         candidates = candidates[candidates["position_group"].isin(positions_needed)].copy()
+
+    if minimum_player_level not in PLAYER_LEVEL_ORDER:
+        raise ValueError(f"Invalid minimum player level: {minimum_player_level}")
+
+    candidates = candidates[
+        candidates["player_level_rank"] >= PLAYER_LEVEL_ORDER[minimum_player_level]
+    ].copy()
 
     config = SCENARIO_CONFIG[scenario]
 
@@ -121,6 +146,7 @@ def optimize_portfolio(
     scenario: str = "balanced",
     max_signings: int = 5,
     min_budget_utilization: float = 0.70,
+    minimum_player_level: str = "Development Prospect",
 ) -> pd.DataFrame:
     if scenario not in SCENARIO_CONFIG:
         raise ValueError(f"Invalid scenario: {scenario}")
@@ -129,6 +155,7 @@ def optimize_portfolio(
         budget=budget,
         positions_needed=positions_needed,
         scenario=scenario,
+        minimum_player_level=minimum_player_level,
     )
 
     config = SCENARIO_CONFIG[scenario]
@@ -214,6 +241,7 @@ def optimize_portfolio(
     portfolio["scenario"] = scenario
     portfolio["budget"] = budget
     portfolio["max_signings"] = max_signings
+    portfolio["minimum_player_level"] = minimum_player_level
     portfolio["solver_status"] = status
 
     portfolio["budget_utilization"] = (
@@ -243,6 +271,8 @@ def print_summary(portfolio: pd.DataFrame) -> None:
     print("\nOPTIMIZED TRANSFER PORTFOLIO")
     print("-" * 45)
     print(f"Scenario: {portfolio['scenario'].iloc[0]}")
+    if "minimum_player_level" in portfolio.columns:
+        print(f"Minimum player level: {portfolio['minimum_player_level'].iloc[0]}")
     print(f"Players selected: {len(portfolio)}")
     print(f"Total cost: €{total_cost:,.0f}")
     print(f"Expected upside: €{expected_upside:,.0f}")
@@ -260,6 +290,7 @@ def print_summary(portfolio: pd.DataFrame) -> None:
                 "player_name_fbref",
                 "club",
                 "position_group",
+                "player_level_tier",
                 "market_value_eur",
                 "expected_upside",
                 "expected_roi",

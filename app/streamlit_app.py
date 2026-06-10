@@ -3330,6 +3330,42 @@ def load_transfer_strategy_optimizer():
     return optimize_portfolio
 
 
+PLAYER_LEVEL_ORDER = {
+    "Development Prospect": 1,
+    "Rotation Profile": 2,
+    "First Team Ready": 3,
+    "Key Player Profile": 4,
+    "Elite Target": 5,
+}
+
+
+def classify_player_level_from_score(score: object) -> str:
+    value = pd.to_numeric(pd.Series([score]), errors="coerce").iloc[0]
+    if pd.isna(value):
+        return "Unclassified"
+    if value >= 94:
+        return "Elite Target"
+    if value >= 88:
+        return "Key Player Profile"
+    if value >= 82:
+        return "First Team Ready"
+    if value >= 75:
+        return "Rotation Profile"
+    return "Development Prospect"
+
+
+def player_level_display_name(level: object) -> str:
+    labels = {
+        "Development Prospect": {"ES": "Proyecto de desarrollo", "EN": "Development Prospect"},
+        "Rotation Profile": {"ES": "Perfil de rotación", "EN": "Rotation Profile"},
+        "First Team Ready": {"ES": "Listo primer equipo", "EN": "First Team Ready"},
+        "Key Player Profile": {"ES": "Jugador clave", "EN": "Key Player Profile"},
+        "Elite Target": {"ES": "Objetivo élite", "EN": "Elite Target"},
+        "Unclassified": {"ES": "Sin clasificar", "EN": "Unclassified"},
+    }
+    return labels.get(str(level), {"ES": str(level), "EN": str(level)}).get(globals().get("LANG", "ES"), str(level))
+
+
 def optimize_transfer_portfolio_with_style(
     budget: float,
     positions_needed: list[str],
@@ -3337,6 +3373,7 @@ def optimize_transfer_portfolio_with_style(
     max_signings: int = 5,
     min_budget_utilization: float = 0.70,
     portfolio_style: str = "balanced_portfolio",
+    minimum_player_level: str = "Development Prospect",
 ) -> pd.DataFrame:
     """Optimize a transfer portfolio with optional concentration constraints.
 
@@ -3350,13 +3387,23 @@ def optimize_transfer_portfolio_with_style(
         # Fallback for environments where PuLP is not available but the project
         # optimizer exists. The external optimizer may not support style constraints.
         optimize_portfolio = load_transfer_strategy_optimizer()
-        return optimize_portfolio(
-            budget=budget,
-            positions_needed=positions_needed,
-            scenario=scenario,
-            max_signings=max_signings,
-            min_budget_utilization=min_budget_utilization,
-        )
+        try:
+            return optimize_portfolio(
+                budget=budget,
+                positions_needed=positions_needed,
+                scenario=scenario,
+                max_signings=max_signings,
+                min_budget_utilization=min_budget_utilization,
+                minimum_player_level=minimum_player_level,
+            )
+        except TypeError:
+            return optimize_portfolio(
+                budget=budget,
+                positions_needed=positions_needed,
+                scenario=scenario,
+                max_signings=max_signings,
+                min_budget_utilization=min_budget_utilization,
+            )
 
     input_file = STRATEGY_REPORTS_PATH / "transfer_portfolio_dataset.csv"
     if not input_file.exists():
@@ -3431,12 +3478,19 @@ def optimize_transfer_portfolio_with_style(
     if "matching_confidence_norm" not in df.columns:
         df["matching_confidence_norm"] = pd.to_numeric(df["matching_confidence"], errors="coerce").clip(0, 1) * 100
 
+    if "player_level_tier" not in df.columns:
+        df["player_level_tier"] = df["portfolio_value_score"].apply(classify_player_level_from_score)
+
+    if "player_level_rank" not in df.columns:
+        df["player_level_rank"] = df["player_level_tier"].map(PLAYER_LEVEL_ORDER)
+
     numeric_cols = [
         "portfolio_cost",
         "portfolio_value_score",
         "expected_upside",
         "expected_roi",
         "matching_confidence_norm",
+        "player_level_rank",
     ]
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -3446,6 +3500,13 @@ def optimize_transfer_portfolio_with_style(
 
     if positions_needed:
         candidates = candidates[candidates["position_group"].isin(positions_needed)].copy()
+
+    if minimum_player_level not in PLAYER_LEVEL_ORDER:
+        raise ValueError(f"Invalid minimum player level: {minimum_player_level}")
+
+    candidates = candidates[
+        candidates["player_level_rank"] >= PLAYER_LEVEL_ORDER[minimum_player_level]
+    ].copy()
 
     config = scenario_config[scenario]
     style = style_config[portfolio_style]
@@ -3530,6 +3591,7 @@ def optimize_transfer_portfolio_with_style(
             max_signings=max_signings,
             min_budget_utilization=min_budget_utilization,
             portfolio_style="value_hunting",
+            minimum_player_level=minimum_player_level,
         )
 
     if status != "Optimal":
@@ -3542,6 +3604,7 @@ def optimize_transfer_portfolio_with_style(
     portfolio["max_signings"] = max_signings
     portfolio["solver_status"] = status
     portfolio["portfolio_style"] = portfolio_style
+    portfolio["minimum_player_level"] = minimum_player_level
     portfolio["budget_utilization"] = portfolio["portfolio_cost"].sum() / budget
     portfolio["player_budget_share"] = portfolio["portfolio_cost"] / budget
     portfolio["player_portfolio_cost_share"] = portfolio["portfolio_cost"] / portfolio["portfolio_cost"].sum()
@@ -12018,7 +12081,7 @@ def render_transfer_strategy_placeholder() -> None:
                 """
             )
 
-    controls_top = st.columns([1.00, 1.00, 1.00, 1.15, 1.00, 1.00], gap="large")
+    controls_top = st.columns([0.95, 0.95, 0.95, 1.15, 1.15, 0.90, 0.95], gap="large")
 
     with controls_top[0]:
         budget_m = st.slider(
@@ -12083,6 +12146,27 @@ def render_transfer_strategy_placeholder() -> None:
         portfolio_style = {v: k for k, v in portfolio_style_labels.items()}[portfolio_style_display]
 
     with controls_top[4]:
+        player_level_labels = {
+            "Development Prospect": "Development Prospect" if LANG == "EN" else "Proyecto de desarrollo",
+            "Rotation Profile": "Rotation Profile" if LANG == "EN" else "Perfil de rotación",
+            "First Team Ready": "First Team Ready" if LANG == "EN" else "Listo primer equipo",
+            "Key Player Profile": "Key Player Profile" if LANG == "EN" else "Jugador clave",
+            "Elite Target": "Elite Target" if LANG == "EN" else "Objetivo élite",
+        }
+        minimum_player_level_display = st.selectbox(
+            "Minimum Player Level" if LANG == "EN" else "Nivel mínimo jugador",
+            list(player_level_labels.values()),
+            index=2,
+            key="transfer_strategy_minimum_player_level_display",
+            help=(
+                "Filters candidates before optimization by minimum competitive tier."
+                if LANG == "EN"
+                else "Filtra candidatos antes de optimizar por nivel competitivo mínimo."
+            ),
+        )
+        minimum_player_level = {v: k for k, v in player_level_labels.items()}[minimum_player_level_display]
+
+    with controls_top[5]:
         max_signings = st.slider(
             "Max Signings" if LANG == "EN" else "Máx. fichajes",
             min_value=1,
@@ -12092,7 +12176,7 @@ def render_transfer_strategy_placeholder() -> None:
             key="transfer_strategy_max_signings",
         )
 
-    with controls_top[5]:
+    with controls_top[6]:
         min_budget_utilization = st.slider(
             "Min Budget Use" if LANG == "EN" else "Uso mín. presupuesto",
             min_value=0.50,
@@ -12162,7 +12246,7 @@ def render_transfer_strategy_placeholder() -> None:
         f"""
 <div class="radar-info-box" style="margin-top:-4px; margin-bottom:12px;">
 <b>{html.escape('Active constraints' if LANG == 'EN' else 'Restricciones activas')}:</b>
-{html.escape(f'Budget €{budget_m}M · Scenario {scenario_display} · Risk {risk_profile_display} · Style {portfolio_style_display} · Max signings {max_signings} · Min budget use {min_budget_utilization:.0%}')}
+{html.escape(f'Budget €{budget_m}M · Scenario {scenario_display} · Risk {risk_profile_display} · Style {portfolio_style_display} · Min level {minimum_player_level_display} · Max signings {max_signings} · Min budget use {min_budget_utilization:.0%}')}
 <br><span style="color:#64748b;">{html.escape('Portfolio recalculates automatically when inputs change.' if LANG == 'EN' else 'La cartera se recalcula automáticamente al cambiar los parámetros.')}</span>
 </div>
 """,
@@ -12177,6 +12261,7 @@ def render_transfer_strategy_placeholder() -> None:
             max_signings=max_signings,
             min_budget_utilization=min_budget_utilization,
             portfolio_style=portfolio_style,
+            minimum_player_level=minimum_player_level,
         )
 
         if portfolio.empty:
@@ -12271,6 +12356,7 @@ def render_transfer_strategy_placeholder() -> None:
             "league",
             "position_group",
             "age",
+            "player_level_tier",
             "market_value_eur",
             "player_portfolio_cost_share",
             "expected_upside",
@@ -12287,6 +12373,7 @@ def render_transfer_strategy_placeholder() -> None:
             "league": "League" if LANG == "EN" else "Liga",
             "position_group": "Position" if LANG == "EN" else "Posición",
             "age": "Age" if LANG == "EN" else "Edad",
+            "player_level_tier": "Player Level" if LANG == "EN" else "Nivel jugador",
             "market_value_eur": "Market Value" if LANG == "EN" else "Valor mercado",
             "player_portfolio_cost_share": "Portfolio Share" if LANG == "EN" else "Peso cartera",
             "expected_upside": "Expected Upside" if LANG == "EN" else "Upside esperado",
@@ -12295,6 +12382,10 @@ def render_transfer_strategy_placeholder() -> None:
             "optimization_score": "Optimization Score" if LANG == "EN" else "Score optimización",
         }
         display = display.rename(columns=rename_map)
+
+        level_cols = [col for col in ["Player Level", "Nivel jugador"] if col in display.columns]
+        for col in level_cols:
+            display[col] = display[col].apply(player_level_display_name)
 
         money_cols = [
             col
@@ -12358,6 +12449,7 @@ def render_transfer_strategy_placeholder() -> None:
                                 group_df["player_name_fbref"].astype(str),
                                 group_df["club"].astype(str) if "club" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
                                 group_df["position_group"].astype(str),
+                                group_df["player_level_tier"].astype(str).map(player_level_display_name) if "player_level_tier" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
                                 pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
                                 pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
                                 pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
@@ -12376,16 +12468,18 @@ def render_transfer_strategy_placeholder() -> None:
                             + ": %{customdata[1]}<br>"
                             + ("Position" if LANG == "EN" else "Posición")
                             + ": %{customdata[2]}<br>"
+                            + ("Player Level" if LANG == "EN" else "Nivel jugador")
+                            + ": %{customdata[3]}<br>"
                             + ("Age" if LANG == "EN" else "Edad")
-                            + ": %{customdata[3]:.1f}<br>"
+                            + ": %{customdata[4]:.1f}<br>"
                             + ("Cost" if LANG == "EN" else "Coste")
                             + ": €%{x:.1f}M<br>"
                             + ("Upside" if LANG == "EN" else "Upside")
                             + ": €%{y:.1f}M<br>"
                             + ("ROI" if LANG == "EN" else "ROI")
-                            + ": %{customdata[4]:.1%}<br>"
+                            + ": %{customdata[5]:.1%}<br>"
                             + ("Portfolio Score" if LANG == "EN" else "Score cartera")
-                            + ": %{customdata[5]:.1f}<extra></extra>"
+                            + ": %{customdata[6]:.1f}<extra></extra>"
                         ),
                     )
                 )
@@ -12403,16 +12497,24 @@ def render_transfer_strategy_placeholder() -> None:
                 automargin=True,
                 showgrid=True,
                 zeroline=False,
+                showline=True,
+                linewidth=1,
+                linecolor="rgba(120,120,120,0.6)",
+                mirror=False,
             )
             fig.update_yaxes(
                 rangemode="tozero",
                 automargin=True,
                 showgrid=True,
                 zeroline=False,
+                showline=True,
+                linewidth=1,
+                linecolor="rgba(120,120,120,0.6)",
+                mirror=False,
             )
             st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
-    except ModuleNotFoundError as exc:
+    except ModuleNotFoundError:
         st.error(
             (
                 "The strategy optimizer module or one of its dependencies is missing. "
@@ -12424,14 +12526,50 @@ def render_transfer_strategy_placeholder() -> None:
                 "Comprueba que existe `src/strategy/optimize_transfer_portfolio.py` y que PuLP está instalado."
             )
         )
-        st.exception(exc)
+    except ValueError as exc:
+        message = str(exc)
+        infeasible_markers = [
+            "infeasible",
+            "no optimal solution",
+            "no eligible candidates",
+            "no feasible portfolio",
+            "solver status",
+        ]
+        if any(marker in message.lower() for marker in infeasible_markers):
+            if LANG == "EN":
+                st.warning("No feasible portfolio found with the selected constraints.")
+                st.info(
+                    "Try relaxing one condition: lower minimum budget use, reduce the minimum player level, "
+                    "increase max signings, remove a required position, or switch portfolio style to Value Opportunities."
+                )
+                st.caption(
+                    "Methodological note: this is an infeasible optimization case, not a system error. "
+                    "The selected constraints leave no valid combination of players."
+                )
+            else:
+                st.warning("No se ha encontrado una cartera factible con las restricciones seleccionadas.")
+                st.info(
+                    "Prueba a relajar una condición: bajar el uso mínimo de presupuesto, reducir el nivel mínimo de jugador, "
+                    "aumentar el máximo de fichajes, quitar alguna posición obligatoria o cambiar el estilo de cartera a Value Opportunities."
+                )
+                st.caption(
+                    "Nota metodológica: es un caso de optimización no factible, no un error del sistema. "
+                    "Las restricciones seleccionadas no dejan ninguna combinación válida de jugadores."
+                )
+        else:
+            st.error(
+                "The strategy engine could not generate a portfolio with the selected inputs."
+                if LANG == "EN"
+                else "El motor estratégico no ha podido generar una cartera con los parámetros seleccionados."
+            )
+            st.caption(message)
     except Exception as exc:
         st.error(
-            "No feasible portfolio found with the selected constraints."
+            "The strategy engine could not generate a portfolio with the selected inputs."
             if LANG == "EN"
-            else "No se ha encontrado una cartera factible con las restricciones seleccionadas."
+            else "El motor estratégico no ha podido generar una cartera con los parámetros seleccionados."
         )
-        st.exception(exc)
+        st.caption(str(exc))
 
 def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     render_product_page_header(
