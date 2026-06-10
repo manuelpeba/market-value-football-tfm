@@ -71,6 +71,131 @@ def winsorize_series(
     return series.clip(lower=lower, upper=upper)
 
 
+SCORING_ENRICHMENT_COLUMNS = [
+    "market_value_growth_prev",
+    "delta_log_market_value_prev",
+    "growth_index",
+    "breakout_indicator",
+    "career_year",
+    "matching_confidence",
+    "matching_method",
+    "log_minutes_played",
+    "goals_per90",
+    "assists_per90",
+]
+
+DEFAULT_ENRICHMENT_PATH = (
+    ROOT / "data" / "processed" / "player_season_modeling_indices_v13a.parquet"
+)
+
+DEFAULT_ENRICHMENT_KEYS = [
+    "player_id_tm",
+    "season",
+    "league",
+    "club",
+]
+
+
+def enrich_scoring_features(
+    df: pd.DataFrame,
+    enrichment_path: Path = DEFAULT_ENRICHMENT_PATH,
+    merge_keys: list[str] = DEFAULT_ENRICHMENT_KEYS,
+    enrichment_columns: list[str] = SCORING_ENRICHMENT_COLUMNS,
+) -> pd.DataFrame:
+    """Reintegrate scoring features lost during the prediction export step.
+
+    Sprint TM.2 requires the 11-league prediction artefact to keep the
+    variables consumed downstream by Growth Score and Confidence Score.
+    The merge is intentionally conservative: it only runs when at least
+    one enrichment column is missing from the prediction dataset.
+    """
+
+    missing_enrichment_columns = [
+        col for col in enrichment_columns if col not in df.columns
+    ]
+
+    if not missing_enrichment_columns:
+        return df
+
+    if not enrichment_path.exists():
+        print(
+            "Warning: scoring enrichment skipped. "
+            f"Feature source not found: {enrichment_path}"
+        )
+        return df
+
+    missing_keys = [col for col in merge_keys if col not in df.columns]
+    if missing_keys:
+        print(
+            "Warning: scoring enrichment skipped. "
+            f"Missing merge keys in predictions: {missing_keys}"
+        )
+        return df
+
+    feature_df = pd.read_parquet(enrichment_path)
+
+    missing_feature_keys = [col for col in merge_keys if col not in feature_df.columns]
+    if missing_feature_keys:
+        print(
+            "Warning: scoring enrichment skipped. "
+            f"Missing merge keys in feature source: {missing_feature_keys}"
+        )
+        return df
+
+    available_enrichment_columns = [
+        col
+        for col in missing_enrichment_columns
+        if col in feature_df.columns
+    ]
+
+    if not available_enrichment_columns:
+        print(
+            "Warning: scoring enrichment skipped. "
+            "None of the requested enrichment columns are available."
+        )
+        return df
+
+    duplicate_keys = feature_df.duplicated(subset=merge_keys).sum()
+    if duplicate_keys:
+        raise ValueError(
+            "Scoring enrichment source is not unique at merge-key level. "
+            f"Duplicated keys: {duplicate_keys}. Merge keys: {merge_keys}"
+        )
+
+    rows_before = len(df)
+
+    enriched_df = df.merge(
+        feature_df[merge_keys + available_enrichment_columns],
+        on=merge_keys,
+        how="left",
+        validate="many_to_one",
+    )
+
+    if len(enriched_df) != rows_before:
+        raise ValueError(
+            "Scoring enrichment changed the number of rows. "
+            f"Before: {rows_before}. After: {len(enriched_df)}"
+        )
+
+    print("Scoring feature enrichment completed")
+    print(f"Feature source: {enrichment_path}")
+    print(f"Merge keys: {merge_keys}")
+    print(f"Added columns: {available_enrichment_columns}")
+
+    missing_rates = (
+        enriched_df[available_enrichment_columns]
+        .isna()
+        .mean()
+        .sort_values(ascending=False)
+    )
+
+    print("Missing rates after enrichment:")
+    for col, rate in missing_rates.items():
+        print(f"  {col}: {rate:.4f}")
+
+    return enriched_df
+
+
 def build_inefficiency_score(
     df: pd.DataFrame,
     observed_market_value_col: str,
@@ -181,6 +306,7 @@ def main() -> None:
         raise FileNotFoundError(f"Input predictions file not found: {input_path}")
 
     df = pd.read_csv(input_path)
+    df = enrich_scoring_features(df)
 
     scored_df = build_inefficiency_score(
         df=df,
