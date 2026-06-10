@@ -7,7 +7,7 @@ La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centr
 La versión actual:
 
 ```text
-v1.2.2 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
 ```
 
 implementa una arquitectura multicapa capaz de transformar información deportiva y económica procedente de múltiples competiciones europeas en recomendaciones accionables para departamentos deportivos profesionales.
@@ -36,12 +36,16 @@ Decision Support System
 Sporting Decision
 ```
 
-La incorporación de Sprint 14 introduce formalmente conceptos procedentes de:
+La arquitectura integra actualmente conceptos procedentes de:
 
-* Decision Science;
-* Operations Research;
-* Portfolio Optimization;
-* Strategic Recruitment.
+* Sports Analytics
+* Sports Economics
+* Econometría aplicada
+* Machine Learning supervisado
+* Explainable AI
+* Decision Science
+* Operations Research
+* Portfolio Optimization
 
 permitiendo evolucionar desde la identificación de oportunidades individuales hacia la optimización de decisiones de fichaje bajo restricciones reales de club.
 
@@ -55,7 +59,7 @@ permitiendo evolucionar desde la identificación de oportunidades individuales h
 | Dataset modelizable            |  5.527 |
 | Ligas                          |     11 |
 | Temporadas                     |      7 |
-| Liga-temporada                 |     77 |
+| Combinaciones liga-temporada   |     77 |
 | Match Rate global              | 75,97% |
 
 ---
@@ -104,26 +108,62 @@ I --> J[Explainability]
 
 H --> K[Operational Predictions]
 
-K --> L[Opportunity Framework]
-K --> M[Risk Framework]
+K --> L[Scoring Feature Reintegration Layer]
 
-L --> N[Ranking Engine]
-M --> N
+L --> M[Opportunity Framework]
+L --> N[Risk Framework]
 
-N --> O[Current Scouting Layer]
+M --> O[Ranking Engine]
+N --> O
 
-O --> P[Player Intelligence]
+O --> P[Scouting Layer]
 
-P --> Q[Recruitment Intelligence]
+P --> Q[Player Intelligence]
 
-Q --> R[Transfer Strategy Engine]
+Q --> R[Recruitment Intelligence]
 
-R --> S[Portfolio Optimization]
+R --> S[Transfer Strategy Engine]
 
-S --> T[Decision Support System]
+S --> T[Portfolio Optimization]
 
-T --> U[Sporting Decision]
+T --> U[Decision Support System]
+
+U --> V[Sporting Decision]
 ```
+
+---
+
+## Contribución arquitectónica de Sprint TM.2
+
+Sprint TM.2 introduce una capa explícita de reintegración de variables entre la salida de predicción y el Opportunity Framework.
+
+Objetivo:
+
+```text
+Predictions
+↓
+Scoring Feature Reintegration
+↓
+Opportunity Framework
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+```
+
+Esta capa garantiza que la expansión multi-liga introducida durante Sprint 13A y Sprint 13B se propague correctamente hasta todas las capas operativas del DSS.
+
+Resultado:
+
+```text
+Modeling Layer             → 11 ligas
+Scoring Layer              → 11 ligas
+Opportunity Layer          → 11 ligas
+Transfer Strategy Engine   → 11 ligas
+Decision Support System    → 11 ligas
+```
+
+La arquitectura elimina así dependencias heredadas de versiones anteriores y asegura consistencia metodológica de extremo a extremo.
 
 ---
 
@@ -174,15 +214,11 @@ Introducida durante Sprint 13B.
 
 Integrar métricas avanzadas derivadas de FBref dentro de la arquitectura productiva.
 
----
-
 ### Variables productivas
 
 * finishing_index_v2
 * availability_index
 * defensive_activity_index
-
----
 
 ### Resultado metodológico
 
@@ -208,8 +244,6 @@ Responsable de la integración entre fuentes.
 FBref ↔ Transfermarkt
 ```
 
----
-
 ### Metodología
 
 * Exact Matching.
@@ -217,15 +251,11 @@ FBref ↔ Transfermarkt
 * Age Validation.
 * Fuzzy Matching.
 
----
-
 ### Tecnología
 
 ```text
 RapidFuzz
 ```
-
----
 
 ### Resultado actual
 
@@ -247,253 +277,174 @@ Responsable de la construcción del dataset modelizable y del entrenamiento de m
 | Ligas         |    11 |
 | Temporadas    |     7 |
 
----
-
 ### Modelos oficiales
 
 #### Growth OLS v13B
 
 Benchmark econométrico oficial.
 
-| Métrica |  Valor |
-| ------- | -----: |
-| R²      | 0.4549 |
-
----
-
 #### Tuned XGBoost v13B
 
-Modelo productivo oficial.
+Modelo Machine Learning productivo.
 
-| Métrica |  Valor |
-| ------- | -----: |
-| R²      | 0.4453 |
+### Resultado
 
----
+La modelización opera actualmente sobre un universo multi-liga de once competiciones europeas y constituye la base de todas las capas posteriores del DSS.
 
-### Función arquitectónica
+## 5. Opportunity Framework Layer
 
-La coexistencia de ambas capas permite combinar:
-
-* interpretabilidad;
-* robustez metodológica;
-* capacidad predictiva.
-
----
-
-## 5. Historical Evaluation Layer
-
-Responsable de la validación metodológica del sistema.
-
-### Funciones
-
-* Validación temporal.
-* Comparación de algoritmos.
-* Backtesting.
-* Explainability.
-* Robustness Checks.
-* Feature Set Evaluation.
-
-### Outputs
-
-```text
-Predictions
-Metrics
-Feature Importance
-SHAP Analysis
-Model Comparison
-```
-
----
-
-## 6. External Validation Layer
-
-Introducida durante Sprint 13A.
+Introducida durante Sprint 5 y ampliada progresivamente hasta Sprint TM.2.
 
 ### Objetivo
 
-Evaluar la capacidad de generalización de la metodología mediante expansión sistemática del universo competitivo.
+Transformar predicciones de valor de mercado en oportunidades accionables de scouting.
+
+La lógica central del sistema se basa en la comparación entre:
+
+```text
+Observed Market Value
+vs
+Expected Market Value
+```
+
+permitiendo identificar potenciales ineficiencias de mercado.
 
 ---
 
 ### Componentes
 
-#### Multi-League Expansion
+#### Inefficiency Score
 
-Incorporación de:
+Mide el grado de infravaloración o sobrevaloración relativa.
 
-* Championship
-* Belgian Pro League
-* Austrian Bundesliga
-* Spanish Segunda División
+#### Growth Score
 
-#### Coverage Diagnostics
+Captura señales de crecimiento y evolución reciente del jugador.
 
-Auditoría automática de:
+#### Confidence Score
 
-* Match Rate por liga.
-* Match Rate por temporada.
-* Cobertura efectiva.
-* Calidad de integración.
+Evalúa la robustez y fiabilidad de la recomendación.
 
-#### Coverage Audit
+#### Opportunity Score
 
-Validación analítica de observaciones no emparejadas.
+Combina las dimensiones anteriores en una métrica única orientada a toma de decisiones.
 
 ---
 
-### Resultado metodológico
+### Resultado operativo
 
-La expansión multi-liga aporta simultáneamente:
+Tras Sprint TM.2:
 
-* mayor cobertura;
-* mayor diversidad competitiva;
-* evidencia favorable de validez externa;
-* mejora de rendimiento predictivo.
+```text
+Opportunity Framework
+↓
+11 ligas integradas
+↓
+6.208 observaciones elegibles
+```
 
-Esta capa constituye una de las principales contribuciones metodológicas del proyecto.
+garantizando consistencia con la cobertura de modelización.
 
-## 7. Current Scouting Layer
+---
 
-Responsable de separar validación histórica y explotación operativa.
+## 6. Risk Framework Layer
+
+Responsable de la evaluación del riesgo asociado a cada recomendación.
 
 ### Objetivo
 
-Transformar predicciones de valor de mercado en señales utilizables para scouting profesional.
+Complementar el análisis de oportunidad con una medida explícita de incertidumbre.
+
+### Componentes
+
+* Risk Score.
+* Risk Category.
+* Opportunity vs Risk Matrix.
+* Risk-adjusted Opportunity.
+
+### Resultado
+
+La plataforma permite evaluar simultáneamente:
+
+```text
+Potencial esperado
++
+Nivel de riesgo
+```
+
+mejorando la calidad de las decisiones de recruitment.
 
 ---
 
-### Funciones
+## 7. Ranking Engine Layer
 
-* Predicción temporada vigente.
-* Construcción de rankings.
-* Identificación de oportunidades.
-* Priorización de candidatos.
-* Generación de shortlists.
+Responsable de transformar Opportunity Framework y Risk Framework en rankings operativos.
+
+### Función principal
+
+```text
+Opportunity Framework
++
+Risk Framework
+↓
+Ranking Engine
+↓
+Scouting Prioritization
+```
 
 ---
 
 ### Outputs principales
 
-```text
-scouting_shortlist.csv
-scouting_shortlist_with_risk.csv
-```
+#### Global Rankings
+
+Ranking global de oportunidades.
+
+#### Positional Rankings
+
+Rankings específicos por posición.
+
+#### Recruitment Rankings
+
+Rankings orientados a scouting y recruitment.
+
+#### Executive Shortlists
+
+Selección priorizada de candidatos para evaluación ejecutiva.
 
 ---
 
-### Universo operativo actual
+### Sprint TM.2
 
-| Métrica               |     Valor |
-| --------------------- | --------: |
-| Observaciones scoring |       811 |
-| Ligas                 |        11 |
-| Temporada actual      | 2025-2026 |
+Sprint TM.2 resolvió una inconsistencia arquitectónica detectada tras la expansión multi-liga.
 
----
-
-## 8. Opportunity & Risk Layer
-
-Responsable de transformar predicciones en recomendaciones accionables.
-
-### Componentes
-
-```text
-Inefficiency Score
-Growth Score
-Confidence Score
-Opportunity Score
-Risk Score
-```
-
----
-
-### Flujo conceptual
+Situación previa:
 
 ```text
-Predicted Market Value
-↓
-Observed Market Value
-↓
-Market Mispricing
-↓
-Opportunity Score
-↓
-Risk Assessment
-↓
-Executive Ranking
+Modeling Layer      → 11 ligas
+Ranking Engine      → 7 ligas
 ```
 
----
-
-### Objetivo
-
-Priorizar candidatos considerando simultáneamente:
-
-* upside esperado;
-* nivel de riesgo;
-* robustez estadística;
-* confianza del modelo.
-
----
-
-### Limitación documentada
-
-Durante Sprint 13B se identificó una separación estructural entre:
+Situación actual:
 
 ```text
-Modeling Pipeline
-≠
-Scoring Pipeline
+Modeling Layer      → 11 ligas
+Ranking Engine      → 11 ligas
 ```
 
-La integración completa queda documentada como:
+Resultado:
 
-```text
-TM.2 — Scoring & Ranking Integration v13B
-```
-
-Estado:
-
-```text
-Backlog prioritario
-```
-
-La limitación no afecta a la validez metodológica de los resultados obtenidos durante Sprint 13B.
+Consistencia completa entre modelización y capa operativa.
 
 ---
 
-## 9. Ranking Engine
-
-Responsable de transformar scores analíticos en listas priorizadas de candidatos.
-
-### Capacidades
-
-* Rankings globales.
-* Rankings por posición.
-* Rankings por liga.
-* Rankings por riesgo.
-* Rankings ejecutivos.
-
----
-
-### Output principal
-
-```text
-Scouting Shortlists
-```
-
----
-
-## 10. Player Intelligence Layer
+## 8. Player Intelligence Layer
 
 Introducida durante Sprint 10.
 
 ### Objetivo
 
 Transformar rankings en análisis individuales de jugadores.
-
----
 
 ### Componentes
 
@@ -503,7 +454,7 @@ Visualización multidimensional del perfil del jugador.
 
 #### Positional Benchmarking
 
-Comparación frente a jugadores equivalentes.
+Comparación frente a perfiles equivalentes.
 
 #### Opportunity vs Risk Matrix
 
@@ -513,23 +464,19 @@ Evaluación conjunta de potencial y riesgo.
 
 Interpretación automática de fortalezas y debilidades.
 
----
-
 ### Resultado
 
 La plataforma evoluciona desde rankings descriptivos hacia inteligencia accionable a nivel de jugador.
 
 ---
 
-## 11. Recruitment Intelligence Layer
+## 9. Recruitment Intelligence Layer
 
 Introducida durante Sprint 11.
 
 ### Objetivo
 
 Transformar análisis individuales en procesos estructurados de recruitment.
-
----
 
 ### Componentes
 
@@ -578,7 +525,7 @@ Recruitment Decision
 
 ---
 
-## 12. Transfer Strategy Engine
+## 10. Transfer Strategy Engine
 
 Introducido durante Sprint 14.
 
@@ -648,7 +595,7 @@ Combinación de talento consolidado y desarrollo futuro.
 
 ---
 
-## 13. Portfolio Optimization Layer
+## 11. Portfolio Optimization Layer
 
 Introducida durante Sprint 14.
 
@@ -658,8 +605,6 @@ Introducida durante Sprint 14.
 Binary Integer Programming
 (PuLP)
 ```
-
----
 
 ### Restricciones implementadas
 
@@ -697,17 +642,15 @@ Representa la principal evolución conceptual del proyecto.
 
 ---
 
-## 14. Decision Support System Layer
+## 12. Decision Support System Layer
 
-Consolidada durante Sprint 12 y ampliada durante Sprint 14.
+Consolidada durante Sprint 12 y ampliada durante Sprint 14 y Sprint TM.2.
 
 ### Aplicación principal
 
 ```text
 app/streamlit_app.py
 ```
-
----
 
 ### Capacidades actuales
 
@@ -740,6 +683,33 @@ Idiomas soportados:
 
 ---
 
+### Cobertura DSS actual
+
+```text
+Modeling Dataset
+↓
+Scoring Dataset
+↓
+Opportunity Framework
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+↓
+Decision Support System
+```
+
+Cobertura:
+
+```text
+11 ligas
+77 league-seasons
+```
+
+La cobertura competitiva es ahora consistente en todas las capas del sistema.
+
+---
+
 # 🔄 Evolución arquitectónica
 
 | Sprint       | Evolución                             |
@@ -749,7 +719,7 @@ Idiomas soportados:
 | Sprint 3     | Composite Football Indices            |
 | Sprint 4     | Machine Learning                      |
 | Sprint 4C    | Explainability                        |
-| Sprint 5     | Scoring Engine                        |
+| Sprint 5     | Opportunity Framework                 |
 | Sprint 6     | Business Evaluation                   |
 | Sprint 7     | Executive Dashboard                   |
 | Sprint 9     | Decision Support Layer                |
@@ -761,6 +731,7 @@ Idiomas soportados:
 | Sprint 13B   | Advanced Metrics Layer                |
 | Sprint 14    | Transfer Strategy Engine              |
 | Sprint 14.1  | Player Level Layer                    |
+| TM.2         | Multi-League DSS Integration          |
 
 ---
 
@@ -807,51 +778,70 @@ Backlog
 
 Objetivo:
 
-Analizar limitaciones de cobertura observadas tras la expansión multi-liga.
+Analizar el techo teórico de matching y las limitaciones estructurales de integración entre FBref y Transfermarkt.
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## Prioridad alta
 
-Estado:
+### Contract Intelligence Layer
 
-```text
-Backlog prioritario
-```
+Variables previstas:
 
-Objetivo:
-
-Alinear completamente la nueva capa de modelización con el pipeline histórico de scoring y rankings.
+* años restantes de contrato;
+* expiración contractual;
+* proximidad a free agency.
 
 ---
 
-## Sprint 15 — Strategic Optimization Refinement
+### UEFA Club Strength Layer
 
-Objetivo:
+Variables previstas:
 
-Refinar la capa de optimización incorporando:
+* coeficiente UEFA;
+* participaciones europeas;
+* rendimiento continental.
 
-* simplificación de restricciones estratégicas;
-* revisión de escenarios;
-* optimización multicriterio;
-* evolución del perfil de riesgo.
+---
+
+### National Team Layer
+
+Variables previstas:
+
+* internacionalidades;
+* minutos internacionales;
+* torneos disputados.
+
+---
+
+## Investigación futura
+
+### Machine Learning
+
+* CatBoost.
+* TabPFN.
+* Ensemble Learning.
+
+### Football Analytics
+
+* Similarity Engine.
+* Career Trajectory Modeling.
+* Club Development Intelligence.
+
+### Sports Economics
+
+* Dynamic Asset Valuation.
+* Multi-Objective Optimization.
+* Portfolio Simulation.
 
 ---
 
 # 🏁 Conclusión
 
-La arquitectura actual representa la evolución desde un sistema de estimación de valor de mercado hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte cuantitativo a decisiones deportivas.
-
-La cadena de valor actual puede resumirse mediante:
+La arquitectura ha evolucionado desde un sistema de valoración de mercado hacia una plataforma DSS completa capaz de integrar:
 
 ```text
-Data Engineering
-↓
-Advanced Metrics Layer
-↓
-Econometrics
-+
-Machine Learning
+Market Value Prediction
 ↓
 Opportunity Detection
 ↓
@@ -868,26 +858,12 @@ Portfolio Optimization
 Decision Support System
 ```
 
-Sprint 13A fortalece la validez externa.
+Sprint 13A aporta validez externa mediante expansión multi-liga.
 
-Sprint 13B fortalece la capacidad explicativa.
+Sprint 13B aporta profundidad analítica mediante métricas avanzadas.
 
-Sprint 14 introduce Decision Science y Operations Research.
+Sprint 14 introduce optimización bajo restricciones reales.
 
-Sprint 14.1 incorpora segmentación estratégica de calidad mediante Player Level Layer.
+Sprint TM.2 garantiza consistencia metodológica de extremo a extremo entre modelización y DSS.
 
-Como resultado, la plataforma deja de responder únicamente:
-
-```text
-¿Qué jugador parece infravalorado?
-```
-
-para responder también:
-
-```text
-¿Qué combinación de jugadores
-maximiza el valor esperado
-bajo restricciones reales de club?
-```
-
-constituyendo la principal contribución metodológica y aplicada de la arquitectura actual.
+La versión actual constituye una arquitectura reproducible, interpretable y orientada a negocio preparada tanto para defensa académica como para evolución hacia una plataforma profesional de scouting y recruitment intelligence.

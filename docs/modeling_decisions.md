@@ -5,10 +5,10 @@
 Este documento recoge las principales decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release:
 
 ```text
-v1.2.2 — Transfer Strategy Engine
+v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
 ```
 
-Su finalidad es justificar las decisiones desde una perspectiva de:
+Su finalidad es justificar formalmente las decisiones tomadas desde una perspectiva de:
 
 * Econometría aplicada.
 * Machine Learning.
@@ -27,7 +27,7 @@ Su finalidad es justificar las decisiones desde una perspectiva de:
 
 El proyecto adopta una arquitectura híbrida donde la precisión predictiva no constituye el objetivo final.
 
-La finalidad última consiste en generar decisiones deportivas de mayor calidad.
+La finalidad última consiste en generar decisiones deportivas de mayor calidad mediante la integración de modelización predictiva, evaluación de oportunidades y optimización estratégica.
 
 La arquitectura conceptual puede resumirse mediante:
 
@@ -51,13 +51,15 @@ Portfolio Optimization
 Decision Support System
 ```
 
-Principio metodológico principal:
+Principio metodológico central:
 
 ```text
 Maximizar utilidad para scouting
 antes que optimizar exclusivamente
 métricas predictivas
 ```
+
+La calidad de una solución no se evalúa únicamente por su capacidad explicativa o predictiva, sino por su capacidad para mejorar procesos reales de toma de decisiones deportivas.
 
 ---
 
@@ -75,11 +77,11 @@ antes de
 predecir
 ```
 
+La econometría proporciona una referencia interpretable frente a modelos de mayor complejidad y permite validar la coherencia económica y deportiva de los resultados obtenidos.
+
 ---
 
-## Modelo oficial
-
-Especificación productiva:
+## Especificación oficial
 
 ```python
 log_market_value_eur ~
@@ -140,7 +142,7 @@ Resultado:
 
 ## Decisión final
 
-Las métricas avanzadas aportan capacidad explicativa incremental.
+Las métricas avanzadas aportan capacidad explicativa incremental sin comprometer la interpretabilidad.
 
 Por tanto:
 
@@ -285,7 +287,7 @@ Competiciones incorporadas:
 * Championship
 * Belgian Pro League
 * Austrian Bundesliga
-* Segunda División de España
+* Spanish Segunda División
 
 ---
 
@@ -302,7 +304,7 @@ Competiciones incorporadas:
 
 La expansión multi-liga queda incorporada permanentemente al sistema.
 
-Motivos:
+Justificación:
 
 * mayor cobertura;
 * mayor representatividad;
@@ -383,9 +385,7 @@ Interpretables
 Defendibles
 ```
 
-especialmente en contextos profesionales de scouting y recruitment.
-
----
+especialmente en contextos profesionales de scouting, recruitment y toma de decisiones deportivas.
 
 # 🧩 Evolución metodológica
 
@@ -404,6 +404,14 @@ Sprint 11
 ↓
 Recruitment Intelligence
 
+Sprint 13A
+↓
+Multi-League Expansion
+
+Sprint 13B
+↓
+Advanced Football Metrics
+
 Sprint 14
 ↓
 Transfer Strategy Engine
@@ -413,9 +421,15 @@ Sprint 14.1
 Portfolio Optimization
 +
 Player Level Layer
+
+TM.2
+↓
+Multi-League DSS Integration
 ```
 
 La modelización deja de perseguir exclusivamente la estimación de valor de mercado para convertirse en una herramienta de apoyo a decisiones deportivas bajo restricciones reales de club.
+
+---
 
 # 🎯 Decisiones sobre scoring
 
@@ -519,11 +533,136 @@ en lugar de utilizar únicamente diferencias entre valor observado y valor esper
 
 ---
 
+# 📌 MD-014 — Multi-League DSS Consistency (Sprint TM.2)
+
+## Problema identificado
+
+Tras Sprint 13A y Sprint 13B, la cobertura de modelización había sido ampliada a once competiciones europeas.
+
+Sin embargo, parte de la capa DSS seguía operando sobre artefactos heredados construidos sobre la versión anterior de siete ligas.
+
+Situación observada:
+
+```text
+Modeling Layer
+↓
+11 ligas
+
+Scoring / Ranking DSS
+↓
+7 ligas
+```
+
+---
+
+## Decisión metodológica
+
+Implementar una capa explícita de reintegración de variables dentro del pipeline de scoring.
+
+Arquitectura resultante:
+
+```text
+Predictions
+↓
+Scoring Feature Reintegration
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+```
+
+---
+
+## Implementación
+
+La reintegración utiliza claves compuestas:
+
+```text
+player_id_tm
++
+season
++
+league
++
+club
+```
+
+e incorpora controles explícitos de:
+
+* integridad de filas;
+* unicidad de claves;
+* validación many-to-one;
+* compatibilidad hacia atrás.
+
+---
+
+## Resultado
+
+Cobertura final:
+
+```text
+Modeling Layer
+↓
+11 ligas
+
+Scoring Layer
+↓
+11 ligas
+
+Opportunity Layer
+↓
+11 ligas
+
+Ranking Engine
+↓
+11 ligas
+
+Transfer Strategy Engine
+↓
+11 ligas
+
+Decision Support System
+↓
+11 ligas
+```
+
+---
+
+## Justificación
+
+La decisión permite:
+
+* mantener reproducibilidad;
+* evitar reentrenamientos innecesarios;
+* preservar la metodología validada;
+* garantizar consistencia arquitectónica de extremo a extremo.
+
+---
+
+## Impacto
+
+Sprint TM.2 no modifica:
+
+* modelos econométricos;
+* modelos Machine Learning;
+* lógica de scoring;
+* métricas de evaluación.
+
+Su contribución consiste exclusivamente en asegurar la propagación completa de la expansión multi-liga hasta la capa operativa DSS.
+
+---
+
 # ⚠️ Risk Framework
 
 Introducido durante Sprint 10.
 
-Problema identificado:
+## Problema identificado
 
 ```text
 Alta oportunidad
@@ -569,7 +708,7 @@ La arquitectura evoluciona desde una lógica puramente ofensiva de upside hacia 
 
 Introducida durante Sprint 10.
 
-Problema identificado:
+## Problema identificado
 
 ```text
 Ranking
@@ -604,7 +743,7 @@ Esta capa constituye la transición desde analítica descriptiva hacia inteligen
 
 Introducida durante Sprint 11.
 
-Problema identificado:
+## Problema identificado
 
 ```text
 Análisis individual
@@ -638,8 +777,6 @@ La plataforma deja de responder únicamente preguntas analíticas y comienza a s
 # 🧠 Transfer Strategy Engine
 
 Introducido durante Sprint 14.
-
----
 
 ## Problema identificado
 
@@ -703,466 +840,3 @@ Sprint 14 introduce formalmente conceptos procedentes de:
 * Strategic Recruitment Analytics.
 
 representando la principal evolución conceptual del proyecto.
-
----
-
-# 📊 Portfolio Optimization
-
-Introducida durante Sprint 14.
-
----
-
-## Problema identificado
-
-```text
-Mejor jugador individual
-≠
-Mejor cartera de fichajes
-```
-
-Una recomendación óptima a nivel individual no garantiza una combinación óptima a nivel colectivo.
-
----
-
-## Decisión
-
-Implementar optimización mediante:
-
-```text
-Binary Integer Programming
-(PuLP)
-```
-
----
-
-## Restricciones implementadas
-
-* presupuesto máximo;
-* utilización mínima del presupuesto;
-* restricciones posicionales;
-* número máximo de fichajes;
-* escenarios estratégicos.
-
----
-
-## Justificación
-
-La formulación mediante Programación Entera Binaria permite modelar de forma explícita restricciones reales de toma de decisiones deportivas.
-
----
-
-## Resultado
-
-La plataforma evoluciona desde:
-
-```text
-Player Selection
-```
-
-hacia:
-
-```text
-Portfolio Selection
-```
-
-alineándose con principios clásicos de Portfolio Optimization.
-
----
-
-# 🏷️ Player Level Layer
-
-Introducida durante Sprint 14.1.
-
----
-
-## Problema identificado
-
-```text
-Alto ROI
-≠
-Nivel deportivo suficiente
-```
-
-Un jugador puede representar una oportunidad financiera atractiva sin cumplir necesariamente el nivel competitivo requerido por el club.
-
----
-
-## Decisión
-
-Incorporar una capa explícita de segmentación de calidad.
-
----
-
-## Niveles implementados
-
-* Development Prospect
-* Rotation Profile
-* First Team Ready
-* Key Player Profile
-* Elite Target
-
----
-
-## Objetivo
-
-Permitir restricciones explícitas de calidad mínima dentro de los procesos de optimización.
-
----
-
-## Resultado
-
-La plataforma incorpora una dimensión adicional de realismo deportivo dentro de la construcción de carteras.
-
----
-
-# 🖥️ Decision Support System
-
-Consolidado durante Sprint 12 y ampliado durante Sprint 14.
-
----
-
-## Problema identificado
-
-```text
-Capacidad analítica
-≠
-Adopción por usuarios finales
-```
-
----
-
-## Decisión
-
-Integrar todas las capas analíticas dentro de un entorno único de soporte a decisiones.
-
----
-
-## Componentes principales
-
-* Executive Dashboard.
-* Player Intelligence.
-* Recruitment Intelligence.
-* Transfer Strategy Engine.
-* Portfolio Optimization.
-* EN/ES Internationalization.
-
----
-
-## Resultado
-
-```text
-Decision Support System
-```
-
-La arquitectura se consolida como plataforma integral para scouting, recruitment y planificación estratégica de fichajes.
-
----
-
-# 📊 Decisiones de evaluación
-
-El proyecto adopta una visión más amplia que la evaluación predictiva tradicional.
-
----
-
-## Métricas técnicas
-
-* RMSE.
-* MAE.
-* R².
-
----
-
-## Métricas de negocio
-
-* Precision@K.
-* Positive ROI Rate.
-* Ranking Quality.
-* Portfolio Quality.
-* Decision Quality.
-
----
-
-## Principio metodológico
-
-```text
-Un modelo útil
-no es únicamente
-el que predice mejor
-
-sino el que genera
-mejores decisiones
-```
-
----
-
-## Resultados actuales
-
-|   K | Precision@K |
-| --: | ----------: |
-|  10 |        0.90 |
-|  20 |        0.90 |
-|  50 |        0.90 |
-| 100 |        0.85 |
-
-Los resultados continúan respaldando la utilidad operativa de la metodología.
-
----
-
-# ⚖️ Trade-offs metodológicos
-
-| Trade-off                              | Decisión                |
-| -------------------------------------- | ----------------------- |
-| Interpretabilidad vs precisión         | OLS + XGBoost           |
-| Econometría vs ML                      | Arquitectura híbrida    |
-| Cobertura vs matching estricto         | Priorizar calidad       |
-| Complejidad vs reproducibilidad        | Modularización          |
-| Métrica técnica vs utilidad            | Precision@K             |
-| Ranking automático vs scout            | Sistema de apoyo        |
-| Evaluación histórica vs operación      | Separación explícita    |
-| Expansión multi-liga vs consistencia   | Validación externa      |
-| Nuevas variables vs sobreajuste        | Validación multi-modelo |
-| Precisión vs explicabilidad            | SHAP                    |
-| Selección individual vs cartera óptima | Portfolio Optimization  |
-
----
-
-# 🛡️ Prevención de leakage
-
-Controles implementados:
-
-* validación temporal;
-* separación train/test;
-* exclusión de variables futuras;
-* scoring posterior a predicción;
-* persistencia independiente;
-* separación Historical Evaluation Layer / Current Scouting Layer.
-
----
-
-## Principio
-
-```text
-Toda variable utilizada como input
-debe existir en el momento real
-de la decisión.
-```
-
----
-
-# ⚠️ Decisión sobre integración de scoring v13B
-
-Durante Sprint 13B se detectó una separación estructural entre:
-
-```text
-Modeling Pipeline
-≠
-Scoring Pipeline
-```
-
----
-
-## Decisión
-
-No abordar la integración completa dentro de Sprint 13B ni Sprint 14.
-
-Justificación:
-
-1. No afecta a la hipótesis principal.
-2. No altera resultados econométricos.
-3. No altera resultados de Machine Learning.
-4. Constituye un trabajo de integración independiente.
-5. Presenta menor prioridad estratégica que Portfolio Optimization.
-
----
-
-## Backlog asociado
-
-```text
-TM.2 — Scoring & Ranking Integration v13B
-```
-
----
-
-# ⚠️ Limitaciones actuales
-
-## Datos
-
-* Dependencia de Transfermarkt.
-* Ausencia de información contractual.
-* Ausencia de información salarial.
-* Ausencia de tracking data.
-* Ausencia de event data avanzado.
-
----
-
-## Modelización
-
-* Heterogeneidad estructural entre posiciones.
-* Posible drift temporal.
-* Dependencia parcial de variables observables.
-
----
-
-## Optimización
-
-* Optimización monoobjetivo.
-* Restricciones simplificadas.
-* Ausencia de simulación dinámica de mercado.
-
----
-
-## Arquitectura
-
-La integración completa entre modelización y scoring permanece pendiente mediante:
-
-```text
-TM.2
-```
-
-sin afectar a la validez metodológica de los resultados actuales.
-
----
-
-# 🛣️ Roadmap
-
-## TM.1 — Transfermarkt Coverage Audit
-
-Objetivo:
-
-* diagnosticar limitaciones de cobertura;
-* estimar techo teórico de matching;
-* mejorar integración de datos.
-
----
-
-## TM.2 — Scoring & Ranking Integration v13B
-
-Objetivo:
-
-```text
-Predictions v13B
-↓
-Scoring Dataset v13B
-↓
-Opportunity Framework v13B
-↓
-Risk Framework v13B
-↓
-Rankings v13B
-```
-
----
-
-## Sprint 15 — Strategic Optimization Refinement
-
-Objetivo:
-
-Refinar la capa de optimización incorporando:
-
-* simplificación de restricciones estratégicas;
-* revisión de escenarios;
-* optimización multicriterio;
-* evolución del perfil de riesgo;
-* mejora de simulación estratégica.
-
----
-
-## Investigación futura
-
-### Modelización
-
-* TabPFN.
-* CatBoost.
-* Ensemble Learning.
-
-### Datos
-
-* nuevas métricas avanzadas FBref;
-* event data;
-* tracking data;
-* información contractual;
-* datos salariales.
-
-### Football Analytics
-
-* Similarity Engine.
-* Career Trajectory Modeling.
-* Club Development Intelligence.
-
-### Sports Economics
-
-* Dynamic Asset Valuation.
-* Multi-Objective Optimization.
-* Portfolio Simulation.
-
----
-
-# 🏁 Conclusión
-
-La principal evolución metodológica del proyecto consiste en transformar una arquitectura centrada en predicción hacia una arquitectura orientada a decisión.
-
-```text
-Predicción
-↓
-Scoring
-↓
-Player Intelligence
-↓
-Recruitment Intelligence
-↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
-Decision Support System
-```
-
-Las decisiones metodológicas más relevantes pueden resumirse mediante:
-
-### Sprint 13A
-
-Validación explícita de validez externa mediante expansión multi-liga.
-
-### Sprint 13B
-
-Validación explícita del valor incremental de métricas avanzadas derivadas de rendimiento futbolístico.
-
-### Sprint 14
-
-Incorporación de Decision Science y Operations Research mediante Transfer Strategy Engine y Portfolio Optimization.
-
-### Sprint 14.1
-
-Incorporación de restricciones explícitas de calidad mediante Player Level Layer.
-
----
-
-## Estado actual
-
-Modelos oficiales:
-
-```text
-Growth OLS v13B
-↓
-Benchmark interpretable
-
-Tuned XGBoost v13B
-↓
-Modelo productivo
-```
-
----
-
-## Resultado metodológico
-
-La plataforma ha evolucionado desde un sistema de estimación de valor de mercado hacia un DSS capaz de integrar:
-
-* Football Analytics;
-* Sports Economics;
-* Machine Learning;
-* Explainability;
-* Recruitment Analytics;
-* Portfolio Optimization;
-* Decision Science.
-
-La principal aportación de la arquitectura actual consiste en conectar modelos predictivos con procesos reales de toma de decisiones deportivas bajo restricciones operativas reproducibles y cuantificables.

@@ -43,6 +43,7 @@ Sprint 13A.1 — Coverage Audit & External Validation
 Sprint 13B — Advanced Data Expansion
 Sprint 14 — Transfer Strategy Engine
 Sprint 14.1 — Player Level Layer
+Sprint TM.2 — Scoring & Ranking Integration
 ```
 
 ## Sprint 13A — Multi-League Expansion
@@ -130,6 +131,38 @@ Esta funcionalidad permite incorporar restricciones explícitas de calidad míni
 
 ---
 
+## Sprint TM.2 — Scoring & Ranking Integration
+
+Sprint TM.2 resuelve una inconsistencia metodológica detectada tras la expansión multi-liga.
+
+Aunque los modelos productivos ya operaban sobre un universo de once ligas europeas, parte de la capa DSS seguía utilizando artefactos legacy generados sobre la versión previa de siete ligas.
+
+La intervención permitió restaurar la consistencia completa entre:
+
+```text
+Modeling Layer
+↓
+Scoring Layer
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+↓
+Decision Support System
+```
+
+Principales resultados:
+
+* Integración completa de las 11 ligas en la capa de scoring.
+* Integración completa de las 11 ligas en ranking y opportunity detection.
+* Integración completa de las 11 ligas en Transfer Strategy Engine.
+* Reintegración automática de variables de crecimiento y confianza durante el pipeline de scoring.
+* Eliminación de dependencias operativas heredadas de la arquitectura pre-expansión.
+
+Como resultado, la cobertura competitiva del DSS queda alineada con la cobertura de modelización introducida en Sprint 13A, garantizando consistencia metodológica de extremo a extremo.
+
+---
+
 ## Contribución global del proyecto
 
 La versión actual representa la transición desde un sistema de valoración de mercado hacia una plataforma DSS (Decision Support System) capaz de integrar:
@@ -141,6 +174,8 @@ La versión actual representa la transición desde un sistema de valoración de 
 * recruitment intelligence;
 * optimización de carteras de fichajes;
 * simulación estratégica.
+
+La incorporación de Transfer Strategy Engine, Portfolio Optimization y la integración multi-liga completa del DSS amplían significativamente la contribución académica y profesional del proyecto.
 
 El resultado es una arquitectura reproducible, interpretable y orientada a negocio que conecta analítica deportiva avanzada con procesos reales de toma de decisiones dentro del fútbol profesional.
 
@@ -160,9 +195,37 @@ El resultado es una arquitectura reproducible, interpretable y orientada a negoc
 
 ---
 
+## Cobertura operativa DSS
+
+Tras la finalización de Sprint TM.2, la cobertura competitiva de la capa DSS queda alineada con la cobertura de modelización.
+
+| Componente                 | Cobertura |
+| -------------------------- | --------: |
+| Modeling Dataset           |  11 ligas |
+| Scoring Dataset            |  11 ligas |
+| Opportunity Dataset        |  11 ligas |
+| Transfer Portfolio Dataset |  11 ligas |
+| Decision Support System    |  11 ligas |
+
+Ligas soportadas:
+
+* Premier League
+* LaLiga
+* Bundesliga
+* Serie A
+* Ligue 1
+* Eredivisie
+* Liga Portugal
+* Championship
+* Belgian Pro League
+* Austrian Bundesliga
+* Spanish Segunda División
+
+---
+
 ## Modelización
 
-### Modelos oficiales (v1.2.1)
+### Modelos oficiales (v1.2.2)
 
 | Capa             | Modelo oficial     |
 | ---------------- | ------------------ |
@@ -240,7 +303,7 @@ Componentes implementados:
 * Risk Score
 * Risk-adjusted Opportunity
 
-Esta arquitectura permite priorizar candidatos considerando simultáneamente upside potencial, robustez estadística y nivel de riesgo asociado.
+La capa Opportunity Framework opera actualmente sobre un universo multi-liga de 6.208 observaciones elegibles distribuidas en once competiciones europeas.
 
 ---
 
@@ -267,6 +330,7 @@ Funcionalidades implementadas:
 ```text
 Sprint 14 — COMPLETADO
 Sprint 14.1 — COMPLETADO
+Sprint TM.2 — COMPLETADO
 ```
 
 ### Objetivo
@@ -343,7 +407,7 @@ Restricciones consideradas:
 * Nivel mínimo de jugador.
 * Restricciones derivadas del estilo de cartera.
 
-La optimización se resuelve en tiempos inferiores a un segundo incluso sobre universos superiores a 600 jugadores elegibles.
+La optimización se resuelve sobre un universo multi-liga de 6.208 jugadores elegibles distribuidos en once competiciones europeas.
 
 ---
 
@@ -368,6 +432,7 @@ Sprint 13A.1 — COMPLETADO
 Sprint 13B — COMPLETADO
 Sprint 14 — COMPLETADO
 Sprint 14.1 — COMPLETADO
+Sprint TM.2 — COMPLETADO
 
 Release v1.2.2 — ACTIVE
 ```
@@ -394,302 +459,357 @@ Portfolio Optimization
 Decision Support System
 ```
 
-La plataforma ha evolucionado desde un sistema de valoración de mercado hacia un entorno completo de apoyo cuantitativo a decisiones deportivas capaz de integrar scouting, recruitment, evaluación de riesgo y optimización estratégica.
+La plataforma ha evolucionado desde un sistema de valoración de mercado hacia un entorno completo de apoyo cuantitativo a decisiones deportivas capaz de integrar scouting, recruitment, evaluación de riesgo, optimización estratégica y cobertura multi-liga de extremo a extremo.
 
 # 📚 Estado CRISP-DM
 
-## Fases completadas
+| Fase                    | Estado       |
+| ----------------------- | ------------ |
+| Business Understanding  | ✅ Completada |
+| Data Understanding      | ✅ Completada |
+| Data Preparation        | ✅ Completada |
+| Modeling                | ✅ Completada |
+| Evaluation              | ✅ Completada |
+| Deployment              | ✅ Completada |
+| DSS Integration         | ✅ Completada |
+| Transfer Strategy Layer | ✅ Completada |
 
-### Business Understanding
+El proyecto se encuentra actualmente en una fase avanzada de consolidación metodológica y evolución funcional.
 
-* Problema de scouting definido.
-* Objetivos de negocio establecidos.
-* Marco de ineficiencias de mercado formulado.
-* Problema de optimización de fichajes formalizado.
-* Restricciones operativas de club modelizadas.
+La arquitectura DSS principal se considera cerrada y operativa.
 
-### Data Understanding
+---
 
-* Exploración de fuentes.
-* Análisis de calidad.
-* Cobertura temporal y competitiva.
-* Auditoría multi-liga.
-* Evaluación de cobertura por competición.
-* Diagnóstico de representatividad del universo analizado.
+# 🎯 Objetivo académico alcanzado
 
-### Data Preparation
+El objetivo original del TFM consistía en desarrollar un sistema capaz de:
 
-* Matching FBref ↔ Transfermarkt.
-* Feature Engineering.
-* Construcción del panel longitudinal.
-* Control de leakage.
-* Expansión multi-liga parametrizada.
-* Construcción de métricas avanzadas derivadas de FBref.
-* Desarrollo de Composite Football Indices v2.
-* Construcción del Portfolio Dataset.
+```text
+Estimar el valor de mercado esperado de futbolistas
+e identificar oportunidades de mercado potencialmente
+infravaloradas.
+```
 
-### Modeling
+Este objetivo ha sido alcanzado mediante:
 
-* Econometric Pipeline.
-* Machine Learning Pipeline.
-* Experiment Tracking.
-* Explainability.
-* Validación multi-liga.
-* Evaluación de métricas avanzadas.
-* Comparación Feature Set A vs Feature Set B.
-* Transfer Portfolio Optimization.
-* Binary Integer Programming.
-* Portfolio Construction Engine.
-
-### Evaluation
-
-* Validación temporal.
-* Evaluación predictiva.
-* Evaluación orientada a negocio.
-* Validación externa.
-* Evaluación incremental de nuevas variables.
-* Comparación transversal multi-modelo.
-* Evaluación de escenarios estratégicos.
-* Validación de restricciones operativas.
-
-### Deployment
-
-* Dashboard interactivo.
+* Modelización econométrica.
+* Modelización Machine Learning.
+* Opportunity Detection.
+* Risk Assessment.
 * Recruitment Intelligence.
 * Transfer Strategy Engine.
-* Portfolio Optimization Layer.
-* Decision Support System.
-* Modelos productivos v13B.
-* Internacionalización EN/ES.
+* Portfolio Optimization.
+
+La solución desarrollada supera el alcance inicialmente previsto al incorporar una capa explícita de apoyo a decisiones deportivas basada en optimización matemática.
 
 ---
 
-## Estado actual
+# 🏆 Principales contribuciones del proyecto
+
+## 1. Framework de valoración de mercado
+
+Desarrollo de modelos explicativos y predictivos para estimar el valor de mercado esperado de futbolistas profesionales.
+
+---
+
+## 2. Detección sistemática de ineficiencias
+
+Implementación de un Opportunity Framework basado en:
 
 ```text
-Econometric Model
-↓
-Machine Learning
-↓
-Opportunity Detection
-↓
-Risk Assessment
-↓
-Player Intelligence
-↓
-Recruitment Intelligence
-↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
-Decision Support System
-```
-
-La metodología ha evolucionado desde un sistema de estimación de valor de mercado hacia una arquitectura DSS completa capaz de integrar predicción, evaluación de oportunidades, análisis de riesgo y optimización estratégica de fichajes.
-
----
-
-# 🏗️ Arquitectura actual
-
-```text
-Raw Sources
-↓
-Feature Engineering
-↓
-Advanced Metrics Layer
-↓
-Matching Layer
-↓
-Player Season Panel
-↓
-Modeling Dataset
-↓
-Econometric Model
-↓
-Machine Learning Model
-↓
-Opportunity Detection
-↓
-Risk Assessment
-↓
-Player Intelligence
-↓
-Recruitment Intelligence
-↓
-Transfer Strategy Engine
-↓
-Portfolio Optimization
-↓
-Decision Support System
-```
-
----
-
-## Componentes implementados
-
-| Componente                    | Estado |
-| ----------------------------- | ------ |
-| Data Pipelines                | ✅      |
-| Matching Pipeline             | ✅      |
-| Feature Engineering           | ✅      |
-| Advanced Feature Engineering  | ✅      |
-| Econometric Pipeline          | ✅      |
-| Machine Learning Pipeline     | ✅      |
-| MLflow Tracking               | ✅      |
-| Explainability                | ✅      |
-| Opportunity Score             | ✅      |
-| Risk Framework                | ✅      |
-| Dashboard DSS                 | ✅      |
-| Recruitment Intelligence      | ✅      |
-| Internationalization EN/ES    | ✅      |
-| Multi-League Expansion        | ✅      |
-| External Validity Assessment  | ✅      |
-| League Coverage Diagnostics   | ✅      |
-| Multi-League Benchmarking     | ✅      |
-| Advanced Metrics Integration  | ✅      |
-| Composite Football Indices v2 | ✅      |
-| Transfer Strategy Engine      | ✅      |
-| Portfolio Optimization        | ✅      |
-| Scenario Simulation           | ✅      |
-| Player Level Layer            | ✅      |
-
----
-
-# ⚙️ Capacidades implementadas
-
-## Estimación de valor de mercado
-
-La plataforma estima el valor esperado de un jugador utilizando modelos econométricos y algoritmos de Machine Learning entrenados sobre datos históricos procedentes de múltiples competiciones europeas.
-
-La arquitectura combina interpretabilidad econométrica y capacidad predictiva avanzada para capturar los principales determinantes del valor de mercado profesional.
-
----
-
-## Advanced Football Metrics Layer
-
-Sprint 13B incorpora una nueva capa analítica destinada a capturar dimensiones futbolísticas insuficientemente representadas en versiones anteriores del sistema.
-
-Variables productivas incorporadas:
-
-* finishing_index_v2
-* availability_index
-* defensive_activity_index
-
-Estas variables amplían la capacidad descriptiva del sistema y fortalecen la señal predictiva disponible para los modelos de valoración.
-
----
-
-## Opportunity Detection
-
-Identificación automática de jugadores potencialmente infravalorados mediante comparación entre:
-
-```text
-Predicted Market Value
+Valor observado
 vs
-Observed Market Value
+Valor esperado
 ```
 
-La diferencia entre ambas magnitudes constituye la base del sistema de detección de ineficiencias de mercado.
+capaz de identificar activos potencialmente infravalorados.
 
 ---
 
-## Risk Assessment
+## 3. Integración de métricas avanzadas
 
-Evaluación del riesgo asociado a cada recomendación mediante:
+Incorporación de nuevas variables derivadas de FBref que mejoran simultáneamente:
 
-* Risk Score.
-* Risk Category.
-* Opportunity vs Risk Matrix.
-* Confidence Framework.
+* econometría;
+* machine learning;
+* interpretabilidad del sistema.
 
-Esta capa permite priorizar oportunidades considerando simultáneamente upside potencial y robustez estadística.
+Hallazgo principal:
 
----
+```text
+finishing_index_v2
+```
 
-## Player Intelligence
-
-Transformación de resultados analíticos en información accionable para scouting.
-
-Funcionalidades:
-
-* Player Radar.
-* Positional Benchmarking.
-* Opportunity Narratives.
-* Explainability Layer.
-* Comparative Evaluation.
+como variable avanzada más relevante.
 
 ---
 
-## Recruitment Intelligence
+## 4. Validación multi-liga
 
-Funcionalidades incorporadas durante Sprint 11:
+Expansión desde siete hasta once competiciones europeas.
 
-* Recruitment Board.
-* Comparative Player Analysis.
-* Candidate Selection System.
-* Executive Scouting Workflow.
-* Global Search Engine.
-* Executive UX Layer.
+Cobertura final:
 
-Esta capa transforma rankings analíticos en herramientas operativas para departamentos deportivos.
+* 11 ligas.
+* 77 league-seasons.
+* 43.591 observaciones procesadas.
+* 5.527 observaciones modelables.
+
+La expansión permite evaluar explícitamente la capacidad de generalización del sistema fuera de las cinco grandes ligas.
 
 ---
 
-## Transfer Strategy Engine
+## 5. Consistencia DSS de extremo a extremo
 
-Sprint 14 incorpora una nueva capa de optimización estratégica orientada a decisiones de fichaje.
+Sprint TM.2 garantiza la propagación completa de la expansión multi-liga a todas las capas operativas.
+
+Cobertura final:
+
+```text
+Modeling Layer
+↓
+Scoring Layer
+↓
+Opportunity Layer
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+↓
+Decision Support System
+```
+
+Resultado:
+
+```text
+11 ligas integradas de extremo a extremo
+```
+
+sin dependencias operativas heredadas de versiones anteriores.
+
+---
+
+## 6. Transfer Strategy Engine
+
+Implementación de una capa de optimización basada en Programación Entera Binaria.
+
+Capacidad:
+
+```text
+Seleccionar carteras óptimas de fichajes
+bajo restricciones reales de club.
+```
+
+Esta contribución amplía significativamente el alcance académico y profesional del proyecto.
+
+---
+
+# 🚀 Roadmap futuro
+
+Las siguientes líneas de trabajo se consideran evoluciones naturales del sistema una vez completada la arquitectura DSS principal.
+
+## Prioridad alta
+
+### Contrato restante
+
+Incorporar información contractual para mejorar la estimación del valor de mercado esperado.
+
+Variables potenciales:
+
+* años restantes de contrato;
+* expiración contractual;
+* proximidad a free agency.
+
+Impacto esperado:
+
+```text
+Alto
+```
+
+---
+
+### UEFA Club Coefficient
+
+Incorporar fortaleza competitiva internacional de los clubes.
+
+Variables potenciales:
+
+* coeficiente UEFA;
+* participaciones europeas;
+* rendimiento continental.
+
+Impacto esperado:
+
+```text
+Alto
+```
+
+---
+
+### CatBoost
+
+Evaluación comparativa frente al stack actual.
 
 Objetivo:
 
 ```text
-Seleccionar la combinación de jugadores
-que maximiza el valor esperado
-bajo restricciones reales de club.
+Validar si existe mejora incremental
+respecto a Tuned XGBoost.
 ```
 
-Inputs principales:
+Impacto esperado:
 
-* Budget.
-* Positions Needed.
-* Scenario.
-* Portfolio Style.
-* Minimum Player Level.
-* Maximum Signings.
-* Budget Utilization.
-
-Outputs principales:
-
-* Recommended Portfolio.
-* Total Cost.
-* Budget Utilization.
-* Expected Upside.
-* Expected ROI.
-* Average Portfolio Score.
+```text
+Medio-Alto
+```
 
 ---
 
-## Portfolio Optimization
+### TabPFN
 
-La optimización se implementa mediante Programación Entera Binaria (Binary Integer Programming) utilizando PuLP.
+Benchmark experimental recomendado durante el programa de máster.
 
-La formulación incorpora:
+Objetivo:
 
-* restricciones presupuestarias;
-* restricciones posicionales;
-* restricciones de calidad mínima;
-* restricciones de tamaño de cartera;
-* restricciones de utilización presupuestaria;
-* escenarios estratégicos alternativos.
+```text
+Comparar arquitecturas fundacionales
+para datos tabulares frente a enfoques
+de boosting tradicionales.
+```
 
-Esta capa constituye la principal incorporación metodológica de Sprint 14 y representa la transición desde analítica descriptiva hacia Decision Science aplicada al mercado de fichajes.
+Impacto esperado:
+
+```text
+Exploratorio
+```
 
 ---
 
-## Decision Support System
+## Prioridad media
 
-La plataforma integra todas las capas anteriores dentro de un entorno único de soporte a decisiones deportivas.
+### Selecciones nacionales
 
-El sistema permite evolucionar desde la identificación de oportunidades individuales hasta la construcción de estrategias completas de captación soportadas por evidencia cuantitativa reproducible.
+Incorporar experiencia internacional absoluta.
 
-La incorporación de Portfolio Optimization convierte la plataforma en un DSS capaz de conectar scouting, valoración económica, gestión de riesgo y planificación estratégica de fichajes dentro de una misma arquitectura analítica.
+Variables potenciales:
+
+* internacionalidades;
+* minutos internacionales;
+* torneos disputados.
+
+---
+
+### Participación europea
+
+Medir exposición competitiva a nivel continental.
+
+Variables potenciales:
+
+* Champions League;
+* Europa League;
+* Conference League.
+
+---
+
+### Club Development Index
+
+Medir la capacidad histórica de desarrollo y revalorización de talento de cada club.
+
+Impacto esperado:
+
+```text
+Medio
+```
+
+---
+
+## Prioridad baja
+
+### Disponibilidad histórica
+
+Incorporar información retrospectiva de disponibilidad deportiva.
+
+Variables potenciales:
+
+* partidos perdidos;
+* disponibilidad histórica;
+* continuidad competitiva.
+
+Impacto esperado:
+
+```text
+Moderado
+```
+
+---
+
+# 🔬 Líneas de investigación futuras
+
+Algunas extensiones exceden el alcance natural del proyecto actual y constituyen líneas de investigación independientes.
+
+## Injury Prediction
+
+Objetivo:
+
+```text
+Estimar riesgo futuro de lesión
+mediante modelización específica.
+```
+
+Posibles fuentes:
+
+* disponibilidad histórica;
+* carga competitiva;
+* minutos acumulados;
+* historial médico.
+
+Esta línea se considera un proyecto complementario independiente y potencialmente una futura capa de Health Intelligence.
+
+---
+
+# 📈 Estado final
+
+```text
+Release actual:
+v1.2.2
+```
+
+Cobertura:
+
+```text
+11 ligas
+77 league-seasons
+43.591 observaciones
+5.527 observaciones modelables
+```
+
+Arquitectura:
+
+```text
+Market Value Prediction
+↓
+Opportunity Detection
+↓
+Risk Assessment
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
+Estado global:
+
+```text
+Arquitectura DSS completada
+Validación multi-liga completada
+Transfer Strategy Engine completado
+TM.2 completado
+Proyecto preparado para defensa académica
+y evolución hacia plataforma profesional.
+```
