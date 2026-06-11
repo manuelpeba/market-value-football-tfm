@@ -698,7 +698,17 @@ La expansión multi-liga mejora simultáneamente:
 * representatividad;
 * capacidad predictiva.
 
-Sprint 13A constituye una validación explícita de la capacidad de generalización de la metodología.
+Resultado principal:
+
+```text
+Tuned XGBoost
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
+Este experimento constituye la principal evidencia de validez externa de la metodología desarrollada y representa el mejor rendimiento predictivo alcanzado durante el proyecto.
+
 
 ---
 
@@ -747,6 +757,18 @@ Resultado:
 | Random Forest        |          +0.0097 |
 | HistGradientBoosting |          +0.0144 |
 | LightGBM             |          +0.0291 |
+
+Resultado productivo final:
+
+```text
+Tuned XGBoost v13B
+
+RMSE = 0.9639
+MAE  = 0.7777
+R²   = 0.4453
+```
+
+Las mejoras observadas se calculan respecto al Feature Set A (v13A) utilizando exactamente el mismo diseño experimental, por lo que deben interpretarse como mejoras incrementales internas del experimento Sprint 13B y no como una comparación directa frente a la validación externa multi-liga de Sprint 13A.1.
 
 ---
 
@@ -901,38 +923,87 @@ La arquitectura incrementa significativamente su realismo deportivo.
 
 ---
 
-# TM.2 — Scoring & Ranking Integration
+# TM.2 — Multi-League DSS Integration
 
 ## Problema identificado
 
-Durante Sprint 13B se detectó:
+Tras Sprint 13A y Sprint 13B, la cobertura de modelización había sido ampliada a once competiciones europeas.
+
+Sin embargo, parte de la capa DSS seguía operando sobre artefactos heredados construidos sobre la versión anterior de siete ligas.
+
+Situación observada:
 
 ```text
-Modeling Pipeline
-≠
-Scoring Pipeline
+Modeling Layer
+↓
+11 ligas
+
+Scoring / Ranking DSS
+↓
+7 ligas
 ```
 
 ---
 
-## Decisión
+## Decisión metodológica
 
-No abordar la integración durante Sprint 13B ni Sprint 14.
+Implementar una capa explícita de reintegración de variables dentro del pipeline de scoring.
 
-Justificación:
+Arquitectura resultante:
 
-1. No afecta a las hipótesis principales.
-2. No altera resultados econométricos.
-3. No altera resultados de Machine Learning.
-4. Constituye un trabajo de integración independiente.
+```text
+Predictions
+↓
+Scoring Feature Reintegration
+↓
+Growth Score
+↓
+Confidence Score
+↓
+Opportunity Score
+↓
+Ranking Engine
+↓
+Transfer Strategy Engine
+```
 
 ---
 
-## Estado
+## Resultado
+
+Cobertura final:
 
 ```text
-Backlog documentado
+Modeling Layer
+↓
+11 ligas
+
+Scoring Layer
+↓
+11 ligas
+
+Opportunity Layer
+↓
+11 ligas
+
+Ranking Engine
+↓
+11 ligas
+
+Transfer Strategy Engine
+↓
+11 ligas
+
+Decision Support System
+↓
+11 ligas
 ```
+
+---
+
+## Conclusión
+
+TM.2 garantiza consistencia metodológica completa entre modelización y DSS sin alterar resultados econométricos, modelos Machine Learning ni lógica de scoring.
 
 ---
 
@@ -1021,7 +1092,21 @@ Sprint 13B — COMPLETADO
 Sprint 14 — COMPLETADO
 Sprint 14.1 — COMPLETADO
 
-TM.2 — BACKLOG
+TM.2 — COMPLETADO
 ```
+Resultado histórico máximo:
+
+```text
+Tuned XGBoost
+R² = 0.5664
+```
+
+Modelo productivo actual:
+
+```text
+Tuned XGBoost v13B
+R² = 0.4453
+```
+
 
 La arquitectura metodológica desarrollada proporciona una base reproducible, interpretable y académicamente consistente para la identificación de ineficiencias de mercado, el scouting cuantitativo y la optimización estratégica de decisiones de fichaje en fútbol profesional.

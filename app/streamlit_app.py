@@ -29,6 +29,7 @@ BUSINESS_PATH = ROOT / "reports" / "business"
 EVALUATION_PATH = ROOT / "reports" / "evaluation"
 PROCESSED_PATH = ROOT / "data" / "processed"
 STRATEGY_REPORTS_PATH = ROOT / "reports" / "strategy"
+DSS_REPORTS_PATH = ROOT / "reports" / "dss"
 STRATEGY_SRC_PATH = ROOT / "src" / "strategy"
 
 SCORED_UNIVERSE_SIZE = 1_138
@@ -3167,7 +3168,7 @@ st.markdown(
 
 
 # =============================================================================
-# Sprint 14 final UX patch: strategy metric tooltips and clean portfolio map
+# final UX patch: strategy metric tooltips and clean portfolio map
 # =============================================================================
 st.markdown(
     """
@@ -3219,16 +3220,18 @@ st.markdown(
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    padding: 2px 2px 12px 2px;
-    margin-bottom: 6px;
+    padding: 14px 14px 16px 14px;
+    margin: 0;
+    box-sizing: border-box;
 }
 .strategy-glossary-item {
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     background: #f8fbff;
-    padding: 11px 12px 12px 12px;
+    padding: 12px 14px;
     min-height: 82px;
     box-sizing: border-box;
+    overflow-wrap: anywhere;
 }
 .strategy-glossary-item b {
     display: block;
@@ -3253,8 +3256,9 @@ div[data-testid="stExpander"]:has(.strategy-glossary-grid) {
     border: 1px solid #dbe3ee;
     border-radius: 14px;
     box-shadow: 0 6px 18px rgba(15,23,42,.035);
-    margin: 12px 0 16px 0;
+    margin: 12px 0 18px 0;
     overflow: hidden;
+    box-sizing: border-box;
 }
 .strategy-glossary-details summary {
     list-style: none;
@@ -3298,6 +3302,653 @@ div[data-testid="stExpander"]:has(.strategy-glossary-grid) {
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# TM.3 professional similarity map patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similarity-rank-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 14px 14px 12px 14px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.060);
+    min-height: 0;
+}
+.similarity-rank-title {
+    font-size: 0.76rem;
+    font-weight: 950;
+    letter-spacing: .08em;
+    color: #0f2f5f;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+}
+.similarity-rank-subtitle {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+.similarity-rank-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0,1fr) 46px;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+.similarity-rank-row:last-child { border-bottom: 0; }
+.similarity-rank-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 950;
+    font-size: .74rem;
+}
+.similarity-rank-name {
+    color: #0f172a;
+    font-size: .80rem;
+    font-weight: 950;
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.similarity-rank-meta {
+    color: #64748b;
+    font-size: .66rem;
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+.similarity-rank-status {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: .62rem;
+    font-weight: 900;
+}
+.similarity-rank-status-upgrade { background:#dcfce7; color:#166534; }
+.similarity-rank-status-strong-alternative { background:#ecfdf5; color:#15803d; }
+.similarity-rank-status-similar { background:#e0f2fe; color:#0369a1; }
+.similarity-rank-status-development-bet { background:#fef3c7; color:#92400e; }
+.similarity-rank-status-lower-priority { background:#f1f5f9; color:#475569; }
+.similarity-rank-status-higher-risk { background:#fee2e2; color:#991b1b; }
+.similarity-rank-row-active { background: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%); border-radius: 12px; padding-left: 6px; padding-right: 6px; border-bottom-color: transparent; box-shadow: inset 3px 0 0 #2563eb; }
+.similarity-executive-recommendation {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #22c55e;
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.050);
+    margin: 0 0 10px 0;
+    max-width: 520px;
+}
+.similarity-executive-eyebrow {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.similarity-executive-title { color:#0f172a; font-size:1.05rem; font-weight:950; line-height:1.08; margin-bottom:4px; }
+.similarity-executive-copy { color:#475569; font-size:.80rem; line-height:1.32; }
+.similarity-executive-chip { display:inline-flex; margin-top:7px; border-radius:999px; padding:5px 9px; font-weight:900; font-size:.70rem; }
+.similarity-executive-chip-upgrade { background:#dcfce7; color:#166534; }
+.similarity-executive-chip-strong-alternative { background:#ecfdf5; color:#15803d; }
+.similarity-executive-chip-similar { background:#e0f2fe; color:#0369a1; }
+.similarity-executive-chip-development-bet { background:#fef3c7; color:#92400e; }
+.similarity-executive-chip-lower-priority { background:#f1f5f9; color:#475569; }
+.similarity-executive-chip-higher-risk { background:#fee2e2; color:#991b1b; }
+.similarity-rank-kpis {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    text-align: right;
+}
+.similarity-rank-kpis b {
+    color: #0f172a;
+    font-size: .80rem;
+    line-height: 1.0;
+    font-weight: 950;
+}
+.similarity-rank-kpis span {
+    color: #94a3b8;
+    font-size: .54rem;
+    line-height: 1.0;
+    font-weight: 950;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+}
+.similarity-rank-footer {
+    margin-top: 9px;
+    padding: 8px 10px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    color: #1d4ed8;
+    background: #f8fbff;
+    font-size: .72rem;
+    font-weight: 900;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.similarity-chart-card-note {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#64748b;
+    font-size:.76rem;
+    margin: 8px 0 0 0;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.1 Similar Player Intelligence professional refactor
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similar-intel-header {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin: 2px 0 16px 0;
+}
+.similar-intel-title-wrap { display:flex; gap:14px; align-items:flex-start; }
+.similar-intel-icon {
+    width:42px; height:42px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    background:#eaf2ff; color:#0f2f5f; font-weight:950; font-size:1.15rem;
+    border:1px solid #cfe0f5;
+}
+.similar-intel-title {
+    font-size:1.55rem; line-height:1.05; font-weight:950; color:#0f172a;
+    letter-spacing:.01em; text-transform:uppercase;
+}
+.similar-intel-subtitle {
+    color:#64748b; font-size:.90rem; line-height:1.35; margin-top:6px;
+}
+.similarity-kpi-grid {
+    display:grid; grid-template-columns: 1.15fr 1.15fr .75fr .75fr .75fr .85fr;
+    gap:14px; margin: 8px 0 14px 0;
+}
+.similarity-kpi-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.052);
+    padding:14px 16px; min-height:104px; position:relative; overflow:hidden;
+}
+.similarity-kpi-label {
+    color:#475569; font-size:.72rem; font-weight:950; letter-spacing:.065em;
+    text-transform:uppercase; margin-bottom:7px;
+}
+.similarity-kpi-name { color:#0f172a; font-size:1.16rem; font-weight:950; line-height:1.1; }
+.similarity-kpi-meta { color:#64748b; font-size:.78rem; line-height:1.35; margin-top:6px; }
+.similarity-kpi-value { color:#0f172a; font-size:1.90rem; font-weight:950; line-height:1.0; }
+.similarity-kpi-suffix { color:#64748b; font-size:.82rem; font-weight:850; margin-left:3px; }
+.similarity-kpi-positive { color:#15803d !important; }
+.similarity-kpi-negative { color:#ea580c !important; }
+.similarity-kpi-bar {
+    height:7px; border-radius:999px; background:#e8edf4; margin-top:14px; overflow:hidden;
+}
+.similarity-kpi-bar span { display:block; height:100%; border-radius:999px; background:#22c55e; }
+.similarity-kpi-bar.orange span { background:#f97316; }
+.similarity-kpi-club-mark {
+    position:absolute; right:14px; top:14px; width:24px; height:24px; border-radius:999px;
+    background:#f1f5f9; color:#334155; display:flex; align-items:center; justify-content:center;
+    font-size:.68rem; font-weight:950;
+}
+.similarity-reco-band {
+    display:grid; grid-template-columns: minmax(260px,.95fr) minmax(420px,1.55fr);
+    gap:18px; align-items:center;
+    background:linear-gradient(135deg,#f8fff9 0%,#ffffff 100%);
+    border:1px solid #86efac; border-left:5px solid #22c55e; border-radius:18px;
+    box-shadow:0 14px 34px rgba(15,23,42,.055);
+    padding:16px 20px; margin: 12px 0 18px 0;
+}
+.similarity-reco-main { display:flex; gap:14px; align-items:center; }
+.similarity-reco-icon {
+    width:54px; height:54px; border-radius:999px; border:1px solid #86efac;
+    display:flex; align-items:center; justify-content:center; background:#dcfce7; color:#166534;
+    font-size:1.45rem; font-weight:950;
+}
+.similarity-reco-eyebrow { color:#15803d; font-size:.72rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; }
+.similarity-reco-title { color:#0f172a; font-size:1.18rem; font-weight:950; line-height:1.10; }
+.similarity-reco-copy { color:#334155; font-size:.84rem; line-height:1.42; }
+.similarity-reco-copy b { color:#0f172a; }
+.similarity-reco-pill { display:inline-flex; border-radius:999px; padding:5px 10px; background:#dcfce7; color:#166534; font-weight:950; font-size:.72rem; margin-left:4px; }
+.similarity-professional-layout {
+    display:grid; grid-template-columns: minmax(0, 3fr) minmax(330px, 1fr);
+    gap:18px; align-items:start; margin-top: 8px;
+}
+.similarity-chart-shell {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px;
+    box-shadow:0 14px 34px rgba(15,23,42,.055); padding:14px 16px 10px 16px;
+}
+.similarity-map-title { font-size:.96rem; font-weight:950; color:#0f172a; margin-bottom:3px; }
+.similarity-map-subtitle { font-size:.74rem; color:#64748b; font-weight:750; margin-bottom:8px; }
+.similarity-risk-key {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.052); padding:14px 16px;
+}
+.similarity-risk-title { font-size:.74rem; font-weight:950; letter-spacing:.07em; text-transform:uppercase; color:#0f2f5f; margin-bottom:8px; }
+.similarity-risk-item { display:flex; gap:8px; align-items:center; color:#475569; font-size:.74rem; margin:6px 0; }
+.similarity-risk-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+.similarity-legend-chips { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 8px 0; }
+.similarity-legend-chip { display:inline-flex; gap:6px; align-items:center; border-radius:999px; padding:5px 10px; font-size:.70rem; font-weight:900; border:1px solid #e2e8f0; background:#ffffff; color:#334155; }
+.similarity-legend-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+.similarity-rank-card { min-height: 0 !important; }
+.similarity-rank-row { padding: 8px 0 !important; grid-template-columns: 30px minmax(0,1fr) 54px !important; }
+.similarity-rank-name { font-size:.82rem !important; }
+.similarity-rank-meta { font-size:.67rem !important; }
+.similarity-rank-status { font-size:.62rem !important; padding:2px 7px !important; }
+.similarity-rank-kpis b { font-size:.78rem !important; }
+.similarity-rank-kpis span { font-size:.51rem !important; }
+.similarity-rank-footer { font-size:.70rem !important; padding:8px 10px !important; }
+@media (max-width: 1350px) {
+    .similarity-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .similarity-professional-layout { grid-template-columns: 1fr; }
+    .similarity-reco-band { grid-template-columns:1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.1 professional similarity module visual hotfix
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similarity-rank-card-compact {
+    padding: 14px 16px !important;
+    border-radius: 18px !important;
+}
+.similarity-rank-card-compact .similarity-rank-row {
+    grid-template-columns: 28px minmax(0,1fr) 48px !important;
+    min-height: 58px !important;
+    padding: 8px 0 !important;
+}
+.similarity-rank-card-compact .similarity-rank-row-active {
+    padding: 8px 6px !important;
+}
+.similarity-rank-card-compact .similarity-rank-name {
+    font-size: .82rem !important;
+}
+.similarity-rank-bottomline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 5px;
+}
+.similarity-rank-small {
+    color: #64748b;
+    font-size: .62rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.similarity-rank-footer-clean {
+    margin-top: 10px;
+    padding: 9px 11px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    color: #1d4ed8;
+    background: #f8fbff;
+    font-size: .72rem;
+    font-weight: 950;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.similarity-chart-shell {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-bottom: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 16px 18px 10px 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.050) !important;
+}
+div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.050) !important;
+}
+.similarity-map-title {
+    font-size: 1.02rem !important;
+    color: #0f172a !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.01em !important;
+}
+.similarity-map-subtitle {
+    color: #475569 !important;
+    font-size: .76rem !important;
+    margin-top: 4px !important;
+    font-weight: 850 !important;
+}
+.similarity-reco-band {
+    margin-bottom: 16px !important;
+}
+.similarity-chart-card-note {
+    margin: 10px 0 14px 0 !important;
+    padding-left: 2px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.2 Similar Player Intelligence executive refactor
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similarity-benchmark-card {
+    background:#ffffff;
+    border:1px solid #dbe3ee;
+    border-left:5px solid #0f2f5f;
+    border-radius:16px;
+    padding:12px 14px;
+    box-shadow:0 10px 26px rgba(15,23,42,.050);
+    margin:0 0 12px 0;
+}
+.similarity-benchmark-eyebrow,
+.similarity-recommended-eyebrow,
+.similarity-assessment-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.similarity-benchmark-title { color:#0f172a; font-size:1.03rem; font-weight:950; line-height:1.1; margin-bottom:7px; }
+.similarity-benchmark-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+.similarity-benchmark-kpi { background:#f8fbff; border:1px solid #edf2f7; border-radius:11px; padding:8px 9px; }
+.similarity-benchmark-kpi span { display:block; color:#64748b; font-size:.62rem; font-weight:900; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+.similarity-benchmark-kpi b { display:block; color:#0f172a; font-size:.82rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.similarity-recommended-card {
+    background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%);
+    border:1px solid #86efac;
+    border-left:5px solid #22c55e;
+    border-radius:16px;
+    box-shadow:0 10px 26px rgba(15,23,42,.050);
+    padding:12px 15px;
+    max-width:520px;
+    margin:0 0 12px 0;
+}
+.similarity-recommended-title { color:#0f172a; font-size:1.12rem; font-weight:950; line-height:1.12; margin-bottom:4px; }
+.similarity-recommended-copy { color:#475569; font-size:.80rem; line-height:1.36; }
+.similarity-recommended-pill { display:inline-flex; margin-top:8px; padding:5px 10px; border-radius:999px; font-size:.70rem; font-weight:950; }
+.similarity-chart-shell { border-bottom:1px solid #e2e8f0 !important; border-radius:18px !important; }
+.similarity-chart-header-grid { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.similarity-bubble-note { display:inline-flex; align-items:center; gap:6px; border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; border-radius:999px; padding:6px 10px; font-size:.70rem; font-weight:950; white-space:nowrap; }
+.similarity-quadrant-legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.similarity-quadrant-chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 9px; border:1px solid #e2e8f0; background:#ffffff; color:#334155; font-size:.68rem; font-weight:900; }
+.similarity-quadrant-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+.similarity-rank-card-compact { height:auto !important; }
+.similarity-rank-title { color:#0f2f5f !important; }
+.similarity-rank-row { min-height:50px !important; }
+.similarity-exec-table-title { color:#0f172a; font-size:1.00rem; font-weight:950; margin:14px 0 7px 0; }
+.similarity-assessment-card {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:16px;
+    box-shadow:0 10px 26px rgba(15,23,42,.050);
+    padding:14px 16px;
+    margin:14px 0 12px 0;
+}
+.similarity-assessment-title { color:#0f172a; font-size:1.04rem; font-weight:950; margin-bottom:5px; }
+.similarity-assessment-copy { color:#334155; font-size:.86rem; line-height:1.48; }
+@media (max-width:1350px){ .similarity-benchmark-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:900px){ .similarity-benchmark-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.3 Similar Player Intelligence final product polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similarity-recommended-card-compact {
+    display: grid !important;
+    grid-template-columns: minmax(240px, .95fr) minmax(260px, 1.05fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+    max-width: 720px !important;
+    padding: 13px 15px !important;
+    margin: 0 0 12px 0 !important;
+}
+.similarity-recommended-card-compact .similarity-recommended-title {
+    font-size: 1.04rem !important;
+    margin-bottom: 4px !important;
+}
+.similarity-recommended-card-compact .similarity-recommended-copy {
+    margin-top: 7px !important;
+    font-size: .78rem !important;
+    line-height: 1.34 !important;
+}
+.similarity-recommended-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+.similarity-recommended-kpi-grid div {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 11px;
+    padding: 8px 9px;
+    min-height: 54px;
+}
+.similarity-recommended-kpi-grid span {
+    display: block;
+    color: #64748b;
+    font-size: .62rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.similarity-recommended-kpi-grid b {
+    display: block;
+    color: #0f172a;
+    font-size: .88rem;
+    font-weight: 950;
+    white-space: nowrap;
+}
+.similarity-rank-card-compact {
+    max-height: none !important;
+    padding: 14px 15px !important;
+}
+.similarity-rank-card-compact .similarity-rank-row {
+    background: #ffffff;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 13px;
+    margin-bottom: 8px;
+    padding: 8px 8px !important;
+    box-shadow: 0 5px 14px rgba(15,23,42,.030);
+}
+.similarity-rank-card-compact .similarity-rank-row:last-child { margin-bottom: 0; }
+.similarity-rank-card-compact .similarity-rank-row-active {
+    border-color: #bfdbfe !important;
+    box-shadow: inset 4px 0 0 #2563eb, 0 8px 18px rgba(37,99,235,.070) !important;
+}
+.similarity-rank-footer-clean { display: none !important; }
+.similarity-chart-shell {
+    border-radius: 18px 18px 0 0 !important;
+    border-bottom: 0 !important;
+}
+.similarity-chart-shell + div[data-testid="stPlotlyChart"] {
+    border-radius: 0 0 18px 18px !important;
+}
+.similarity-bubble-note {
+    background: #ffffff !important;
+    border-color: #bfdbfe !important;
+    color: #1e3a8a !important;
+}
+.similarity-assessment-card {
+    margin-top: 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%) !important;
+}
+@media (max-width: 1200px) {
+    .similarity-recommended-card-compact { grid-template-columns: 1fr !important; }
+    .similarity-recommended-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.4 Similar Player Intelligence decision-support polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+.similarity-decision-grid {
+    display:grid;
+    grid-template-columns: minmax(260px,.85fr) minmax(360px,1.1fr) minmax(360px,1.1fr);
+    gap:12px;
+    margin: 0 0 14px 0;
+}
+.similarity-decision-card {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    box-shadow:0 10px 26px rgba(15,23,42,.050);
+    padding:13px 15px;
+}
+.similarity-decision-card-primary {
+    border-left:5px solid #22c55e;
+    background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%);
+}
+.similarity-decision-eyebrow {
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.similarity-decision-title {
+    color:#0f172a;
+    font-size:1.02rem;
+    font-weight:950;
+    line-height:1.12;
+    margin-bottom:8px;
+}
+.similarity-action-list {
+    display:grid;
+    gap:6px;
+}
+.similarity-action-item {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:6px 8px;
+    border-radius:10px;
+    background:#f8fafc;
+    border:1px solid #edf2f7;
+    color:#334155;
+    font-size:.74rem;
+    font-weight:850;
+}
+.similarity-action-item b { color:#0f172a; font-weight:950; white-space:nowrap; }
+.similarity-driver-list {
+    display:grid;
+    gap:6px;
+}
+.similarity-driver-item {
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+    color:#334155;
+    font-size:.76rem;
+    line-height:1.30;
+}
+.similarity-driver-plus { color:#16a34a; font-weight:950; }
+.similarity-driver-minus { color:#ea580c; font-weight:950; }
+.similarity-benchmark-compare {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:.74rem;
+    overflow:hidden;
+    border-radius:12px;
+    border:1px solid #edf2f7;
+}
+.similarity-benchmark-compare th {
+    background:#f8fafc;
+    color:#475569;
+    font-weight:950;
+    padding:7px 8px;
+    border-bottom:1px solid #edf2f7;
+    text-align:left;
+}
+.similarity-benchmark-compare td {
+    color:#0f172a;
+    padding:7px 8px;
+    border-bottom:1px solid #edf2f7;
+}
+.similarity-benchmark-compare tr:last-child td { border-bottom:0; }
+.similarity-benchmark-compare td:nth-child(2),
+.similarity-benchmark-compare td:nth-child(3),
+.similarity-benchmark-compare th:nth-child(2),
+.similarity-benchmark-compare th:nth-child(3) { text-align:right; }
+.similarity-exec-table-title {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.similarity-exec-table-note {
+    color:#64748b;
+    font-size:.74rem;
+    font-weight:750;
+}
+@media (max-width: 1350px) {
+    .similarity-decision-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -3317,7 +3968,7 @@ def load_parquet(path: Path) -> pd.DataFrame:
 
 
 def load_transfer_strategy_optimizer():
-    """Load the Sprint 14 transfer portfolio optimizer from src/strategy.
+    """Load the transfer portfolio optimizer from src/strategy.
 
     The import is intentionally lazy so the dashboard can still render a clear
     error message if the strategy module or PuLP dependency is missing.
@@ -3377,7 +4028,7 @@ def optimize_transfer_portfolio_with_style(
 ) -> pd.DataFrame:
     """Optimize a transfer portfolio with optional concentration constraints.
 
-    This dashboard-side wrapper keeps Sprint 14C self-contained: it preserves the
+    This dashboard-side wrapper keeps self-contained: it preserves the
     existing ILP formulation and adds a portfolio-style layer to avoid overly
     concentrated outputs such as several micro-bets plus one very expensive asset.
     """
@@ -3613,17 +4264,26 @@ def optimize_transfer_portfolio_with_style(
 
 
 def translate_tier(value):
+    raw = str(value).strip()
+    normalized = raw.lower().replace("-", "_").replace(" ", "_")
     tier_map = {
         "high_priority": "Alta prioridad",
+        "alta_prioridad": "Alta prioridad",
         "target_scouting": "Objetivo scouting",
+        "objetivo_scouting": "Objetivo scouting",
+        "interesting": "Interesante",
+        "interesante": "Interesante",
+        "low_opportunity": "Baja oportunidad",
+        "baja_oportunidad": "Baja oportunidad",
+        "monitoring": "Monitorización",
+        "monitorizacion": "Monitorización",
+        "monitorización": "Monitorización",
         "low_risk": "Bajo riesgo",
+        "bajo_riesgo": "Bajo riesgo",
         "exploratory": "Exploratorio",
-        "Alta prioridad": "Alta prioridad",
-        "Objetivo scouting": "Objetivo scouting",
-        "Bajo riesgo": "Bajo riesgo",
-        "Exploratorio": "Exploratorio",
+        "exploratorio": "Exploratorio",
     }
-    return tier_map.get(value, value)
+    return tier_map.get(normalized, raw.replace("_", " ").strip().capitalize() if raw else raw)
 
 
 def tier_badge(value):
@@ -3842,14 +4502,14 @@ def UI(text: object) -> str:
         "FILTROS": "FILTERS",
         "Define criterios de elegibilidad antes de revisar ranking, matriz y perfiles.": "Define eligibility criteria before reviewing rankings, matrix and profiles.",
         "Contexto activo": "Active context",
-        "Universo modelado": "Modelled universe",
-        "Shortlist ejecutiva": "Executive shortlist",
+        "Universo prospect": "Prospect universe",
+        "Vista ejecutiva": "Executive view",
         "Candidatos actuales": "Current candidates",
         "jugadores precandidatos": "pre-candidates",
         "cobertura competitiva": "competitive coverage",
         "calidad del ranking": "ranking quality",
         "simulación conservadora": "conservative simulation",
-        "de la shortlist": "of shortlist",
+        "del universo": "of universe",
         "Ligas representadas": "Leagues represented",
         "Objetivos prioritarios": "Priority targets",
         "Apuestas de crecimiento": "Growth bets",
@@ -3994,7 +4654,7 @@ def render_metric_card_with_caption(label, value, caption=None, show_info_icon=F
 
 
 def render_strategy_metric_card(label, value, caption=None, tooltip=None):
-    """Render Sprint 14 KPI card with click-to-open info disclosure."""
+    """Render KPI card with click-to-open info disclosure."""
     tooltip_html = (
         "<details class='strategy-info-details'>"
         "<summary>i</summary>"
@@ -4089,6 +4749,9 @@ def build_recommendation(row):
 # =============================================================================
 
 RADAR_DATASET_CANDIDATES = [
+    "player_season_modeling_v13b_productive_candidate.parquet",
+    "player_season_modeling_v13b_advanced.parquet",
+    "player_season_modeling_v13a.parquet",
     "player_season_modeling_indices.parquet",
     "player_season_modeling_growth.parquet",
     "player_season_modeling_advanced.parquet",
@@ -4102,6 +4765,8 @@ RADAR_METRIC_CANDIDATES = {
         ("goals_per90", "Goles/90"),
         ("assists_per90", "Asistencias/90"),
         ("g_a_per90", "G+A/90"),
+        ("finishing_index_v2", "Finishing Index"),
+        ("availability_index", "Availability Index"),
         ("growth_score", "Growth Score"),
         ("confidence_score", "Confidence Score"),
     ],
@@ -4110,6 +4775,8 @@ RADAR_METRIC_CANDIDATES = {
         ("goals_per90", "Goles/90"),
         ("assists_per90", "Asistencias/90"),
         ("g_a_per90", "G+A/90"),
+        ("finishing_index_v2", "Finishing Index"),
+        ("availability_index", "Availability Index"),
         ("growth_score", "Growth Score"),
         ("confidence_score", "Confidence Score"),
     ],
@@ -4118,6 +4785,8 @@ RADAR_METRIC_CANDIDATES = {
         ("tackles_per90", "Tackles/90"),
         ("interceptions_per90", "Interceptions/90"),
         ("blocks_per90", "Blocks/90"),
+        ("defensive_activity_index", "Defensive Activity"),
+        ("availability_index", "Availability Index"),
         ("growth_score", "Growth Score"),
         ("confidence_score", "Confidence Score"),
     ],
@@ -4125,6 +4794,7 @@ RADAR_METRIC_CANDIDATES = {
         ("minutes_played", "Minutos"),
         ("save_pct", "Save %"),
         ("clean_sheets", "Clean Sheets"),
+        ("availability_index", "Availability Index"),
         ("growth_score", "Growth Score"),
         ("confidence_score", "Confidence Score"),
     ],
@@ -4135,6 +4805,9 @@ RADAR_GENERIC_FOOTBALL_METRICS = [
     ("goals_per90", "Goles/90"),
     ("assists_per90", "Asistencias/90"),
     ("g_a_per90", "G+A/90"),
+    ("finishing_index_v2", "Finishing Index"),
+    ("availability_index", "Availability Index"),
+    ("defensive_activity_index", "Defensive Activity"),
     ("growth_score", "Growth Score"),
     ("confidence_score", "Confidence Score"),
 ]
@@ -5013,16 +5686,16 @@ def add_projected_market_value_features(df: pd.DataFrame) -> pd.DataFrame:
         return result
 
     market_value = pd.to_numeric(result["market_value_eur"], errors="coerce")
-    growth = pd.to_numeric(result.get("growth_score", 50), errors="coerce").fillna(50).clip(0, 100)
-    opportunity = pd.to_numeric(result.get("opportunity_score", 50), errors="coerce").fillna(50).clip(0, 100)
-    confidence = pd.to_numeric(result.get("confidence_score", 65), errors="coerce").fillna(65).clip(0, 100)
-    risk = pd.to_numeric(result.get("risk_score", 50), errors="coerce").fillna(50).clip(0, 100)
+    growth = pd.to_numeric(result["growth_score"] if "growth_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
+    opportunity = pd.to_numeric(result["opportunity_score"] if "opportunity_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
+    confidence = pd.to_numeric(result["confidence_score"] if "confidence_score" in result.columns else pd.Series(65, index=result.index), errors="coerce").fillna(65).clip(0, 100)
+    risk = pd.to_numeric(result["risk_score"] if "risk_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
 
     if "league_strength_index" not in result.columns and "league" in result.columns:
         result["league_strength_index"] = result["league"].apply(get_league_strength)
         result["league_quality_tier"] = result["league_strength_index"].apply(classify_league_quality)
 
-    strength = pd.to_numeric(result.get("league_strength_index", DEFAULT_LEAGUE_STRENGTH), errors="coerce").fillna(DEFAULT_LEAGUE_STRENGTH).clip(70, 100)
+    strength = pd.to_numeric(result["league_strength_index"] if "league_strength_index" in result.columns else pd.Series(DEFAULT_LEAGUE_STRENGTH, index=result.index), errors="coerce").fillna(DEFAULT_LEAGUE_STRENGTH).clip(70, 100)
     age_factor = result.get("age", pd.Series([21] * len(result), index=result.index)).apply(get_age_projection_factor)
 
     growth_component = 1.00 + (growth / 100.0) * 1.15
@@ -5986,34 +6659,635 @@ def add_similarity_deltas(similarity_df: pd.DataFrame, target_row: pd.Series) ->
     return result
 
 
+
 def render_similarity_executive_cards(target_row: pd.Series, best_row: pd.Series, name_col: str, top_df: pd.DataFrame | None = None) -> None:
-    """Executive cards for Similar Players."""
+    """Professional executive summary cards for Similar Player Intelligence."""
     target_name = get_display_name(target_row, name_col)
     best_name = get_display_name(best_row, name_col)
     similarity = get_numeric_value(best_row, "similarity_score_pct", np.nan)
     delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
     delta_risk = get_numeric_value(best_row, "delta_risk", np.nan)
+    best_value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    target_value = get_numeric_value(target_row, "market_value_eur", np.nan)
+    best_opp = get_numeric_value(best_row, "opportunity_score", np.nan)
+    best_risk = get_numeric_value(best_row, "risk_score", np.nan)
 
-    avg_similarity = None
-    if top_df is not None and not top_df.empty and "similarity_score_pct" in top_df.columns:
-        avg_similarity = pd.to_numeric(top_df["similarity_score_pct"], errors="coerce").mean()
+    target_meta_parts = [
+        str(safe_get(target_row, "position_group", "N/A")),
+        f"{format_score(safe_get(target_row, 'age', np.nan))} {'years' if LANG == 'EN' else 'años'}",
+        str(safe_get(target_row, "club", "N/A")),
+        league_display_name(safe_get(target_row, "league", "N/A")),
+    ]
+    best_meta_parts = [
+        str(safe_get(best_row, "position_group", "N/A")),
+        f"{format_score(safe_get(best_row, 'age', np.nan))} {'years' if LANG == 'EN' else 'años'}",
+        str(safe_get(best_row, "club", "N/A")),
+        league_display_name(safe_get(best_row, "league", "N/A")),
+    ]
 
-    cols = st.columns(5)
-    with cols[0]:
-        ref_context = f"{safe_get(target_row, 'position_group', '')} · Strength {format_score(safe_get(target_row, 'league_strength_index', 'N/A'))}"
-        render_metric_card_with_caption("Jugador referencia", target_name, ref_context)
-    with cols[1]:
-        render_metric_card_with_caption("Perfil más similar", best_name, f"Similarity: {similarity:.1f}")
-    with cols[2]:
-        sign = "+" if pd.notna(delta_opp) and delta_opp >= 0 else ""
-        render_metric_card_with_caption("Δ Opportunity", f"{sign}{delta_opp:.1f}", V("vs jugador referencia"))
-    with cols[3]:
-        sign = "+" if pd.notna(delta_risk) and delta_risk >= 0 else ""
-        render_metric_card_with_caption("Δ Risk", f"{sign}{delta_risk:.1f}", V("menor es mejor"))
-    with cols[4]:
-        avg_text = f"{avg_similarity:.1f}" if avg_similarity is not None and pd.notna(avg_similarity) else "N/A"
-        render_metric_card_with_caption("Similitud media", avg_text, V("Top perfiles"))
+    sim_pct = max(0, min(100, similarity if pd.notna(similarity) else 0))
+    risk_delta_class = "similarity-kpi-positive" if pd.notna(delta_risk) and delta_risk <= 0 else "similarity-kpi-negative"
+    opp_delta_class = "similarity-kpi-positive" if pd.notna(delta_opp) and delta_opp >= 0 else "similarity-kpi-negative"
+    opp_sign = "+" if pd.notna(delta_opp) and delta_opp >= 0 else ""
+    risk_sign = "+" if pd.notna(delta_risk) and delta_risk >= 0 else ""
 
+    if LANG == "EN":
+        ref_label, alt_label = "Reference player", "Best alternative"
+        sim_label, opp_label, risk_label, value_label = "Similarity Score", "Opportunity Gap", "Risk Gap", "Market Value"
+        similarity_caption = "Very high tactical similarity" if pd.notna(similarity) and similarity >= 95 else "Comparable tactical profile"
+        opp_caption = "Lower opportunity than reference" if pd.notna(delta_opp) and delta_opp < 0 else "Higher opportunity than reference"
+        risk_caption = "Lower risk than reference" if pd.notna(delta_risk) and delta_risk < 0 else "Higher risk than reference"
+        value_caption = "Current market value"
+    else:
+        ref_label, alt_label = "Jugador referencia", "Mejor alternativa"
+        sim_label, opp_label, risk_label, value_label = "Similarity Score", "Opportunity Gap", "Risk Gap", "Market Value"
+        similarity_caption = "Muy alta similitud táctica" if pd.notna(similarity) and similarity >= 95 else "Perfil táctico comparable"
+        opp_caption = "Menor oportunidad que referencia" if pd.notna(delta_opp) and delta_opp < 0 else "Mayor oportunidad que referencia"
+        risk_caption = "Menor riesgo que referencia" if pd.notna(delta_risk) and delta_risk < 0 else "Mayor riesgo que referencia"
+        value_caption = "Valor de mercado"
+
+    html_block = f"""
+    <div class="similarity-kpi-grid">
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-label">{html.escape(ref_label)}</div>
+            <div class="similarity-kpi-name">{html.escape(str(target_name))}</div>
+            <div class="similarity-kpi-meta">{html.escape(' · '.join([p for p in target_meta_parts if p and p != 'nan']))}</div>
+            <div class="similarity-kpi-meta"><b>{html.escape(format_money_short(target_value))}</b></div>
+        </div>
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-club-mark">ALT</div>
+            <div class="similarity-kpi-label">{html.escape(alt_label)}</div>
+            <div class="similarity-kpi-name">{html.escape(str(best_name))}</div>
+            <div class="similarity-kpi-meta">{html.escape(' · '.join([p for p in best_meta_parts if p and p != 'nan']))}</div>
+            <div class="similarity-kpi-meta"><b>{html.escape(format_money_short(best_value))}</b></div>
+        </div>
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-label">{html.escape(sim_label)}</div>
+            <div><span class="similarity-kpi-value">{format_score(similarity)}</span><span class="similarity-kpi-suffix">/100</span></div>
+            <div class="similarity-kpi-meta">{html.escape(similarity_caption)}</div>
+            <div class="similarity-kpi-bar"><span style="width:{sim_pct:.0f}%"></span></div>
+        </div>
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-label similarity-kpi-negative">{html.escape(opp_label)}</div>
+            <div class="similarity-kpi-value {opp_delta_class}">{opp_sign}{format_score(delta_opp)}<span class="similarity-kpi-suffix">pts</span></div>
+            <div class="similarity-kpi-meta">{html.escape(opp_caption)}</div>
+            <div class="similarity-kpi-bar orange"><span style="width:{max(8, min(100, abs(delta_opp if pd.notna(delta_opp) else 0) * 2.8)):.0f}%"></span></div>
+        </div>
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-label">{html.escape(risk_label)}</div>
+            <div class="similarity-kpi-value {risk_delta_class}">{risk_sign}{format_score(delta_risk)}<span class="similarity-kpi-suffix">pts</span></div>
+            <div class="similarity-kpi-meta">{html.escape(risk_caption)}</div>
+            <div class="similarity-kpi-bar"><span style="width:{max(8, min(100, abs(delta_risk if pd.notna(delta_risk) else 0) * 4)):.0f}%"></span></div>
+        </div>
+        <div class="similarity-kpi-card">
+            <div class="similarity-kpi-label">{html.escape(value_label)}</div>
+            <div class="similarity-kpi-value">{html.escape(format_money_short(best_value))}</div>
+            <div class="similarity-kpi-meta">{html.escape(value_caption)}</div>
+            <div class="similarity-kpi-meta">OPP {format_score(best_opp)} · RISK {format_score(best_risk)}</div>
+        </div>
+    </div>
+    """
+    st.markdown(html_block, unsafe_allow_html=True)
+
+def classify_similarity_recommendation(row: pd.Series) -> str:
+    """Classify similar profiles with scouting-friendly decision labels.
+
+    The label should not punish a player for being slightly below an elite
+    reference. A candidate with very high similarity, strong opportunity and
+    controlled risk remains a valuable replacement option, not a "bad option".
+    """
+    delta_opp = get_numeric_value(row, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(row, "delta_risk", np.nan)
+    similarity = get_numeric_value(row, "similarity_score_pct", np.nan)
+    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+    future_asset = get_numeric_value(row, "future_asset_score", np.nan)
+    growth = get_numeric_value(row, "growth_score", np.nan)
+
+    # Red is reserved for genuinely riskier profiles, not simply lower
+    # opportunity than an exceptional reference player.
+    if pd.notna(delta_risk) and delta_risk >= 18 and pd.notna(risk) and risk >= 45:
+        return "Higher Risk"
+
+    if pd.notna(delta_opp) and pd.notna(delta_risk) and delta_opp >= 0 and delta_risk <= 0:
+        return "Upgrade"
+
+    if (
+        pd.notna(similarity) and similarity >= 95
+        and pd.notna(opportunity) and opportunity >= 70
+        and (pd.isna(risk) or risk <= 35)
+    ):
+        return "Strong Alternative"
+
+    if (
+        pd.notna(similarity) and similarity >= 92
+        and pd.notna(opportunity) and opportunity >= 60
+        and (pd.isna(risk) or risk <= 50)
+    ):
+        return "Similar"
+
+    if (pd.notna(opportunity) and opportunity >= 70) or (pd.notna(future_asset) and future_asset >= 65) or (pd.notna(growth) and growth >= 75):
+        return "Development Bet"
+
+    return "Lower Priority"
+
+def similarity_recommendation_label(value: str) -> str:
+    labels = {
+        "Upgrade": {"ES": "Upgrade", "EN": "Upgrade"},
+        "Strong Alternative": {"ES": "Strong Alternative", "EN": "Strong Alternative"},
+        "Similar": {"ES": "Similar", "EN": "Similar"},
+        "Development Bet": {"ES": "Development Bet", "EN": "Development Bet"},
+        "Lower Priority": {"ES": "Lower Priority", "EN": "Lower Priority"},
+        "Higher Risk": {"ES": "Higher Risk", "EN": "Higher Risk"},
+    }
+    return labels.get(str(value), {"ES": str(value), "EN": str(value)}).get(LANG, str(value))
+
+
+def similarity_status_class(value: str) -> str:
+    return (
+        str(value)
+        .strip()
+        .lower()
+        .replace(" ", "-")
+        .replace("_", "-")
+    )
+
+def render_similarity_rank_panel(similarity_view: pd.DataFrame, name_col: str, highlighted_player: str | None = None) -> None:
+    """Render a compact professional side ranking for the Similar Players map."""
+    if similarity_view.empty:
+        return
+
+    rows_html = ""
+    for rank, (_, row) in enumerate(similarity_view.head(5).iterrows(), start=1):
+        player = get_display_name(row, name_col)
+        club = safe_get(row, "club", "")
+        league = league_display_name(safe_get(row, "league", ""))
+        sim = get_numeric_value(row, "similarity_score_pct", np.nan)
+        opp = get_numeric_value(row, "opportunity_score", np.nan)
+        risk = get_numeric_value(row, "risk_score", np.nan)
+        value = get_numeric_value(row, "market_value_eur", np.nan)
+        status_raw = str(safe_get(row, "_recommendation_class", "Lower Priority"))
+        status = similarity_recommendation_label(status_raw)
+        status_class = similarity_status_class(status_raw)
+        active_class = " similarity-rank-row-active" if highlighted_player and str(player) == str(highlighted_player) else ""
+        rows_html += f"""
+        <div class="similarity-rank-row{active_class}">
+            <div class="similarity-rank-number">{rank}</div>
+            <div class="similarity-rank-main">
+                <div class="similarity-rank-name">{html.escape(str(player))}</div>
+                <div class="similarity-rank-meta">{html.escape(str(club))} · {html.escape(str(league))}</div>
+                <div class="similarity-rank-bottomline">
+                    <span class="similarity-rank-status similarity-rank-status-{html.escape(status_class)}">{html.escape(str(status))}</span>
+                    <span class="similarity-rank-small">OPP {format_score(opp)} · RISK {format_score(risk)} · {html.escape(format_money_short(value))}</span>
+                </div>
+            </div>
+            <div class="similarity-rank-kpis">
+                <b>{format_score(sim)}</b><span>SIM</span>
+            </div>
+        </div>
+        """
+
+    title = "TOP RECRUITMENT ALTERNATIVES" if LANG == "EN" else "TOP RECRUITMENT ALTERNATIVES"
+    subtitle = "Executive shortlist: SIM · OPP · RISK · VALUE" if LANG == "EN" else "Shortlist ejecutiva: SIM · OPP · RISK · VALOR"
+    st.markdown(
+        f"""
+        <div class="similarity-rank-card similarity-rank-card-compact">
+            <div class="similarity-rank-title">{html.escape(title)}</div>
+            <div class="similarity-rank-subtitle">{html.escape(subtitle)}</div>
+            {rows_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.Series, name_col: str, highlighted_player: str | None = None) -> go.Figure | None:
+    """Professional Similar Player Intelligence map.
+
+    The chart shows candidates only. The reference player is handled outside the
+    chart as a benchmark profile, so the scatter focuses on recruitment alternatives.
+    """
+    if similarity_view.empty or "similarity_score_pct" not in similarity_view.columns:
+        return None
+
+    chart = similarity_view.copy()
+    chart["_similarity"] = pd.to_numeric(chart.get("similarity_score_pct", np.nan), errors="coerce")
+    chart["_opportunity_axis"] = pd.to_numeric(chart.get("opportunity_score", np.nan), errors="coerce")
+    chart["_risk"] = pd.to_numeric(chart.get("risk_score", np.nan), errors="coerce")
+    chart["_market_value_m"] = pd.to_numeric(chart.get("market_value_eur", np.nan), errors="coerce") / 1_000_000
+    chart["_future_asset"] = pd.to_numeric(chart.get("future_asset_score", np.nan), errors="coerce")
+    chart["_roi"] = pd.to_numeric(chart.get("asset_roi_3y_pct", np.nan), errors="coerce")
+    chart["_player_label"] = chart[name_col].astype(str) if name_col in chart.columns else chart.index.astype(str)
+    chart["_club_label"] = chart.get("club", pd.Series("", index=chart.index)).fillna("").astype(str)
+    chart["_league_label"] = chart.get("league", pd.Series("", index=chart.index)).fillna("").astype(str).apply(league_display_name)
+    chart["_position_label"] = chart.get("position_group", pd.Series("UNK", index=chart.index)).fillna("UNK").astype(str)
+    chart["_recommendation_class"] = chart.apply(classify_similarity_recommendation, axis=1)
+    chart = chart.dropna(subset=["_similarity", "_opportunity_axis"]).copy()
+    if chart.empty:
+        return None
+
+    market_value = chart["_market_value_m"].copy()
+    if market_value.notna().sum() >= 1:
+        size_raw = market_value.fillna(market_value.median())
+        size_min, size_max = float(size_raw.min()), float(size_raw.max())
+        chart["_bubble_size"] = 18 + 38 * (size_raw - size_min) / (size_max - size_min) if size_max > size_min else 32
+    else:
+        chart["_bubble_size"] = 30
+
+    chart = chart.sort_values(["_similarity", "_opportunity_axis"], ascending=[False, False]).copy()
+    chart["_rank"] = np.arange(1, len(chart) + 1)
+    top3 = chart.head(3).copy()
+    top3_labels = set(top3["_player_label"].astype(str).tolist())
+
+    def _compact_label(player: str) -> str:
+        clean = str(player).strip()
+        parts = clean.split()
+        return parts[-1] if len(parts) >= 2 else clean[:14]
+
+    chart["_visible_label"] = np.where(
+        chart["_player_label"].isin(top3_labels),
+        "#" + chart["_rank"].astype(str) + " " + chart["_player_label"].map(_compact_label),
+        "",
+    )
+    chart["_is_highlighted"] = chart["_player_label"].astype(str).eq(str(highlighted_player)) if highlighted_player else False
+
+    sim_threshold = float(chart["_similarity"].quantile(0.75))
+    opp_threshold = float(chart["_opportunity_axis"].quantile(0.75))
+    x_min, x_max = 84.0, 103.0
+    y_min, y_max = 48.0, 104.0
+
+    recommendation_order = ["Upgrade", "Strong Alternative", "Similar", "Development Bet", "Lower Priority", "Higher Risk"]
+    color_map = {
+        "Upgrade": "#15803d",
+        "Strong Alternative": "#22c55e",
+        "Similar": "#60a5fa",
+        "Development Bet": "#f59e0b",
+        "Lower Priority": "#94a3b8",
+        "Higher Risk": "#ef4444",
+    }
+
+    fig = go.Figure()
+
+    # More visible executive quadrants.
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=opp_threshold, y1=y_max, fillcolor="rgba(245, 158, 11, 0.20)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=opp_threshold, y1=y_max, fillcolor="rgba(34, 197, 94, 0.22)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=y_min, y1=opp_threshold, fillcolor="rgba(148, 163, 184, 0.16)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=y_min, y1=opp_threshold, fillcolor="rgba(96, 165, 250, 0.18)", line_width=0, layer="below")
+
+    for rec_class in recommendation_order:
+        group = chart[chart["_recommendation_class"] == rec_class].copy()
+        if group.empty:
+            continue
+        marker_sizes = group["_bubble_size"].copy()
+        marker_lines = np.where(group["_is_highlighted"], 4.2, 1.2)
+        marker_line_colors = np.where(group["_is_highlighted"], "#0f172a", "rgba(15, 23, 42, 0.28)")
+        fig.add_trace(
+            go.Scatter(
+                x=group["_similarity"],
+                y=group["_opportunity_axis"],
+                mode="markers+text",
+                text=group["_visible_label"],
+                textposition="top center",
+                textfont=dict(size=10, color="#0f172a", family="Arial"),
+                name=similarity_recommendation_label(rec_class),
+                marker=dict(
+                    size=np.where(group["_is_highlighted"], marker_sizes * 1.18, marker_sizes),
+                    color=color_map.get(rec_class, "#64748b"),
+                    opacity=np.where(group["_is_highlighted"], 0.98, 0.80),
+                    line=dict(width=marker_lines, color=marker_line_colors),
+                ),
+                customdata=np.stack([
+                    group["_player_label"], group["_club_label"], group["_league_label"], group["_position_label"],
+                    group["_market_value_m"], group["_future_asset"], group["_roi"], group["_risk"],
+                    group.get("delta_opportunity", pd.Series(np.nan, index=group.index)),
+                    group.get("delta_risk", pd.Series(np.nan, index=group.index)),
+                    group["_recommendation_class"],
+                ], axis=-1),
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>"
+                    + ("Club" if LANG == "ES" else "Club") + ": %{customdata[1]}<br>"
+                    + ("Liga" if LANG == "ES" else "League") + ": %{customdata[2]}<br>"
+                    + ("Posición" if LANG == "ES" else "Position") + ": %{customdata[3]}<br>"
+                    + "Similarity: %{x:.1f}<br>Opportunity: %{y:.1f}<br>Risk: %{customdata[7]:.1f}<br>"
+                    + "Market value: €%{customdata[4]:.1f}M<br>"
+                    + "Future Asset: %{customdata[5]:.1f}<br>ROI 3Y: %{customdata[6]:.0f}%<br>"
+                    + "Δ Opportunity: %{customdata[8]:+.1f}<br>Δ Risk: %{customdata[9]:+.1f}<br>"
+                    + "Recruitment Assessment: %{customdata[10]}<extra></extra>"
+                ),
+            )
+        )
+
+    fig.add_shape(type="line", x0=sim_threshold, x1=sim_threshold, y0=y_min, y1=y_max, line=dict(color="rgba(100,116,139,.45)", width=1.2, dash="dash"), layer="above")
+    fig.add_shape(type="line", x0=x_min, x1=x_max, y0=opp_threshold, y1=opp_threshold, line=dict(color="rgba(100,116,139,.45)", width=1.2, dash="dash"), layer="above")
+
+    quadrant_labels = {
+        "top_right": "ELITE TARGETS" if LANG == "EN" else "ELITE TARGETS",
+        "top_left": "HIGH UPSIDE PROSPECTS" if LANG == "EN" else "HIGH UPSIDE PROSPECTS",
+        "bottom_right": "SIMILAR REPLACEMENTS" if LANG == "EN" else "SIMILAR REPLACEMENTS",
+        "bottom_left": "LOW PRIORITY" if LANG == "EN" else "LOW PRIORITY",
+    }
+    fig.add_annotation(x=(sim_threshold + x_max) / 2, y=y_max, text=quadrant_labels["top_right"] + "<br><span style='font-size:10px'>Alta oportunidad · Alta similitud</span>", showarrow=False, yshift=-28, font=dict(size=11, color="#166534"), bgcolor="rgba(255,255,255,0)")
+    fig.add_annotation(x=(x_min + sim_threshold) / 2, y=y_max, text=quadrant_labels["top_left"] + "<br><span style='font-size:10px'>Alta oportunidad · Menor similitud</span>", showarrow=False, yshift=-28, font=dict(size=11, color="#92400e"), bgcolor="rgba(255,255,255,0)")
+    fig.add_annotation(x=(sim_threshold + x_max) / 2, y=y_min, text=quadrant_labels["bottom_right"] + "<br><span style='font-size:10px'>Menor oportunidad · Alta similitud</span>", showarrow=False, yshift=30, font=dict(size=11, color="#1d4ed8"), bgcolor="rgba(255,255,255,0)")
+    fig.add_annotation(x=(x_min + sim_threshold) / 2, y=y_min, text=quadrant_labels["bottom_left"] + "<br><span style='font-size:10px'>Bajo ajuste prioritario</span>", showarrow=False, yshift=30, font=dict(size=11, color="#475569"), bgcolor="rgba(255,255,255,0)")
+
+    fig.update_layout(
+        xaxis_title="Similarity Score",
+        yaxis_title="Opportunity Score",
+        height=500,
+        margin=dict(l=56, r=20, t=28, b=42),
+        showlegend=True,
+        legend=dict(orientation="h", x=0.0, xanchor="left", y=1.14, yanchor="bottom", bgcolor="rgba(255,255,255,0)", font=dict(size=10), title=None),
+        hovermode="closest",
+        plot_bgcolor="#ffffff",
+        paper_bgcolor="#ffffff",
+        uniformtext=dict(minsize=9, mode="show"),
+    )
+    fig.update_xaxes(range=[x_min, x_max], gridcolor="rgba(0,0,0,0.08)", showline=True, linewidth=1.2, linecolor="rgba(15,23,42,.50)", ticks="outside", zeroline=False)
+    fig.update_yaxes(range=[y_min, y_max], gridcolor="rgba(0,0,0,0.08)", showline=True, linewidth=1.2, linecolor="rgba(15,23,42,.50)", ticks="outside", zeroline=False)
+    return fig
+
+
+def render_similarity_benchmark_profile(target_row: pd.Series, name_col: str) -> None:
+    """Render reference player outside the scatter as an explicit benchmark profile."""
+    target_name = get_display_name(target_row, name_col)
+    position = safe_get(target_row, "position_group", "N/A")
+    club = safe_get(target_row, "club", "N/A")
+    league = league_display_name(safe_get(target_row, "league", "N/A"))
+    age = get_numeric_value(target_row, "age", np.nan)
+    opp = get_numeric_value(target_row, "opportunity_score", np.nan)
+    risk = get_numeric_value(target_row, "risk_score", np.nan)
+    value = get_numeric_value(target_row, "market_value_eur", np.nan)
+    title = "BENCHMARK PROFILE" if LANG == "EN" else "BENCHMARK PROFILE"
+    st.markdown(
+        f"""
+        <div class="similarity-benchmark-card">
+            <div class="similarity-benchmark-eyebrow">{html.escape(title)}</div>
+            <div class="similarity-benchmark-title">{html.escape(str(target_name))}</div>
+            <div class="similarity-benchmark-grid">
+                <div class="similarity-benchmark-kpi"><span>Similarity baseline</span><b>100</b></div>
+                <div class="similarity-benchmark-kpi"><span>Opportunity</span><b>{format_score(opp)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>Risk</span><b>{format_score(risk)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>Market value</span><b>{html.escape(format_money_short(value))}</b></div>
+                <div class="similarity-benchmark-kpi"><span>Age</span><b>{format_score(age)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>League</span><b>{html.escape(str(league))}</b></div>
+            </div>
+            <div class="similarity-kpi-meta" style="margin-top:8px;">{html.escape(str(position))} · {html.escape(str(club))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def build_automated_recruitment_assessment(target_player: str, best_row: pd.Series, name_col: str) -> str:
+    """Build DSS-style automated recruitment assessment for the best similar profile."""
+    best_name = get_display_name(best_row, name_col)
+    sim = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    opp = get_numeric_value(best_row, "opportunity_score", np.nan)
+    risk = get_numeric_value(best_row, "risk_score", np.nan)
+    delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
+    value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    rec_class = str(safe_get(best_row, "_recommendation_class", classify_similarity_recommendation(best_row)))
+    label = similarity_recommendation_label(rec_class)
+
+    if LANG == "EN":
+        return (
+            f"<b>{html.escape(str(best_name))}</b> is the most balanced alternative identified by the DSS. "
+            f"He preserves a very high similarity level versus <b>{html.escape(str(target_player))}</b> ({sim:.1f}/100). "
+            f"Although his Opportunity Score is lower than the benchmark (Δ Opportunity {delta_opp:+.1f}), "
+            f"he combines controlled risk ({risk:.1f}), actionable market value ({html.escape(format_money_short(value))}) "
+            f"and enough upside to justify priority follow-up.<br><br>"
+            f"<b>Recommendation:</b> {html.escape(label)} · priority scouting review."
+        )
+
+    return (
+        f"<b>{html.escape(str(best_name))}</b> es la alternativa más equilibrada identificada por el DSS. "
+        f"Mantiene una similitud muy elevada frente a <b>{html.escape(str(target_player))}</b> ({sim:.1f}/100). "
+        f"Aunque reduce el Opportunity Score respecto al benchmark (Δ Opportunity {delta_opp:+.1f}), "
+        f"combina riesgo controlado ({risk:.1f}), valoración económica asumible ({html.escape(format_money_short(value))}) "
+        f"y suficiente atractivo de mercado para justificar seguimiento prioritario.<br><br>"
+        f"<b>Recomendación:</b> {html.escape(label)} · revisión prioritaria de scouting."
+    )
+
+
+def render_automated_recruitment_assessment(target_player: str, best_row: pd.Series, name_col: str) -> None:
+    title = "Automated Recruitment Assessment" if LANG == "EN" else "Automated Recruitment Assessment"
+    subtitle = "DSS interpretation" if LANG == "EN" else "Lectura DSS"
+    assessment = build_automated_recruitment_assessment(target_player, best_row, name_col)
+    st.markdown(
+        f"""
+        <div class="similarity-assessment-card">
+            <div class="similarity-assessment-eyebrow">{html.escape(subtitle)}</div>
+            <div class="similarity-assessment-title">{html.escape(title)}</div>
+            <div class="similarity-assessment-copy">{assessment}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+def render_similarity_recommendation_card(best_row: pd.Series, name_col: str) -> None:
+    """Render a compact recommended target card focused on decision making."""
+    player = get_display_name(best_row, name_col)
+    sim = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    opp = get_numeric_value(best_row, "opportunity_score", np.nan)
+    risk = get_numeric_value(best_row, "risk_score", np.nan)
+    value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(best_row, "delta_risk", np.nan)
+    rec_class = str(safe_get(best_row, "_recommendation_class", classify_similarity_recommendation(best_row)))
+    label = similarity_recommendation_label(rec_class)
+    css_class = similarity_status_class(rec_class)
+
+    if LANG == "EN":
+        eyebrow = "RECOMMENDED TARGET"
+        copy = (
+            f"Best comparable profile. Preserves {sim:.1f}/100 similarity, "
+            f"with {opp:.1f} Opportunity and {risk:.1f} Risk."
+        )
+        delta_opp_label = "Δ OPP"
+        delta_risk_label = "Δ RISK"
+        value_label = "VALUE"
+    else:
+        eyebrow = "RECOMMENDED TARGET"
+        copy = (
+            f"Mejor perfil comparable. Mantiene {sim:.1f}/100 de similitud, "
+            f"con {opp:.1f} de Opportunity y {risk:.1f} de Risk."
+        )
+        delta_opp_label = "Δ OPP"
+        delta_risk_label = "Δ RISK"
+        value_label = "VALOR"
+
+    st.markdown(
+        f"""
+        <div class="similarity-recommended-card similarity-recommended-card-compact">
+            <div>
+                <div class="similarity-recommended-eyebrow">{html.escape(eyebrow)}</div>
+                <div class="similarity-recommended-title">{html.escape(str(player))}</div>
+                <span class="similarity-recommended-pill similarity-executive-chip-{html.escape(css_class)}">{html.escape(label)}</span>
+                <div class="similarity-recommended-copy">{html.escape(copy)}</div>
+            </div>
+            <div class="similarity-recommended-kpi-grid">
+                <div><span>SIM</span><b>{format_score(sim)}</b></div>
+                <div><span>OPP</span><b>{format_score(opp)}</b></div>
+                <div><span>RISK</span><b>{format_score(risk)}</b></div>
+                <div><span>{html.escape(value_label)}</span><b>{html.escape(format_money_short(value))}</b></div>
+                <div><span>{html.escape(delta_opp_label)}</span><b>{format_score(delta_opp)}</b></div>
+                <div><span>{html.escape(delta_risk_label)}</span><b>{format_score(delta_risk)}</b></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
+def build_similarity_recruitment_actions(best_row: pd.Series) -> list[tuple[str, str]]:
+    """Translate similarity assessment into practical recruitment actions."""
+    rec_class = str(safe_get(best_row, "_recommendation_class", classify_similarity_recommendation(best_row)))
+    risk = get_numeric_value(best_row, "risk_score", np.nan)
+    value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    sim = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    opp = get_numeric_value(best_row, "opportunity_score", np.nan)
+
+    if rec_class in {"Upgrade", "Strong Alternative"} and pd.notna(sim) and sim >= 95:
+        priority = "Alta" if LANG == "ES" else "High"
+        video = "Sí" if LANG == "ES" else "Yes"
+        live = "Sí" if LANG == "ES" else "Yes"
+    elif rec_class in {"Similar", "Development Bet"}:
+        priority = "Media" if LANG == "ES" else "Medium"
+        video = "Sí" if LANG == "ES" else "Yes"
+        live = "Condicional" if LANG == "ES" else "Conditional"
+    else:
+        priority = "Baja" if LANG == "ES" else "Low"
+        video = "Revisión ligera" if LANG == "ES" else "Light review"
+        live = "No prioritario" if LANG == "ES" else "Not priority"
+
+    if pd.notna(value) and value <= 5_000_000:
+        finance = "Muy compatible" if LANG == "ES" else "Very compatible"
+    elif pd.notna(value) and value <= 15_000_000:
+        finance = "Compatible" if LANG == "ES" else "Compatible"
+    else:
+        finance = "Requiere presupuesto" if LANG == "ES" else "Budget review"
+
+    if pd.notna(risk) and risk <= 20:
+        risk_label = "Controlado" if LANG == "ES" else "Controlled"
+    elif pd.notna(risk) and risk <= 40:
+        risk_label = "Moderado" if LANG == "ES" else "Moderate"
+    else:
+        risk_label = "Elevado" if LANG == "ES" else "High"
+
+    return [
+        ("Prioridad de seguimiento" if LANG == "ES" else "Follow-up priority", priority),
+        ("Vídeo scouting" if LANG == "ES" else "Video scouting", video),
+        ("Seguimiento presencial" if LANG == "ES" else "Live scouting", live),
+        ("Encaje financiero" if LANG == "ES" else "Financial fit", finance),
+        ("Riesgo" if LANG == "ES" else "Risk", risk_label),
+        ("Assessment" if LANG == "ES" else "Assessment", similarity_recommendation_label(rec_class)),
+    ]
+
+
+def build_similarity_recommendation_drivers(target_row: pd.Series, best_row: pd.Series) -> list[tuple[str, str]]:
+    """Build plus/minus decision drivers for the recommended similar profile."""
+    drivers: list[tuple[str, str]] = []
+    sim = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    risk = get_numeric_value(best_row, "risk_score", np.nan)
+    delta_risk = get_numeric_value(best_row, "delta_risk", np.nan)
+    delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
+    delta_value = get_numeric_value(best_row, "delta_market_value_eur", np.nan)
+    opp = get_numeric_value(best_row, "opportunity_score", np.nan)
+    age = get_numeric_value(best_row, "age", np.nan)
+
+    if pd.notna(sim) and sim >= 95:
+        drivers.append(("+", f"Similarity elite ({sim:.1f}/100)" if LANG == "EN" else f"Similarity elite ({sim:.1f}/100)"))
+    elif pd.notna(sim):
+        drivers.append(("+", f"Perfil comparable ({sim:.1f}/100)" if LANG == "ES" else f"Comparable profile ({sim:.1f}/100)"))
+
+    if pd.notna(risk) and risk <= 20:
+        drivers.append(("+", f"Riesgo bajo/controlado ({risk:.1f})" if LANG == "ES" else f"Low/controlled risk ({risk:.1f})"))
+    elif pd.notna(delta_risk) and delta_risk <= 0:
+        drivers.append(("+", f"Menor riesgo que el benchmark ({delta_risk:+.1f})" if LANG == "ES" else f"Lower risk than benchmark ({delta_risk:+.1f})"))
+
+    if pd.notna(age) and age <= 23:
+        drivers.append(("+", f"Edad compatible con política prospect ({age:.1f})" if LANG == "ES" else f"Age fits prospect policy ({age:.1f})"))
+
+    if pd.notna(opp) and opp >= 75:
+        drivers.append(("+", f"Opportunity Score alto ({opp:.1f})" if LANG == "ES" else f"High Opportunity Score ({opp:.1f})"))
+
+    if pd.notna(delta_opp) and delta_opp < 0:
+        drivers.append(("-", f"Opportunity inferior al benchmark ({delta_opp:+.1f})" if LANG == "ES" else f"Lower opportunity than benchmark ({delta_opp:+.1f})"))
+
+    if pd.notna(delta_value) and delta_value > 0:
+        drivers.append(("-", f"Coste superior al jugador referencia ({format_signed_money_short(delta_value)})" if LANG == "ES" else f"Higher cost than reference ({format_signed_money_short(delta_value)})"))
+
+    return drivers[:6]
+
+
+def render_similarity_decision_support_panel(target_row: pd.Series, best_row: pd.Series, name_col: str) -> None:
+    """Render action recommendation, drivers and benchmark-vs-alternative comparison."""
+    target_name = get_display_name(target_row, name_col)
+    best_name = get_display_name(best_row, name_col)
+    actions = build_similarity_recruitment_actions(best_row)
+    drivers = build_similarity_recommendation_drivers(target_row, best_row)
+
+    actions_html = "".join(
+        f"<div class='similarity-action-item'><span>{html.escape(label)}</span><b>{html.escape(value)}</b></div>"
+        for label, value in actions
+    )
+    drivers_html = "".join(
+        f"<div class='similarity-driver-item'><span class='similarity-driver-{'plus' if sign == '+' else 'minus'}'>{html.escape(sign)}</span><span>{html.escape(text)}</span></div>"
+        for sign, text in drivers
+    )
+
+    comparison_rows = [
+        ("Similarity", "100", format_score(get_numeric_value(best_row, "similarity_score_pct", np.nan))),
+        ("Opportunity", format_score(get_numeric_value(target_row, "opportunity_score", np.nan)), format_score(get_numeric_value(best_row, "opportunity_score", np.nan))),
+        ("Risk", format_score(get_numeric_value(target_row, "risk_score", np.nan)), format_score(get_numeric_value(best_row, "risk_score", np.nan))),
+        ("Market Value" if LANG == "EN" else "Valor", format_money_short(get_numeric_value(target_row, "market_value_eur", np.nan)), format_money_short(get_numeric_value(best_row, "market_value_eur", np.nan))),
+        ("Age" if LANG == "EN" else "Edad", format_score(get_numeric_value(target_row, "age", np.nan)), format_score(get_numeric_value(best_row, "age", np.nan))),
+    ]
+    comparison_html = "".join(
+        f"<tr><td>{html.escape(metric)}</td><td>{html.escape(str(ref))}</td><td>{html.escape(str(alt))}</td></tr>"
+        for metric, ref, alt in comparison_rows
+    )
+
+    if LANG == "EN":
+        action_title = "Recommended action"
+        drivers_title = "Recommendation drivers"
+        compare_title = "Benchmark vs alternative"
+        ref_header = "Reference"
+        alt_header = "Alternative"
+    else:
+        action_title = "Acción recomendada DSS"
+        drivers_title = "Drivers de recomendación"
+        compare_title = "Benchmark vs alternativa"
+        ref_header = "Referencia"
+        alt_header = "Alternativa"
+
+    st.markdown(
+        f"""
+        <div class="similarity-decision-grid">
+            <div class="similarity-decision-card similarity-decision-card-primary">
+                <div class="similarity-decision-eyebrow">Decision Support</div>
+                <div class="similarity-decision-title">{html.escape(action_title)}</div>
+                <div class="similarity-action-list">{actions_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Explainability</div>
+                <div class="similarity-decision-title">{html.escape(drivers_title)}</div>
+                <div class="similarity-driver-list">{drivers_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Trade-off</div>
+                <div class="similarity-decision-title">{html.escape(compare_title)}</div>
+                <table class="similarity-benchmark-compare">
+                    <thead><tr><th>Metric</th><th>{html.escape(ref_header)}<br><span style="font-weight:750;color:#64748b;">{html.escape(str(target_name))}</span></th><th>{html.escape(alt_header)}<br><span style="font-weight:750;color:#64748b;">{html.escape(str(best_name))}</span></th></tr></thead>
+                    <tbody>{comparison_html}</tbody>
+                </table>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def build_similarity_narrative(target_player: str, best_row: pd.Series, name_col: str) -> str:
     best_name = get_display_name(best_row, name_col)
@@ -6294,8 +7568,20 @@ def calculate_similarity_table(
 
 def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
     """Similarity Engine with executive interpretation."""
-    st.subheader("🧬 " + ("Jugadores similares" if LANG == "ES" else "Similar Players"))
-    st.caption(TXT("Identifica perfiles comparables al jugador de referencia y resume los principales trade-offs deportivos, económicos y de riesgo."))
+    st.markdown(
+        f"""
+        <div class="similar-intel-header">
+            <div class="similar-intel-title-wrap">
+                <div class="similar-intel-icon">◎</div>
+                <div>
+                    <div class="similar-intel-title">Similar Player Intelligence</div>
+                    <div class="similar-intel-subtitle">{html.escape('Identifica las mejores alternativas para reforzar tu plantilla con perfiles similares' if LANG == 'ES' else 'Identify the best alternatives to strengthen the squad with comparable profiles')}</div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if shortlist_df.empty:
         st.info(TXT("No hay jugadores disponibles con los filtros actuales."))
@@ -6328,8 +7614,6 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         st.info(TXT("No se encuentra el jugador de referencia seleccionado."))
         return
     target_row = target_rows.iloc[0]
-    render_player_profile_header(target_row, name_col, "Reference player")
-
     similarity_df = calculate_similarity_table(
         df=selector_df,
         target_player=target_player,
@@ -6342,9 +7626,58 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         return
 
     similarity_df = add_similarity_deltas(similarity_df, target_row)
+    similarity_df["_recommendation_class"] = similarity_df.apply(classify_similarity_recommendation, axis=1)
     best = similarity_df.iloc[0]
     render_similarity_executive_cards(target_row, best, name_col, similarity_df.head(top_n))
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+
+    similarity_chart_source = similarity_df.head(top_n).copy()
+    highlight_options = similarity_chart_source[name_col].astype(str).tolist() if name_col in similarity_chart_source.columns else []
+    highlighted_player = highlight_options[0] if highlight_options else None
+    if highlight_options:
+        highlighted_player = st.selectbox(
+            "Perfil destacado" if LANG == "ES" else "Highlighted profile",
+            highlight_options,
+            index=0,
+            key="similarity_highlighted_profile",
+            help="Selecciona un perfil del ranking lateral para resaltarlo en el mapa." if LANG == "ES" else "Select a profile from the side ranking to highlight it on the map.",
+        )
+    similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=highlighted_player)
+    if similarity_fig is not None:
+        render_similarity_recommendation_card(best, name_col)
+        render_similarity_decision_support_panel(target_row, best, name_col)
+        chart_col, rank_col = st.columns([3.0, 1.0], gap="large")
+        with chart_col:
+            render_similarity_benchmark_profile(target_row, name_col)
+            st.markdown(
+                f"""
+                <div class="similarity-chart-shell">
+                    <div class="similarity-chart-header-grid">
+                        <div>
+                            <div class="similarity-map-title">Similarity vs Opportunity Analysis</div>
+                            <div class="similarity-map-subtitle">{html.escape('El mapa compara alternativas reales de recruitment; el jugador referencia queda fuera del gráfico como benchmark ejecutivo.' if LANG == 'ES' else 'The map compares real recruitment alternatives; the reference player stays outside the chart as the executive benchmark.')}</div>
+                        </div>
+                        <div class="similarity-bubble-note">Bubble Size = Market Value (€)</div>
+                    </div>
+                    <div class="similarity-quadrant-legend">
+                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#22c55e"></i>Elite Targets</span>
+                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#60a5fa"></i>Similar Replacements</span>
+                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#f59e0b"></i>High Upside Prospects</span>
+                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#94a3b8"></i>Low Priority</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False})
+            st.markdown(
+                f"""
+                <div class="similarity-chart-card-note">ⓘ {html.escape('El mapa cruza similitud y Opportunity Score para priorizar sustitutos comparables. El tamaño de la burbuja representa exclusivamente valor de mercado.' if LANG == 'ES' else 'The map combines similarity and Opportunity Score to prioritize comparable replacements. Bubble size represents market value only.')}</div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with rank_col:
+            render_similarity_rank_panel(similarity_chart_source, name_col, highlighted_player=highlighted_player)
+        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     # Executive compact view: keep only decision-relevant fields on screen.
     # Full variables remain available in the underlying dataframe for audit/export if needed.
@@ -6360,59 +7693,68 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
             lambda value: format_signed_money_short(value)
         )
 
-    display_cols = [
-        name_col,
-        "club",
-        "league",
-        "league_quality_tier",
-        "position_group",
-        "similarity_score_pct",
-        "delta_opportunity",
-        "delta_risk",
-        "delta_growth",
-        "delta_league_strength",
-        "projected_value_3y_display",
-        "asset_roi_3y_pct",
-        "future_asset_score",
-        "opportunity_score",
-        "risk_score",
-    ]
-    display_cols = [col for col in display_cols if col in similarity_view.columns]
+    similarity_view["recommendation_label"] = similarity_view.apply(lambda row: similarity_recommendation_label(str(safe_get(row, "_recommendation_class", classify_similarity_recommendation(row)))), axis=1)
+    if "market_value_eur" in similarity_view.columns:
+        similarity_view["market_value_display"] = similarity_view["market_value_eur"].apply(format_money_short)
 
+    executive_cols = [name_col, "club", "league", "position_group", "similarity_score_pct", "opportunity_score", "risk_score", "market_value_display", "recommendation_label"]
+    executive_cols = [col for col in executive_cols if col in similarity_view.columns]
+
+    matrix_title = 'Recruitment Intelligence Matrix' if LANG == 'EN' else 'Recruitment Intelligence Matrix'
+    matrix_note = 'Executive view · advanced variables remain in the expandable analytical view' if LANG == 'EN' else 'Vista ejecutiva · variables avanzadas en el desplegable analítico'
+    st.markdown(
+        f"<div class='similarity-exec-table-title'><span>{html.escape(matrix_title)}</span><span class='similarity-exec-table-note'>{html.escape(matrix_note)}</span></div>",
+        unsafe_allow_html=True,
+    )
     st.dataframe(
-        localize_display_df(similarity_view)[display_cols],
+        localize_display_df(similarity_view)[executive_cols],
         use_container_width=True,
         hide_index=True,
         column_config={
             name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
             "club": st.column_config.TextColumn("Club"),
             "league": st.column_config.TextColumn(T("league")),
-            "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
             "position_group": st.column_config.TextColumn(T("position")),
             "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-            "delta_opportunity": st.column_config.NumberColumn("Δ Opp.", format="%+.1f"),
-            "delta_risk": st.column_config.NumberColumn("Δ Risk", format="%+.1f"),
-            "delta_growth": st.column_config.NumberColumn("Δ Growth", format="%+.1f"),
-            "delta_league_strength": st.column_config.NumberColumn("Δ Strength", format="%+.1f"),
-            "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
-            "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
-            "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
             "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
             "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
+            "market_value_display": st.column_config.TextColumn("Value" if LANG == "EN" else "Valor"),
+            "recommendation_label": st.column_config.TextColumn("Assessment" if LANG == "EN" else "Assessment"),
         },
     )
 
-    narrative = build_similarity_narrative(target_player, best, name_col)
-    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div class="radar-info-box">
-            <b>{html.escape(TXT("Lectura de similitud"))}</b><br><br>
-            {narrative}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    analytical_cols = [
+        name_col, "club", "league", "league_quality_tier", "position_group", "similarity_score_pct",
+        "delta_opportunity", "delta_risk", "delta_growth", "delta_league_strength",
+        "projected_value_3y_display", "asset_roi_3y_pct", "future_asset_score",
+        "opportunity_score", "risk_score",
+    ]
+    analytical_cols = [col for col in analytical_cols if col in similarity_view.columns]
+    with st.expander("Vista analítica avanzada" if LANG == "ES" else "Advanced analytical view"):
+        st.dataframe(
+            localize_display_df(similarity_view)[analytical_cols],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
+                "club": st.column_config.TextColumn("Club"),
+                "league": st.column_config.TextColumn(T("league")),
+                "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
+                "position_group": st.column_config.TextColumn(T("position")),
+                "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
+                "delta_opportunity": st.column_config.NumberColumn("Δ Opp.", format="%+.1f"),
+                "delta_risk": st.column_config.NumberColumn("Δ Risk", format="%+.1f"),
+                "delta_growth": st.column_config.NumberColumn("Δ Growth", format="%+.1f"),
+                "delta_league_strength": st.column_config.NumberColumn("Δ Strength", format="%+.1f"),
+                "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
+                "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
+                "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
+                "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
+                "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
+            },
+        )
+
+    render_automated_recruitment_assessment(target_player, best, name_col)
 
     top_similarity = similarity_df.head(top_n).copy()
     avg_similarity = pd.to_numeric(top_similarity.get("similarity_score_pct", np.nan), errors="coerce").mean()
@@ -6507,8 +7849,6 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         st.info(TXT("No se encuentra el jugador seleccionado."))
         return
     target_row = target_rows.iloc[0]
-    render_player_profile_header(target_row, name_col, "Reference player")
-
     similarity_df = calculate_similarity_table(
         df=selector_df,
         target_player=target_player,
@@ -6733,15 +8073,15 @@ def add_executive_decision_features(df: pd.DataFrame) -> pd.DataFrame:
 
     result = enrich_scouting_context_features(df).copy()
 
-    opportunity = pd.to_numeric(result.get("opportunity_score", 50), errors="coerce").fillna(50).clip(0, 100)
+    opportunity = pd.to_numeric(result["opportunity_score"] if "opportunity_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
     context = pd.to_numeric(
         result.get("risk_adjusted_opportunity_league", result.get("risk_adjusted_opportunity_score", opportunity)),
         errors="coerce",
     ).fillna(opportunity).clip(0, 100)
     future_asset = pd.to_numeric(result.get("future_asset_score", opportunity), errors="coerce").fillna(opportunity).clip(0, 100)
-    roi = pd.to_numeric(result.get("roi_score", 50), errors="coerce").fillna(50).clip(0, 100)
-    risk = pd.to_numeric(result.get("risk_score", 50), errors="coerce").fillna(50).clip(0, 100)
-    confidence = pd.to_numeric(result.get("confidence_score", 65), errors="coerce").fillna(65).clip(0, 100)
+    roi = pd.to_numeric(result["roi_score"] if "roi_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
+    risk = pd.to_numeric(result["risk_score"] if "risk_score" in result.columns else pd.Series(50, index=result.index), errors="coerce").fillna(50).clip(0, 100)
+    confidence = pd.to_numeric(result["confidence_score"] if "confidence_score" in result.columns else pd.Series(65, index=result.index), errors="coerce").fillna(65).clip(0, 100)
 
     if "replacement_context_fit" in result.columns:
         replacement_fit = pd.to_numeric(result["replacement_context_fit"], errors="coerce").fillna(65).clip(0, 100)
@@ -8158,7 +9498,7 @@ def render_opportunity_risk_insight(chart_source: pd.DataFrame) -> None:
         )
     else:
         body = (
-            f"Se identifican <b>{priority_count}</b> objetivos prioritarios y <b>{growth_count}</b> apuestas de crecimiento dentro de la shortlist filtrada. "
+            f"Se identifican <b>{priority_count}</b> objetivos prioritarios y <b>{growth_count}</b> apuestas de crecimiento dentro del universo filtrada. "
             f"{leader_text}<br><br>"
             f"<b>{upside_player}</b> presenta la mayor señal de oportunidad del grupo, con Risk Score {upside_risk:.1f}. "
             f"El <b>{moderate_risk_pct:.0f}%</b> de los candidatos se concentra en una banda de riesgo moderado alrededor de la mediana. "
@@ -8299,16 +9639,18 @@ def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
 # Load data
 # =============================================================================
 
-shortlist = load_csv(RANKINGS_PATH / "scouting_shortlist_with_risk.csv")
+shortlist = load_csv(DSS_REPORTS_PATH / "global_prospect_universe.csv")
 shortlist = enrich_shortlist_with_radar_features(shortlist)
 precision = load_csv(EVALUATION_PATH / "precision_at_k.csv")
 roi = load_csv(BUSINESS_PATH / "roi_global_summary.csv")
 
 if shortlist.empty:
-    st.warning("No se ha encontrado `reports/rankings/scouting_shortlist_with_risk.csv`. Ejecuta primero `python -m src.models.scouting.build_risk_score`.")
+    st.warning("No se ha encontrado `reports/dss/global_prospect_universe.csv`. Ejecuta primero `python src/dss/build_global_prospect_universe.py`.")
     st.stop()
 
 df = shortlist.copy()
+if "club" not in df.columns and "club_actual" in df.columns:
+    df["club"] = df["club_actual"]
 if "league" in df.columns:
     df["league"] = df["league"].replace({"Liga Portugal": "Primeira Liga"})
 
@@ -8344,11 +9686,54 @@ numeric_cols = [
     "pass_completion_pct",
     "progressive_passes_per90",
     "progressive_carries_per90",
+    "finishing_index_v2",
+    "availability_index",
+    "defensive_activity_index",
 ]
 
 for col in numeric_cols:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+
+# DSS compatibility layer: the Global Prospect Universe may not carry the
+# old risk columns generated by the previous shortlist builder. Reconstruct
+# the operational risk proxy from confidence when needed, preserving the
+# same convention used in earlier dashboard layers: lower risk is better.
+if "risk_score" not in df.columns:
+    if "confidence_score" in df.columns:
+        df["risk_score"] = (100 - pd.to_numeric(df["confidence_score"], errors="coerce")).clip(0, 100)
+    elif "matching_confidence" in df.columns:
+        mc = pd.to_numeric(df["matching_confidence"], errors="coerce")
+        if mc.dropna().max() <= 1.0:
+            mc = mc * 100
+        df["risk_score"] = (100 - mc).clip(0, 100)
+    else:
+        df["risk_score"] = 50.0
+else:
+    df["risk_score"] = pd.to_numeric(df["risk_score"], errors="coerce").fillna(50).clip(0, 100)
+
+if "risk_adjusted_opportunity_score" not in df.columns and "opportunity_score" in df.columns:
+    df["risk_adjusted_opportunity_score"] = (
+        pd.to_numeric(df["opportunity_score"], errors="coerce").fillna(0)
+        * (1 - pd.to_numeric(df["risk_score"], errors="coerce").fillna(50).clip(0, 100) / 100)
+    ).clip(0, 100)
+
+# Product display compatibility: derive a categorical risk level when the new
+# Global Prospect Universe only carries the numeric risk proxy.
+if "risk_level" not in df.columns:
+    risk_numeric = pd.to_numeric(df.get("risk_score", pd.Series(50, index=df.index)), errors="coerce").fillna(50)
+    df["risk_level"] = np.select(
+        [risk_numeric <= 25, risk_numeric <= 50],
+        ["Bajo", "Medio"],
+        default="Alto",
+    )
+else:
+    risk_numeric = pd.to_numeric(df.get("risk_score", pd.Series(50, index=df.index)), errors="coerce").fillna(50)
+    df["risk_level"] = df["risk_level"].replace({"Low": "Bajo", "Medium": "Medio", "High": "Alto"})
+    df["risk_level"] = df["risk_level"].where(
+        df["risk_level"].notna() & (df["risk_level"].astype(str).str.lower() != "nan"),
+        np.select([risk_numeric <= 25, risk_numeric <= 50], ["Bajo", "Medio"], default="Alto"),
+    )
 
 if "opportunity_tier" in df.columns:
     df["opportunity_tier_label"] = df["opportunity_tier"].apply(translate_tier)
@@ -8400,10 +9785,10 @@ st.sidebar.markdown("---")
 st.sidebar.markdown(f"### {'NAVIGATION' if LANG == 'EN' else 'NAVEGACIÓN'}")
 PAGE_OPTIONS = [
     "Executive Overview",
-    "Transfer Strategy",
-    "Market Opportunities",
+    "Global Scouting Universe",
     "Player Intelligence",
     "Recruitment Board",
+    "Transfer Strategy",
     "Methodology",
 ]
 if "dashboard_navigation_page" not in st.session_state:
@@ -8414,10 +9799,10 @@ if st.session_state.dashboard_navigation_page not in PAGE_OPTIONS:
 def _nav_label(page_name: str) -> str:
     labels = {
         "Executive Overview": "Executive",
-        "Transfer Strategy": "Strategy",
-        "Market Opportunities": "Market",
+        "Global Scouting Universe": "Universe",
         "Player Intelligence": "Players",
         "Recruitment Board": "Board",
+        "Transfer Strategy": "Strategy",
         "Methodology": "Methodology",
     }
     return labels.get(page_name, page_name)
@@ -8535,8 +9920,17 @@ def sort_label(col: str) -> str:
 LEAGUE_COUNTRY_LABELS = {
     "LaLiga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
     "La Liga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
+    "Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "Segunda Division": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "Spanish Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "Spanish Segunda Division": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "LaLiga2": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
     "Premier League": {"ES": "Premier League (Inglaterra)", "EN": "Premier League (England)"},
+    "Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
+    "EFL Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
     "Bundesliga": {"ES": "Bundesliga (Alemania)", "EN": "Bundesliga (Germany)"},
+    "Austrian Bundesliga": {"ES": "Bundesliga (Austria)", "EN": "Bundesliga (Austria)"},
+    "Bundesliga Austria": {"ES": "Bundesliga (Austria)", "EN": "Bundesliga (Austria)"},
     "Ligue 1": {"ES": "Ligue 1 (Francia)", "EN": "Ligue 1 (France)"},
     "Serie A": {"ES": "Serie A (Italia)", "EN": "Serie A (Italy)"},
     "Eredivisie": {"ES": "Eredivisie (Países Bajos)", "EN": "Eredivisie (Netherlands)"},
@@ -8544,7 +9938,36 @@ LEAGUE_COUNTRY_LABELS = {
     "Primeira Liga": {"ES": "Primeira Liga (Portugal)", "EN": "Primeira Liga (Portugal)"},
     "Belgian Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
     "Jupiler Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
+    "Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
 }
+
+LEAGUE_DISPLAY_ORDER = {
+    "LaLiga (España)": 10,
+    "LaLiga (Spain)": 10,
+    "Segunda División (España)": 11,
+    "Segunda División (Spain)": 11,
+    "Premier League (Inglaterra)": 20,
+    "Premier League (England)": 20,
+    "EFL Championship (Inglaterra)": 21,
+    "EFL Championship (England)": 21,
+    "Bundesliga (Alemania)": 30,
+    "Bundesliga (Germany)": 30,
+    "Serie A (Italia)": 40,
+    "Serie A (Italy)": 40,
+    "Ligue 1 (Francia)": 50,
+    "Ligue 1 (France)": 50,
+    "Primeira Liga (Portugal)": 60,
+    "Eredivisie (Países Bajos)": 70,
+    "Eredivisie (Netherlands)": 70,
+    "Liga Bélgica": 80,
+    "Pro League (Bélgica)": 80,
+    "Belgian Pro League": 80,
+    "Pro League (Bélgica)": 80,
+    "Pro League (Belgium)": 80,
+    "Bundesliga (Austria)": 90,
+}
+
+LEAGUE_DISPLAY_ORDER_FALLBACK = 999
 
 def league_display_name(league: object) -> str:
     raw = str(league)
@@ -8908,6 +10331,9 @@ def metric_display_name(value: object) -> str:
         "Confidence Score": "Confidence Score",
         "Save %": "Save %",
         "Clean Sheets": "Clean Sheets",
+        "Finishing Index": "Finishing Index",
+        "Availability Index": "Availability Index",
+        "Defensive Activity": "Defensive Activity",
     }
     return metric_map.get(raw, raw)
 
@@ -9080,6 +10506,12 @@ VALUE_TRANSLATIONS.setdefault("EN", {}).update({
     "Objetivo scouting": "Scouting target",
     "Exploratorio": "Exploratory",
     "Bajo riesgo": "Low risk",
+    "Interesante": "Interesting",
+    "Baja oportunidad": "Low opportunity",
+    "Monitorización": "Monitoring",
+    "Bajo": "Low",
+    "Medio": "Medium",
+    "Alto": "High",
 })
 
 def league_quality_display_name(value: object) -> str:
@@ -10905,6 +12337,27 @@ st.markdown(
 
 st.markdown(
     """
+<style>
+/* TM.3 UX hotfix: separate the product top bar from Streamlit's Deploy control. */
+.block-container {
+    padding-top: 1.05rem !important;
+}
+.scouting-topbar {
+    margin-top: 0.45rem !important;
+    margin-bottom: 14px !important;
+}
+header[data-testid="stHeader"] {
+    min-height: 2.1rem !important;
+    height: 2.1rem !important;
+    background: transparent !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
     <div class="scouting-topbar">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
         <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span></div>
@@ -10949,7 +12402,7 @@ if SHOW_COMMAND_PANEL:
             st.markdown(
                 f"""
                 <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
-                <div class="final-search-caption">{html.escape('Search players, clubs, leagues or positions. Executive ranking remains anchored to the actionable universe.' if LANG == 'EN' else 'Busca jugadores, clubes, ligas o posiciones. El ranking ejecutivo sigue anclado al universo accionable.')}</div>
+                <div class="final-search-caption">{html.escape('Search players, clubs, leagues or positions. Executive ranking remains anchored to the actionable universe.' if LANG == 'EN' else 'Busca jugadores, clubes, ligas o posiciones. Explora el universo accionable de prospects y utiliza filtros inteligentes para priorizar candidatos.')}</div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -11182,7 +12635,11 @@ st.sidebar.markdown(
 with filter_row_2[0]:
     raw_leagues = sorted(base_df["league"].dropna().astype(str).unique().tolist())
     league_display_to_raw = {league_display_name(league): league for league in raw_leagues}
-    league_options = [T("all_f")] + list(league_display_to_raw.keys())
+    ordered_league_labels = sorted(
+        league_display_to_raw.keys(),
+        key=lambda label: (LEAGUE_DISPLAY_ORDER.get(label, 999), label),
+    )
+    league_options = [T("all_f")] + ordered_league_labels
     selected_league_display = st.selectbox(T("league"), league_options, key=f"league_{preset_name}")
     selected_league = league_display_to_raw.get(selected_league_display, selected_league_display)
 with filter_row_2[1]:
@@ -11191,7 +12648,20 @@ with filter_row_2[1]:
 with filter_row_2[2]:
     raw_tiers = sorted(base_df["opportunity_tier_label"].dropna().astype(str).unique().tolist())
     tier_display_to_raw = {tier_display_name(tier): tier for tier in raw_tiers}
-    tier_options = [T("all_m")] + list(tier_display_to_raw.keys())
+    tier_order = {
+        "Alta prioridad": 10,
+        "Objetivo scouting": 20,
+        "Interesante": 30,
+        "Monitorización": 40,
+        "Baja oportunidad": 50,
+        "Bajo riesgo": 60,
+        "Exploratorio": 70,
+    }
+    ordered_tier_labels = sorted(
+        tier_display_to_raw.keys(),
+        key=lambda label: (tier_order.get(label, 999), label),
+    )
+    tier_options = [T("all_m")] + ordered_tier_labels
     selected_tier_display = st.selectbox(T("tier"), tier_options, key=f"tier_{preset_name}")
     selected_tier = tier_display_to_raw.get(selected_tier_display, selected_tier_display)
 with filter_row_2[3]:
@@ -11202,16 +12672,41 @@ with filter_row_2[3]:
     os_max_key = f"opportunity_max_{preset_name}"
     os_min_default = float(preset["min_opportunity"])
     os_max_default = global_max_os
+    if os_min_key not in st.session_state:
+        st.session_state[os_min_key] = os_min_default
+    if os_max_key not in st.session_state:
+        st.session_state[os_max_key] = os_max_default
+
+    # Buttons must update session_state before the number_input widgets are instantiated.
+    # Streamlit does not allow modifying a widget-bound key later in the same run.
+    os_button_cols = st.sidebar.columns(4, gap="small")
+    with os_button_cols[0]:
+        if st.button("−", key=f"{os_min_key}_minus", use_container_width=True, help="Bajar mínimo Opportunity"):
+            st.session_state[os_min_key] = max(global_min_os, float(st.session_state.get(os_min_key, os_min_default)) - 1.0)
+            st.rerun()
+    with os_button_cols[1]:
+        if st.button("+", key=f"{os_min_key}_plus", use_container_width=True, help="Subir mínimo Opportunity"):
+            st.session_state[os_min_key] = min(global_max_os, float(st.session_state.get(os_min_key, os_min_default)) + 1.0)
+            st.rerun()
+    with os_button_cols[2]:
+        if st.button("−", key=f"{os_max_key}_minus", use_container_width=True, help="Bajar máximo Opportunity"):
+            st.session_state[os_max_key] = max(global_min_os, float(st.session_state.get(os_max_key, os_max_default)) - 1.0)
+            st.rerun()
+    with os_button_cols[3]:
+        if st.button("+", key=f"{os_max_key}_plus", use_container_width=True, help="Subir máximo Opportunity"):
+            st.session_state[os_max_key] = min(global_max_os, float(st.session_state.get(os_max_key, os_max_default)) + 1.0)
+            st.rerun()
+
     os_min_preview = float(st.session_state.get(os_min_key, os_min_default))
     os_max_preview = float(st.session_state.get(os_max_key, os_max_default))
     render_sidebar_filter_range(os_min_preview, os_max_preview, global_min_os, global_max_os)
-    os_cols = st.columns(2, gap="medium")
+    os_cols = st.sidebar.columns(2, gap="medium")
     with os_cols[0]:
         os_min_value = st.number_input(
             "Min",
             min_value=global_min_os,
             max_value=global_max_os,
-            value=os_min_default,
+            value=os_min_preview,
             step=1.0,
             key=os_min_key,
             label_visibility="collapsed",
@@ -11221,7 +12716,7 @@ with filter_row_2[3]:
             "Max",
             min_value=global_min_os,
             max_value=global_max_os,
-            value=os_max_default,
+            value=os_max_preview,
             step=1.0,
             key=os_max_key,
             label_visibility="collapsed",
@@ -11240,13 +12735,13 @@ with filter_row_3[0]:
     st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_value'))}</div>", unsafe_allow_html=True)
     max_value_key = f"max_value_{preset_name}"
     max_value_preview = float(st.session_state.get(max_value_key, max_value_limit_m))
-    render_sidebar_filter_value(max_value_preview, "M", 0.5, max_value_limit_m)
+    render_sidebar_filter_value(max_value_preview, "M", 0.25, max_value_limit_m)
     max_market_value_m = st.number_input(
         T("max_value"),
-        min_value=0.5,
+        min_value=0.25,
         max_value=max_value_limit_m,
-        value=max_value_limit_m,
-        step=0.5,
+        value=max_value_preview,
+        step=0.25,
         key=max_value_key,
         label_visibility="collapsed",
     )
@@ -11286,7 +12781,8 @@ confidence_filter = pd.to_numeric(filtered_df.get("confidence_score", 0), errors
 opportunity_filter = pd.to_numeric(filtered_df.get("opportunity_score", 0), errors="coerce").fillna(0).between(os_range[0], os_range[1])
 value_filter = pd.to_numeric(filtered_df.get("market_value_eur", 0), errors="coerce").fillna(0) <= max_market_value_m * 1_000_000
 roi_filter = pd.to_numeric(filtered_df.get("asset_roi_3y_pct", 0), errors="coerce").fillna(0) >= min_roi
-risk_filter = pd.to_numeric(filtered_df.get("risk_score", 100), errors="coerce").fillna(100) <= max_risk_filter
+risk_filter_source = filtered_df["risk_score"] if "risk_score" in filtered_df.columns else pd.Series(100, index=filtered_df.index)
+risk_filter = pd.to_numeric(risk_filter_source, errors="coerce").fillna(100) <= max_risk_filter
 filtered_df = filtered_df[
     age_filter
     & minutes_filter
@@ -11348,7 +12844,7 @@ st.sidebar.markdown(
     f"""
     <div class="sidebar-footer">
         <b>{filtered_universe:,}</b> {html.escape(UI("jugadores encontrados"))}<br>
-        {html.escape("Football Universe" if universe_mode == "Football Universe" else UI("Universo modelado"))}: {len(base_df):,}<br>
+        {html.escape("Football Universe" if universe_mode == "Football Universe" else UI("Universo prospect"))}: {len(base_df):,}<br>
         {html.escape(UI("Actualizado con filtros activos"))}
     </div>
     """,
@@ -11418,9 +12914,9 @@ if SHOW_COMMAND_PANEL:
             <div class="context-current-label">{html.escape(UI("Candidatos actuales"))}</div>
         </div>
         <div class="context-secondary-kpis">
-            <span class="context-chip">{html.escape(UI("Universo modelado"))} · {len(base_df):,}</span>
-            <span class="context-chip">{html.escape(UI("Shortlist ejecutiva"))} · {shortlist_universe:,}</span>
-            <span class="context-chip context-chip-neutral">{filtered_pct_shortlist:.0%} {html.escape(UI("de la shortlist"))}</span>
+            <span class="context-chip">{html.escape(UI("Universo prospect"))} · {len(base_df):,}</span>
+            <span class="context-chip">{html.escape(UI("Vista ejecutiva"))} · {shortlist_universe:,}</span>
+            <span class="context-chip context-chip-neutral">{filtered_pct_shortlist:.0%} {html.escape(UI("del universo"))}</span>
         </div>
     </div>
     <div class="context-chip-row">{context_chips}</div>
@@ -11989,9 +13485,9 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     )
     k1, k2, k3, k4, k5 = st.columns(5)
     with k1:
-        render_metric_card_with_caption(UI("Candidatos actuales"), f"{len(source_df):,}", f"{filtered_pct_shortlist:.0%} {UI('de la shortlist')}")
+        render_metric_card_with_caption(UI("Candidatos actuales"), f"{len(source_df):,}", f"{filtered_pct_shortlist:.0%} {UI('del universo')}")
     with k2:
-        render_metric_card_with_caption(UI("Shortlist ejecutiva"), f"{shortlist_universe:,}", UI("jugadores precandidatos"))
+        render_metric_card_with_caption(UI("Vista ejecutiva"), f"{shortlist_universe:,}", UI("jugadores precandidatos"))
     with k3:
         render_metric_card_with_caption(UI("Ligas representadas"), leagues, UI("cobertura competitiva"))
     with k4:
@@ -12014,8 +13510,8 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     st.markdown(
         f"""
 <div class="quick-action-grid">
-    <div class="quick-action-card"><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Sprint 14 portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras del Sprint 14.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Market Opportunities</div><div class="quick-action-text">{html.escape('Review ranking, Top 5 and risk-adjusted market opportunities.' if LANG == 'EN' else 'Revisar ranking, Top 5 y oportunidades ajustadas por riesgo.')}</div></div>
+    <div class="quick-action-card"><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras.')}</div></div>
+    <div class="quick-action-card"><div class="quick-action-title">Global Scouting Universe</div><div class="quick-action-text">{html.escape('Explore, filter and prioritize the actionable prospect universe.' if LANG == 'EN' else 'Explorar, filtrar y priorizar el universo accionable de prospects.')}</div></div>
     <div class="quick-action-card"><div class="quick-action-title">Recruitment Board</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
 </div>
 """,
@@ -12025,7 +13521,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
 
 
 def render_transfer_strategy_placeholder() -> None:
-    """Render Sprint 14C Transfer Strategy Engine.
+    """Render Transfer Strategy Engine.
 
     The section exposes the ILP portfolio optimizer implemented in src/strategy.
     It turns player-level opportunity signals into an optimized transfer portfolio
@@ -12044,7 +13540,7 @@ def render_transfer_strategy_placeholder() -> None:
     st.markdown(
         f"""
 <div class="strategy-banner">
-    <div class="strategy-eyebrow">{html.escape('Sprint 14 · Portfolio Optimization Layer' if LANG == 'EN' else 'Sprint 14 · Capa de optimización de cartera')}</div>
+    <div class="strategy-eyebrow">{html.escape('Portfolio Optimization Layer' if LANG == 'EN' else 'Capa de optimización de cartera')}</div>
     <div class="strategy-title">{html.escape('From player ranking to portfolio decision.' if LANG == 'EN' else 'Del ranking de jugadores a la decisión de cartera.')}</div>
     <div class="strategy-copy">{html.escape('This module formulates transfer planning as a Binary Integer Programming problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo formula la planificación de fichajes como un problema de Programación Entera Binaria: seleccionar la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
 </div>
@@ -12059,7 +13555,7 @@ def render_transfer_strategy_placeholder() -> None:
         if LANG == "EN":
             st.markdown(
                 """
-                The engine uses the Sprint 14 portfolio dataset and solves a 0-1 selection problem.
+                The engine uses the portfolio dataset and solves a 0-1 selection problem.
 
                 **Decision variable:** `x_i = 1` if player `i` is selected, `0` otherwise.
 
@@ -12071,7 +13567,7 @@ def render_transfer_strategy_placeholder() -> None:
         else:
             st.markdown(
                 """
-                El motor utiliza el dataset de cartera del Sprint 14 y resuelve un problema de selección 0-1.
+                El motor utiliza el dataset de cartera y resuelve un problema de selección 0-1.
 
                 **Variable de decisión:** `x_i = 1` si el jugador `i` es seleccionado, `0` en caso contrario.
 
@@ -12573,9 +14069,9 @@ def render_transfer_strategy_placeholder() -> None:
 
 def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     render_product_page_header(
-        "Market Opportunities",
-        "Market Opportunities",
-        T("matrix_caption"),
+        "Global Scouting Universe",
+        "Global Scouting Universe",
+        "Explora el universo accionable de prospects con filtros inteligentes de scouting." if LANG == "ES" else "Explore the actionable prospect universe with smart scouting filters.",
     )
     render_layer_badge("EXECUTIVE SCOUTING LAYER")
     st.markdown(f"## 🎯 {T('matrix_title')}", unsafe_allow_html=True)
@@ -12762,7 +14258,7 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
     st.markdown('<div class="methodology-grid">', unsafe_allow_html=True)
     m1, m2, m3, m4 = st.columns(4)
     with m1:
-        render_metric_card_with_caption("Dataset", f"{len(source_df):,}", "modeled player-season candidates" if LANG == "EN" else "candidatos jugador-temporada modelados")
+        render_metric_card_with_caption("Dataset", f"{len(source_df):,}", "eligible prospects" if LANG == "EN" else "prospects elegibles")
     with m2:
         render_metric_card_with_caption("Coverage", f"{source_df['league'].nunique() if 'league' in source_df.columns else 'N/A'}", "European leagues" if LANG == "EN" else "ligas europeas")
     with m3:
@@ -12774,18 +14270,18 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
     with c1:
         render_metric_card_with_caption("Growth OLS", "R² 0.5258", "Interpretable benchmark" if LANG == "EN" else "Benchmark interpretable")
     with c2:
-        render_metric_card_with_caption("Tuned XGBoost", "R² 0.5414", "Production model" if LANG == "EN" else "Modelo productivo")
+        render_metric_card_with_caption("Tuned XGBoost", "R² 0.5664", "mejor validación externa" if LANG == "ES" else "best external validation")
     with c3:
         render_metric_card_with_caption("Precision@K", "90%", "Ranking evaluation" if LANG == "EN" else "Evaluación de ranking")
     with st.expander("CRISP-DM / Del Dato al Conocimiento", expanded=False):
         st.markdown("""
 Business Understanding → Data Understanding → Data Preparation → Modeling → Evaluation → Deployment
 
-The dashboard separates historical evaluation, operational exploitation, Player Intelligence, Recruitment Intelligence and Decision Support. This architecture avoids mixing academic validation with executive recommendation and prepares Sprint 14: strategic transfer optimization.
+The dashboard separates historical evaluation, operational exploitation, Player Intelligence, Recruitment Intelligence and Decision Support. This architecture avoids mixing academic validation with executive recommendation and prepares strategic transfer optimization.
 """ if LANG == "EN" else """
 Business Understanding → Data Understanding → Data Preparation → Modeling → Evaluation → Deployment
 
-El dashboard separa evaluación histórica, explotación operativa, Player Intelligence, Recruitment Intelligence y Decision Support System. Esta arquitectura evita mezclar validación académica con recomendación ejecutiva y prepara la evolución hacia Sprint 14: optimización estratégica de fichajes.
+El dashboard separa evaluación histórica, explotación operativa, Player Intelligence, Recruitment Intelligence y Decision Support System. Esta arquitectura evita mezclar validación académica con recomendación ejecutiva y prepara la evolución hacia optimización estratégica de fichajes.
 """)
     with st.expander("Scoring architecture", expanded=False):
         st.markdown("""
@@ -12812,7 +14308,7 @@ else:
         render_executive_overview_page(filtered_df)
     elif dashboard_page == "Transfer Strategy":
         render_transfer_strategy_placeholder()
-    elif dashboard_page == "Market Opportunities":
+    elif dashboard_page == "Global Scouting Universe":
         render_market_opportunities_page(filtered_df)
     elif dashboard_page == "Player Intelligence":
         render_player_intelligence_page(filtered_df)
@@ -12962,6 +14458,25 @@ div[data-testid="stMarkdownContainer"] p:empty {
     letter-spacing: .12em !important;
     text-transform: uppercase !important;
 }
+
+/* TM.3 product hotfix: visible numeric steppers and clean strategy glossary spacing. */
+[data-testid="stSidebar"] div[data-testid="stNumberInput"] button {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 34px !important;
+}
+[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stNumberInput"] input {
+    min-width: 0 !important;
+}
+.strategy-glossary-grid {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+.strategy-glossary-details {
+    width: 100% !important;
+    max-width: 100% !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -12971,7 +14486,7 @@ st.markdown(
     """
 <div class="scouting-iq-footer">
     <b>SCOUTING IQ PLATFORM</b>
-    <div>Market Value Intelligence System · Version v1.2.1 · Sprint 14</div>
+    <div>Market Value Intelligence System</div>
     <div>Master Thesis · Sports Analytics &amp; Data Science</div>
 </div>
 """,

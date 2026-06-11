@@ -125,24 +125,44 @@ Sprint TM.2  — Scoring & Ranking Integration
 
 # 📌 Resultados clave
 
-| Indicador                     |              Valor |
-| ----------------------------- | -----------------: |
-| Ligas cubiertas               |                 11 |
-| Temporadas                    |                  7 |
-| Liga-temporada                |                 77 |
-| Observaciones FBref           |             43.591 |
-| Dataset modelizable           |              5.527 |
-| Match Rate global             |             75,97% |
-| Cobertura DSS                 |           11 ligas |
-| Modelo econométrico oficial   |    Growth OLS v13B |
-| Modelo ML oficial             | Tuned XGBoost v13B |
-| R² OLS                        |             0.4549 |
-| R² XGBoost                    |             0.4453 |
-| Precision@10                  |                90% |
-| Escenarios estratégicos       |                  3 |
-| Player Levels                 |                  5 |
-| Solver Portfolio Optimization |               PuLP |
-| Estado actual                 |      DSS Operativo |
+| Indicador                            |              Valor |
+| ------------------------------------ | -----------------: |
+| Ligas cubiertas                      |                 11 |
+| Temporadas                           |                  7 |
+| Liga-temporada                       |                 77 |
+| Observaciones FBref                  |             43.591 |
+| Dataset modelizable                  |              5.527 |
+| Match Rate global                    |             75,97% |
+| Cobertura DSS                        |           11 ligas |
+| Modelo econométrico oficial          |    Growth OLS v13B |
+| Modelo ML productivo oficial         | Tuned XGBoost v13B |
+| R² OLS productivo                    |             0.4549 |
+| R² XGBoost productivo                |             0.4453 |
+| Mejor R² histórico alcanzado (13A.1) |             0.5664 |
+| Precision@10                         |                90% |
+| Escenarios estratégicos              |                  3 |
+| Player Levels                        |                  5 |
+| Solver Portfolio Optimization        |               PuLP |
+| Estado actual                        |      DSS Operativo |
+
+---
+
+### Nota metodológica
+
+El mejor resultado predictivo obtenido durante el proyecto corresponde a la validación externa multi-liga de Sprint 13A.1:
+
+```text
+Tuned XGBoost
+11 ligas
+R² = 0.5664
+RMSE = 0.8525
+MAE = 0.6834
+```
+
+La versión productiva actual (v1.2.2) utiliza el dataset consolidado generado tras Sprint 13B y la integración DSS multi-liga de Sprint TM.2.
+
+Por este motivo, los resultados productivos actuales no son directamente comparables con los experimentos de validación externa realizados durante Sprint 13A.1.
+
 
 ---
 
@@ -916,6 +936,19 @@ Este comportamiento reduce significativamente el riesgo de sobreajuste metodoló
 
 ---
 
+## Resultados históricos relevantes
+
+Durante Sprint 13A.1 se obtuvo el mejor rendimiento predictivo de todo el proyecto mediante una validación externa multi-liga:
+
+| Modelo                   |   RMSE |    MAE |     R² |
+| ------------------------ | -----: | -----: | -----: |
+| Tuned XGBoost (11 ligas) | 0.8525 | 0.6834 | 0.5664 |
+
+Este resultado constituye la referencia histórica de capacidad predictiva alcanzada por la arquitectura Machine Learning desarrollada en el proyecto.
+
+
+---
+
 # 🔍 Explainability
 
 La plataforma incorpora Explainable Artificial Intelligence mediante:
@@ -971,13 +1004,13 @@ Este constituye el principal hallazgo analítico de Sprint 13B.
 
 # 🌍 Validación externa
 
-## Sprint 13A — Multi-League Expansion
+## Sprint 13A.1 — External Validation
 
-Sprint 13A amplía la cobertura competitiva del sistema desde siete hasta once competiciones europeas.
+Tras la expansión multi-liga se realizó una validación externa explícita para evaluar la capacidad de generalización del sistema fuera de las cinco grandes ligas europeas.
 
 Competiciones incorporadas:
 
-* Championship
+* EFL Championship
 * Belgian Pro League
 * Austrian Bundesliga
 * Spanish Segunda División
@@ -996,15 +1029,25 @@ Competiciones incorporadas:
 
 ---
 
-## Resultado metodológico
+## Mejor resultado Machine Learning obtenido
 
-La expansión multi-liga permite evaluar explícitamente la capacidad de generalización de la metodología fuera de las cinco grandes ligas europeas.
+| Métrica |         Valor |
+| ------- | ------------: |
+| Modelo  | Tuned XGBoost |
+| RMSE    |        0.8525 |
+| MAE     |        0.6834 |
+| R²      |        0.5664 |
 
-Resultado:
+---
 
-```text
-Validez externa fortalecida
-```
+## Interpretación
+
+La ampliación desde siete hasta once ligas no redujo el rendimiento predictivo del sistema.
+
+Por el contrario, la incorporación de nuevos contextos competitivos permitió mejorar la capacidad de generalización del modelo y obtener el mejor resultado predictivo alcanzado durante el proyecto.
+
+Este experimento constituye la principal evidencia de validez externa de la metodología desarrollada.
+
 
 ---
 
@@ -1507,10 +1550,12 @@ Sprint TM.2  — Scoring & Ranking Integration
 
 ## Modelos oficiales
 
-| Capa             | Modelo             |
-| ---------------- | ------------------ |
-| Econometría      | Growth OLS v13B    |
-| Machine Learning | Tuned XGBoost v13B |
+| Capa                         | Modelo                       |
+| ---------------------------- | ---------------------------- |
+| Econometría                  | Growth OLS v13B              |
+| Machine Learning             | Tuned XGBoost v13B           |
+| Mejor resultado histórico ML | Tuned XGBoost (Sprint 13A.1) |
+
 
 ---
 

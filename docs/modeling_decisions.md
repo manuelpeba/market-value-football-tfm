@@ -229,6 +229,27 @@ Rol:
 Production Prediction Engine
 ```
 
+Resultado productivo:
+
+```text
+RMSE = 0.9639
+MAE  = 0.7777
+R²   = 0.4453
+```
+
+Referencia histórica de validación externa:
+
+```text
+Sprint 13A.1
+Tuned XGBoost
+
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
+Este resultado constituye el mejor rendimiento predictivo alcanzado durante el proyecto y la principal evidencia de capacidad de generalización multi-liga de la metodología desarrollada.
+
 ---
 
 ## Justificación
@@ -241,19 +262,26 @@ Production Prediction Engine
 
 ---
 
-## Decisión final
+## Decisión
 
-```text
-Growth OLS v13B
-↓
-Interpretabilidad
+La expansión multi-liga queda incorporada permanentemente al sistema.
 
-Tuned XGBoost v13B
-↓
-Producción
-```
+Justificación:
 
-La coexistencia deliberada de econometría y Machine Learning constituye una decisión metodológica central del proyecto.
+* mayor cobertura;
+* mayor representatividad;
+* mejora predictiva;
+* fortalecimiento de validez externa.
+
+Resultado principal:
+
+| Dataset  | R² Tuned XGBoost |
+| -------- | ---------------: |
+| 7 ligas  |           0.5414 |
+| 11 ligas |           0.5664 |
+
+La validación externa multi-liga constituye una de las evidencias metodológicas más sólidas del proyecto, demostrando que la ampliación de cobertura no reduce la capacidad predictiva del sistema y permite mejorar su capacidad de generalización.
+
 
 ---
 

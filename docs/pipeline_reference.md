@@ -594,6 +594,30 @@ Maximizar capacidad predictiva mediante modelos no lineales capaces de capturar 
 Production Prediction Engine
 ```
 
+## Resultado productivo oficial
+
+```text
+Tuned XGBoost v13B
+
+RMSE = 0.9639
+MAE  = 0.7777
+R²   = 0.4453
+```
+
+## Referencia histórica de validación externa
+
+Sprint 13A.1 obtuvo el mejor resultado predictivo alcanzado durante el proyecto:
+
+```text
+Tuned XGBoost
+
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
+Este experimento constituye la principal evidencia de capacidad de generalización multi-liga de la metodología desarrollada.
+
 ---
 
 # 🔬 Explainability Pipeline
@@ -809,6 +833,7 @@ app/streamlit_app.py
 | Sprint 13B   | Advanced Metrics Layer                |
 | Sprint 14    | Transfer Strategy Engine              |
 | Sprint 14.1  | Player Level Layer                    |
+| TM.2         | Multi-League DSS Integration          |
 
 ---
 
@@ -840,17 +865,44 @@ Determinar el origen de las limitaciones de cobertura observadas tras la expansi
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Multi-League DSS Integration
 
 Estado:
 
 ```text
-Backlog prioritario
+COMPLETADO
 ```
 
-Objetivo:
+Objetivo alcanzado:
 
-Alinear completamente la capa de modelización v13B con el sistema histórico de scoring y rankings.
+Alinear completamente la cobertura de modelización multi-liga con las capas de scoring, rankings, Transfer Strategy Engine y DSS.
+
+Resultado:
+
+```text
+Modeling Layer
+↓
+11 ligas
+
+Scoring Layer
+↓
+11 ligas
+
+Ranking Engine
+↓
+11 ligas
+
+Transfer Strategy Engine
+↓
+11 ligas
+
+Decision Support System
+↓
+11 ligas
+```
+
+TM.2 garantiza consistencia metodológica completa entre modelización y capas operativas sin modificar modelos econométricos, modelos Machine Learning ni lógica de scoring.
+
 
 ---
 

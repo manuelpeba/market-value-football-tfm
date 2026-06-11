@@ -234,6 +234,31 @@ Ligas soportadas:
 
 ---
 
+### Referencias de rendimiento
+
+| Resultado                    |  Valor |
+| ---------------------------- | -----: |
+| R² OLS productivo (v13B)     | 0.4549 |
+| R² XGBoost productivo (v13B) | 0.4453 |
+| Mejor R² histórico alcanzado | 0.5664 |
+
+El mejor resultado predictivo obtenido durante el proyecto corresponde a Sprint 13A.1 (External Validation), donde Tuned XGBoost alcanzó:
+
+```text
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
+La versión productiva actual utiliza el dataset consolidado generado tras Sprint 13B y la integración DSS multi-liga de Sprint TM.2.
+
+Nota metodológica:
+
+Los resultados productivos actuales y los resultados históricos de validación externa corresponden a experimentos distintos y no son directamente comparables, al utilizar datasets y configuraciones experimentales diferentes.
+
+
+---
+
 ### Benchmark econométrico
 
 | Modelo                |     R² |
@@ -261,6 +286,14 @@ Modelo oficial:
 Tuned XGBoost v13B
 ```
 
+Resultado sobre conjunto de test temporal (2024-2025):
+
+| Métrica |  Valor |
+| ------- | -----: |
+| RMSE    | 0.9639 |
+| MAE     | 0.7777 |
+| R²      | 0.4453 |
+
 Principales resultados obtenidos durante Sprint 13B:
 
 | Arquitectura         | Mejora observada |
@@ -273,6 +306,7 @@ Principales resultados obtenidos durante Sprint 13B:
 Hallazgo principal:
 
 Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables avanzadas, reforzando la robustez metodológica de los resultados.
+
 
 ---
 
@@ -287,6 +321,21 @@ finishing_index_v2
 como la variable avanzada con mayor relevancia predictiva agregada.
 
 Este resultado constituye el principal hallazgo analítico de Sprint 13B.
+
+---
+
+### Validación externa multi-liga (Sprint 13A.1)
+
+Como parte de la evaluación de validez externa se realizó una reestimación específica sobre el universo ampliado de once ligas europeas.
+
+Mejor resultado obtenido:
+
+| Modelo        |   RMSE |    MAE |     R² |
+| ------------- | -----: | -----: | -----: |
+| Tuned XGBoost | 0.8525 | 0.6834 | 0.5664 |
+
+Este experimento constituye la principal evidencia de capacidad de generalización de la metodología desarrollada y representa el mejor resultado predictivo alcanzado durante el proyecto.
+
 
 ---
 
@@ -810,6 +859,14 @@ Arquitectura DSS completada
 Validación multi-liga completada
 Transfer Strategy Engine completado
 TM.2 completado
+
+Mejor resultado histórico:
+R² = 0.5664 (Sprint 13A.1)
+
+Modelo productivo actual:
+Tuned XGBoost v13B
+R² = 0.4453
+
 Proyecto preparado para defensa académica
 y evolución hacia plataforma profesional.
 ```

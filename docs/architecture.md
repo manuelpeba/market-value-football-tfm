@@ -283,13 +283,41 @@ Responsable de la construcción del dataset modelizable y del entrenamiento de m
 
 Benchmark econométrico oficial.
 
+R²:
+
+```text
+0.4549
+```
+
 #### Tuned XGBoost v13B
 
 Modelo Machine Learning productivo.
 
+Resultado productivo:
+
+```text
+RMSE = 0.9639
+MAE  = 0.7777
+R²   = 0.4453
+```
+
+#### Referencia histórica de validación externa
+
+Sprint 13A.1 obtuvo el mejor resultado predictivo alcanzado durante el proyecto:
+
+```text
+Tuned XGBoost
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
+Este resultado constituye la principal evidencia de capacidad de generalización multi-liga de la metodología desarrollada.
+
 ### Resultado
 
 La modelización opera actualmente sobre un universo multi-liga de once competiciones europeas y constituye la base de todas las capas posteriores del DSS.
+
 
 ## 5. Opportunity Framework Layer
 
@@ -860,10 +888,22 @@ Decision Support System
 
 Sprint 13A aporta validez externa mediante expansión multi-liga.
 
+Sprint 13A.1 aporta evidencia explícita de generalización mediante validación externa sobre once competiciones europeas, alcanzando el mejor rendimiento predictivo observado durante el proyecto:
+
+```text
+Tuned XGBoost
+RMSE = 0.8525
+MAE  = 0.6834
+R²   = 0.5664
+```
+
 Sprint 13B aporta profundidad analítica mediante métricas avanzadas.
 
 Sprint 14 introduce optimización bajo restricciones reales.
 
 Sprint TM.2 garantiza consistencia metodológica de extremo a extremo entre modelización y DSS.
 
+La versión productiva actual opera sobre una arquitectura completamente integrada de once ligas europeas y constituye la base funcional del Decision Support System desarrollado.
+
 La versión actual constituye una arquitectura reproducible, interpretable y orientada a negocio preparada tanto para defensa académica como para evolución hacia una plataforma profesional de scouting y recruitment intelligence.
+
