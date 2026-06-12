@@ -6177,6 +6177,11 @@ def format_money_short(value):
         return "N/A"
 
 
+def format_eur(value):
+    """Backward-compatible EUR formatter for hover templates and matrix labels."""
+    return format_money_short(value)
+
+
 
 def format_signed_money_short(value):
     """Format signed monetary deltas compactly for executive tables."""
@@ -7196,12 +7201,17 @@ def render_benchmark_context(benchmark_df: pd.DataFrame, benchmark_mode: str, pl
 
 
 def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
-    st.markdown("---")
-    st.header("🎯 Player Radar & Positional Benchmarking")
+    radar_help = UI('percentiles del jugador frente a su benchmark posicional para detectar fortalezas, debilidades y perfil dominante.')
     st.markdown(
         f"""
-<div class="radar-info-box">
-<b>{UI('Radar scouting')}:</b> {UI('percentiles del jugador frente a su benchmark posicional para detectar fortalezas, debilidades y perfil dominante.')}</div>
+<div class="player-radar-compact-header internal-module-header">
+    <div class="internal-module-title">🎯 Player Radar &amp; Positional Benchmarking
+        <details class="module-info-details">
+            <summary>i</summary>
+            <div><b>{UI('Radar scouting')}:</b> {html.escape(str(radar_help))}</div>
+        </details>
+    </div>
+</div>
 """,
         unsafe_allow_html=True,
     )
@@ -7225,7 +7235,7 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
 
     player_options = selector_df[player_name_col].astype(str).drop_duplicates().tolist()
 
-    controls = st.columns([1.5, 1.0])
+    controls = st.columns([1.8, 1.25])
     with controls[0]:
         selected_radar_player = st.selectbox(
             UI("Seleccionar jugador"),
@@ -7275,7 +7285,7 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
         player_position=player_position,
     )
 
-    radar_col, cards_col = st.columns([1.15, 1.0], gap="large")
+    radar_col, cards_col = st.columns([1.2, 1.05], gap="large")
     with radar_col:
         radar_fig = build_player_radar_chart(radar_df, selected_radar_player)
         if radar_fig is not None:
@@ -7286,7 +7296,14 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
             )
 
     with cards_col:
-        st.subheader("🧾 " + UI("Tarjetas de scouting"))
+        st.markdown(
+            f"""
+            <div class="internal-module-header internal-module-header--compact">
+                <div class="internal-module-title internal-module-title--sm">🧾 {html.escape(UI('Tarjetas de scouting'))}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         render_scouting_cards(radar_df)
 
         if missing_metrics:
@@ -7299,9 +7316,12 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
         f"{metric_display_name(row['label'])} P{float(row['percentile']):.1f} ({row['rating']})"
         for _, row in top_attributes.iterrows()
     )
-    st.markdown(
-        (f"**Scouting readout:** {html.escape(str(selected_radar_player))} stands out mainly in {explanation}." if globals().get("LANG") == "EN" else f"**Lectura scouting:** {html.escape(str(selected_radar_player))} destaca principalmente en {explanation}.")
+    readout_text = (
+        f"<b>Scouting readout:</b> {html.escape(str(selected_radar_player))} stands out mainly in {explanation}."
+        if globals().get("LANG") == "EN"
+        else f"<b>Lectura scouting:</b> {html.escape(str(selected_radar_player))} destaca principalmente en {explanation}."
     )
+    st.markdown(f"<div class='radar-readout-card'>{readout_text}</div>", unsafe_allow_html=True)
 
 
 
@@ -8235,11 +8255,9 @@ def render_multi_player_radar_comparison(shortlist_df: pd.DataFrame) -> None:
         st.info("No hay suficientes métricas comunes para construir el radar comparativo.")
         return
 
-    left_radar_col, right_radar_col = st.columns([1.45, 0.95], gap="large")
+    left_radar_col, right_radar_col = st.columns([1.25, 1.05], gap="large")
     with left_radar_col:
-        st.markdown("<div class='radar-chart-card'>", unsafe_allow_html=True)
         st.plotly_chart(radar_fig, use_container_width=True, config={"displaylogo": False})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     percentile_matrix = build_multi_player_percentile_matrix(
         selected_rows=selected_rows,
@@ -10168,6 +10186,15 @@ def render_executive_recommendation_engine(shortlist_df: pd.DataFrame) -> None:
 
     st.subheader("📌 " + ("Recruitment Center" if LANG == "ES" else "Recruitment Center"))
     st.caption(TXT("Vista compacta para priorizar revisión. El CSV y las tablas detalladas conservan las variables auxiliares."))
+    st.markdown(
+        f"""
+        <div class="recruitment-workflow-toolbar">
+            <span>{html.escape('Player workflow' if LANG == 'EN' else 'Flujo del jugador')}</span>
+            <b>{html.escape('Profile → Similar Players → Assessment → Contract → Strategy' if LANG == 'EN' else 'Perfil → Similares → Assessment → Contrato → Estrategia')}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.dataframe(
         localize_display_df(ranking_view)[display_cols],
         use_container_width=True,
@@ -10978,6 +11005,14 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
 
     risk_ref = float(df["risk_score"].median())
     opportunity_ref = float(df["opportunity_score"].quantile(0.60))
+
+    # Product UX: Risk Score is theoretically 0-100, but the current scouting universe
+    # is concentrated in the low-risk range. A dynamic executive range avoids an empty
+    # matrix and improves discrimination between actionable profiles.
+    risk_q98 = float(df["risk_score"].quantile(0.98))
+    risk_padding = max(3.0, risk_q98 * 0.12)
+    x_axis_max = float(min(45.0, max(35.0, np.ceil((risk_q98 + risk_padding) / 5.0) * 5.0)))
+    x_axis_max = max(x_axis_max, min(45.0, np.ceil((risk_ref + 5.0) / 5.0) * 5.0))
     is_en = globals().get("LANG") == "EN"
     zone_labels = {
         "Objetivo prioritario": "Priority target" if is_en else "Objetivo prioritario",
@@ -11008,17 +11043,32 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         "Riesgo elevado": "#ef4444",
     }
 
-    min_adjusted = float(df["risk_adjusted_opportunity_score"].min())
-    max_adjusted = float(df["risk_adjusted_opportunity_score"].max())
-    span_adjusted = max(max_adjusted - min_adjusted, 1.0)
+    # Bubble size prioritises business upside when available; otherwise it falls back
+    # to the DSS score. This makes the matrix more decision-oriented than a purely
+    # technical risk/opportunity scatterplot.
+    bubble_metric_col = None
+    for candidate_col in [
+        "market_value_gap_eur",
+        "asset_upside_3y_eur",
+        "expected_profit_eur",
+        "risk_adjusted_opportunity_score",
+    ]:
+        if candidate_col in df.columns:
+            bubble_metric_col = candidate_col
+            break
 
-    df["bubble_size"] = (
-        14
-        + (
-            (df["risk_adjusted_opportunity_score"] - min_adjusted)
-            / span_adjusted
-        ).clip(0, 1).mul(42)
-    )
+    if bubble_metric_col is not None:
+        bubble_values = pd.to_numeric(df[bubble_metric_col], errors="coerce").fillna(0)
+        if bubble_metric_col != "risk_adjusted_opportunity_score":
+            bubble_values = bubble_values.clip(lower=0)
+            bubble_values = np.log1p(bubble_values)
+    else:
+        bubble_values = df["risk_adjusted_opportunity_score"]
+
+    min_bubble = float(pd.Series(bubble_values).min())
+    max_bubble = float(pd.Series(bubble_values).max())
+    span_bubble = max(max_bubble - min_bubble, 1.0)
+    df["bubble_size"] = 16 + ((bubble_values - min_bubble) / span_bubble).clip(0, 1).mul(44)
 
     top5 = (
         df.sort_values("risk_adjusted_opportunity_score", ascending=False)
@@ -11041,7 +11091,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     fig.add_shape(
         type="rect",
         x0=risk_ref,
-        x1=100,
+        x1=x_axis_max,
         y0=opportunity_ref,
         y1=100,
         fillcolor="rgba(249,115,22,0.12)",
@@ -11061,7 +11111,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     fig.add_shape(
         type="rect",
         x0=risk_ref,
-        x1=100,
+        x1=x_axis_max,
         y0=0,
         y1=opportunity_ref,
         fillcolor="rgba(239,68,68,0.09)",
@@ -11091,6 +11141,10 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
             f"Opportunity Score: {format_score(safe_get(row, 'opportunity_score'))}<br>"
             f"Risk Score: {format_score(safe_get(row, 'risk_score'))}<br>"
             f"Risk Level: {risk_level_display_name(safe_get(row, 'risk_level'))}<br>"
+            f"Market Value: {format_eur(safe_get(row, 'market_value_eur'))}<br>"
+            f"Expected Value: {format_eur(safe_get(row, 'predicted_market_value_eur', safe_get(row, 'projected_market_value_3y_eur')))}<br>"
+            f"Market Gap: {format_eur(safe_get(row, 'market_value_gap_eur', safe_get(row, 'asset_upside_3y_eur')))}<br>"
+            f"Decision Score: {format_score(safe_get(row, 'executive_decision_score_v2', safe_get(row, 'risk_adjusted_opportunity_score')))}<br>"
             f"Risk Adjusted Opportunity: {format_score(safe_get(row, 'risk_adjusted_opportunity_score'))}"
             for _, row in zone_df.iterrows()
         ]
@@ -11154,7 +11208,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         font=dict(size=12, color="#475569"),
     )
     fig.add_annotation(
-        x=99,
+        x=x_axis_max - 0.5,
         y=opportunity_ref,
         text=opportunity_ref_label,
         showarrow=False,
@@ -11168,8 +11222,56 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         font=dict(size=12, color="#475569"),
     )
 
+    y_axis_min = max(0, float(df["opportunity_score"].min()) - 5)
+    quadrant_font = dict(size=13, color="#0f172a", family="Arial Black")
+    label_style = dict(
+        showarrow=False,
+        font=quadrant_font,
+        bgcolor="rgba(255,255,255,0.96)",
+        bordercolor="rgba(100,116,139,0.92)",
+        borderwidth=1,
+        borderpad=5,
+    )
+    left_label_x = max(0.7, x_axis_max * 0.045)
+    right_label_x = min(x_axis_max - 0.7, x_axis_max * 0.955)
+    top_label_y = 99.0
+    bottom_label_y = max(y_axis_min + 7, 9)
+
+    fig.add_annotation(
+        x=left_label_x,
+        y=top_label_y,
+        text=zone_labels["Objetivo prioritario"],
+        xanchor="left",
+        yanchor="top",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=right_label_x,
+        y=top_label_y,
+        text=zone_labels["Apuesta de crecimiento"],
+        xanchor="right",
+        yanchor="top",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=left_label_x,
+        y=bottom_label_y,
+        text=zone_labels["Perfil de bajo impacto"],
+        xanchor="left",
+        yanchor="middle",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=right_label_x,
+        y=bottom_label_y,
+        text=zone_labels["Riesgo elevado"],
+        xanchor="right",
+        yanchor="middle",
+        **label_style,
+    )
+
     fig.update_layout(
-        height=640,
+        height=600,
         margin=dict(l=18, r=44, t=42, b=32),
         plot_bgcolor="white",
         paper_bgcolor="white",
@@ -11188,7 +11290,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     )
 
     fig.update_xaxes(
-        range=[0, 100],
+        range=[0, x_axis_max],
         showgrid=True,
         gridcolor="#e5e7eb",
         zeroline=False,
@@ -11196,7 +11298,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
 
     fig.update_yaxes(
         range=[
-            max(0, float(df["opportunity_score"].min()) - 5),
+            y_axis_min,
             101,
         ],
         showgrid=True,
@@ -11660,31 +11762,47 @@ with lang_control_col:
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"### {'NAVIGATION' if LANG == 'EN' else 'NAVEGACIÓN'}")
+# TM.3.4.1 Sprint 1A — Product architecture navigation
+# Navigation is now organised by decision workflow instead of implementation modules.
 PAGE_OPTIONS = [
-    "Executive Overview",
-    "Global Scouting Universe",
+    "Market Intelligence",
     "Player Intelligence",
-    "Recruitment Board",
-    "Contract Intelligence",
-    "Transfer Strategy",
+    "Recruitment Intelligence",
+    "Strategy Center",
     "Methodology",
 ]
-if "dashboard_navigation_page" not in st.session_state:
+
+LEGACY_PAGE_MAP = {
+    "Executive Overview": "Market Intelligence",
+    "Global Scouting Universe": "Market Intelligence",
+    "Recruitment Board": "Recruitment Intelligence",
+    "Contract Intelligence": "Strategy Center",
+    "Transfer Strategy": "Strategy Center",
+}
+
+# Preserve backwards compatibility with sessions created before Sprint 1A.
+if "dashboard_navigation_page" in st.session_state:
+    st.session_state.dashboard_navigation_page = LEGACY_PAGE_MAP.get(
+        st.session_state.dashboard_navigation_page,
+        st.session_state.dashboard_navigation_page,
+    )
+else:
     st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
+
 if st.session_state.dashboard_navigation_page not in PAGE_OPTIONS:
     st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
 
+
 def _nav_label(page_name: str) -> str:
     labels = {
-        "Executive Overview": "Executive",
-        "Global Scouting Universe": "Market",
-        "Player Intelligence": "Players",
-        "Recruitment Board": "Recruitment Center",
-        "Contract Intelligence": "Contract Intelligence",
-        "Transfer Strategy": "Strategy",
+        "Market Intelligence": "Market Intelligence",
+        "Player Intelligence": "Player Intelligence",
+        "Recruitment Intelligence": "Recruitment Intelligence",
+        "Strategy Center": "Strategy Center",
         "Methodology": "Methodology",
     }
     return labels.get(page_name, page_name)
+
 
 st.sidebar.markdown("<div class='sidebar-nav-stack'>", unsafe_allow_html=True)
 for _page_option in PAGE_OPTIONS:
@@ -11700,6 +11818,195 @@ for _page_option in PAGE_OPTIONS:
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 dashboard_page = st.session_state.dashboard_navigation_page
 
+# Sprint 1A state: keep lightweight internal defaults for grouped sections.
+if "market_intelligence_view" not in st.session_state:
+    st.session_state.market_intelligence_view = "Executive Overview"
+if "strategy_center_view" not in st.session_state:
+    st.session_state.strategy_center_view = "Contract Intelligence"
+
+
+def render_dss_workflow(active_page: str) -> None:
+    """Render a compact persistent DSS workflow bar."""
+    title = "Decision workflow" if LANG == "EN" else "Flujo DSS"
+    subtitle = "Market → Player → Recruitment → Contract → Strategy → Decision"
+    workflow_steps = [
+        ("Market", "Market Intelligence"),
+        ("Player", "Player Intelligence"),
+        ("Recruitment", "Recruitment Intelligence"),
+        ("Similar", "Recruitment Intelligence"),
+        ("Contract", "Strategy Center"),
+        ("Strategy", "Strategy Center"),
+        ("Decision", "Strategy Center"),
+    ]
+    step_html = "".join(
+        f"<span class='dss-compact-step {'is-active' if owner == active_page else ''}'>{idx}. {html.escape(label)}</span>"
+        for idx, (label, owner) in enumerate(workflow_steps, start=1)
+    )
+    st.markdown(
+        f"""
+        <div class='dss-compact-bar'>
+            <div class='dss-compact-left'>{html.escape(title.upper())}</div>
+            <div class='dss-compact-steps'>{step_html}</div>
+            <div class='dss-compact-right'>{html.escape(subtitle)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
+st.markdown(
+    """
+<style>
+/* TM.3.4.1 Sprint 1A — DSS Product Architecture */
+.dss-workflow-shell {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    padding: 13px 15px 14px 15px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050);
+    margin: 0 0 16px 0;
+}
+.dss-workflow-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+}
+.dss-workflow-header span {
+    color:#0f172a;
+    font-size:.80rem;
+    font-weight:950;
+    letter-spacing:.075em;
+    text-transform:uppercase;
+}
+.dss-workflow-header small {
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:800;
+}
+.dss-workflow-grid {
+    display:grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap:8px;
+}
+.dss-workflow-step {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-height:38px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    padding:7px 8px;
+}
+.dss-workflow-step-active {
+    background:#eff6ff !important;
+    border-color:#93c5fd !important;
+    box-shadow: inset 3px 0 0 #2563eb, 0 7px 18px rgba(37,99,235,.070);
+}
+.dss-workflow-step-muted { opacity:.86; }
+.dss-workflow-index {
+    width:22px;
+    height:22px;
+    min-width:22px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+}
+.dss-workflow-label {
+    color:#0f172a;
+    font-size:.72rem;
+    font-weight:900;
+    line-height:1.12;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.sidebar-nav-stack button {
+    text-align:left !important;
+}
+@media (max-width: 1350px) {
+    .dss-workflow-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .dss-workflow-grid { grid-template-columns: 1fr; }
+    .dss-workflow-header { flex-direction:column; align-items:flex-start; }
+}
+
+/* TM.3.4.1 closure — compact DSS workflow bar */
+.dss-compact-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    padding: 8px 11px;
+    box-shadow: 0 6px 18px rgba(15,23,42,.035);
+    margin: 0 0 12px 0;
+}
+.dss-compact-left {
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.dss-compact-right {
+    color: #94a3b8;
+    font-size: .68rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.dss-compact-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+}
+.dss-compact-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    color: #64748b;
+    background: transparent;
+    font-size: .69rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.dss-compact-step.is-active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    box-shadow: inset 0 0 0 1px rgba(37,99,235,.05);
+}
+@media (max-width: 1200px) {
+    .dss-compact-bar { grid-template-columns: 1fr; gap: 6px; }
+    .dss-compact-steps { justify-content: flex-start; overflow-x: auto; }
+    .dss-compact-right { display: none; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     f"""
@@ -14239,17 +14546,19 @@ st.markdown(
     """
     <div class="scouting-topbar">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
-        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span><span>✓ Contract Intelligence</span></div>
+        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span><span>✓ Recruitment Intelligence</span><span>✓ Strategy Center</span></div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+render_dss_workflow(dashboard_page)
+
 base_df = add_executive_decision_features(scouting_df.copy())
 
 # Search/context panels are useful in scouting pages, but they create dead space
 # in Strategy and Methodology. Keep them out of those pages.
-SHOW_COMMAND_PANEL = dashboard_page not in {"Transfer Strategy", "Contract Intelligence", "Methodology"}
+SHOW_COMMAND_PANEL = dashboard_page not in {"Strategy Center", "Methodology"}
 
 # Sprint 13.5 v2: compact command row. Search and active context share the first viewport row
 # only where the command/search layer is relevant.
@@ -14280,8 +14589,10 @@ if SHOW_COMMAND_PANEL:
         with st.container(border=True):
             st.markdown(
                 f"""
-                <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
-                <div class="final-search-caption">{html.escape('Search players, clubs, leagues or positions. Executive ranking remains anchored to the actionable universe.' if LANG == 'EN' else 'Busca jugadores, clubes, ligas o posiciones. Explora el universo accionable de prospects y utiliza filtros inteligentes para priorizar candidatos.')}</div>
+                <div class="final-search-title-row">
+                    <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
+                    <span class="final-search-examples final-search-examples-top">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</span>
+                </div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -14298,44 +14609,7 @@ if SHOW_COMMAND_PANEL:
                     else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
                 ),
             )
-            helper_left, helper_guide, helper_spacer = st.columns([0.42, 0.28, 0.30])
-            with helper_left:
-                st.markdown(
-                    f"""
-                    <div class="search-helper-inline">
-                        <span class="final-search-examples">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with helper_guide:
-                with st.popover("Quick Guide" if LANG == "EN" else "Guía rápida"):
-                    st.markdown(
-                        f"""
-                        <div class="quick-guide-popover-body">
-                            <div class="quick-guide-layout">
-                                <div class="quick-guide-card">
-                                    <span>{html.escape('Workflow' if LANG == 'EN' else 'Flujo')}</span>
-                                    <b>{html.escape('From ranking to decision' if LANG == 'EN' else 'Del ranking a la decisión')}</b>
-                                    <small>{html.escape('Use Market to detect opportunities, Players to validate profiles, Recruitment Center to compare candidates and Strategy to optimise the portfolio.' if LANG == 'EN' else 'Usa Market para detectar oportunidades, Players para validar perfiles, Recruitment Center para comparar candidatos y Strategy para optimizar cartera.')}</small>
-                                </div>
-                                <div class="quick-guide-card">
-                                    <span>{html.escape('Filters' if LANG == 'EN' else 'Filtros')}</span>
-                                    <b>{html.escape('Eligibility layer' if LANG == 'EN' else 'Capa de elegibilidad')}</b>
-                                    <small>{html.escape('Age, minutes, confidence, opportunity, value, ROI and risk define the active scouting universe.' if LANG == 'EN' else 'Edad, minutos, confianza, oportunidad, valor, ROI y riesgo definen el universo activo de scouting.')}</small>
-                                </div>
-                            </div>
-                            <div class="quick-guide-glossary">
-                                <span>{html.escape('Glossary' if LANG == 'EN' else 'Glosario')}</span>
-                                <div><b>Opportunity</b><small>{html.escape('market inefficiency and upside signal' if LANG == 'EN' else 'señal de ineficiencia y upside de mercado')}</small></div>
-                                <div><b>Risk</b><small>{html.escape('estimated uncertainty; lower is better' if LANG == 'EN' else 'incertidumbre estimada; menor es mejor')}</small></div>
-                                <div><b>ROI 3Y</b><small>{html.escape('expected three-year asset return' if LANG == 'EN' else 'retorno esperado del activo a tres años')}</small></div>
-                                <div><b>Decision Score</b><small>{html.escape('final executive priority indicator' if LANG == 'EN' else 'indicador final de prioridad ejecutiva')}</small></div>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+            # Examples are shown inline in the search header to keep the command panel compact.
 else:
     global_search_label = None
 
@@ -15114,13 +15388,266 @@ st.markdown(
 )
 
 
+
+# =============================================================================
+# TM.3.4.1 Phase 1 final compactness patch: search + Player Intelligence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact global search: examples live in the title row, explanatory copy removed. */
+.final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+    margin: 0 0 8px 0 !important;
+}
+.final-search-title-row .final-search-title {
+    margin: 0 !important;
+    line-height: 1.1 !important;
+}
+.final-search-examples-top {
+    margin: 0 !important;
+    padding: 5px 10px !important;
+    min-height: 26px !important;
+    font-size: .72rem !important;
+    box-shadow: none !important;
+}
+.final-search-caption, .search-helper-inline {
+    display: none !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title-row),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title-row) div[data-baseweb="select"] > div {
+    min-height: 50px !important;
+    height: 50px !important;
+}
+/* Player Intelligence: reduce dead space between hero and radar; remove standalone layer-chip rhythm. */
+.product-page-hero {
+    margin-bottom: 12px !important;
+}
+.player-radar-compact-header {
+    margin: 8px 0 10px 0 !important;
+}
+.player-radar-title {
+    color: #0f172a !important;
+    font-size: 1.72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.12 !important;
+    margin: 0 0 8px 0 !important;
+}
+.player-radar-subtitle {
+    background: #ffffff !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+    color: #334155 !important;
+    font-size: .88rem !important;
+    line-height: 1.35 !important;
+    padding: 10px 14px !important;
+    margin: 0 !important;
+}
+.player-radar-compact-header + div[data-testid="stVerticalBlock"] {
+    gap: .45rem !important;
+}
+.player-intelligence-report-gap {
+    height: 12px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.4.1 final release polish: unified module headers + Plotly overflow fix
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final Fase 1: unified level-2 module headers across Player/Strategy modules. */
+.internal-module-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin: 28px 0 18px 0 !important;
+    padding: 0 !important;
+}
+.internal-module-header--compact {
+    margin: 4px 0 14px 0 !important;
+}
+.internal-module-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #0f172a !important;
+    font-size: 1.54rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.12 !important;
+    margin: 0 !important;
+}
+.internal-module-title--sm {
+    font-size: 1.38rem !important;
+}
+.module-info-details {
+    display: inline-flex !important;
+    position: relative !important;
+    margin-left: 2px !important;
+    vertical-align: 2px !important;
+}
+.module-info-details summary {
+    list-style: none !important;
+    width: 17px !important;
+    height: 17px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #2563eb !important;
+    font-size: 11px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+.module-info-details summary::-webkit-details-marker { display: none !important; }
+.module-info-details div {
+    position: absolute !important;
+    left: 0 !important;
+    top: 24px !important;
+    z-index: 9999 !important;
+    min-width: 300px !important;
+    max-width: 420px !important;
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    color: #334155 !important;
+    font-size: .78rem !important;
+    line-height: 1.38 !important;
+    font-weight: 650 !important;
+    box-shadow: 0 18px 38px rgba(15,23,42,.16) !important;
+}
+.player-radar-compact-header {
+    margin: 30px 0 18px 0 !important;
+}
+.player-radar-subtitle {
+    display: none !important;
+}
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    margin-top: 2px !important;
+}
+/* Keep charts analytical-sized but remove the Streamlit/Plotly internal scroll sensation. */
+div[data-testid="stElementContainer"]:has(div[data-testid="stPlotlyChart"]),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stPlotlyChart"]),
+div[data-testid="stPlotlyChart"],
+div[data-testid="stPlotlyChart"] > div,
+div[data-testid="stPlotlyChart"] .js-plotly-plot,
+div[data-testid="stPlotlyChart"] .plot-container,
+div[data-testid="stPlotlyChart"] .svg-container {
+    overflow: visible !important;
+    max-height: none !important;
+}
+div[data-testid="stPlotlyChart"] svg.main-svg {
+    overflow: visible !important;
+}
+/* Avoid old chart-card styles forcing scrollable/cropped plot containers. */
+.radar-chart-card,
+.similarity-chart-shell,
+.contract-matrix-shell {
+    overflow: visible !important;
+}
+/* Strategy Center: the banner is now the first internal block after section navigation. */
+.strategy-banner {
+    margin-top: 4px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.4.1 final title + matrix label coherence patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Unify page-level headers with the Executive Overview hero language. */
+.product-page-hero-unified {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    background: linear-gradient(135deg, #06152a 0%, #0b2a55 58%, #134b8f 100%);
+    border: 1px solid rgba(191,219,254,.28);
+    border-radius: 22px;
+    padding: 22px 24px;
+    box-shadow: 0 22px 48px rgba(2,6,23,.18);
+    margin: 0 0 18px 0;
+    color: #ffffff;
+}
+.product-page-hero-unified .product-page-eyebrow {
+    color: #bfdbfe !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .095em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+}
+.product-page-hero-unified .product-page-title {
+    color: #ffffff !important;
+    font-size: 2.05rem !important;
+    line-height: 1.04 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+    margin: 0 0 4px 0 !important;
+}
+.product-page-hero-unified .product-page-subtitle {
+    color: #dbeafe !important;
+    font-size: .96rem !important;
+    line-height: 1.45 !important;
+    max-width: 900px !important;
+}
+/* Stronger in-chart quadrant labels for executive readability. */
+.opportunity-matrix-label-note {
+    display: none;
+}
+
+/* Final Phase 1 closure: unified page headers and stronger matrix subtitle. */
+.matrix-subtitle-strong {
+    color: #475569 !important;
+    font-size: .95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.45 !important;
+    margin: 2px 0 12px 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 def render_product_page_header(eyebrow: str, title: str, subtitle: str) -> None:
+    """Render a unified page-level hero, aligned with the Executive Overview header style."""
     st.markdown(
         f"""
-<div class="product-page-hero">
-    <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
-    <div class="product-page-title">{html.escape(title)}</div>
-    <div class="product-page-subtitle">{html.escape(subtitle)}</div>
+<div class="product-page-hero-unified">
+    <div>
+        <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
+        <div class="product-page-title">{html.escape(title)}</div>
+        <div class="product-page-subtitle">{html.escape(subtitle)}</div>
+    </div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -15261,7 +15788,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
 <div class="quick-action-grid">
     <div class="quick-action-card"><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras.')}</div></div>
     <div class="quick-action-card"><div class="quick-action-title">Global Scouting Universe</div><div class="quick-action-text">{html.escape('Explore, filter and prioritize the actionable prospect universe.' if LANG == 'EN' else 'Explorar, filtrar y priorizar el universo accionable de prospects.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Recruitment Center</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
+    <div class="quick-action-card"><div class="quick-action-title">Recruitment Intelligence</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
     <div class="quick-action-card"><div class="quick-action-title">Contract Intelligence</div><div class="quick-action-text">{html.escape('Prioritize targets by contract timing and negotiation leverage.' if LANG == 'EN' else 'Priorizar targets por timing contractual y poder negociador.')}</div></div>
 </div>
 """,
@@ -15300,16 +15827,6 @@ def render_transfer_strategy_placeholder() -> None:
     It turns player-level opportunity signals into an optimized transfer portfolio
     under budget, positional, risk/scenario and squad-size constraints.
     """
-    render_product_page_header(
-        "Strategic Recruitment Engine",
-        "⭐ Transfer Strategy Engine",
-        (
-            "Optimize a transfer portfolio under budget, position, risk and squad-size constraints."
-            if LANG == "EN"
-            else "Optimiza una cartera de fichajes bajo restricciones de presupuesto, posición, riesgo y tamaño de plantilla."
-        ),
-    )
-
     st.markdown(
         f"""
 <div class="strategy-banner">
@@ -15842,13 +16359,13 @@ def render_transfer_strategy_placeholder() -> None:
 
 def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     render_product_page_header(
-        "Global Scouting Universe",
-        "Global Scouting Universe",
+        "Market Intelligence",
+        "Football Recruitment Intelligence Platform",
         "Explora el universo accionable de prospects con filtros inteligentes de scouting." if LANG == "ES" else "Explore the actionable prospect universe with smart scouting filters.",
     )
     render_layer_badge("EXECUTIVE SCOUTING LAYER")
     st.markdown(f"## 🎯 {T('matrix_title')}", unsafe_allow_html=True)
-    st.caption(T("matrix_caption"))
+    st.markdown(f"<div class='matrix-subtitle-strong'>{html.escape(T('matrix_caption'))}</div>", unsafe_allow_html=True)
     fig = build_opportunity_risk_matrix(source_df)
     if fig is None:
         st.info("Not enough data to build the Opportunity vs Risk matrix with current filters." if LANG == "EN" else "No hay datos suficientes para generar la matriz Opportunity vs Risk con los filtros actuales.")
@@ -16012,16 +16529,15 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
 
 
 def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
-    render_product_page_header("Player Intelligence", "Player Intelligence", "Radar, positional benchmark, individual profile and model drivers." if LANG == "EN" else "Radar, benchmark posicional, perfil individual y drivers del modelo.")
-    render_layer_badge("PLAYER ANALYSIS LAYER")
+    render_product_page_header("Player Intelligence", "Player Intelligence Platform", "Radar, positional benchmark, individual profile and model drivers." if LANG == "EN" else "Radar, benchmark posicional, perfil individual y drivers del modelo.")
     table = build_ranked_table_df(source_df)
     render_player_radar_benchmarking(table)
-    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
     render_individual_player_report(table)
 
 
 def render_recruitment_board_page(source_df: pd.DataFrame) -> None:
-    render_product_page_header("Recruitment Center", "Recruitment Center", "Operational scouting workspace: target validation, similar players, replacement analysis, investment view and model drivers." if LANG == "EN" else "Centro operativo de scouting: validación de targets, jugadores similares, reemplazos, inversión y drivers del modelo.")
+    render_product_page_header("Recruitment Intelligence", "Player Recruitment Intelligence Platform", "Operational scouting workspace: target validation, similar players, replacement analysis, investment view and model drivers." if LANG == "EN" else "Validación de targets, comparables, assessment y soporte a la decisión.")
     table = build_ranked_table_df(source_df)
     st.markdown(
         f"""
@@ -17237,7 +17753,7 @@ def _render_contract_league_distribution(data: pd.DataFrame) -> None:
 def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
     render_product_page_header(
         "Contract Intelligence",
-        "Contract Intelligence",
+        "Contract Intelligence Platform",
         "Negotiation timing and contract opportunity layer." if LANG == "EN" else "Timing negociador y oportunidades contractuales.",
     )
 
@@ -17366,19 +17882,7 @@ def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
     potential_gain = pd.to_numeric(filtered_contract.get("market_value_gap_eur"), errors="coerce").clip(lower=0).sum() if "market_value_gap_eur" in filtered_contract.columns else np.nan
     potential_gain_txt = format_money_short(potential_gain) if pd.notna(potential_gain) and potential_gain > 0 else "N/A"
 
-    kpi_cols = st.columns(6)
-    with kpi_cols[0]:
-        _render_contract_kpi("Actionable Targets" if LANG == "EN" else "Targets accionables", f"{immediate_count:,}", "active filtered view" if LANG == "EN" else "vista filtrada activa")
-    with kpi_cols[1]:
-        _render_contract_kpi("Expiring <12M", f"{expiring_12m:,}", "short contract window" if LANG == "EN" else "ventana contractual corta")
-    with kpi_cols[2]:
-        _render_contract_kpi("Avg Score" if LANG == "EN" else "Score medio", f"{avg_recruitment_contract:.1f}" if pd.notna(avg_recruitment_contract) else "N/A", "recruitment + contract" if LANG == "EN" else "recruitment + contrato")
-    with kpi_cols[3]:
-        _render_contract_kpi("U23 Actionable" if LANG == "EN" else "U23 accionables", f"{u23_actionable:,}", "young targets with action" if LANG == "EN" else "jóvenes con acción")
-    with kpi_cols[4]:
-        _render_contract_kpi("Expired / Immediate" if LANG == "EN" else "Expirados / inmediato", f"{urgent_or_expired:,}", "≤30 days or expired" if LANG == "EN" else "≤30 días o expirados")
-    with kpi_cols[5]:
-        _render_contract_kpi("Potential Market Gain" if LANG == "EN" else "Plusvalía potencial", potential_gain_txt, "positive inefficiency sum in filtered view" if LANG == "EN" else "suma positiva en la vista filtrada")
+
 
 
     top_contract_target = filtered_contract.iloc[0]
@@ -17430,14 +17934,28 @@ def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
             _contract_nav_to("Player Intelligence", player_name_top, "Profile")
     with wf_cols[1]:
         if st.button("🔁 " + ("Comparables" if LANG == "EN" else "Comparables"), key=f"contract_top_similar_{player_name_top}"):
-            _contract_nav_to("Recruitment Board", player_name_top, "Similar Players")
+            _contract_nav_to("Recruitment Intelligence", player_name_top, "Similar Players")
     with wf_cols[2]:
         if st.button("📋 Assessment", key=f"contract_top_assessment_{player_name_top}"):
-            _contract_nav_to("Recruitment Board", player_name_top, "Recruitment Assessment")
+            _contract_nav_to("Recruitment Intelligence", player_name_top, "Recruitment Assessment")
     with wf_cols[3]:
         if st.button("⏱ " + ("Contract" if LANG == "EN" else "Contrato"), key=f"contract_top_contract_{player_name_top}"):
-            _contract_nav_to("Contract Intelligence", player_name_top, "Contract Detail")
+            _contract_nav_to("Strategy Center", player_name_top, "Contract Detail")
 
+    st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
+    kpi_cols = st.columns(6)
+    with kpi_cols[0]:
+        _render_contract_kpi("Actionable Targets" if LANG == "EN" else "Targets accionables", f"{immediate_count:,}", "active filtered view" if LANG == "EN" else "vista filtrada activa")
+    with kpi_cols[1]:
+        _render_contract_kpi("Expiring <12M", f"{expiring_12m:,}", "short contract window" if LANG == "EN" else "ventana contractual corta")
+    with kpi_cols[2]:
+        _render_contract_kpi("Avg Score" if LANG == "EN" else "Score medio", f"{avg_recruitment_contract:.1f}" if pd.notna(avg_recruitment_contract) else "N/A", "recruitment + contract" if LANG == "EN" else "recruitment + contrato")
+    with kpi_cols[3]:
+        _render_contract_kpi("U23 Actionable" if LANG == "EN" else "U23 accionables", f"{u23_actionable:,}", "young targets with action" if LANG == "EN" else "jóvenes con acción")
+    with kpi_cols[4]:
+        _render_contract_kpi("Expired / Immediate" if LANG == "EN" else "Expirados / inmediato", f"{urgent_or_expired:,}", "≤30 days or expired" if LANG == "EN" else "≤30 días o expirados")
+    with kpi_cols[5]:
+        _render_contract_kpi("Potential Market Gain" if LANG == "EN" else "Plusvalía potencial", potential_gain_txt, "positive inefficiency sum in filtered view" if LANG == "EN" else "suma positiva en la vista filtrada")
     st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
 
     # 1) What should the sporting department do first?
@@ -17559,38 +18077,177 @@ Business Understanding → Data Understanding → Data Preparation → Modeling 
 El dashboard separa evaluación histórica, explotación operativa, Player Intelligence, Recruitment Intelligence y Decision Support System. Esta arquitectura evita mezclar validación académica con recomendación ejecutiva y prepara la evolución hacia optimización estratégica de fichajes.
 """)
     with st.expander("Scoring architecture", expanded=False):
-        st.markdown("""
-Predictions  
-↓  
-Inefficiency Score  
-↓  
-Growth Score  
-↓  
-Confidence Score  
-↓  
-Opportunity Score  
-↓  
-Risk Score  
-↓  
-Executive Decision Score
-""")
+        scoring_steps = [
+            ("01", "Predictions"),
+            ("02", "Inefficiency Score"),
+            ("03", "Growth Score"),
+            ("04", "Confidence Score"),
+            ("05", "Opportunity Score"),
+            ("06", "Risk Score"),
+            ("07", "Executive Decision Score"),
+        ]
+        scoring_html = "".join(
+            f"<div class='scoring-architecture-step'><span>{num}</span><b>{html.escape(label)}</b></div>"
+            for num, label in scoring_steps
+        )
+        st.markdown(f"<div class='scoring-architecture-chain'>{scoring_html}</div>", unsafe_allow_html=True)
+        st.caption(
+            "The scoring architecture converts model outputs into an executive DSS layer."
+            if LANG == "EN"
+            else "La arquitectura de scoring convierte salidas de modelo en una capa DSS ejecutiva."
+        )
 
+
+
+
+
+def render_market_intelligence_page(source_df: pd.DataFrame) -> None:
+    """Sprint 1A grouped entry point for market opportunity discovery."""
+    view_options = ["Executive Overview", "Opportunity Universe"]
+    selected_view = st.radio(
+        "Market Intelligence view" if LANG == "EN" else "Vista Market Intelligence",
+        view_options,
+        index=view_options.index(st.session_state.get("market_intelligence_view", "Executive Overview")) if st.session_state.get("market_intelligence_view", "Executive Overview") in view_options else 0,
+        horizontal=True,
+        key="market_intelligence_view",
+        label_visibility="collapsed",
+    )
+    if selected_view == "Executive Overview":
+        render_executive_overview_page(source_df)
+    else:
+        render_market_opportunities_page(source_df)
+
+
+def render_strategy_center_page(source_df: pd.DataFrame, contract_source_df: pd.DataFrame) -> None:
+    """Sprint 1A grouped entry point for contract and transfer decision layers."""
+    render_product_page_header(
+        "Strategy Center",
+        "Transfer Strategy Intelligence Platform",
+        "Portfolio optimization, contract timing and market planning."
+        if LANG == "EN"
+        else "Optimización de cartera, timing contractual y planificación de mercado.",
+    )
+    view_options = ["Contract Intelligence", "Transfer Strategy"]
+    selected_view = st.radio(
+        "Strategy Center view" if LANG == "EN" else "Vista Strategy Center",
+        view_options,
+        index=view_options.index(st.session_state.get("strategy_center_view", "Contract Intelligence")) if st.session_state.get("strategy_center_view", "Contract Intelligence") in view_options else 0,
+        horizontal=True,
+        key="strategy_center_view",
+        label_visibility="collapsed",
+    )
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    if selected_view == "Transfer Strategy":
+        render_transfer_strategy_placeholder()
+    else:
+        render_contract_intelligence_page(contract_source_df)
+
+
+# =============================================================================
+# TM.3.4.1 Phase 1 closure patch: compact DSS, methodology grid and CTA coherence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove remaining top Quick Guide real estate: guidance now belongs to Methodology. */
+.search-helper-row > .search-quick-guide,
+.quick-guide-inline.search-quick-guide,
+[data-testid="stAppViewContainer"] .main div[data-testid="stPopover"] button:has(p) {
+    max-height: 30px;
+}
+/* Recruitment CTA toolbar mirrors Contract player workflow without adding navigation complexity. */
+.recruitment-workflow-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 8px 0 12px 0;
+    padding: 8px 11px;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040);
+}
+.recruitment-workflow-toolbar span {
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.recruitment-workflow-toolbar b {
+    color: #1e3a8a;
+    font-size: .74rem;
+    font-weight: 950;
+    white-space: nowrap;
+}
+/* Contract controls become secondary; Top Contract Target and Action Board carry the decision hierarchy. */
+.contract-filter-title {
+    color: #64748b !important;
+    font-size: .78rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+    margin-top: 4px !important;
+}
+.contract-filter-subtitle {
+    color: #94a3b8 !important;
+    font-size: .72rem !important;
+    margin-bottom: 6px !important;
+}
+/* Methodology scoring architecture: horizontal DSS chain instead of a tall vertical list. */
+.scoring-architecture-chain {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin: 6px 0 8px 0;
+}
+.scoring-architecture-step {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 10px;
+    min-height: 58px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.scoring-architecture-step span {
+    display: block;
+    color: #1d4ed8;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.scoring-architecture-step b {
+    display: block;
+    color: #0f172a;
+    font-size: .76rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+@media (max-width: 1350px) {
+    .scoring-architecture-chain { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .recruitment-workflow-toolbar { border-radius: 16px; align-items: flex-start; flex-direction: column; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 if filtered_df.empty:
     st.warning("No players match the current filters." if LANG == "EN" else "No hay jugadores que cumplan los filtros actuales.")
 else:
-    if dashboard_page == "Executive Overview":
-        render_executive_overview_page(filtered_df)
-    elif dashboard_page == "Transfer Strategy":
-        render_transfer_strategy_placeholder()
-    elif dashboard_page == "Global Scouting Universe":
-        render_market_opportunities_page(filtered_df)
+    if dashboard_page == "Market Intelligence":
+        render_market_intelligence_page(filtered_df)
     elif dashboard_page == "Player Intelligence":
         render_player_intelligence_page(filtered_df)
-    elif dashboard_page == "Recruitment Board":
+    elif dashboard_page == "Recruitment Intelligence":
         render_recruitment_board_page(filtered_df)
-    elif dashboard_page == "Contract Intelligence":
-        render_contract_intelligence_page(contract_df)
+    elif dashboard_page == "Strategy Center":
+        render_strategy_center_page(filtered_df, contract_df)
     elif dashboard_page == "Methodology":
         render_methodology_page(filtered_df)
 
