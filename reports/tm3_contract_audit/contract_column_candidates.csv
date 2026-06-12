@@ -1,0 +1,5 @@
+file,file_type,column,match_type,error
+data\raw\transfermarkt\kaggle_player_scores\players.csv,.csv,contract_expiration_date,exact_candidate,
+data\raw\transfermarkt\kaggle_player_scores\data\raw\transfermarkt\kaggle_player_scores\players.csv,.csv,contract_expiration_date,exact_candidate,
+data\raw\transfermarkt\kaggle_player_scores\data\raw\transfermarkt\kaggle_player_scores\data\raw\transfermarkt\kaggle_player_scores\players.csv,.csv,contract_expiration_date,exact_candidate,
+data\raw\transfermarkt\update_2025_2026\players.csv,.csv,contract_expiration_date,exact_candidate,

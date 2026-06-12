@@ -1,0 +1,2 @@
+scope,files_scanned,exact_contract_columns_found,semantic_contract_columns_found,contract_data_available,coverage_computable
+tabular_artifacts,531,4,0,True,True

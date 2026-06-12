@@ -5,7 +5,7 @@
 Este documento recoge las principales decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release:
 
 ```text
-v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
+v1.4.0 — Contract Intelligence Layer
 ```
 
 Su finalidad es justificar formalmente las decisiones tomadas desde una perspectiva de:
@@ -20,6 +20,8 @@ Su finalidad es justificar formalmente las decisiones tomadas desde una perspect
 * Decision Science.
 * Operations Research.
 * Decision Support Systems.
+* Recruitment Analytics.
+* Contract Intelligence.
 
 ---
 
@@ -27,7 +29,7 @@ Su finalidad es justificar formalmente las decisiones tomadas desde una perspect
 
 El proyecto adopta una arquitectura híbrida donde la precisión predictiva no constituye el objetivo final.
 
-La finalidad última consiste en generar decisiones deportivas de mayor calidad mediante la integración de modelización predictiva, evaluación de oportunidades y optimización estratégica.
+La finalidad última consiste en generar decisiones deportivas de mayor calidad mediante la integración de modelización predictiva, evaluación de oportunidades, inteligencia de recruitment, contexto contractual y optimización estratégica.
 
 La arquitectura conceptual puede resumirse mediante:
 
@@ -43,6 +45,8 @@ Scoring
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Contract Intelligence
 ↓
 Transfer Strategy Engine
 ↓
@@ -60,6 +64,8 @@ métricas predictivas
 ```
 
 La calidad de una solución no se evalúa únicamente por su capacidad explicativa o predictiva, sino por su capacidad para mejorar procesos reales de toma de decisiones deportivas.
+
+En este sentido, TM.3 refuerza la transición desde un sistema de detección de oportunidades hacia una plataforma DSS capaz de incorporar contexto negociador y contractual en procesos de recruitment profesional.
 
 ---
 
@@ -111,6 +117,32 @@ season FE
 
 ---
 
+## Decisión sobre variables contractuales
+
+Las variables contractuales incorporadas en Sprint TM.3 no se integran dentro de la especificación econométrica oficial.
+
+Decisión:
+
+```text
+Contract Intelligence
+=
+DSS Layer
+≠
+Historical Modeling Feature
+```
+
+Justificación:
+
+* la información contractual disponible procede de un snapshot operativo;
+* no existe serie histórica contractual completa y homogénea para todo el panel jugador-temporada;
+* incorporar contratos al dataset histórico podría introducir temporal leakage;
+* el objetivo de TM.3 es mejorar la toma de decisiones DSS, no reestimar el valor de mercado esperado;
+* los modelos econométricos mantienen su función como benchmark interpretable de valoración.
+
+Por tanto, la capa econométrica oficial permanece inalterada tras TM.3.
+
+---
+
 ## Modelo oficial
 
 ```text
@@ -151,6 +183,8 @@ Growth OLS v13B
 =
 Benchmark econométrico oficial
 ```
+
+Sprint TM.3 no modifica este modelo. Su contribución se sitúa aguas abajo, en la capa de Decision Support System.
 
 ---
 
@@ -262,6 +296,36 @@ Este resultado constituye el mejor rendimiento predictivo alcanzado durante el p
 
 ---
 
+## Decisión sobre variables contractuales
+
+Las variables contractuales de Sprint TM.3 no se incorporan al modelo Machine Learning productivo.
+
+Decisión:
+
+```text
+Tuned XGBoost v13B
+permanece como modelo productivo oficial
+sin reentrenamiento contractual
+```
+
+Justificación:
+
+* TM.3 no busca mejorar métricas predictivas del valor de mercado;
+* la variable contractual disponible pertenece a un snapshot operacional 2025-2026;
+* utilizar esta información como predictor histórico podría contaminar la validación temporal;
+* la capa contractual se utiliza para enriquecer rankings DSS y no para alterar predicciones de mercado;
+* se preserva la comparabilidad de resultados con Sprint 13B y TM.2.
+
+Por tanto, Sprint TM.3 no modifica:
+
+* modelos Machine Learning;
+* features de entrenamiento;
+* validación temporal;
+* métricas productivas;
+* artefactos MLflow.
+
+---
+
 ## Decisión
 
 La expansión multi-liga queda incorporada permanentemente al sistema.
@@ -281,7 +345,6 @@ Resultado principal:
 | 11 ligas |           0.5664 |
 
 La validación externa multi-liga constituye una de las evidencias metodológicas más sólidas del proyecto, demostrando que la ampliación de cobertura no reduce la capacidad predictiva del sistema y permite mejorar su capacidad de generalización.
-
 
 ---
 
@@ -338,6 +401,22 @@ Justificación:
 * mayor representatividad;
 * mejora predictiva;
 * fortalecimiento de validez externa.
+
+---
+
+## Relación con Sprint TM.3
+
+Sprint TM.3 no reabre la validación externa de modelos porque no modifica la capa predictiva.
+
+La validez de TM.3 se evalúa desde una perspectiva DSS:
+
+* cobertura contractual;
+* consistencia de integración;
+* ausencia de duplicados;
+* coherencia de rankings;
+* utilidad operativa para recruitment.
+
+La capa contractual amplía la explotación de los resultados sobre el universo DSS, pero no altera la evidencia predictiva obtenida en Sprint 13A.1 y Sprint 13B.
 
 ---
 
@@ -401,6 +480,29 @@ aparece como la variable avanzada con mayor relevancia predictiva agregada.
 
 ---
 
+## Relación con Sprint TM.3
+
+Sprint TM.3 no modifica la explainability del modelo predictivo porque la información contractual no entra en el entrenamiento.
+
+La interpretación contractual se sitúa en una capa posterior:
+
+```text
+Model Explainability
+↓
+Opportunity Interpretation
+↓
+Contract Intelligence
+↓
+Recruitment Decision
+```
+
+Esto permite separar dos planos:
+
+* explicación del valor de mercado esperado;
+* explicación de la oportunidad negociadora.
+
+---
+
 ## Decisión final
 
 Las recomendaciones generadas por la plataforma deben ser:
@@ -411,9 +513,11 @@ Predictivas
 Interpretables
 +
 Defendibles
++
+Operativamente accionables
 ```
 
-especialmente en contextos profesionales de scouting, recruitment y toma de decisiones deportivas.
+especialmente en contextos profesionales de scouting, recruitment, negociación contractual y toma de decisiones deportivas.
 
 # 🧩 Evolución metodológica
 
@@ -453,9 +557,15 @@ Player Level Layer
 TM.2
 ↓
 Multi-League DSS Integration
+
+TM.3
+↓
+Contract Intelligence Layer
 ```
 
 La modelización deja de perseguir exclusivamente la estimación de valor de mercado para convertirse en una herramienta de apoyo a decisiones deportivas bajo restricciones reales de club.
+
+La incorporación de TM.3 añade una nueva dimensión de decisión relacionada con negociación contractual, leverage de mercado y timing de adquisición.
 
 ---
 
@@ -686,6 +796,242 @@ Su contribución consiste exclusivamente en asegurar la propagación completa de
 
 ---
 
+# 📌 MD-015 — Contract Intelligence Layer (Sprint TM.3)
+
+## Problema identificado
+
+Hasta Sprint TM.2 la plataforma era capaz de responder:
+
+```text
+¿Qué jugadores parecen infravalorados?
+```
+
+y
+
+```text
+¿Qué jugadores presentan mejor relación
+entre oportunidad y riesgo?
+```
+
+Sin embargo, seguía existiendo una limitación operativa importante.
+
+Dos jugadores con Opportunity Score similar pueden presentar condiciones de negociación radicalmente distintas debido a su situación contractual.
+
+Pregunta metodológica:
+
+```text
+¿Cómo incorporar contexto contractual
+sin comprometer la integridad de la
+modelización histórica?
+```
+
+---
+
+## Decisión metodológica principal
+
+Implementar una nueva capa:
+
+```text
+Contract Intelligence Layer
+```
+
+situada entre:
+
+```text
+Recruitment Intelligence
+↓
+Contract Intelligence
+↓
+Transfer Strategy Engine
+```
+
+La nueva capa opera exclusivamente sobre el universo DSS.
+
+---
+
+## Decisión sobre integración de datos
+
+Fuente utilizada:
+
+```text
+Transfermarkt
+```
+
+Variable contractual disponible:
+
+```text
+contract_expiration_date
+```
+
+Cobertura obtenida:
+
+```text
+95.90%
+```
+
+sobre el universo DSS.
+
+---
+
+## Decisión sobre modelización
+
+Las variables contractuales no se incorporan:
+
+* al panel histórico;
+* a la econometría;
+* al Machine Learning productivo;
+* a los experimentos de validación externa.
+
+Justificación:
+
+```text
+Evitar temporal leakage
+```
+
+La información contractual disponible representa un snapshot operativo y no una serie histórica completa.
+
+Incorporarla dentro de la modelización podría introducir información futura respecto a observaciones históricas.
+
+---
+
+## Decisión sobre arquitectura
+
+Contract Intelligence se implementa como:
+
+```text
+DSS Layer
+```
+
+y no como:
+
+```text
+Modeling Layer
+```
+
+Esto permite:
+
+* preservar comparabilidad histórica;
+* mantener reproducibilidad experimental;
+* evitar reestimaciones innecesarias;
+* enriquecer el proceso de recruitment.
+
+---
+
+## Variables implementadas
+
+* contract_expiration_date
+* contract_months_remaining
+* contract_years_remaining
+* contract_expiring_12m
+* contract_critical_zone
+* free_agent_horizon
+* negotiation_leverage_score
+* contract_opportunity_score
+* contract_status
+
+---
+
+## Contract Opportunity Score
+
+Objetivo:
+
+```text
+Cuantificar atractivo contractual
+independientemente de la calidad deportiva
+del jugador.
+```
+
+Dimensiones consideradas:
+
+* proximidad a expiración;
+* leverage negociador;
+* horizonte de agente libre;
+* criticidad contractual.
+
+---
+
+## Recruitment Contract Score
+
+Objetivo:
+
+```text
+Combinar oportunidad deportiva
+y oportunidad contractual
+en una única métrica operativa.
+```
+
+Implementación:
+
+```python
+0.70 * opportunity_score +
+0.30 * contract_opportunity_score
+```
+
+---
+
+## Justificación de pesos
+
+| Componente                 | Peso |
+| -------------------------- | ---- |
+| Opportunity Score          | 70%  |
+| Contract Opportunity Score | 30%  |
+
+Principio metodológico:
+
+```text
+La calidad deportiva
+debe seguir siendo
+la señal dominante.
+```
+
+La capa contractual complementa la decisión, pero no sustituye la lógica principal de detección de oportunidades.
+
+---
+
+## Decisión sobre Risk Score
+
+Risk Score no se incorpora al Recruitment Contract Score.
+
+Justificación:
+
+* cobertura parcial;
+* disponibilidad no homogénea;
+* necesidad de mantener consistencia sobre todo el universo DSS.
+
+Esta decisión permite calcular rankings contractuales sobre prácticamente todos los jugadores enriquecidos.
+
+---
+
+## Outputs generados
+
+```text
+contract_intelligence_dataset.csv
+top_contract_opportunities.csv
+top_recruitment_contract_targets.csv
+```
+
+---
+
+## Resultado
+
+La arquitectura evoluciona desde:
+
+```text
+Opportunity-Based Recruitment
+```
+
+hacia:
+
+```text
+Opportunity-Based Recruitment
++
+Contract-Aware Recruitment
+```
+
+aportando una dimensión adicional de decisión alineada con procesos reales de scouting y negociación.
+
+---
+
 # ⚠️ Risk Framework
 
 Introducido durante Sprint 10.
@@ -868,3 +1214,41 @@ Sprint 14 introduce formalmente conceptos procedentes de:
 * Strategic Recruitment Analytics.
 
 representando la principal evolución conceptual del proyecto.
+
+---
+
+# 🏁 Conclusión metodológica
+
+La evolución del proyecto puede resumirse mediante:
+
+```text
+Market Value Prediction
+↓
+Opportunity Detection
+↓
+Risk Assessment
+↓
+Player Intelligence
+↓
+Recruitment Intelligence
+↓
+Contract Intelligence
+↓
+Transfer Strategy Engine
+↓
+Portfolio Optimization
+↓
+Decision Support System
+```
+
+La principal decisión metodológica adoptada durante TM.3 consiste en separar explícitamente:
+
+```text
+Modelización histórica
+≠
+Inteligencia contractual operativa
+```
+
+preservando la validez científica de los modelos mientras se incrementa significativamente la utilidad práctica del DSS.
+
+La versión v1.4.0 representa la arquitectura metodológica más completa desarrollada durante el proyecto y constituye la base para futuras extensiones relacionadas con UEFA Intelligence, National Team Layer, CatBoost, TabPFN y Health Intelligence.

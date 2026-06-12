@@ -2,15 +2,15 @@
 
 ## Visión general
 
-La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centrado en modelización predictiva hacia una plataforma integral de Football Analytics orientada a scouting profesional, recruitment intelligence y soporte cuantitativo a decisiones deportivas.
+La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centrado en modelización predictiva hacia una plataforma integral de Football Analytics orientada a scouting profesional, recruitment intelligence, contract intelligence y soporte cuantitativo a decisiones deportivas.
 
 La versión actual:
 
 ```text
-v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
+v1.4.0 — Contract Intelligence Layer
 ```
 
-implementa una arquitectura multicapa capaz de transformar información deportiva y económica procedente de múltiples competiciones europeas en recomendaciones accionables para departamentos deportivos profesionales.
+implementa una arquitectura multicapa capaz de transformar información deportiva, económica y contractual procedente de múltiples competiciones europeas en recomendaciones accionables para departamentos deportivos profesionales.
 
 La evolución metodológica del sistema puede resumirse mediante:
 
@@ -26,6 +26,8 @@ Risk Assessment
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Contract Intelligence
 ↓
 Transfer Strategy Engine
 ↓
@@ -46,8 +48,10 @@ La arquitectura integra actualmente conceptos procedentes de:
 * Decision Science
 * Operations Research
 * Portfolio Optimization
+* Contract Intelligence
+* Recruitment Analytics
 
-permitiendo evolucionar desde la identificación de oportunidades individuales hacia la optimización de decisiones de fichaje bajo restricciones reales de club.
+permitiendo evolucionar desde la identificación de oportunidades individuales hacia la optimización de decisiones de fichaje bajo restricciones reales de club, incorporando además contexto contractual y poder negociador.
 
 ---
 
@@ -61,6 +65,8 @@ permitiendo evolucionar desde la identificación de oportunidades individuales h
 | Temporadas                     |      7 |
 | Combinaciones liga-temporada   |     77 |
 | Match Rate global              | 75,97% |
+| Jugadores DSS enriquecidos     |    757 |
+| Cobertura contractual DSS      | 95,90% |
 
 ---
 
@@ -79,6 +85,8 @@ La arquitectura se diseña siguiendo los siguientes principios:
 * Validez externa.
 * Generalización multi-liga.
 * Optimización bajo restricciones.
+* Integración contractual sin leakage temporal.
+* Separación entre modelización histórica y explotación DSS.
 
 ---
 
@@ -122,13 +130,15 @@ P --> Q[Player Intelligence]
 
 Q --> R[Recruitment Intelligence]
 
-R --> S[Transfer Strategy Engine]
+R --> S[Contract Intelligence]
 
-S --> T[Portfolio Optimization]
+S --> T[Transfer Strategy Engine]
 
-T --> U[Decision Support System]
+T --> U[Portfolio Optimization]
 
-U --> V[Sporting Decision]
+U --> V[Decision Support System]
+
+V --> W[Sporting Decision]
 ```
 
 ---
@@ -167,6 +177,52 @@ La arquitectura elimina así dependencias heredadas de versiones anteriores y as
 
 ---
 
+## Contribución arquitectónica de Sprint TM.3
+
+Sprint TM.3 introduce una capa explícita de inteligencia contractual entre Recruitment Intelligence y Transfer Strategy Engine.
+
+Objetivo:
+
+```text
+Recruitment Intelligence
+↓
+Contract Intelligence
+↓
+Contract-Aware Recruitment
+↓
+Decision Support System
+```
+
+Esta capa permite incorporar información contractual de Transfermarkt al universo DSS sin modificar los modelos econométricos ni los modelos de Machine Learning.
+
+La decisión arquitectónica principal consiste en mantener Contract Intelligence como una capa operativa DSS, no como una variable histórica de modelización.
+
+Justificación:
+
+* evita temporal leakage;
+* mantiene la integridad del panel histórico jugador-temporada;
+* respeta la naturaleza snapshot de los datos contractuales;
+* añade contexto negociador al proceso de recruitment;
+* mejora la utilidad ejecutiva del DSS sin alterar los modelos productivos.
+
+Resultado:
+
+```text
+DSS Universe                 → 757 jugadores
+Contract Intelligence        → 95,90% cobertura contractual
+Contract Opportunity Outputs → 3 artefactos principales
+```
+
+Outputs generados:
+
+```text
+reports/tm3_contract_intelligence/contract_intelligence_dataset.csv
+reports/tm3_contract_intelligence/top_contract_opportunities.csv
+reports/tm3_contract_intelligence/top_recruitment_contract_targets.csv
+```
+
+---
+
 # 🏛️ Capas arquitectónicas
 
 ## 1. Data Layer
@@ -186,6 +242,7 @@ Responsable de la adquisición, limpieza y preparación de datos.
 * Integración.
 * Enriquecimiento.
 * Construcción de variables.
+* Preparación de snapshots operativos para DSS.
 
 ### Componentes
 
@@ -318,6 +375,7 @@ Este resultado constituye la principal evidencia de capacidad de generalización
 
 La modelización opera actualmente sobre un universo multi-liga de once competiciones europeas y constituye la base de todas las capas posteriores del DSS.
 
+---
 
 ## 5. Opportunity Framework Layer
 
@@ -440,6 +498,10 @@ Rankings orientados a scouting y recruitment.
 
 Selección priorizada de candidatos para evaluación ejecutiva.
 
+#### Contract-Aware Rankings
+
+Rankings enriquecidos con contexto contractual y oportunidad negociadora.
+
 ---
 
 ### Sprint TM.2
@@ -463,6 +525,28 @@ Ranking Engine      → 11 ligas
 Resultado:
 
 Consistencia completa entre modelización y capa operativa.
+
+---
+
+### Sprint TM.3
+
+Sprint TM.3 amplía el Ranking Engine mediante la incorporación de rankings contractuales derivados de:
+
+* contract_opportunity_score;
+* recruitment_contract_score;
+* negotiation_leverage_score;
+* contract_status;
+* free_agent_horizon.
+
+Resultado:
+
+```text
+Opportunity Rankings
+↓
+Contract-Aware Rankings
+↓
+Recruitment Contract Targets
+```
 
 ---
 
@@ -553,7 +637,101 @@ Recruitment Decision
 
 ---
 
-## 10. Transfer Strategy Engine
+## 10. Contract Intelligence Layer
+
+Introducida durante Sprint TM.3.
+
+### Objetivo
+
+Incorporar contexto contractual al proceso de recruitment sin modificar la capa de modelización histórica.
+
+La capa permite responder a una pregunta operativa adicional:
+
+```text
+¿Qué jugadores combinan oportunidad deportiva
+y situación contractual favorable?
+```
+
+---
+
+### Fuente
+
+La información contractual procede de Transfermarkt.
+
+Variable base:
+
+```text
+contract_expiration_date
+```
+
+---
+
+### Variables derivadas
+
+* contract_months_remaining
+* contract_years_remaining
+* contract_expiring_12m
+* contract_critical_zone
+* free_agent_horizon
+* negotiation_leverage_score
+* contract_opportunity_score
+* contract_status
+
+---
+
+### Métrica principal
+
+```text
+Recruitment Contract Score
+=
+0.70 × Opportunity Score
++
+0.30 × Contract Opportunity Score
+```
+
+### Justificación
+
+El Opportunity Score mantiene el peso principal del sistema porque resume infravaloración, potencial y robustez analítica.
+
+El Contract Opportunity Score actúa como capa complementaria de contexto económico y negociador.
+
+No se incorpora Risk Score en esta métrica porque no está disponible de forma homogénea para todo el universo DSS.
+
+---
+
+### Outputs principales
+
+```text
+contract_intelligence_dataset.csv
+top_contract_opportunities.csv
+top_recruitment_contract_targets.csv
+```
+
+---
+
+### Cobertura
+
+| Métrica                    |  Valor |
+| -------------------------- | -----: |
+| Jugadores DSS enriquecidos |    757 |
+| Cobertura contractual DSS  | 95,90% |
+| Outputs TM.3               |      3 |
+
+---
+
+### Resultado
+
+La arquitectura evoluciona desde recruitment basado en oportunidad deportiva y económica hacia recruitment enriquecido por situación contractual.
+
+```text
+Recruitment Intelligence
+↓
+Contract Intelligence
+↓
+Contract-Aware Recruitment
+```
+
+## 11. Transfer Strategy Engine
 
 Introducido durante Sprint 14.
 
@@ -623,7 +801,7 @@ Combinación de talento consolidado y desarrollo futuro.
 
 ---
 
-## 11. Portfolio Optimization Layer
+## 12. Portfolio Optimization Layer
 
 Introducida durante Sprint 14.
 
@@ -670,9 +848,9 @@ Representa la principal evolución conceptual del proyecto.
 
 ---
 
-## 12. Decision Support System Layer
+## 13. Decision Support System Layer
 
-Consolidada durante Sprint 12 y ampliada durante Sprint 14 y Sprint TM.2.
+Consolidada durante Sprint 12 y ampliada durante Sprint 14, Sprint TM.2 y Sprint TM.3.
 
 ### Aplicación principal
 
@@ -693,6 +871,10 @@ Benchmarking y análisis individual.
 #### Recruitment Intelligence
 
 Comparación y selección de candidatos.
+
+#### Contract Intelligence
+
+Evaluación contractual, leverage negociador y detección de oportunidades pre-expiración.
 
 #### Transfer Strategy Engine
 
@@ -722,6 +904,10 @@ Opportunity Framework
 ↓
 Ranking Engine
 ↓
+Recruitment Intelligence
+↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Decision Support System
@@ -732,9 +918,12 @@ Cobertura:
 ```text
 11 ligas
 77 league-seasons
+
+757 jugadores DSS enriquecidos
+95.90% cobertura contractual
 ```
 
-La cobertura competitiva es ahora consistente en todas las capas del sistema.
+La cobertura competitiva y contractual es ahora consistente en todas las capas operativas del sistema.
 
 ---
 
@@ -760,6 +949,7 @@ La cobertura competitiva es ahora consistente en todas las capas del sistema.
 | Sprint 14    | Transfer Strategy Engine              |
 | Sprint 14.1  | Player Level Layer                    |
 | TM.2         | Multi-League DSS Integration          |
+| TM.3         | Contract Intelligence Layer           |
 
 ---
 
@@ -780,7 +970,8 @@ market-value-football-tfm/
 │   ├── strategy/
 │   ├── scouting_reports/
 │   ├── data_quality/
-│   └── sprint_13a1/
+│   ├── sprint_13a1/
+│   └── tm3_contract_intelligence/
 │
 ├── src/
 │   ├── data/
@@ -812,16 +1003,6 @@ Analizar el techo teórico de matching y las limitaciones estructurales de integ
 
 ## Prioridad alta
 
-### Contract Intelligence Layer
-
-Variables previstas:
-
-* años restantes de contrato;
-* expiración contractual;
-* proximidad a free agency.
-
----
-
 ### UEFA Club Strength Layer
 
 Variables previstas:
@@ -832,6 +1013,31 @@ Variables previstas:
 
 ---
 
+### CatBoost Benchmark
+
+Objetivo:
+
+```text
+Validar si existe mejora incremental
+respecto a Tuned XGBoost.
+```
+
+---
+
+### TabPFN Benchmark
+
+Objetivo:
+
+```text
+Comparar arquitecturas fundacionales
+para datos tabulares frente a enfoques
+de boosting tradicionales.
+```
+
+---
+
+## Prioridad media
+
 ### National Team Layer
 
 Variables previstas:
@@ -839,6 +1045,26 @@ Variables previstas:
 * internacionalidades;
 * minutos internacionales;
 * torneos disputados.
+
+---
+
+### European Competition Layer
+
+Variables previstas:
+
+* Champions League;
+* Europa League;
+* Conference League.
+
+---
+
+### Club Development Index
+
+Variables previstas:
+
+* capacidad histórica de desarrollo;
+* revalorización de talento;
+* generación de plusvalías deportivas.
 
 ---
 
@@ -862,6 +1088,12 @@ Variables previstas:
 * Multi-Objective Optimization.
 * Portfolio Simulation.
 
+### Health Intelligence
+
+* Historical Availability Layer.
+* Injury Prediction.
+* Medical Risk Analytics.
+
 ---
 
 # 🏁 Conclusión
@@ -878,6 +1110,8 @@ Risk Assessment
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Contract Intelligence
 ↓
 Transfer Strategy Engine
 ↓
@@ -903,7 +1137,8 @@ Sprint 14 introduce optimización bajo restricciones reales.
 
 Sprint TM.2 garantiza consistencia metodológica de extremo a extremo entre modelización y DSS.
 
-La versión productiva actual opera sobre una arquitectura completamente integrada de once ligas europeas y constituye la base funcional del Decision Support System desarrollado.
+Sprint TM.3 incorpora inteligencia contractual y contexto negociador dentro del proceso de recruitment.
 
-La versión actual constituye una arquitectura reproducible, interpretable y orientada a negocio preparada tanto para defensa académica como para evolución hacia una plataforma profesional de scouting y recruitment intelligence.
+La versión productiva actual opera sobre una arquitectura completamente integrada de once ligas europeas, 757 jugadores DSS enriquecidos y una cobertura contractual del 95.90%.
 
+La arquitectura actual constituye una plataforma reproducible, interpretable y orientada a negocio preparada tanto para defensa académica como para evolución hacia una solución profesional de Football Analytics, Recruitment Intelligence y Decision Support Systems.

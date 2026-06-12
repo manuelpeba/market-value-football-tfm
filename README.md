@@ -12,7 +12,7 @@
 ![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![Coverage](https://img.shields.io/badge/Coverage-11%20Leagues-success)
 ![Status](https://img.shields.io/badge/Status-DSS%20Operational-success)
-![Version](https://img.shields.io/badge/version-v1.2.2-blue)
+![Version](https://img.shields.io/badge/version-v1.4.0-blue)
 
 ---
 
@@ -55,6 +55,7 @@ El proyecto integra:
 * Transfer Strategy Engine.
 * Portfolio Optimization.
 * Decision Support Systems.
+* Contract Intelligence.
 
 El objetivo trasciende la simple predicción del valor de mercado de futbolistas.
 
@@ -66,6 +67,9 @@ La plataforma permite:
 * Detectar ineficiencias de mercado.
 * Identificar oportunidades de fichaje.
 * Cuantificar riesgo e incertidumbre.
+* Evaluar disponibilidad contractual.
+* Identificar oportunidades pre-expiración.
+* Incorporar poder negociador en procesos de recruitment.
 * Construir shortlists de scouting.
 * Comparar candidatos simultáneamente.
 * Optimizar carteras de fichajes.
@@ -93,6 +97,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -107,7 +113,7 @@ La principal aportación de las versiones recientes consiste en evolucionar desd
 ## Release actual
 
 ```text
-v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
+v1.4.0 — Contract Intelligence Layer
 ```
 
 Sprint completados:
@@ -119,6 +125,7 @@ Sprint 13B   — Advanced Data Expansion
 Sprint 14    — Transfer Strategy Engine
 Sprint 14.1  — Player Level Layer
 Sprint TM.2  — Scoring & Ranking Integration
+Sprint TM.3 — Contract Intelligence Layer
 ```
 
 ---
@@ -143,6 +150,9 @@ Sprint TM.2  — Scoring & Ranking Integration
 | Escenarios estratégicos              |                  3 |
 | Player Levels                        |                  5 |
 | Solver Portfolio Optimization        |               PuLP |
+| Cobertura contractual DSS            |             95.90% |
+| Jugadores DSS enriquecidos           |                757 |
+| Contract Intelligence Outputs        |                  3 |
 | Estado actual                        |      DSS Operativo |
 
 ---
@@ -159,9 +169,7 @@ RMSE = 0.8525
 MAE = 0.6834
 ```
 
-La versión productiva actual (v1.2.2) utiliza el dataset consolidado generado tras Sprint 13B y la integración DSS multi-liga de Sprint TM.2.
-
-Por este motivo, los resultados productivos actuales no son directamente comparables con los experimentos de validación externa realizados durante Sprint 13A.1.
+La versión productiva actual (v1.4.0) utiliza el dataset consolidado generado tras Sprint 13B, la integración DSS multi-liga de Sprint TM.2 y la capa Contract Intelligence incorporada en Sprint TM.3.
 
 
 ---
@@ -253,6 +261,10 @@ Sell High
 * Internationalization EN/ES.
 * Advanced Football Metrics Integration.
 * Multi-League DSS Integration (TM.2).
+* Contract Intelligence Layer.
+* Contract Opportunity Scoring.
+* Negotiation Leverage Framework.
+* Contract-Aware Recruitment Ranking.
 
 ---
 
@@ -267,6 +279,13 @@ Sell High
 * Portfolio Construction.
 * Scenario Simulation.
 * Decision Support System.
+* Contract Opportunity Detection.
+* Pre-Expiry Recruitment Targeting.
+* Negotiation Support Intelligence.
+* Contract Intelligence.
+* Negotiation Intelligence.
+* Free-Agent Opportunity Detection.
+* Contract-Aware Recruitment.
 
 ---
 
@@ -287,6 +306,8 @@ Sell High
 | v1.2.0  | Multi-League Expansion         |
 | v1.2.1  | Transfer Strategy Engine       |
 | v1.2.2  | Multi-League DSS Integration   |
+| v1.3.0  | Recruitment Intelligence & DSS |
+| v1.4.0  | Contract Intelligence Layer    |
 
 
 # 🏗️ Arquitectura global
@@ -324,6 +345,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -351,6 +374,8 @@ Risk Assessment
 Player Intelligence
 ↓
 Recruitment Intelligence
+↓
+Contract Intelligence
 ↓
 Transfer Strategy Engine
 ↓
@@ -383,11 +408,13 @@ D --> E[Player Intelligence]
 
 E --> F[Recruitment Intelligence]
 
-F --> G[Transfer Strategy Engine]
+F --> G[Contract Intelligence]
 
-G --> H[Portfolio Optimization]
+G --> H[Transfer Strategy Engine]
 
-H --> I[Decision Support System]
+H --> I[Portfolio Optimization]
+
+I --> J[Decision Support System]
 ```
 
 ---
@@ -425,6 +452,68 @@ Resultado:
 | DSS                        |  11 ligas |
 
 La cobertura competitiva queda alineada de extremo a extremo.
+
+---
+
+## Sprint TM.3 — Contract Intelligence Layer
+
+Sprint TM.3 incorpora una nueva capa de inteligencia contractual orientada a complementar la evaluación deportiva y económica de candidatos mediante información procedente de Transfermarkt.
+
+Hasta TM.2, el sistema respondía principalmente a preguntas relacionadas con valor esperado, oportunidad de mercado y encaje deportivo.
+
+TM.3 amplía la capacidad analítica incorporando contexto contractual relevante para procesos reales de negociación y recruitment.
+
+La nueva capa permite identificar:
+
+* jugadores próximos a finalizar contrato;
+* oportunidades pre-expiración;
+* potenciales agentes libres;
+* situaciones favorables de negociación.
+
+La integración se basa en información contractual disponible en Transfermarkt mediante la variable:
+
+```text
+contract_expiration_date
+```
+
+Cobertura obtenida:
+
+```text
+95.90%
+```
+
+sobre el universo DSS.
+
+Principales variables derivadas:
+
+* contract_months_remaining
+* contract_years_remaining
+* contract_expiring_12m
+* contract_critical_zone
+* free_agent_horizon
+* negotiation_leverage_score
+* contract_opportunity_score
+
+La nueva capa genera un indicador adicional:
+
+```text
+Recruitment Contract Score
+```
+
+que combina:
+
+* Opportunity Score
+* Contract Opportunity Score
+
+mediante una ponderación diseñada para mantener la señal principal de mercado mientras incorpora información contractual relevante para la toma de decisiones.
+
+Esta funcionalidad aproxima la plataforma a procesos reales de scouting y recruitment utilizados por departamentos deportivos profesionales.
+
+| Componente                 | Peso |
+| -------------------------- | ---: |
+| Opportunity Score          |  70% |
+| Contract Opportunity Score |  30% |
+
 
 ---
 
@@ -1362,6 +1451,18 @@ Permite:
 
 ---
 
+### Contract Intelligence
+
+Permite:
+
+* identificar expiraciones contractuales;
+* detectar oportunidades pre-expiración;
+* evaluar poder negociador;
+* priorizar agentes libres potenciales;
+* incorporar contexto contractual a procesos de recruitment.
+
+---
+
 ### Transfer Strategy Engine
 
 Permite:
@@ -1502,6 +1603,16 @@ de potencial, riesgo y coste?
 ¿Qué combinación de jugadores maximiza
 el valor esperado bajo restricciones reales?
 ```
+---
+
+
+## Oportunidad contractual
+
+```text
+¿Qué jugadores combinan
+oportunidad deportiva
+y situación contractual favorable?
+```
 
 ---
 
@@ -1511,7 +1622,7 @@ el valor esperado bajo restricciones reales?
 
 ```text
 Release:
-v1.2.2
+v1.4.0
 ```
 
 Estado:
@@ -1531,6 +1642,7 @@ Sprint 13B   — Advanced Data Expansion
 Sprint 14    — Transfer Strategy Engine
 Sprint 14.1  — Player Level Layer
 Sprint TM.2  — Scoring & Ranking Integration
+Sprint TM.3  — Contract Intelligence Layer
 ```
 
 ---
@@ -1572,6 +1684,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -1590,17 +1704,6 @@ Aunque la arquitectura principal puede considerarse completada, existen limitaci
 ## Matching
 
 La ausencia de identificadores universales entre FBref y Transfermarkt obliga a utilizar procesos probabilísticos de matching.
-
----
-
-## Cobertura contractual
-
-Actualmente no se incorporan variables relacionadas con:
-
-* años restantes de contrato;
-* expiración contractual;
-* cláusulas;
-* situación contractual.
 
 ---
 
@@ -1628,18 +1731,6 @@ La plataforma no incorpora todavía:
 # 🛣️ Roadmap
 
 Las siguientes líneas representan extensiones naturales del sistema.
-
----
-
-## Prioridad alta
-
-### Contract Intelligence Layer
-
-Variables previstas:
-
-* contrato restante;
-* expiración contractual;
-* free agency.
 
 ---
 
@@ -2037,5 +2128,5 @@ Market Value Dynamics and Market Inefficiency Detection in Professional Football
 Versión actual:
 
 ```text
-v1.2.2 — Transfer Strategy Engine + Multi-League DSS Integration
+v1.4.0 — Contract Intelligence Layer
 ```

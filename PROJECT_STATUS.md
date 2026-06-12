@@ -28,6 +28,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -38,13 +40,16 @@ Decision Support System
 La versión actual incorpora los resultados consolidados de:
 
 ```text
-Sprint 13A — Multi-League Expansion
+Sprint 13A   — Multi-League Expansion
 Sprint 13A.1 — Coverage Audit & External Validation
-Sprint 13B — Advanced Data Expansion
-Sprint 14 — Transfer Strategy Engine
-Sprint 14.1 — Player Level Layer
-Sprint TM.2 — Scoring & Ranking Integration
+Sprint 13B   — Advanced Data Expansion
+Sprint 14    — Transfer Strategy Engine
+Sprint 14.1  — Player Level Layer
+Sprint TM.2  — Scoring & Ranking Integration
+Sprint TM.3  — Contract Intelligence Layer
 ```
+
+---
 
 ## Sprint 13A — Multi-League Expansion
 
@@ -163,6 +168,72 @@ Como resultado, la cobertura competitiva del DSS queda alineada con la cobertura
 
 ---
 
+## Sprint TM.3 — Contract Intelligence Layer
+
+Sprint TM.3 incorpora una nueva capa de inteligencia contractual orientada a complementar la evaluación deportiva y económica de candidatos mediante información procedente de Transfermarkt.
+
+La nueva capa permite identificar:
+
+* jugadores próximos a finalizar contrato;
+* oportunidades pre-expiración;
+* potenciales agentes libres;
+* situaciones favorables de negociación.
+
+La integración contractual se basa en la variable:
+
+```text
+contract_expiration_date
+```
+
+obteniendo una cobertura final del:
+
+```text
+95.90%
+```
+
+sobre el universo DSS.
+
+Variables implementadas:
+
+* contract_months_remaining
+* contract_years_remaining
+* contract_expiring_12m
+* contract_critical_zone
+* free_agent_horizon
+* negotiation_leverage_score
+* contract_opportunity_score
+
+TM.3 incorpora además un nuevo indicador operativo:
+
+```text
+Recruitment Contract Score
+```
+
+definido como:
+
+```text
+0.70 × Opportunity Score
++
+0.30 × Contract Opportunity Score
+```
+
+La nueva capa aproxima el sistema a procesos reales de scouting, recruitment y negociación utilizados por departamentos deportivos profesionales.
+
+Outputs generados:
+
+* contract_intelligence_dataset.csv
+* top_contract_opportunities.csv
+* top_recruitment_contract_targets.csv
+
+Cobertura DSS enriquecida:
+
+```text
+757 jugadores
+95.90% cobertura contractual
+```
+
+---
+
 ## Contribución global del proyecto
 
 La versión actual representa la transición desde un sistema de valoración de mercado hacia una plataforma DSS (Decision Support System) capaz de integrar:
@@ -172,10 +243,11 @@ La versión actual representa la transición desde un sistema de valoración de 
 * evaluación de riesgo;
 * scouting cuantitativo;
 * recruitment intelligence;
+* contract intelligence;
 * optimización de carteras de fichajes;
 * simulación estratégica.
 
-La incorporación de Transfer Strategy Engine, Portfolio Optimization y la integración multi-liga completa del DSS amplían significativamente la contribución académica y profesional del proyecto.
+La incorporación de Contract Intelligence, Transfer Strategy Engine, Portfolio Optimization y la integración multi-liga completa del DSS amplían significativamente la contribución académica y profesional del proyecto.
 
 El resultado es una arquitectura reproducible, interpretable y orientada a negocio que conecta analítica deportiva avanzada con procesos reales de toma de decisiones dentro del fútbol profesional.
 
@@ -197,15 +269,16 @@ El resultado es una arquitectura reproducible, interpretable y orientada a negoc
 
 ## Cobertura operativa DSS
 
-Tras la finalización de Sprint TM.2, la cobertura competitiva de la capa DSS queda alineada con la cobertura de modelización.
+Tras la finalización de Sprint TM.3, la cobertura competitiva y contractual de la capa DSS queda alineada con la cobertura de modelización.
 
-| Componente                 | Cobertura |
-| -------------------------- | --------: |
-| Modeling Dataset           |  11 ligas |
-| Scoring Dataset            |  11 ligas |
-| Opportunity Dataset        |  11 ligas |
-| Transfer Portfolio Dataset |  11 ligas |
-| Decision Support System    |  11 ligas |
+| Componente                     | Cobertura |
+| ------------------------------ | --------: |
+| Modeling Dataset               |  11 ligas |
+| Scoring Dataset                |  11 ligas |
+| Opportunity Dataset            |  11 ligas |
+| Transfer Portfolio Dataset     |  11 ligas |
+| Decision Support System        |  11 ligas |
+| Contract Intelligence Coverage |    95.90% |
 
 Ligas soportadas:
 
@@ -225,7 +298,7 @@ Ligas soportadas:
 
 ## Modelización
 
-### Modelos oficiales (v1.2.2)
+### Modelos oficiales (v1.4.0)
 
 | Capa             | Modelo oficial     |
 | ---------------- | ------------------ |
@@ -250,12 +323,11 @@ MAE  = 0.6834
 R²   = 0.5664
 ```
 
-La versión productiva actual utiliza el dataset consolidado generado tras Sprint 13B y la integración DSS multi-liga de Sprint TM.2.
+La versión productiva actual utiliza el dataset consolidado generado tras Sprint 13B, la integración DSS multi-liga de Sprint TM.2 y la capa Contract Intelligence incorporada en Sprint TM.3.
 
 Nota metodológica:
 
 Los resultados productivos actuales y los resultados históricos de validación externa corresponden a experimentos distintos y no son directamente comparables, al utilizar datasets y configuraciones experimentales diferentes.
-
 
 ---
 
@@ -307,7 +379,6 @@ Hallazgo principal:
 
 Todas las arquitecturas evaluadas mejoran simultáneamente tras incorporar las nuevas variables avanzadas, reforzando la robustez metodológica de los resultados.
 
-
 ---
 
 ### Variable avanzada más relevante
@@ -336,10 +407,9 @@ Mejor resultado obtenido:
 
 Este experimento constituye la principal evidencia de capacidad de generalización de la metodología desarrollada y representa el mejor resultado predictivo alcanzado durante el proyecto.
 
-
 ---
 
-## Opportunity & Risk Framework
+## Opportunity, Risk & Contract Framework
 
 La plataforma incorpora una capa completa de evaluación de oportunidades de mercado basada en la comparación entre valor observado y valor esperado.
 
@@ -351,6 +421,8 @@ Componentes implementados:
 * Opportunity Score
 * Risk Score
 * Risk-adjusted Opportunity
+* Contract Opportunity Score
+* Recruitment Contract Score
 
 La capa Opportunity Framework opera actualmente sobre un universo multi-liga de 6.208 observaciones elegibles distribuidas en once competiciones europeas.
 
@@ -372,14 +444,60 @@ Funcionalidades implementadas:
 
 ---
 
+## Contract Intelligence
+
+### Estado
+
+```text
+Sprint TM.3 — COMPLETADO
+```
+
+### Cobertura
+
+```text
+95.90%
+```
+
+sobre el universo DSS.
+
+### Variables implementadas
+
+* contract_expiration_date
+* contract_months_remaining
+* contract_years_remaining
+* contract_expiring_12m
+* contract_critical_zone
+* free_agent_horizon
+* negotiation_leverage_score
+* contract_opportunity_score
+
+### Indicador operativo
+
+```text
+Recruitment Contract Score
+=
+0.70 × Opportunity Score
++
+0.30 × Contract Opportunity Score
+```
+
+### Outputs generados
+
+* contract_intelligence_dataset.csv
+* top_contract_opportunities.csv
+* top_recruitment_contract_targets.csv
+
+---
+
 ## Transfer Strategy Engine
 
 ### Estado
 
 ```text
-Sprint 14 — COMPLETADO
+Sprint 14   — COMPLETADO
 Sprint 14.1 — COMPLETADO
 Sprint TM.2 — COMPLETADO
+Sprint TM.3 — COMPLETADO
 ```
 
 ### Objetivo
@@ -469,21 +587,22 @@ La optimización se resuelve sobre un universo multi-liga de 6.208 jugadores ele
 | Precision@50  |   90% |
 | Precision@100 |   85% |
 
-Los resultados continúan respaldando la utilidad operativa del sistema para procesos de scouting, recruitment y construcción de carteras de fichajes.
+Los resultados continúan respaldando la utilidad operativa del sistema para procesos de scouting, recruitment, contract intelligence y construcción de carteras de fichajes.
 
 ---
 
 ## Estado general del proyecto
 
 ```text
-Sprint 13A — COMPLETADO
+Sprint 13A   — COMPLETADO
 Sprint 13A.1 — COMPLETADO
-Sprint 13B — COMPLETADO
-Sprint 14 — COMPLETADO
-Sprint 14.1 — COMPLETADO
-Sprint TM.2 — COMPLETADO
+Sprint 13B   — COMPLETADO
+Sprint 14    — COMPLETADO
+Sprint 14.1  — COMPLETADO
+Sprint TM.2  — COMPLETADO
+Sprint TM.3  — COMPLETADO
 
-Release v1.2.2 — ACTIVE
+Release v1.4.0 — ACTIVE
 ```
 
 ---
@@ -501,6 +620,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -508,7 +629,7 @@ Portfolio Optimization
 Decision Support System
 ```
 
-La plataforma ha evolucionado desde un sistema de valoración de mercado hacia un entorno completo de apoyo cuantitativo a decisiones deportivas capaz de integrar scouting, recruitment, evaluación de riesgo, optimización estratégica y cobertura multi-liga de extremo a extremo.
+La plataforma ha evolucionado desde un sistema de valoración de mercado hacia un entorno completo de apoyo cuantitativo a decisiones deportivas capaz de integrar scouting, recruitment, contract intelligence, evaluación de riesgo, optimización estratégica y cobertura multi-liga de extremo a extremo.
 
 # 📚 Estado CRISP-DM
 
@@ -522,6 +643,7 @@ La plataforma ha evolucionado desde un sistema de valoración de mercado hacia u
 | Deployment              | ✅ Completada |
 | DSS Integration         | ✅ Completada |
 | Transfer Strategy Layer | ✅ Completada |
+| Contract Intelligence   | ✅ Completada |
 
 El proyecto se encuentra actualmente en una fase avanzada de consolidación metodológica y evolución funcional.
 
@@ -546,10 +668,11 @@ Este objetivo ha sido alcanzado mediante:
 * Opportunity Detection.
 * Risk Assessment.
 * Recruitment Intelligence.
+* Contract Intelligence.
 * Transfer Strategy Engine.
 * Portfolio Optimization.
 
-La solución desarrollada supera el alcance inicialmente previsto al incorporar una capa explícita de apoyo a decisiones deportivas basada en optimización matemática.
+La solución desarrollada supera el alcance inicialmente previsto al incorporar capas explícitas de apoyo a decisiones deportivas, negociación contractual y optimización matemática.
 
 ---
 
@@ -612,22 +735,6 @@ La expansión permite evaluar explícitamente la capacidad de generalización de
 
 Sprint TM.2 garantiza la propagación completa de la expansión multi-liga a todas las capas operativas.
 
-Cobertura final:
-
-```text
-Modeling Layer
-↓
-Scoring Layer
-↓
-Opportunity Layer
-↓
-Ranking Engine
-↓
-Transfer Strategy Engine
-↓
-Decision Support System
-```
-
 Resultado:
 
 ```text
@@ -638,7 +745,29 @@ sin dependencias operativas heredadas de versiones anteriores.
 
 ---
 
-## 6. Transfer Strategy Engine
+## 6. Contract Intelligence Layer
+
+Sprint TM.3 incorpora una nueva dimensión de decisión basada en información contractual.
+
+Capacidades implementadas:
+
+* detección de expiraciones contractuales;
+* identificación de oportunidades pre-expiración;
+* evaluación de leverage negociador;
+* priorización de agentes libres potenciales;
+* contract-aware recruitment.
+
+Cobertura obtenida:
+
+```text
+95.90%
+```
+
+sobre el universo DSS.
+
+---
+
+## 7. Transfer Strategy Engine
 
 Implementación de una capa de optimización basada en Programación Entera Binaria.
 
@@ -659,33 +788,13 @@ Las siguientes líneas de trabajo se consideran evoluciones naturales del sistem
 
 ## Prioridad alta
 
-### Contrato restante
+### UEFA Club Strength Layer
 
-Incorporar información contractual para mejorar la estimación del valor de mercado esperado.
-
-Variables potenciales:
-
-* años restantes de contrato;
-* expiración contractual;
-* proximidad a free agency.
-
-Impacto esperado:
-
-```text
-Alto
-```
-
----
-
-### UEFA Club Coefficient
-
-Incorporar fortaleza competitiva internacional de los clubes.
-
-Variables potenciales:
+Variables previstas:
 
 * coeficiente UEFA;
-* participaciones europeas;
-* rendimiento continental.
+* rendimiento europeo;
+* experiencia continental.
 
 Impacto esperado:
 
@@ -695,9 +804,9 @@ Alto
 
 ---
 
-### CatBoost
+### CatBoost Benchmark
 
-Evaluación comparativa frente al stack actual.
+Comparación frente al stack actual.
 
 Objetivo:
 
@@ -714,7 +823,7 @@ Medio-Alto
 
 ---
 
-### TabPFN
+### TabPFN Benchmark
 
 Benchmark experimental recomendado durante el programa de máster.
 
@@ -736,11 +845,9 @@ Exploratorio
 
 ## Prioridad media
 
-### Selecciones nacionales
+### National Team Layer
 
-Incorporar experiencia internacional absoluta.
-
-Variables potenciales:
+Variables previstas:
 
 * internacionalidades;
 * minutos internacionales;
@@ -748,11 +855,9 @@ Variables potenciales:
 
 ---
 
-### Participación europea
+### European Competition Layer
 
-Medir exposición competitiva a nivel continental.
-
-Variables potenciales:
+Variables previstas:
 
 * Champions League;
 * Europa League;
@@ -762,7 +867,7 @@ Variables potenciales:
 
 ### Club Development Index
 
-Medir la capacidad histórica de desarrollo y revalorización de talento de cada club.
+Medición de la capacidad histórica de desarrollo y revalorización de talento de cada club.
 
 Impacto esperado:
 
@@ -774,11 +879,9 @@ Medio
 
 ## Prioridad baja
 
-### Disponibilidad histórica
+### Historical Availability Layer
 
-Incorporar información retrospectiva de disponibilidad deportiva.
-
-Variables potenciales:
+Variables previstas:
 
 * partidos perdidos;
 * disponibilidad histórica;
@@ -793,8 +896,6 @@ Moderado
 ---
 
 # 🔬 Líneas de investigación futuras
-
-Algunas extensiones exceden el alcance natural del proyecto actual y constituyen líneas de investigación independientes.
 
 ## Injury Prediction
 
@@ -820,7 +921,7 @@ Esta línea se considera un proyecto complementario independiente y potencialmen
 
 ```text
 Release actual:
-v1.2.2
+v1.4.0
 ```
 
 Cobertura:
@@ -830,6 +931,9 @@ Cobertura:
 77 league-seasons
 43.591 observaciones
 5.527 observaciones modelables
+
+757 jugadores DSS enriquecidos
+95.90% cobertura contractual
 ```
 
 Arquitectura:
@@ -845,6 +949,8 @@ Player Intelligence
 ↓
 Recruitment Intelligence
 ↓
+Contract Intelligence
+↓
 Transfer Strategy Engine
 ↓
 Portfolio Optimization
@@ -859,6 +965,7 @@ Arquitectura DSS completada
 Validación multi-liga completada
 Transfer Strategy Engine completado
 TM.2 completado
+TM.3 completado
 
 Mejor resultado histórico:
 R² = 0.5664 (Sprint 13A.1)
