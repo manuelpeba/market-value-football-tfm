@@ -1,0 +1,34 @@
+module,dataset_pattern,dataset,exists,modified_at_utc,n_rows,n_cols,read_error,pipeline_hint
+DSS / Market Intelligence,reports/dss/global_prospect_universe.csv,reports/dss/global_prospect_universe.csv,True,2026-06-11T11:41:16.856097+00:00,757.0,77.0,,src/dss/build_global_prospect_universe.py
+Executive Evaluation,reports/evaluation/precision_at_k.csv,reports/evaluation/precision_at_k.csv,True,2026-05-25T20:56:52.777672+00:00,4.0,4.0,,business evaluation pipeline
+Executive Evaluation,reports/business/roi_global_summary.csv,reports/business/roi_global_summary.csv,True,2026-05-25T21:06:07.719529+00:00,1.0,14.0,,src/business / ROI simulation pipeline
+Transfer Strategy,reports/strategy/transfer_portfolio_dataset.csv,reports/strategy/transfer_portfolio_dataset.csv,True,2026-06-10T18:04:26.445118+00:00,6208.0,23.0,,src/strategy/build_transfer_portfolio_dataset.py
+Transfer Strategy,reports/business/transfer_strategy_analysis.csv,reports/business/transfer_strategy_analysis.csv,True,2026-05-25T21:06:07.734451+00:00,16.0,16.0,,src/strategy / transfer strategy analysis pipeline
+Transfer Strategy,reports/business/roi_simulation.csv,reports/business/roi_simulation.csv,True,2026-05-25T21:06:07.719529+00:00,1138.0,24.0,,src/business / ROI simulation pipeline
+Transfer Strategy,reports/business/roi_scouting_shortlist.csv,reports/business/roi_scouting_shortlist.csv,True,2026-05-25T21:06:07.739647+00:00,100.0,24.0,,src/business / ROI simulation pipeline
+Transfer Strategy,reports/business/roi_scouting_shortlist_summary.csv,reports/business/roi_scouting_shortlist_summary.csv,True,2026-05-25T21:06:07.739647+00:00,1.0,14.0,,src/business / ROI simulation pipeline
+Contract Intelligence,reports/tm3_contract_intelligence/*.csv,reports/tm3_contract_intelligence/contract_intelligence_dataset.csv,True,2026-06-12T00:20:45.517965+00:00,757.0,90.0,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/tm3_contract_intelligence/*.csv,reports/tm3_contract_intelligence/contract_status_distribution.csv,True,2026-06-12T00:04:26.458711+00:00,6.0,2.0,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/tm3_contract_intelligence/*.csv,reports/tm3_contract_intelligence/top_contract_opportunities.csv,True,2026-06-12T00:20:45.527969+00:00,25.0,90.0,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/tm3_contract_intelligence/*.csv,reports/tm3_contract_intelligence/top_recruitment_contract_targets.csv,True,2026-06-12T00:20:45.537046+00:00,25.0,90.0,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/contract_intelligence/*.csv,,False,,,,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/dss/*contract*.csv,,False,,,,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/strategy/*contract*.csv,,False,,,,,TM.3 contract intelligence pipeline
+Contract Intelligence,reports/dss/global_prospect_universe.csv,reports/dss/global_prospect_universe.csv,True,2026-06-11T11:41:16.856097+00:00,757.0,77.0,,src/dss/build_global_prospect_universe.py
+Contract Intelligence,reports/strategy/transfer_portfolio_dataset.csv,reports/strategy/transfer_portfolio_dataset.csv,True,2026-06-10T18:04:26.445118+00:00,6208.0,23.0,,src/strategy/build_transfer_portfolio_dataset.py
+Player Profile / Football Lookup,data/processed/player_season_panel.parquet,data/processed/player_season_panel.parquet,True,2026-06-02T13:45:52.229927+00:00,27547.0,52.0,,src/data/build_player_season_panel.py
+Player Profile / Football Lookup,data/processed/player_season_modeling.parquet,data/processed/player_season_modeling.parquet,True,2026-06-07T23:03:47.167721+00:00,3916.0,54.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Player Profile / Football Lookup,data/processed/player_season_modeling_advanced.parquet,data/processed/player_season_modeling_advanced.parquet,True,2026-06-02T14:06:33.215408+00:00,3916.0,59.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Player Profile / Football Lookup,data/processed/player_season_modeling_growth.parquet,data/processed/player_season_modeling_growth.parquet,True,2026-06-02T14:06:39.315262+00:00,3916.0,64.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Player Profile / Football Lookup,data/processed/player_season_modeling_indices.parquet,data/processed/player_season_modeling_indices.parquet,True,2026-06-02T14:06:45.108817+00:00,3916.0,74.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Player Profile / Football Lookup,data/processed/player_season_panel_v13a.parquet,data/processed/player_season_panel_v13a.parquet,True,2026-06-07T16:25:45.558909+00:00,43591.0,52.0,,src/data/build_player_season_panel.py
+Player Profile / Football Lookup,data/processed/player_season_modeling_v13b_productive_candidate.parquet,data/processed/player_season_modeling_v13b_productive_candidate.parquet,True,2026-06-08T23:44:52.533622+00:00,5527.0,78.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Modeling,data/processed/player_season_modeling_v13b_productive_candidate.parquet,data/processed/player_season_modeling_v13b_productive_candidate.parquet,True,2026-06-08T23:44:52.533622+00:00,5527.0,78.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Modeling,data/processed/player_season_modeling_v13b_advanced.parquet,data/processed/player_season_modeling_v13b_advanced.parquet,True,2026-06-08T22:31:41.600647+00:00,5527.0,78.0,,src/features/build_modeling_dataset.py / advanced feature pipeline
+Streamlit explicit load,reports/dss/global_prospect_universe.csv,reports/dss/global_prospect_universe.csv,True,2026-06-11T11:41:16.856097+00:00,757.0,77.0,,streamlit_app.py line 11933
+Streamlit explicit load,reports/evaluation/precision_at_k.csv,reports/evaluation/precision_at_k.csv,True,2026-05-25T20:56:52.777672+00:00,4.0,4.0,,streamlit_app.py line 11935
+Streamlit explicit load,reports/business/roi_global_summary.csv,reports/business/roi_global_summary.csv,True,2026-05-25T21:06:07.719529+00:00,1.0,14.0,,streamlit_app.py line 11936
+Streamlit explicit load,contract_intelligence_dataset.csv,contract_intelligence_dataset.csv,False,,,,,streamlit_app.py line 11937
+Streamlit explicit load,reports/dss/global_prospect_universe.csv,reports/dss/global_prospect_universe.csv,True,2026-06-11T11:41:16.856097+00:00,757.0,77.0,,streamlit_app.py line 9642
+Streamlit explicit load,reports/evaluation/precision_at_k.csv,reports/evaluation/precision_at_k.csv,True,2026-05-25T20:56:52.777672+00:00,4.0,4.0,,streamlit_app.py line 9644
+Streamlit explicit load,reports/business/roi_global_summary.csv,reports/business/roi_global_summary.csv,True,2026-05-25T21:06:07.719529+00:00,1.0,14.0,,streamlit_app.py line 9645

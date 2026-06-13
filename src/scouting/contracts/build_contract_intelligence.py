@@ -29,13 +29,8 @@ def normalize_text(value):
         return ""
 
     value = str(value).lower().strip()
-
     value = unicodedata.normalize("NFKD", value)
-    value = "".join(
-        c for c in value
-        if not unicodedata.combining(c)
-    )
-
+    value = "".join(c for c in value if not unicodedata.combining(c))
     value = re.sub(r"[^a-z0-9 ]", " ", value)
     value = re.sub(r"\s+", " ", value)
 
@@ -43,7 +38,6 @@ def normalize_text(value):
 
 
 def contract_status(score):
-
     if pd.isna(score):
         return "Contract Unknown"
 
@@ -62,100 +56,147 @@ def contract_status(score):
     return "Long-Term Locked Asset"
 
 
-def main():
+def select_latest_contract_rows(contracts: pd.DataFrame) -> pd.DataFrame:
+    contracts = contracts.copy()
 
-    OUTPUT_DIR.mkdir(
-        parents=True,
-        exist_ok=True
+    required_cols = [
+        "name_key",
+        "contract_expiration_date",
+        "current_club_name",
+        "market_value_in_eur",
+    ]
+
+    missing_cols = [c for c in required_cols if c not in contracts.columns]
+    if missing_cols:
+        raise ValueError(
+            f"Missing required contract source columns: {missing_cols}"
+        )
+
+    contracts["contract_expiration_date"] = pd.to_datetime(
+        contracts["contract_expiration_date"],
+        errors="coerce",
     )
 
-    dss = pd.read_csv(DSS_PATH)
-
-    contracts = pd.read_csv(CONTRACTS_PATH)
-
-    dss["name_key"] = (
-        dss["player_name_fbref"]
-        .map(normalize_text)
+    contracts["market_value_in_eur"] = pd.to_numeric(
+        contracts["market_value_in_eur"],
+        errors="coerce",
     )
 
-    contracts["name_key"] = (
-        contracts["name"]
-        .map(normalize_text)
-    )
+    candidate_sort_cols = [
+        "name_key",
+        "contract_expiration_date",
+        "updated_at",
+        "last_updated",
+        "date",
+        "valuation_date",
+        "market_value_date",
+        "value_update_date",
+        "season",
+        "last_season",
+        "market_value_in_eur",
+    ]
+
+    sort_cols = [
+        c for c in candidate_sort_cols
+        if c in contracts.columns
+    ]
+
+    ascending = [
+        True if c == "name_key" else False
+        for c in sort_cols
+    ]
+
+    for c in sort_cols:
+        if c not in ["name_key", "season", "last_season", "market_value_in_eur"]:
+            contracts[c] = pd.to_datetime(
+                contracts[c],
+                errors="coerce",
+            )
 
     contracts_small = (
-        contracts[
-            [
-                "name_key",
-                "contract_expiration_date",
-                "current_club_name",
-                "market_value_in_eur",
-            ]
-        ]
-        .drop_duplicates("name_key")
+        contracts
+        .sort_values(
+            sort_cols,
+            ascending=ascending,
+            na_position="last",
+        )
+        .drop_duplicates("name_key", keep="first")
+        [required_cols]
     )
+
+    return contracts_small
+
+
+def main():
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    if not DSS_PATH.exists():
+        raise FileNotFoundError(f"DSS dataset not found: {DSS_PATH}")
+
+    if not CONTRACTS_PATH.exists():
+        raise FileNotFoundError(f"Contract source not found: {CONTRACTS_PATH}")
+
+    dss = pd.read_csv(DSS_PATH)
+    contracts = pd.read_csv(CONTRACTS_PATH)
+
+    if "player_name_fbref" not in dss.columns:
+        raise ValueError("DSS dataset must contain player_name_fbref")
+
+    if "name" not in contracts.columns:
+        raise ValueError("Transfermarkt players.csv must contain name")
+
+    dss["name_key"] = dss["player_name_fbref"].map(normalize_text)
+    contracts["name_key"] = contracts["name"].map(normalize_text)
+
+    contracts_small = select_latest_contract_rows(contracts)
 
     df = dss.merge(
         contracts_small,
         on="name_key",
-        how="left"
+        how="left",
     )
 
     df["contract_expiration_date"] = pd.to_datetime(
         df["contract_expiration_date"],
-        errors="coerce"
+        errors="coerce",
     )
 
     active_contract = (
         df["contract_expiration_date"].notna()
-        &
-        (df["contract_expiration_date"] >= SNAPSHOT_DATE)
+        & (df["contract_expiration_date"] >= SNAPSHOT_DATE)
     )
 
     months_remaining = (
-        (
-            df["contract_expiration_date"]
-            - SNAPSHOT_DATE
-        ).dt.days
-        / 30.44
+        (df["contract_expiration_date"] - SNAPSHOT_DATE).dt.days / 30.44
     )
 
     df["contract_months_remaining"] = (
-        months_remaining
-        .clip(lower=0)
-        .round(1)
+        months_remaining.clip(lower=0).round(1)
     )
 
     df["contract_years_remaining"] = (
-        df["contract_months_remaining"]
-        / 12
+        df["contract_months_remaining"] / 12
     ).round(2)
 
     df["contract_expiring_12m"] = (
         active_contract
-        &
-        (df["contract_months_remaining"] <= 12)
+        & (df["contract_months_remaining"] <= 12)
     ).astype(int)
 
     df["contract_critical_zone"] = (
         active_contract
-        &
-        (df["contract_months_remaining"] <= 6)
+        & (df["contract_months_remaining"] <= 6)
     ).astype(int)
 
     df["free_agent_horizon"] = (
         active_contract
-        &
-        (df["contract_months_remaining"] <= 18)
+        & (df["contract_months_remaining"] <= 18)
     ).astype(int)
 
     df["negotiation_leverage_score"] = np.where(
         active_contract,
-        100 * (
-            1
-            - df["contract_months_remaining"] / 60
-        ),
-        np.nan
+        100 * (1 - df["contract_months_remaining"] / 60),
+        np.nan,
     )
 
     df["negotiation_leverage_score"] = (
@@ -167,16 +208,11 @@ def main():
     df["contract_opportunity_score"] = np.where(
         active_contract,
         (
-            0.70
-            * df["negotiation_leverage_score"]
-            +
-            20
-            * df["free_agent_horizon"]
-            +
-            10
-            * df["contract_critical_zone"]
+            0.70 * df["negotiation_leverage_score"]
+            + 20 * df["free_agent_horizon"]
+            + 10 * df["contract_critical_zone"]
         ),
-        np.nan
+        np.nan,
     )
 
     df["contract_opportunity_score"] = (
@@ -192,102 +228,60 @@ def main():
 
     df["recruitment_contract_score"] = (
         0.70 * df["opportunity_score"]
-        +
-        0.30 * df["contract_opportunity_score"]
+        + 0.30 * df["contract_opportunity_score"]
     ).round(2)
 
-    dataset_path = (
-        OUTPUT_DIR
-        / "contract_intelligence_dataset.csv"
-    )
+    dataset_path = OUTPUT_DIR / "contract_intelligence_dataset.csv"
 
-    df.to_csv(
-        dataset_path,
-        index=False
-    )
+    df.to_csv(dataset_path, index=False)
 
     top_contract = (
-        df[
-            df["contract_opportunity_score"]
-            .notna()
-        ]
-        .sort_values(
-            "contract_opportunity_score",
-            ascending=False
-        )
+        df[df["contract_opportunity_score"].notna()]
+        .sort_values("contract_opportunity_score", ascending=False)
         .head(25)
     )
 
     top_contract.to_csv(
-        OUTPUT_DIR
-        / "top_contract_opportunities.csv",
-        index=False
+        OUTPUT_DIR / "top_contract_opportunities.csv",
+        index=False,
     )
 
     top_targets = (
-        df[
-            df["recruitment_contract_score"]
-            .notna()
-        ]
-        .sort_values(
-            "recruitment_contract_score",
-            ascending=False
-        )
+        df[df["recruitment_contract_score"].notna()]
+        .sort_values("recruitment_contract_score", ascending=False)
         .head(25)
     )
 
     top_targets.to_csv(
-        OUTPUT_DIR
-        / "top_recruitment_contract_targets.csv",
-        index=False
+        OUTPUT_DIR / "top_recruitment_contract_targets.csv",
+        index=False,
     )
 
-    coverage = (
-        df["contract_expiration_date"]
-        .notna()
-        .mean()
-        * 100
+    status_distribution = (
+        df["contract_status"]
+        .value_counts(dropna=False)
+        .reset_index()
     )
 
-    print()
-    print("TM.3 DSS Contract Intelligence")
-    print()
+    status_distribution.columns = [
+        "contract_status",
+        "players",
+    ]
 
-    print(
-        f"DSS players: {len(df):,}"
+    status_distribution.to_csv(
+        OUTPUT_DIR / "contract_status_distribution.csv",
+        index=False,
     )
 
-    print(
-        f"Contract coverage: {coverage:.2f}%"
-    )
+    coverage = df["contract_expiration_date"].notna().mean() * 100
 
-    print(
-        f"Top contract opportunities: {len(top_contract)}"
-    )
-
-    print(
-        f"Top recruitment targets: {len(top_targets)}"
-    )
-
-    print()
-    print(
-        "Outputs:"
-    )
-
-    print(
-        OUTPUT_DIR
-        / "contract_intelligence_dataset.csv"
-    )
-
-    print(
-        OUTPUT_DIR
-        / "top_contract_opportunities.csv"
-    )
-
-    print(
-        OUTPUT_DIR
-        / "top_recruitment_contract_targets.csv"
-    )
+    print("TM.3 Contract Intelligence completed")
+    print(f"Output directory: {OUTPUT_DIR}")
+    print(f"Dataset: {dataset_path}")
+    print(f"Rows: {len(df)}")
+    print(f"Columns: {len(df.columns)}")
+    print(f"Contract coverage: {coverage:.2f}%")
+    print(f"Snapshot date: {SNAPSHOT_DATE.date()}")
 
 
 if __name__ == "__main__":
