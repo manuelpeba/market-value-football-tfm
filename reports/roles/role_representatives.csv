@@ -1,0 +1,181 @@
+role_subgroup,archetype_id,role_name,rank,player,team,league,season,minutes,primary_role_similarity,role_confidence,secondary_role
+ATT_CF,0,Creator Forward,1,Gianluca Scamacca,Atalanta,ITA-Serie A,2324,1453,79.8,10.8,Mobile Forward
+ATT_CF,0,Creator Forward,2,Stephan El Shaarawy,Roma,ITA-Serie A,2122,1055,79.7,14.4,Mobile Forward
+ATT_CF,0,Creator Forward,3,Anthony Limbombe,Nantes,FRA-Ligue 1,1819,1237,79.1,4.6,Mobile Forward
+ATT_CF,0,Creator Forward,4,Jacob Murphy,Newcastle Utd,ENG-Premier League,2324,1189,78.5,9.8,Creator Forward
+ATT_CF,0,Creator Forward,5,Hirving Lozano,Napoli,ITA-Serie A,2223,1605,77.8,12.0,Box Finisher
+ATT_CF,0,Creator Forward,6,Mykhailo Mudryk,Chelsea,ENG-Premier League,2324,1576,77.6,7.3,Mobile Forward
+ATT_CF,0,Creator Forward,7,Andy Delort,Montpellier,FRA-Ligue 1,2021,2482,76.8,3.5,Creator Forward
+ATT_CF,0,Creator Forward,8,Roberto Firmino,Liverpool,ENG-Premier League,2122,990,75.9,6.4,Box Finisher
+ATT_CF,0,Creator Forward,9,Harry Kane,Tottenham,ENG-Premier League,2021,3082,74.9,7.5,Creator Forward
+ATT_CF,0,Creator Forward,10,François Kamano,Bordeaux,FRA-Ligue 1,1718,2014,74.7,4.4,Mobile Forward
+ATT_CF,0,Creator Forward,11,Victor Boniface,Leverkusen,GER-Bundesliga,2324,1546,74.7,9.7,Box Finisher
+ATT_CF,0,Creator Forward,12,Sheraldo Becker,Union Berlin,GER-Bundesliga,2223,2554,74.4,10.2,Creator Forward
+ATT_CF,0,Creator Forward,13,Wilfried Zaha,Crystal Palace,ENG-Premier League,2122,2760,74.0,6.9,Creator Forward
+ATT_CF,0,Creator Forward,14,Matteo Politano,Napoli,ITA-Serie A,2122,1650,72.6,2.3,Creator Forward
+ATT_CF,0,Creator Forward,15,Jadon Sancho,Chelsea,ENG-Premier League,2425,1764,72.5,8.2,Box Finisher
+ATT_CF,0,Creator Forward,16,Dodi Lukebakio,Sevilla,ESP-La Liga,2425,3092,72.3,8.8,Creator Forward
+ATT_CF,0,Creator Forward,17,Marcus Rashford,Manchester Utd,ENG-Premier League,2324,2271,72.1,0.6,Creator Forward
+ATT_CF,0,Creator Forward,18,Diogo Jota,Liverpool,ENG-Premier League,2021,1112,71.6,7.2,Mobile Forward
+ATT_CF,0,Creator Forward,19,Duván Zapata,Atalanta,ITA-Serie A,1920,2026,71.6,1.6,Box Finisher
+ATT_CF,0,Creator Forward,20,Ferrán Torres,Barcelona,ESP-La Liga,2324,1211,70.8,8.0,Creator Forward
+ATT_CF,1,Mobile Forward,1,Jim Allevinah,Clermont Foot,FRA-Ligue 1,2122,1488,81.6,11.3,Creator Forward
+ATT_CF,1,Mobile Forward,2,Ridle Baku,Wolfsburg,GER-Bundesliga,2021,2678,78.3,11.7,Creator Forward
+ATT_CF,1,Mobile Forward,3,Sergi Canós,Brentford,ENG-Premier League,2122,2083,77.6,18.7,Mobile Forward
+ATT_CF,1,Mobile Forward,4,Mitchel Bakker,Lille,FRA-Ligue 1,2425,1139,75.8,1.3,Mobile Forward
+ATT_CF,1,Mobile Forward,5,Tim Skarke,Darmstadt 98,GER-Bundesliga,2324,2404,75.8,16.3,Creator Forward
+ATT_CF,1,Mobile Forward,6,Caiuby,Augsburg,GER-Bundesliga,1718,2855,75.4,6.7,Mobile Forward
+ATT_CF,1,Mobile Forward,7,Miguel Almirón,Newcastle Utd,ENG-Premier League,2324,1937,74.4,4.5,Mobile Forward
+ATT_CF,1,Mobile Forward,8,Pavel Kadeřábek,Hoffenheim,GER-Bundesliga,1718,2199,72.9,12.7,Mobile Forward
+ATT_CF,1,Mobile Forward,9,Pavel Kadeřábek,Hoffenheim,GER-Bundesliga,1920,2474,72.7,4.4,Mobile Forward
+ATT_CF,1,Mobile Forward,10,Sergi Guardiola,Valladolid,ESP-La Liga,2021,1795,71.5,5.7,Creator Forward
+ATT_CF,1,Mobile Forward,11,Farid El Melali,Angers,FRA-Ligue 1,2425,1893,71.5,11.2,Creator Forward
+ATT_CF,1,Mobile Forward,12,Joelinton,Newcastle Utd,ENG-Premier League,1920,2683,71.3,3.9,Box Finisher
+ATT_CF,1,Mobile Forward,13,Rasmus Carstensen,Köln,GER-Bundesliga,2324,1659,71.2,17.5,Mobile Forward
+ATT_CF,1,Mobile Forward,14,Luiz Henrique,Betis,ESP-La Liga,2223,1807,71.0,9.2,Creator Forward
+ATT_CF,1,Mobile Forward,15,Iñaki Williams,Athletic Club,ESP-La Liga,1920,2939,70.1,4.2,Creator Forward
+ATT_CF,1,Mobile Forward,16,Hidde ter Avest,Udinese,ITA-Serie A,1819,973,69.8,9.2,Mobile Forward
+ATT_CF,1,Mobile Forward,17,Alan Virginius,Clermont Foot,FRA-Ligue 1,2324,934,69.4,6.7,Creator Forward
+ATT_CF,1,Mobile Forward,18,Nordi Mukiele,RB Leipzig,GER-Bundesliga,1920,1783,68.7,13.1,Creator Forward
+ATT_CF,1,Mobile Forward,19,Adrián López,Osasuna,ESP-La Liga,1920,1443,68.3,1.9,Box Finisher
+ATT_CF,1,Mobile Forward,20,Mirco Antenucci,SPAL,ITA-Serie A,1819,2133,68.3,4.6,Box Finisher
+ATT_CF,2,Box Finisher,1,Ihlas Bebou,Hoffenheim,GER-Bundesliga,2223,1416,84.1,17.0,Creator Forward
+ATT_CF,2,Box Finisher,2,Arkadiusz Milik,Napoli,ITA-Serie A,1819,2396,83.5,18.0,Creator Forward
+ATT_CF,2,Box Finisher,3,Mariusz Stępiński,Chievo,ITA-Serie A,1819,2476,82.8,16.8,Mobile Forward
+ATT_CF,2,Box Finisher,4,Mama Samba Baldé,Troyes,FRA-Ligue 1,2223,2665,81.5,17.5,Creator Forward
+ATT_CF,2,Box Finisher,5,Odsonne Édouard,Crystal Palace,ENG-Premier League,2122,1564,80.5,15.3,Creator Forward
+ATT_CF,2,Box Finisher,6,Gianluca Scamacca,West Ham,ENG-Premier League,2223,926,79.6,17.2,Creator Forward
+ATT_CF,2,Box Finisher,7,Martin Satriano,Brest,FRA-Ligue 1,2324,1864,79.5,13.0,Creator Forward
+ATT_CF,2,Box Finisher,8,Jonathan Calleri,Las Palmas,ESP-La Liga,1718,3109,79.3,9.1,Creator Forward
+ATT_CF,2,Box Finisher,9,Serhou Guirassy,Amiens,FRA-Ligue 1,1920,1921,79.3,14.5,Creator Forward
+ATT_CF,2,Box Finisher,10,Gaëtan Laborde,Nice,FRA-Ligue 1,2223,2506,79.1,3.5,Creator Forward
+ATT_CF,2,Box Finisher,11,Nikola Krstović,Lecce,ITA-Serie A,2324,2373,79.1,16.8,Creator Forward
+ATT_CF,2,Box Finisher,12,Wesley Saïd,Lens,FRA-Ligue 1,2425,905,78.7,20.9,Creator Forward
+ATT_CF,2,Box Finisher,13,Gerard Moreno,Villarreal,ESP-La Liga,1819,2315,78.2,9.1,Creator Forward
+ATT_CF,2,Box Finisher,14,Beto,Everton,ENG-Premier League,2324,951,77.8,14.4,Creator Forward
+ATT_CF,2,Box Finisher,15,Jonas Wind,Wolfsburg,GER-Bundesliga,2324,2651,77.7,21.6,Mobile Forward
+ATT_CF,2,Box Finisher,16,Neal Maupay,Marseille,FRA-Ligue 1,2425,1042,77.6,22.2,Creator Forward
+ATT_CF,2,Box Finisher,17,Gaëtan Laborde,Bordeaux,FRA-Ligue 1,1718,957,77.2,12.3,Creator Forward
+ATT_CF,2,Box Finisher,18,Taiwo Awoniyi,Nott'ham Forest,ENG-Premier League,2324,1042,77.0,17.8,Creator Forward
+ATT_CF,2,Box Finisher,19,Cédric Bakambu,Villarreal,ESP-La Liga,1718,1263,76.7,21.6,Creator Forward
+ATT_CF,2,Box Finisher,20,Borja Mayoral,Roma,ITA-Serie A,2021,1551,76.7,18.7,Creator Forward
+DEF_CB,0,Ball-Playing Centre-Back,1,Kalidou Koulibaly,Napoli,ITA-Serie A,1819,3132,85.9,25.2,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,2,Carlos Augusto,Inter,ITA-Serie A,2425,1691,80.1,11.0,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,3,Rob Holding,Arsenal,ENG-Premier League,2021,2558,79.9,15.8,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,4,Dominique Heintz,Freiburg,GER-Bundesliga,2021,1369,79.4,16.3,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,5,Marin Pongračić,Lecce,ITA-Serie A,2324,3219,78.7,15.6,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,6,Jean-Charles Castelletto,Nantes,FRA-Ligue 1,2324,2464,77.4,9.7,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,7,Sead Kolašinac,Arsenal,ENG-Premier League,1920,1701,77.2,8.9,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,8,Mattia De Sciglio,Lyon,FRA-Ligue 1,2021,1467,76.5,6.6,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,9,Emerson Palmieri,Lyon,FRA-Ligue 1,2122,2264,76.0,12.0,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,10,Danilo D'Ambrosio,Inter,ITA-Serie A,1920,1402,75.7,8.4,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,11,Jakub Kiwior,Arsenal,ENG-Premier League,2324,946,75.6,4.5,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,12,Edmond Tapsoba,Leverkusen,GER-Bundesliga,2223,2871,75.6,7.9,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,13,Hans Hateboer,Rennes,FRA-Ligue 1,2425,1684,74.9,5.6,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,14,César Azpilicueta,Chelsea,ENG-Premier League,1718,3330,74.8,12.8,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,15,Emmanuel Agbadou,Reims,FRA-Ligue 1,2425,1260,74.5,6.3,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,16,Lilian Brassier,Brest,FRA-Ligue 1,2324,2677,73.9,9.7,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,17,Willi Orban,RB Leipzig,GER-Bundesliga,2223,2951,73.1,16.9,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,18,Lucas Perrin,Strasbourg,FRA-Ligue 1,2324,2723,72.7,12.5,Aerial Defender
+DEF_CB,0,Ball-Playing Centre-Back,19,Ricardo Rodríguez,Torino,ITA-Serie A,2324,2772,72.5,10.4,Ball-Playing Centre-Back
+DEF_CB,0,Ball-Playing Centre-Back,20,Lorenzo Venuti,Fiorentina,ITA-Serie A,2122,1571,71.9,20.9,Aerial Defender
+DEF_CB,1,Aggressive Defender,1,Pasquale Mazzocchi,Salernitana,ITA-Serie A,2223,1958,80.6,41.2,Aerial Defender
+DEF_CB,1,Aggressive Defender,2,Toño,Levante,ESP-La Liga,1920,1589,80.5,40.8,Aerial Defender
+DEF_CB,1,Aggressive Defender,3,Jonathan Schmid,Augsburg,GER-Bundesliga,1819,2520,79.4,29.7,Aerial Defender
+DEF_CB,1,Aggressive Defender,4,Bakaye Dibassy,Amiens,FRA-Ligue 1,1819,2942,79.2,40.7,Aerial Defender
+DEF_CB,1,Aggressive Defender,5,Neto Borges,Clermont Foot,FRA-Ligue 1,2324,2516,79.1,38.6,Aerial Defender
+DEF_CB,1,Aggressive Defender,6,Patrick van Aanholt,Crystal Palace,ENG-Premier League,1920,2507,79.0,39.8,Aerial Defender
+DEF_CB,1,Aggressive Defender,7,Abdu Conté,Troyes,FRA-Ligue 1,2122,1347,77.2,39.1,Aerial Defender
+DEF_CB,1,Aggressive Defender,8,Charlie Taylor,Burnley,ENG-Premier League,2324,2331,76.9,32.9,Aerial Defender
+DEF_CB,1,Aggressive Defender,9,Óscar Mingueza,Celta Vigo,ESP-La Liga,2223,1284,76.6,32.9,Aerial Defender
+DEF_CB,1,Aggressive Defender,10,Ricardo Pereira,Leicester City,ENG-Premier League,2122,991,76.3,26.4,Aerial Defender
+DEF_CB,1,Aggressive Defender,11,Giovanni González,Mallorca,ESP-La Liga,2223,926,76.1,31.4,Aerial Defender
+DEF_CB,1,Aggressive Defender,12,Denzel Dumfries,Inter,ITA-Serie A,2223,2218,75.9,34.8,Aerial Defender
+DEF_CB,1,Aggressive Defender,13,Antonio Candela,Venezia,ITA-Serie A,2425,1008,75.7,34.7,Aerial Defender
+DEF_CB,1,Aggressive Defender,14,Carlos Neva,Granada,ESP-La Liga,2324,3146,75.6,41.7,Aerial Defender
+DEF_CB,1,Aggressive Defender,15,Ola Aina,Fulham,ENG-Premier League,2021,2664,75.6,35.7,Aerial Defender
+DEF_CB,1,Aggressive Defender,16,Pierre-Yves Polomat,Saint-Étienne,FRA-Ligue 1,1819,950,75.2,31.0,Aerial Defender
+DEF_CB,1,Aggressive Defender,17,Ashley Young,Manchester Utd,ENG-Premier League,1718,2442,75.0,31.8,Aerial Defender
+DEF_CB,1,Aggressive Defender,18,Kelvin Amian,Nantes,FRA-Ligue 1,2425,2165,75.0,23.3,Aerial Defender
+DEF_CB,1,Aggressive Defender,19,Luca Pellegrini,Juventus,ITA-Serie A,2122,1107,74.9,25.2,Aerial Defender
+DEF_CB,1,Aggressive Defender,20,Arthur Masuaku,West Ham,ENG-Premier League,1920,937,74.8,35.2,Aerial Defender
+DEF_CB,2,Aerial Defender,1,Cédric Yamberé,Dijon,FRA-Ligue 1,1718,2829,81.3,20.0,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,2,Lisandro Magallán,Crotone,ITA-Serie A,2021,2181,78.3,14.2,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,3,Ervin Zukanović,Genoa,ITA-Serie A,1718,2873,77.5,4.8,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,4,Bram Nuytinck,Udinese,ITA-Serie A,1718,2362,77.1,10.6,Aerial Defender
+DEF_CB,2,Aerial Defender,5,Pedro Mendes,Montpellier,FRA-Ligue 1,1718,2855,76.2,11.4,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,6,Matthias Ginter,Freiburg,GER-Bundesliga,2223,3060,76.2,6.1,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,7,Kurt Zouma,West Ham,ENG-Premier League,2324,2838,75.9,15.4,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,8,Lewis Dunk,Brighton,ENG-Premier League,1920,3230,75.2,11.7,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,9,Srđan Babić,Almería,ESP-La Liga,2223,2998,75.2,10.0,Aerial Defender
+DEF_CB,2,Aerial Defender,10,Manuel Gulde,Freiburg,GER-Bundesliga,2021,1954,74.9,5.7,Aerial Defender
+DEF_CB,2,Aerial Defender,11,Domingos Duarte,Granada,ESP-La Liga,1920,3087,74.1,21.0,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,12,Romain Saïss,Wolves,ENG-Premier League,1920,2705,73.9,20.9,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,13,Edgar Ié,Lille,FRA-Ligue 1,1718,3146,73.9,19.2,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,14,Juan Foyth,Villarreal,ESP-La Liga,2425,1517,73.2,9.7,Aerial Defender
+DEF_CB,2,Aerial Defender,15,Fabian Schär,La Coruña,ESP-La Liga,1718,2219,72.9,7.4,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,16,José Luis Palomino,Atalanta,ITA-Serie A,1718,1979,72.8,7.2,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,17,Maxime Le Marchand,Fulham,ENG-Premier League,1819,2250,72.6,15.2,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,18,Benedikt Gimber,Heidenheim,GER-Bundesliga,2324,2021,72.6,10.6,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,19,Scott McKenna,Nott'ham Forest,ENG-Premier League,2223,1571,72.6,22.1,Ball-Playing Centre-Back
+DEF_CB,2,Aerial Defender,20,Ozan Kabak,Hoffenheim,GER-Bundesliga,2324,2282,72.5,10.6,Ball-Playing Centre-Back
+MID,0,Attacking Progressor,1,Hector Bellerin,Arsenal,ENG-Premier League,2021,2089,86.5,22.4,Creative Playmaker
+MID,0,Attacking Progressor,2,Lucas Moura,Tottenham,ENG-Premier League,2021,1411,85.8,24.8,Creative Playmaker
+MID,0,Attacking Progressor,3,Emi Buendía,Aston Villa,ENG-Premier League,2223,2412,85.6,24.8,Creative Playmaker
+MID,0,Attacking Progressor,4,Aron Dønnum,Toulouse,FRA-Ligue 1,2425,2689,85.4,27.2,Creative Playmaker
+MID,0,Attacking Progressor,5,Marius Wolf,Eint Frankfurt,GER-Bundesliga,1718,2363,84.6,24.0,Creative Playmaker
+MID,0,Attacking Progressor,6,Ruben Loftus-Cheek,Chelsea,ENG-Premier League,2223,1536,83.2,17.1,Creative Playmaker
+MID,0,Attacking Progressor,7,Matheus Cunha,Wolves,ENG-Premier League,2324,2440,83.1,27.8,Creative Playmaker
+MID,0,Attacking Progressor,8,Yukinari Sugawara,Southampton,ENG-Premier League,2425,1557,82.9,26.8,Creative Playmaker
+MID,0,Attacking Progressor,9,Kevin Sessa,Heidenheim,GER-Bundesliga,2324,1011,82.7,26.3,Creative Playmaker
+MID,0,Attacking Progressor,10,Sergej Milinković-Savić,Lazio,ITA-Serie A,2223,3022,82.5,20.7,Creative Playmaker
+MID,0,Attacking Progressor,11,Nikola Vlašić,Torino,ITA-Serie A,2223,2728,82.5,21.4,Creative Playmaker
+MID,0,Attacking Progressor,12,Remi Oudin,Bordeaux,FRA-Ligue 1,2021,2420,82.5,24.8,Creative Playmaker
+MID,0,Attacking Progressor,13,Andrea Colpani,Monza,ITA-Serie A,2223,948,82.4,12.6,Creative Playmaker
+MID,0,Attacking Progressor,14,Jorge de Frutos,Levante,ESP-La Liga,2122,1760,82.2,21.5,Creative Playmaker
+MID,0,Attacking Progressor,15,Ayoze Pérez,Leicester City,ENG-Premier League,2021,1331,82.1,17.6,Creative Playmaker
+MID,0,Attacking Progressor,16,Grégoire Defrel,Sassuolo,ITA-Serie A,1920,980,81.8,20.1,Creative Playmaker
+MID,0,Attacking Progressor,17,Elias Kachunga,Huddersfield,ENG-Premier League,1718,1329,81.6,25.4,Creative Playmaker
+MID,0,Attacking Progressor,18,Federico Bonazzoli,Salernitana,ITA-Serie A,2122,1866,81.4,25.2,Creative Playmaker
+MID,0,Attacking Progressor,19,Pablo Fornals,West Ham,ENG-Premier League,2021,2572,81.2,24.1,Creative Playmaker
+MID,0,Attacking Progressor,20,Ridle Baku,Wolfsburg,GER-Bundesliga,2425,1170,80.8,27.5,Creative Playmaker
+MID,1,Ball Winner,1,Dominik Kohr,Mainz 05,GER-Bundesliga,2122,1614,86.5,38.7,Attacking Progressor
+MID,1,Ball Winner,2,John McGinn,Aston Villa,ENG-Premier League,2223,2693,84.6,39.9,Attacking Progressor
+MID,1,Ball Winner,3,Davide Faraoni,Crotone,ITA-Serie A,1718,1754,83.6,31.7,Attacking Progressor
+MID,1,Ball Winner,4,Hernani,Parma,ITA-Serie A,1920,2419,83.6,35.3,Attacking Progressor
+MID,1,Ball Winner,5,Mauro Arambarri,Getafe,ESP-La Liga,2122,2663,83.4,37.1,Attacking Progressor
+MID,1,Ball Winner,6,Santi Comesaña,Rayo Vallecano,ESP-La Liga,2223,2451,82.8,30.1,Attacking Progressor
+MID,1,Ball Winner,7,John McGinn,Aston Villa,ENG-Premier League,2122,3090,81.9,35.9,Attacking Progressor
+MID,1,Ball Winner,8,Artur Ioniță,Cagliari,ITA-Serie A,1718,2669,81.8,26.0,Attacking Progressor
+MID,1,Ball Winner,9,Moussa Sissoko,Tottenham,ENG-Premier League,1920,2452,81.8,30.1,Attacking Progressor
+MID,1,Ball Winner,10,Xavier Chavalerin,Reims,FRA-Ligue 1,1920,2147,80.8,32.5,Attacking Progressor
+MID,1,Ball Winner,11,Cheikhou Kouyaté,West Ham,ENG-Premier League,1718,2799,80.7,35.0,Attacking Progressor
+MID,1,Ball Winner,12,Thiago Mendes,Lyon,FRA-Ligue 1,1920,1812,80.6,28.1,Attacking Progressor
+MID,1,Ball Winner,13,Frederic Guilbert,Aston Villa,ENG-Premier League,1920,2041,80.4,26.3,Creative Playmaker
+MID,1,Ball Winner,14,Koo Ja-cheol,Augsburg,GER-Bundesliga,1819,1640,79.9,32.5,Attacking Progressor
+MID,1,Ball Winner,15,Tyrick Mitchell,Crystal Palace,ENG-Premier League,2324,3204,79.8,26.1,Creative Playmaker
+MID,1,Ball Winner,16,Dominik Kohr,Leverkusen,GER-Bundesliga,1718,1664,79.3,23.7,Attacking Progressor
+MID,1,Ball Winner,17,Maximilian Arnold,Wolfsburg,GER-Bundesliga,2324,2506,79.3,38.0,Attacking Progressor
+MID,1,Ball Winner,18,André Gomes,Everton,ENG-Premier League,2021,1570,79.1,37.2,Attacking Progressor
+MID,1,Ball Winner,19,Janik Haberer,Freiburg,GER-Bundesliga,1819,2340,78.9,30.2,Attacking Progressor
+MID,1,Ball Winner,20,Lucas Deaux,Nîmes,FRA-Ligue 1,2021,1754,78.9,36.0,Attacking Progressor
+MID,2,Creative Playmaker,1,Memphis,Lyon,FRA-Ligue 1,1920,1018,84.5,24.8,Attacking Progressor
+MID,2,Creative Playmaker,2,Florian Kainz,Köln,GER-Bundesliga,1920,1561,82.8,18.0,Attacking Progressor
+MID,2,Creative Playmaker,3,Josip Brekalo,Torino,ITA-Serie A,2122,2286,81.9,25.1,Attacking Progressor
+MID,2,Creative Playmaker,4,Ilan Kebbal,Reims,FRA-Ligue 1,2122,1772,81.6,13.4,Attacking Progressor
+MID,2,Creative Playmaker,5,Sergej Milinković-Savić,Lazio,ITA-Serie A,2122,3100,81.3,21.6,Attacking Progressor
+MID,2,Creative Playmaker,6,Federico Bernardeschi,Juventus,ITA-Serie A,1819,1473,81.3,18.4,Attacking Progressor
+MID,2,Creative Playmaker,7,Hákon Arnar Haraldsson,Lille,FRA-Ligue 1,2425,1755,80.6,20.3,Attacking Progressor
+MID,2,Creative Playmaker,8,Nicolas Pépé,Lille,FRA-Ligue 1,1819,3324,79.8,15.4,Attacking Progressor
+MID,2,Creative Playmaker,9,Florian Thauvin,Marseille,FRA-Ligue 1,2021,2732,79.5,16.2,Attacking Progressor
+MID,2,Creative Playmaker,10,Oussama Idrissi,Cádiz,ESP-La Liga,2122,902,79.2,18.3,Attacking Progressor
+MID,2,Creative Playmaker,11,Abdoul Kader Bamba,Nantes,FRA-Ligue 1,2021,917,78.7,23.3,Attacking Progressor
+MID,2,Creative Playmaker,12,Thomas Lemar,Atlético Madrid,ESP-La Liga,2223,1252,77.6,7.9,Creative Playmaker
+MID,2,Creative Playmaker,13,Dominik Szoboszlai,Liverpool,ENG-Premier League,2425,2491,77.6,3.7,Creative Playmaker
+MID,2,Creative Playmaker,14,Mason Mount,Chelsea,ENG-Premier League,1920,2867,77.1,17.1,Attacking Progressor
+MID,2,Creative Playmaker,15,Brahim Díaz,Real Madrid,ESP-La Liga,2425,1385,77.0,0.8,Attacking Progressor
+MID,2,Creative Playmaker,16,Leandro Trossard,Brighton,ENG-Premier League,2021,2607,76.2,20.1,Attacking Progressor
+MID,2,Creative Playmaker,17,Adnan Januzaj,Real Sociedad,ESP-La Liga,1920,1167,76.1,14.1,Attacking Progressor
+MID,2,Creative Playmaker,18,Lorenzo Pellegrini,Roma,ITA-Serie A,2021,2598,75.7,16.0,Attacking Progressor
+MID,2,Creative Playmaker,19,Bertrand Traoré,Lyon,FRA-Ligue 1,1920,1253,75.5,18.1,Attacking Progressor
+MID,2,Creative Playmaker,20,Érik Lamela,Tottenham,ENG-Premier League,1819,974,75.5,19.9,Attacking Progressor

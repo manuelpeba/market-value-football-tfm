@@ -1,0 +1,24 @@
+{
+  "input_archetypes": "data\\processed\\player_role_archetypes.parquet",
+  "input_centroids": "reports\\roles\\archetype_feature_centroids.csv",
+  "output_labels": "data\\processed\\player_role_labels.parquet",
+  "n_rows": 11889,
+  "n_roles": 9,
+  "role_subgroups": {
+    "MID": 5677,
+    "DEF_CB": 4415,
+    "ATT_CF": 1797
+  },
+  "role_distribution": {
+    "Ball Winner": 2528,
+    "Attacking Progressor": 2050,
+    "Aerial Defender": 1738,
+    "Aggressive Defender": 1694,
+    "Creative Playmaker": 1099,
+    "Box Finisher": 1011,
+    "Ball-Playing Centre-Back": 983,
+    "Creator Forward": 424,
+    "Mobile Forward": 362
+  },
+  "primary_archetype_match_rate": 0.6404239212717638
+}

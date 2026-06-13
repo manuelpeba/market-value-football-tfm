@@ -1,0 +1,115 @@
+query_player,expected_taxonomy,player,team,season,pos_,position_taxonomy,position_confidence,validation_status
+Bastoni,CB,Alessandro Bastoni,Inter,2425,DF,FB,39.89,review
+Bastoni,CB,Alessandro Bastoni,Inter,2324,DF,FB,40.78,review
+Bastoni,CB,Alessandro Bastoni,Inter,2223,DF,CB,36.03,pass
+Bastoni,CB,Simone Bastoni,Spezia,2223,"MF,DF",DM,23.81,review
+Bastoni,CB,Alessandro Bastoni,Inter,2122,DF,CB,41.91,pass
+Rúben Dias,CB,Rúben Dias,Manchester City,2425,DF,CB,39.59,pass
+Rúben Dias,CB,Rúben Dias,Manchester City,2324,DF,CB,40.22,pass
+Rúben Dias,CB,Rúben Dias,Manchester City,2223,DF,CB,55.82,pass
+Rúben Dias,CB,Rúben Dias,Manchester City,2122,DF,CB,41.91,pass
+Rúben Dias,CB,Rúben Dias,Manchester City,2021,DF,CB,52.71,pass
+Ruben Dias,CB,Rúben Dias,Manchester City,2425,DF,CB,39.59,pass
+Ruben Dias,CB,Rúben Dias,Manchester City,2324,DF,CB,40.22,pass
+Ruben Dias,CB,Rúben Dias,Manchester City,2223,DF,CB,55.82,pass
+Ruben Dias,CB,Rúben Dias,Manchester City,2122,DF,CB,41.91,pass
+Ruben Dias,CB,Rúben Dias,Manchester City,2021,DF,CB,52.71,pass
+Van Dijk,CB,Virgil van Dijk,Liverpool,2425,DF,CB,61.48,pass
+Van Dijk,CB,Virgil van Dijk,Liverpool,2324,DF,CB,63.59,pass
+Van Dijk,CB,Virgil van Dijk,Liverpool,2223,DF,CB,65.28,pass
+Van Dijk,CB,Virgil van Dijk,Liverpool,2122,DF,CB,59.06,pass
+Van Dijk,CB,Virgil van Dijk,Liverpool,1920,DF,CB,61.02,pass
+Hakimi,FB,Achraf Hakimi,Paris S-G,2425,DF,FB,80.16,pass
+Hakimi,FB,Achraf Hakimi,Paris S-G,2324,DF,FB,76.38,pass
+Hakimi,FB,Achraf Hakimi,Paris S-G,2223,"DF,MF",FB,28.11,pass
+Hakimi,FB,Achraf Hakimi,Paris S-G,2122,DF,FB,66.72,pass
+Hakimi,FB,Achraf Hakimi,Inter,2021,DF,FB,71.95,pass
+Frimpong,FB,Jeremie Frimpong,Leverkusen,2425,"DF,MF",FB,32.56,pass
+Frimpong,FB,Jeremie Frimpong,Leverkusen,2324,DF,FB,75.91,pass
+Frimpong,FB,Jeremie Frimpong,Leverkusen,2223,"DF,MF",FB,31.64,pass
+Frimpong,FB,Jeremie Frimpong,Leverkusen,2122,DF,FB,57.23,pass
+Theo Hernández,FB,Theo Hernández,Milan,2425,DF,FB,44.45,pass
+Theo Hernández,FB,Theo Hernández,Milan,2324,DF,FB,52.45,pass
+Theo Hernández,FB,Theo Hernández,Milan,2223,DF,FB,47.04,pass
+Theo Hernández,FB,Theo Hernández,Milan,2122,DF,FB,60.34,pass
+Theo Hernández,FB,Theo Hernández,Milan,2021,DF,FB,54.88,pass
+Theo Hernandez,FB,Theo Hernández,Milan,2425,DF,FB,44.45,pass
+Theo Hernandez,FB,Theo Hernández,Milan,2324,DF,FB,52.45,pass
+Theo Hernandez,FB,Theo Hernández,Milan,2223,DF,FB,47.04,pass
+Theo Hernandez,FB,Theo Hernández,Milan,2122,DF,FB,60.34,pass
+Theo Hernandez,FB,Theo Hernández,Milan,2021,DF,FB,54.88,pass
+Caicedo,DM,Moisés Caicedo,Chelsea,2425,"MF,DF",DM,30.36,pass
+Caicedo,DM,Moisés Caicedo,Chelsea,2324,MF,DM,31.48,pass
+Caicedo,DM,Moisés Caicedo,Brighton,2223,MF,DM,29.82,pass
+Caicedo,DM,Felipe Caicedo,Lazio,2021,FW,CF,77.04,review
+Caicedo,DM,Felipe Caicedo,Lazio,1920,FW,CF,64.44,review
+Endo,DM,Arnaud Kalimuendo,Rennes,2425,"FW,MF",CF,49.73,review
+Endo,DM,Mattéo Guendouzi,Lazio,2425,MF,CM,26.8,review
+Endo,DM,Arnaud Kalimuendo,Rennes,2324,FW,CF,65.78,review
+Endo,DM,Wataru Endo,Liverpool,2324,MF,DM,29.36,pass
+Endo,DM,Mattéo Guendouzi,Lazio,2324,MF,AM,25.26,review
+Ugarte,DM,Manuel Ugarte,Manchester Utd,2425,MF,DM,38.9,pass
+Ugarte,DM,Manuel Ugarte,Paris S-G,2324,MF,DM,40.58,pass
+Rodri,DM,Rodrigo Muniz,Fulham,2425,FW,CF,85.06,review
+Rodri,DM,Javi Rodríguez,Celta Vigo,2425,DF,CB,48.56,review
+Rodri,DM,Ricardo Rodríguez,Betis,2425,DF,CB,48.27,review
+Rodri,DM,Guido Rodríguez,West Ham,2425,MF,DM,42.14,pass
+Rodri,DM,Jesus Rodríguez,Betis,2425,FW,CF,37.84,review
+Vitinha,CM,Vitinha,Paris S-G,2425,MF,CM,26.84,pass
+Vitinha,CM,Vitinha,Genoa,2425,"FW,MF",CF,23.95,review
+Vitinha,CM,Vitinha,Marseille,2324,FW,CF,66.77,review
+Vitinha,CM,Vitinha,Paris S-G,2324,MF,AM,32.45,review
+Vitinha,CM,Vitinha,Paris S-G,2223,MF,CM,23.21,pass
+Zubimendi,DM,Martín Zubimendi,Real Sociedad,2425,MF,DM,29.53,pass
+Zubimendi,DM,Martín Zubimendi,Real Sociedad,2324,MF,DM,27.5,pass
+Zubimendi,DM,Martín Zubimendi,Real Sociedad,2223,MF,DM,29.59,pass
+Zubimendi,DM,Martín Zubimendi,Real Sociedad,2122,MF,DM,32.83,pass
+Zubimendi,DM,Martín Zubimendi,Real Sociedad,2021,MF,DM,35.67,pass
+Pedri,AM,Pedri,Barcelona,2425,MF,CM,25.01,review
+Pedri,AM,Pedri,Barcelona,2324,"MF,FW",AM,22.67,pass
+Pedri,AM,Pedri,Barcelona,2223,MF,AM,34.19,pass
+Pedri,AM,Pedri,Barcelona,2021,MF,AM,32.51,pass
+Wirtz,AM,Florian Wirtz,Leverkusen,2425,"MF,FW",AM,32.97,pass
+Wirtz,AM,Florian Wirtz,Leverkusen,2324,MF,AM,64.77,pass
+Wirtz,AM,Florian Wirtz,Leverkusen,2223,"FW,MF",AM,33.3,pass
+Wirtz,AM,Florian Wirtz,Leverkusen,2122,"MF,FW",AM,34.97,pass
+Wirtz,AM,Florian Wirtz,Leverkusen,2021,MF,AM,42.0,pass
+Bellingham,AM,Jude Bellingham,Real Madrid,2425,MF,AM,39.84,pass
+Bellingham,AM,Jude Bellingham,Real Madrid,2324,MF,AM,47.74,pass
+Bellingham,AM,Jude Bellingham,Dortmund,2223,MF,AM,27.61,pass
+Bellingham,AM,Jude Bellingham,Dortmund,2122,MF,AM,30.78,pass
+Bellingham,AM,Jude Bellingham,Dortmund,2021,MF,DM,22.88,review
+Vinicius,W,Vinicius Júnior,Real Madrid,2425,FW,CF,37.58,review
+Vinicius,W,Vinicius Júnior,Real Madrid,2324,FW,CF,49.77,review
+Vinicius,W,Vinicius Souza,Sheffield Utd,2324,MF,DM,47.05,review
+Vinicius,W,Carlos Vinícius,Fulham,2223,FW,CF,69.2,review
+Vinicius,W,Vinicius Souza,Espanyol,2223,MF,DM,42.0,review
+Vinícius,W,Vinicius Júnior,Real Madrid,2425,FW,CF,37.58,review
+Vinícius,W,Vinicius Júnior,Real Madrid,2324,FW,CF,49.77,review
+Vinícius,W,Vinicius Souza,Sheffield Utd,2324,MF,DM,47.05,review
+Vinícius,W,Carlos Vinícius,Fulham,2223,FW,CF,69.2,review
+Vinícius,W,Vinicius Souza,Espanyol,2223,MF,DM,42.0,review
+Saka,W,Aaron Wan-Bissaka,West Ham,2425,DF,FB,44.85,review
+Saka,W,Bukayo Saka,Arsenal,2425,"FW,MF",AM,34.19,review
+Saka,W,Aaron Wan-Bissaka,Manchester Utd,2324,DF,CB,47.84,review
+Saka,W,Bukayo Saka,Arsenal,2324,FW,W,36.45,pass
+Saka,W,Bukayo Saka,Arsenal,2223,FW,W,42.81,pass
+Nico Williams,W,Nico Williams,Athletic Club,2425,FW,W,46.16,pass
+Nico Williams,W,Nico Williams,Athletic Club,2324,FW,W,45.12,pass
+Nico Williams,W,Nico Williams,Athletic Club,2223,FW,W,41.3,pass
+Nico Williams,W,Nico Williams,Athletic Club,2122,MF,AM,45.28,review
+Haaland,CF,Erling Haaland,Manchester City,2425,FW,CF,81.83,pass
+Haaland,CF,Erling Haaland,Manchester City,2324,FW,CF,81.75,pass
+Haaland,CF,Erling Haaland,Manchester City,2223,FW,CF,81.11,pass
+Haaland,CF,Erling Haaland,Dortmund,2122,FW,CF,77.47,pass
+Haaland,CF,Erling Haaland,Dortmund,2021,FW,CF,78.71,pass
+Kane,CF,Harry Kane,Bayern Munich,2425,FW,CF,75.85,pass
+Kane,CF,Harry Kane,Bayern Munich,2324,FW,CF,78.76,pass
+Kane,CF,Harry Kane,Tottenham,2223,FW,CF,71.93,pass
+Kane,CF,Harry Kane,Tottenham,2122,FW,CF,68.55,pass
+Kane,CF,Harry Kane,Tottenham,2021,FW,CF,69.69,pass
+Isak,CF,Alexander Isak,Newcastle Utd,2425,FW,CF,70.91,pass
+Isak,CF,Isak Hien,Atalanta,2425,DF,CB,62.96,review
+Isak,CF,Gustav Isaksen,Lazio,2425,FW,CF,36.92,pass
+Isak,CF,Alexander Isak,Newcastle Utd,2324,FW,CF,74.47,pass
+Isak,CF,Isak Hien,Atalanta,2324,DF,CB,74.02,review

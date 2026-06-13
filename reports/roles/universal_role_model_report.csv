@@ -1,0 +1,2 @@
+position_group,role_subgroup,n_players,n_features,k,silhouette,features
+ATT,ATT_CF,362,6,4,0.24230658449659281,"minutes, goals_p90, assists_p90, ga_p90, finishing, availability"
