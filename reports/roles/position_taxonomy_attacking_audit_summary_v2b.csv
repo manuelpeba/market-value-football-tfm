@@ -1,0 +1,2 @@
+audit_scope,players_found,players_expected,avg_success_rate_pct_found_players,min_success_rate_pct_found_players,players_pass_80pct,closure_threshold_pct,closure_status,note
+ATT,8,9,63.8,25.0,2,80.0,REVIEW,NOT_FOUND players are reported but excluded from the threshold because they are outside current data coverage.

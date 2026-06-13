@@ -1,0 +1,8 @@
+position_taxonomy,n,share_pct,avg_position_confidence,avg_functional_margin,position_purity_score
+CB,3445,26.81,59.4,,59.4
+FB,1270,9.88,42.51,,42.51
+DM,2214,17.23,75.02,0.0892,40.76
+CM,1923,14.97,65.01,0.0452,41.67
+AM,328,2.55,62.16,0.0329,29.81
+W,1191,9.27,69.98,0.03,32.8
+CF,1518,11.82,65.98,0.0221,40.81
