@@ -1,0 +1,9 @@
+dimension,candidate_columns,used_columns_n,used_columns,coverage_pct,mean
+finishing_index_role,9,9,Per 90 Minutes_Gls | Per 90 Minutes_xG | Per 90 Minutes_npxG | Standard_SoT% | Standard_G/Sh | Standard_G/SoT | Expected_G-xG | Expected_np:G-xG | Expected_npxG/Sh,100.0,48.85
+chance_creation_index,9,9,Per 90 Minutes_Ast | Per 90 Minutes_xAG | Expected_xAG | Expected_xA | KP_ | PPA_ | CrsPA_ | GCA_GCA90 | GCA_GCA,100.0,49.86
+ball_progression_index,7,7,Progression_PrgC | Progression_PrgP | Progression_PrgR | PrgP_ | Total_PrgDist | 1/3_ | PPA_,99.43,49.91
+passing_security_index,6,6,Total_Cmp% | Short_Cmp% | Medium_Cmp% | Long_Cmp% | Total_Att | Total_Cmp,98.87,49.71
+passing_volume_index,6,6,Total_Att | Total_Cmp | Short_Att | Medium_Att | Long_Att | Outcomes_Cmp,99.43,49.92
+crossing_width_index,4,4,Pass Types_Crs | CrsPA_ | Corner Kicks_In | Corner Kicks_Out,99.43,49.98
+availability_index_role,5,5,Playing Time_MP | Playing Time_Starts | Playing Time_Min | Playing Time_90s | 90s_,100.0,50.11
+discipline_risk_index,2,2,Performance_CrdY | Performance_CrdR,100.0,49.89
