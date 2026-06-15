@@ -1,12 +1,47 @@
 from pathlib import Path
 from math import ceil
+from datetime import date, datetime, timezone
+import json
 import re
 import html
 import sys
+import unicodedata
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+
+# =============================================================================
+# tactical intelligence.5.1 visual design tokens
+# =============================================================================
+PRIMARY = "#2F5BFF"
+SUCCESS = "#58C27D"
+WARNING = "#F5A623"
+DANGER = "#E05658"
+NEUTRAL = "#7C8DB5"
+SURFACE = "#FFFFFF"
+SOFT_SUCCESS = "#EAF7EE"
+SOFT_WARNING = "#FFF4E8"
+SOFT_DANGER = "#FDECEC"
+SOFT_NEUTRAL = "#EDF3FF"
+
+
+def clean_role_display(value, pending_label: str | None = None) -> str:
+    """Return a product-safe role label; never expose NaN/N/A in the UI."""
+    if pending_label is None:
+        pending_label = "Role Pending" if globals().get("LANG", "ES") == "EN" else "Rol pendiente"
+    if value is None:
+        return pending_label
+    try:
+        if pd.isna(value):
+            return pending_label
+    except Exception:
+        pass
+    role = str(value).strip()
+    if not role or role.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return pending_label
+    return role
 
 
 def find_project_root() -> Path:
@@ -3842,7 +3877,7 @@ st.markdown(
 <style>
 .similarity-decision-grid {
     display:grid;
-    grid-template-columns: minmax(260px,.85fr) minmax(360px,1.1fr) minmax(360px,1.1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap:12px;
     margin: 0 0 14px 0;
 }
@@ -5810,18 +5845,244 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# role intelligence.8 Role Intelligence CSS
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid #bfdbfe;
+    background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);
+    color:#1e3a8a; border-radius:999px; padding:5px 10px;
+    font-size:.74rem; font-weight:950; margin-left:8px;
+    vertical-align:middle; white-space:nowrap;
+}
+.role-profile-grid {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px; margin:12px 0 18px 0;
+}
+.role-profile-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+    padding:13px 14px; min-height:92px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+}
+.role-profile-label {
+    color:#64748b; font-size:.72rem; font-weight:950;
+    text-transform:uppercase; letter-spacing:.055em; margin-bottom:6px;
+}
+.role-profile-value {
+    color:#0f172a; font-size:1.04rem; font-weight:950; line-height:1.15;
+}
+.role-profile-caption {
+    color:#94a3b8; font-size:.72rem; margin-top:5px; line-height:1.25;
+}
+.role-similar-grid {
+    display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:12px; margin:12px 0 22px 0;
+}
+.role-similar-card {
+    background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+    border:1px solid #e2e8f0; border-radius:16px;
+    padding:13px 14px; min-height:112px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+}
+.role-similar-rank {
+    width:26px; height:26px; border-radius:8px; background:#eff6ff;
+    color:#1d4ed8; display:flex; align-items:center; justify-content:center;
+    font-weight:950; font-size:.78rem; margin-bottom:8px;
+}
+.role-similar-name { color:#0f172a; font-size:.90rem; font-weight:950; line-height:1.15; }
+.role-similar-meta { color:#64748b; font-size:.72rem; line-height:1.28; margin-top:5px; }
+.role-similar-score { color:#166534; font-size:1.00rem; font-weight:950; margin-top:8px; }
+.role-section-card {
+    background:#ffffff; border:1px solid #dbeafe; border-left:5px solid #2563eb;
+    border-radius:18px; padding:15px 17px; box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:10px 0 18px 0;
+}
+.role-section-title { color:#0f172a; font-size:.98rem; font-weight:950; margin-bottom:3px; }
+.role-section-subtitle { color:#64748b; font-size:.78rem; line-height:1.35; }
+@media(max-width:1300px){
+    .role-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .role-similar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:760px){
+    .role-profile-grid,.role-similar-grid{grid-template-columns:1fr;}
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5 final Role Intelligence UX polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-badge-family-defensive,
+.role-profile-card-family-defensive,
+.role-top-role-row-family-defensive { border-color:#bfdbfe !important; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important; }
+.role-badge-family-build_up,
+.role-profile-card-family-build_up,
+.role-top-role-row-family-build_up { border-color:#ddd6fe !important; background:linear-gradient(180deg,#ffffff 0%,#fbfaff 100%) !important; }
+.role-badge-family-creative,
+.role-profile-card-family-creative,
+.role-top-role-row-family-creative { border-color:#bbf7d0 !important; background:linear-gradient(180deg,#ffffff 0%,#f7fff9 100%) !important; }
+.role-badge-family-attacking,
+.role-profile-card-family-attacking,
+.role-top-role-row-family-attacking { border-color:#fed7aa !important; background:linear-gradient(180deg,#ffffff 0%,#fffaf5 100%) !important; }
+.role-badge-family-balanced,
+.role-profile-card-family-balanced,
+.role-top-role-row-family-balanced { border-color:#e2e8f0 !important; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%) !important; }
+
+.role-badge-family-defensive { color:#1d4ed8 !important; }
+.role-badge-family-build_up { color:#6d28d9 !important; }
+.role-badge-family-creative { color:#15803d !important; }
+.role-badge-family-attacking { color:#ea580c !important; }
+.role-badge-family-balanced { color:#334155 !important; }
+
+.role-tactical-read-card {
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #bfdbfe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 18px 0;
+}
+.role-tactical-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.role-tactical-title {
+    color:#0f172a;
+    font-size:1.06rem;
+    font-weight:950;
+    line-height:1.15;
+    margin-bottom:6px;
+}
+.role-tactical-copy {
+    color:#334155;
+    font-size:.86rem;
+    line-height:1.44;
+    font-weight:750;
+}
+.role-tactical-chips {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:10px;
+}
+.role-tactical-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:950;
+}
+.role-top-role-card {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 18px 0;
+}
+.role-top-role-title {
+    color:#0f172a;
+    font-size:.96rem;
+    font-weight:950;
+    margin-bottom:3px;
+}
+.role-top-role-subtitle {
+    color:#64748b;
+    font-size:.76rem;
+    line-height:1.35;
+    margin-bottom:10px;
+}
+.role-top-role-grid {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+}
+.role-top-role-row {
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:10px 11px;
+    min-height:92px;
+    box-shadow:0 6px 16px rgba(15,23,42,.030);
+}
+.role-top-role-rank {
+    display:inline-flex;
+    width:24px;
+    height:22px;
+    border-radius:8px;
+    align-items:center;
+    justify-content:center;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    margin-bottom:6px;
+}
+.role-top-role-name {
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+    line-height:1.14;
+}
+.role-top-role-meta {
+    color:#64748b;
+    font-size:.70rem;
+    line-height:1.28;
+    margin-top:4px;
+}
+.role-top-role-score {
+    color:#166534;
+    font-size:.92rem;
+    font-weight:950;
+    margin-top:6px;
+}
+.role-availability-chip b::before {
+    content: "";
+}
+.role-availability-share {
+    opacity:.72;
+    font-weight:850;
+    margin-left:4px;
+}
+@media(max-width:1200px){
+    .role-top-role-grid { grid-template-columns:1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_parquet(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
@@ -5876,6 +6137,1431 @@ def player_level_display_name(level: object) -> str:
         "Unclassified": {"ES": "Sin clasificar", "EN": "Unclassified"},
     }
     return labels.get(str(level), {"ES": str(level), "EN": str(level)}).get(globals().get("LANG", "ES"), str(level))
+
+
+ROLE_OPTIONS = ["Defensive Anchor", "Ball Progressor", "Box-to-Box Engine", "Creative Playmaker"]  # fallback only; sidebar uses all roles found in data
+ROLE_DATASET_PATH = PROCESSED_PATH / "player_role_dss.parquet"
+ROLE_EXPLAINABILITY_PATH = PROCESSED_PATH / "player_role_explainability.parquet"
+
+ROLE_DNA_COLUMNS = [
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "passing_volume_index",
+    "crossing_width_index",
+    "availability_index_role",
+    "discipline_risk_index",
+]
+
+ROLE_DNA_LABELS = {
+    "finishing_index_role": {"ES": "Finalización", "EN": "Finishing"},
+    "chance_creation_index": {"ES": "Creación", "EN": "Chance Creation"},
+    "ball_progression_index": {"ES": "Progresión", "EN": "Ball Progression"},
+    "passing_security_index": {"ES": "Seguridad pase", "EN": "Passing Security"},
+    "passing_volume_index": {"ES": "Volumen pase", "EN": "Passing Volume"},
+    "crossing_width_index": {"ES": "Amplitud/Centros", "EN": "Crossing Width"},
+    "availability_index_role": {"ES": "Disponibilidad", "EN": "Availability"},
+    "discipline_risk_index": {"ES": "Disciplina", "EN": "Discipline"},
+}
+
+ROLE_DNA_FILTER_COLUMNS = [
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "availability_index_role",
+]
+
+# Product-facing Role DNA order: the bars should explain the role, not merely sort
+# every available index by magnitude. This prevents CB profiles from being led by
+# finishing when the role definition is build-up, progression and security.
+ROLE_DNA_ROLE_PRIORITY = {
+    "ball playing centre back": [
+        "passing_volume_index",
+        "ball_progression_index",
+        "passing_security_index",
+        "availability_index_role",
+        "chance_creation_index",
+        "discipline_risk_index",
+        "finishing_index_role",
+        "crossing_width_index",
+    ],
+    "aerial defender": [
+        "availability_index_role",
+        "passing_security_index",
+        "ball_progression_index",
+        "discipline_risk_index",
+        "crossing_width_index",
+    ],
+    "aggressive defender": [
+        "ball_progression_index",
+        "availability_index_role",
+        "passing_security_index",
+        "discipline_risk_index",
+        "crossing_width_index",
+    ],
+    "ball winner": [
+        "availability_index_role",
+        "ball_progression_index",
+        "passing_security_index",
+        "passing_volume_index",
+        "discipline_risk_index",
+        "chance_creation_index",
+    ],
+    "creative playmaker": [
+        "chance_creation_index",
+        "ball_progression_index",
+        "passing_security_index",
+        "passing_volume_index",
+        "crossing_width_index",
+        "availability_index_role",
+    ],
+    "attacking progressor": [
+        "ball_progression_index",
+        "chance_creation_index",
+        "passing_volume_index",
+        "availability_index_role",
+        "crossing_width_index",
+        "finishing_index_role",
+    ],
+    "box finisher": [
+        "finishing_index_role",
+        "chance_creation_index",
+        "availability_index_role",
+        "ball_progression_index",
+    ],
+    "creator forward": [
+        "chance_creation_index",
+        "finishing_index_role",
+        "ball_progression_index",
+        "availability_index_role",
+    ],
+    "mobile forward": [
+        "ball_progression_index",
+        "finishing_index_role",
+        "chance_creation_index",
+        "availability_index_role",
+    ],
+}
+
+
+def find_role_explainability_path() -> Path | None:
+    """Locate TM.5.5 Role Explainability Engine output."""
+    candidates = [
+        PROCESSED_PATH / "player_role_explainability.parquet",
+        ROOT / "data" / "processed" / "player_role_explainability.parquet",
+        ROOT / "reports" / "roles" / "player_role_dna.csv",
+        ROOT / "reports" / "roles" / "player_role_explainability.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_explainability.parquet",
+        Path.cwd() / "reports" / "roles" / "player_role_dna.csv",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    search_roots = [PROCESSED_PATH, ROOT / "data" / "processed", ROOT / "reports" / "roles", ROOT / "reports", Path.cwd()]
+    patterns = ["player_role_explainability*.parquet", "player_role_dna*.csv"]
+    discovered = []
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            discovered.extend(root.rglob(pattern))
+    discovered = [x for x in discovered if x.is_file()]
+    if discovered:
+        return sorted(set(discovered), key=lambda x: (0 if x.suffix == ".parquet" else 1, len(str(x)), str(x)))[0]
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def load_role_explainability_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load TM.5.5 role explainability / Role DNA artefact.
+
+    The artefact is optional: the DSS must keep working when the pipeline has not
+    been executed yet. When available, it adds tactical indices and explanatory
+    role text to player-season rows.
+    """
+    resolved_path = path if path is not None else find_role_explainability_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    resolved_path = Path(resolved_path)
+    if resolved_path.suffix.lower() == ".csv":
+        dna = pd.read_csv(resolved_path, low_memory=False)
+    else:
+        dna = pd.read_parquet(resolved_path)
+    dna = apply_club_name_normalization(dna.copy())
+
+    rename_candidates = {
+        "player_name_fbref": "role_dna_player",
+        "player_name": "role_dna_player",
+        "player": "role_dna_player",
+        "team": "role_dna_team",
+        "club": "role_dna_team",
+        "squad": "role_dna_team",
+        "league": "role_dna_league",
+        "season": "role_dna_season",
+    }
+    for source, target in rename_candidates.items():
+        if source in dna.columns and target not in dna.columns:
+            dna = dna.rename(columns={source: target})
+
+    for col in ROLE_DNA_COLUMNS + ["role_fit_explainability_score", "dominant_tactical_score"]:
+        if col in dna.columns:
+            dna[col] = pd.to_numeric(dna[col], errors="coerce")
+
+    if "role_dna_player" in dna.columns:
+        dna["role_dna_player_key"] = dna["role_dna_player"].map(normalize_join_text)
+    if "role_dna_team" in dna.columns:
+        dna["role_dna_team_key"] = dna["role_dna_team"].map(normalize_join_text)
+    if "role_dna_league" in dna.columns:
+        dna["role_dna_league_key"] = dna["role_dna_league"].map(normalize_join_text)
+    if "role_dna_season" in dna.columns:
+        dna["role_dna_season_key"] = dna["role_dna_season"].map(normalize_role_season)
+
+    return dna
+
+
+def merge_role_explainability(base: pd.DataFrame, dna_df: pd.DataFrame) -> pd.DataFrame:
+    """Merge Role DNA features into a DSS dataframe using conservative fallbacks."""
+    if base.empty or dna_df.empty:
+        return base
+    if "role_dna_player_key" not in dna_df.columns:
+        return base
+
+    left = base.copy()
+    left["_role_dna_row_id"] = np.arange(len(left))
+    right = dna_df.copy()
+
+    dna_cols = [
+        c for c in ROLE_DNA_COLUMNS + [
+            "role_fit_explainability_score",
+            "role_explainability_quality",
+            "dominant_tactical_dimension",
+            "dominant_tactical_score",
+            "role_explanation_text",
+        ]
+        if c in right.columns
+    ]
+    if not dna_cols:
+        return left.drop(columns=["_role_dna_row_id"], errors="ignore")
+
+    # Do not let Role Explainability overwrite the role labels produced by TM.5.
+    right_cols = ["role_dna_player_key", "role_dna_team_key", "role_dna_league_key", "role_dna_season_key"] + dna_cols
+    right_cols = [c for c in right_cols if c in right.columns]
+    right = right[right_cols].copy()
+
+    left_name_candidates = [c for c in ["player_name_fbref", "player_name_tm", "player", "name"] if c in left.columns]
+    left_club_candidates = [c for c in ["club", "team", "current_club_name_tm", "current_club", "squad"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition"] if c in left.columns]
+    left["_role_dna_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+
+    text_dna_cols = {"role_explainability_quality", "dominant_tactical_dimension", "role_explanation_text"}
+    for col in dna_cols:
+        if col not in left.columns:
+            if col in text_dna_cols:
+                left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+            else:
+                left[col] = np.nan
+        elif col in text_dna_cols:
+            left[col] = left[col].astype("object")
+
+    def _merge_fill(name_col: str, extra_left_cols: list[str], extra_right_keys: list[str]) -> None:
+        nonlocal left
+        unresolved = left[dna_cols].isna().all(axis=1)
+        if not unresolved.any():
+            return
+        tmp = left.loc[unresolved, ["_role_dna_row_id", name_col, "_role_dna_season_key"] + extra_left_cols].copy()
+        tmp["role_dna_player_key"] = tmp[name_col].map(normalize_join_text)
+        rename = {"_role_dna_season_key": "role_dna_season_key"}
+        tmp = tmp.rename(columns=rename)
+        for l_col, r_key in zip(extra_left_cols, extra_right_keys):
+            tmp[r_key] = tmp[l_col].map(normalize_join_text)
+        join_cols = ["role_dna_player_key", "role_dna_season_key"] + extra_right_keys
+        join_cols = [c for c in join_cols if c in tmp.columns]
+        tmp = tmp[["_role_dna_row_id"] + join_cols]
+        tmp = tmp[tmp["role_dna_player_key"].astype(str).str.len() > 0]
+        available_join_cols = [c for c in join_cols if c in right.columns]
+        if not available_join_cols or tmp.empty:
+            return
+        tmp_right = right.drop_duplicates(available_join_cols)[available_join_cols + dna_cols]
+        matched = tmp.merge(tmp_right, on=available_join_cols, how="left")
+        matched = matched.dropna(subset=dna_cols, how="all")
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_role_dna_row_id", keep="first").set_index("_role_dna_row_id")
+        for col in dna_cols:
+            values = left["_role_dna_row_id"].map(matched[col])
+            mask = left[col].isna() & values.notna()
+            left.loc[mask, col] = values[mask]
+
+    for name_col in left_name_candidates:
+        for club_col in left_club_candidates:
+            _merge_fill(name_col, [club_col], ["role_dna_team_key"])
+        for league_col in left_league_candidates:
+            _merge_fill(name_col, [league_col], ["role_dna_league_key"])
+        _merge_fill(name_col, [], [])
+
+        # Last fallback: name-only, useful for current-season DSS rows when the
+        # tactical dataset stores compact season labels differently.
+        unresolved = left[dna_cols].isna().all(axis=1)
+        if unresolved.any():
+            tmp = left.loc[unresolved, ["_role_dna_row_id", name_col]].copy()
+            tmp["role_dna_player_key"] = tmp[name_col].map(normalize_join_text)
+            tmp = tmp[tmp["role_dna_player_key"].astype(str).str.len() > 0]
+            tmp_right = right.drop_duplicates(["role_dna_player_key"])[["role_dna_player_key"] + dna_cols]
+            matched = tmp[["_role_dna_row_id", "role_dna_player_key"]].merge(tmp_right, on="role_dna_player_key", how="left")
+            matched = matched.dropna(subset=dna_cols, how="all").drop_duplicates("_role_dna_row_id", keep="first").set_index("_role_dna_row_id")
+            if not matched.empty:
+                for col in dna_cols:
+                    values = left["_role_dna_row_id"].map(matched[col])
+                    mask = left[col].isna() & values.notna()
+                    left.loc[mask, col] = values[mask]
+
+    return left.drop(columns=["_role_dna_row_id", "_role_dna_season_key"], errors="ignore")
+
+
+def find_role_dataset_path() -> Path | None:
+    """Locate the role intelligence role artefact across the project layouts used in the sprints.
+
+    role intelligence has moved artefacts between data/processed, reports and artifacts during
+    sprint iterations. The previous app only checked a small fixed list; if the
+    parquet was exported with a suffix, the DSS silently displayed "pending role intelligence".
+    """
+    candidates = [
+        PROCESSED_PATH / "player_role_labels.parquet",
+        PROCESSED_PATH / "player_role_dss.parquet",
+        ROOT / "data" / "processed" / "player_role_labels.parquet",
+        ROOT / "data" / "processed" / "player_role_dss.parquet",
+        ROOT / "reports" / "dss" / "player_role_dss.parquet",
+        ROOT / "reports" / "tm5_role_intelligence" / "player_role_dss.parquet",
+        ROOT / "reports" / "role_intelligence" / "player_role_dss.parquet",
+        ROOT / "artifacts" / "player_role_dss.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_labels.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_dss.parquet",
+        Path.cwd() / "player_role_labels.parquet",
+        Path.cwd() / "player_role_dss.parquet",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    # Fallback: discover suffixed artefacts, preferring processed data over reports.
+    search_roots = [PROCESSED_PATH, ROOT / "data" / "processed", ROOT / "reports", ROOT / "artifacts", Path.cwd()]
+    patterns = ["player_role_labels*.parquet", "player_role_dss*.parquet", "*role*dss*.parquet", "*role*intelligence*.parquet"]
+    discovered = []
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            discovered.extend(root.rglob(pattern))
+    discovered = [x for x in discovered if x.is_file()]
+    if discovered:
+        priority = {"processed": 0, "dss": 1, "tm5": 2, "role": 3}
+        def _rank(path: Path) -> tuple[int, int, str]:
+            lower = str(path).lower()
+            score = min([v for k, v in priority.items() if k in lower] or [9])
+            return (score, len(str(path)), str(path))
+        return sorted(set(discovered), key=_rank)[0]
+    return None
+
+
+def normalize_join_text(value: object) -> str:
+    """Normalize player/club/league strings for stable joins across FBref/TM exports."""
+    if pd.isna(value):
+        return ""
+    text = str(value).strip().casefold()
+    text = text.translate(str.maketrans("áàäâãéèëêíìïîóòöôõúùüûñç", "aaaaaeeeeiiiiooooouuuunc"))
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+
+
+def normalize_search_text(value: object) -> str:
+    """Accent-insensitive, case-insensitive text normalisation for scouting search."""
+    return normalize_join_text(value)
+
+def strip_accents_for_display(value: object) -> str:
+    """Return a readable label without diacritics for autocomplete aliases."""
+    if value is None or pd.isna(value):
+        return ""
+    raw = str(value).strip()
+    decomposed = unicodedata.normalize("NFKD", raw)
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+def is_valid_role_value(value: object) -> bool:
+    if pd.isna(value):
+        return False
+    text = str(value).strip()
+    return text != "" and text.casefold() not in {"nan", "none", "n/a", "na", "null", "sin rol", "no role"}
+
+
+def has_valid_role_metrics(row: pd.Series) -> bool:
+    metric_cols = ["primary_role_similarity", "role_confidence", "role_ambiguity"]
+    available = []
+    for col in metric_cols:
+        if col in row.index:
+            num = pd.to_numeric(pd.Series([row.get(col)]), errors="coerce").iloc[0]
+            available.append(pd.notna(num))
+    return any(available)
+
+
+def normalize_role_season(value: object) -> str:
+    if pd.isna(value):
+        return ""
+    raw = str(value).strip()
+    if "-" in raw:
+        parts = raw.split("-")
+        if len(parts) >= 2 and parts[0][-2:].isdigit() and parts[1][-2:].isdigit():
+            return parts[0][-2:] + parts[1][-2:]
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if len(digits) == 8:
+        return digits[2:4] + digits[6:8]
+    if len(digits) == 4:
+        return digits
+    return raw
+
+
+@st.cache_data(show_spinner=False)
+def load_role_intelligence_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load and standardise the role intelligence role discovery artefact.
+
+    The previous integration assumed one fixed path and one exact schema. This version
+    resolves the artefact path defensively, harmonises common column names and removes
+    invalid role rows before the merge.
+    """
+    resolved_path = path if path is not None else find_role_dataset_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    role_df = pd.read_parquet(resolved_path).copy()
+
+    rename_candidates = {
+        "player": "role_player",
+        "player_name": "role_player",
+        "name": "role_player",
+        "team": "role_team",
+        "club": "role_team",
+        "squad": "role_team",
+        "league": "role_league",
+        "competition": "role_league",
+        "season": "role_season",
+    }
+    for source, target in rename_candidates.items():
+        if source in role_df.columns and target not in role_df.columns:
+            role_df = role_df.rename(columns={source: target})
+
+    for col in ["primary_role_similarity", "secondary_role_similarity", "role_confidence", "role_ambiguity"]:
+        if col in role_df.columns:
+            role_df[col] = pd.to_numeric(role_df[col], errors="coerce")
+
+    # Keep every valid role label. Similarity/confidence can be unavailable in some
+    # role intelligence exports; the UI will show N/D instead of suppressing the role entirely.
+    if "primary_role" in role_df.columns:
+        valid_primary = role_df["primary_role"].map(is_valid_role_value)
+        role_df = role_df.loc[valid_primary].copy()
+
+    if "role_player" in role_df.columns:
+        role_df["role_player_key"] = role_df["role_player"].map(normalize_join_text)
+    return role_df
+
+
+def get_role_dataset_status(role_df: pd.DataFrame) -> dict[str, object]:
+    path = find_role_dataset_path()
+    status = {
+        "path": str(path) if path is not None else "not_found",
+        "rows": int(len(role_df)) if isinstance(role_df, pd.DataFrame) else 0,
+        "players": int(role_df["role_player"].nunique()) if isinstance(role_df, pd.DataFrame) and "role_player" in role_df.columns else 0,
+        "roles": sorted(role_df["primary_role"].dropna().astype(str).unique().tolist()) if isinstance(role_df, pd.DataFrame) and "primary_role" in role_df.columns else [],
+    }
+    return status
+
+def explain_scouting_exclusion(row: pd.Series, *, max_age: float, min_minutes: float, min_confidence: float, os_range: tuple[float, float], selected_league: str, selected_position: str, selected_role: str, selected_tier: str, max_market_value_m: float, min_roi: float, max_risk_filter: float) -> list[str]:
+    """Return human-readable reasons explaining why a searched player is outside active scouting criteria."""
+    reasons = []
+    age = get_numeric_value(row, "age", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+    confidence = get_numeric_value(row, "confidence_score", np.nan)
+    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
+    value = get_numeric_value(row, "market_value_eur", np.nan)
+    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+
+    if pd.notna(age) and age > max_age:
+        reasons.append((f"Age {age:.1f} > active max {max_age:.0f}" if LANG == "EN" else f"Edad {age:.1f} > máximo activo {max_age:.0f}"))
+    if pd.notna(minutes) and minutes < min_minutes:
+        reasons.append((f"Minutes {minutes:,.0f} < minimum {min_minutes:,.0f}" if LANG == "EN" else f"Minutos {minutes:,.0f} < mínimo {min_minutes:,.0f}"))
+    if pd.notna(confidence) and confidence < min_confidence:
+        reasons.append((f"Confidence {confidence:.1f} < minimum {min_confidence:.0f}" if LANG == "EN" else f"Confidence {confidence:.1f} < mínimo {min_confidence:.0f}"))
+    if pd.notna(opportunity) and not (os_range[0] <= opportunity <= os_range[1]):
+        reasons.append((f"Opportunity {opportunity:.1f} outside active range {os_range[0]:.0f}–{os_range[1]:.0f}" if LANG == "EN" else f"Opportunity {opportunity:.1f} fuera del rango activo {os_range[0]:.0f}–{os_range[1]:.0f}"))
+    if pd.notna(value) and value > max_market_value_m * 1_000_000:
+        reasons.append((f"Market value {format_money_short(value)} > cap {max_market_value_m:.1f}M" if LANG == "EN" else f"Valor de mercado {format_money_short(value)} > límite €{max_market_value_m:.1f}M"))
+    if pd.notna(roi) and roi < min_roi:
+        reasons.append((f"3Y ROI {roi:.0f}% < minimum {min_roi:.0f}%" if LANG == "EN" else f"ROI 3Y {roi:.0f}% < mínimo {min_roi:.0f}%"))
+    if pd.notna(risk) and risk > max_risk_filter:
+        reasons.append((f"Risk {risk:.1f} > max {max_risk_filter:.0f}" if LANG == "EN" else f"Risk {risk:.1f} > máximo {max_risk_filter:.0f}"))
+
+    league_val = safe_get(row, "league", "")
+    if selected_league != T("all_f") and str(league_val) != str(selected_league):
+        reasons.append((f"League {league_display_name(league_val)} ≠ active league {league_display_name(selected_league)}" if LANG == "EN" else f"Liga {league_display_name(league_val)} ≠ liga activa {league_display_name(selected_league)}"))
+    pos_val = safe_get(row, "position_group", "")
+    if selected_position != T("all_f") and str(pos_val) != str(selected_position):
+        reasons.append((f"Position {pos_val} ≠ active position {selected_position}" if LANG == "EN" else f"Posición {pos_val} ≠ posición activa {selected_position}"))
+    if selected_role != T("all_m"):
+        role_val = safe_get(row, "primary_role", "")
+        if str(role_val) != str(selected_role):
+            reasons.append((f"Role {role_val or 'N/A'} ≠ active role {selected_role}" if LANG == "EN" else f"Rol {role_val or 'N/A'} ≠ rol activo {selected_role}"))
+    if selected_tier != T("all_m"):
+        tier_val = safe_get(row, "opportunity_tier_label", "")
+        if str(tier_val) != str(selected_tier):
+            reasons.append((f"Tier {tier_val or 'N/A'} ≠ active tier {selected_tier}" if LANG == "EN" else f"Tier {tier_val or 'N/A'} ≠ tier activo {selected_tier}"))
+
+    if not reasons:
+        reasons.append("No specific exclusion reason detected; review search key or duplicated player identity." if LANG == "EN" else "No se detecta una causa específica; revisar clave de búsqueda o identidad duplicada del jugador.")
+    return reasons[:6]
+
+
+
+def build_scouting_eligibility_checks(
+    row: pd.Series,
+    *,
+    max_age: float,
+    min_minutes: float,
+    min_confidence: float,
+    os_range: tuple[float, float],
+    selected_league: str,
+    selected_position: str,
+    selected_role: str,
+    selected_tier: str,
+    max_market_value_m: float,
+    min_roi: float,
+    max_risk_filter: float,
+) -> list[dict[str, object]]:
+    """Build pass/fail cards explaining Scouting Universe eligibility.
+
+    This is intentionally UI-facing: scouts need to understand why an informative
+    player profile does or does not alter rankings, matrices and recommendations.
+    """
+    checks: list[dict[str, object]] = []
+
+    def _add(label: str, value: str, passed: bool, detail: str) -> None:
+        checks.append({"label": label, "value": value, "passed": bool(passed), "detail": detail})
+
+    age = get_numeric_value(row, "age", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+    confidence = get_numeric_value(row, "confidence_score", np.nan)
+    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
+    value = get_numeric_value(row, "market_value_eur", np.nan)
+    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+
+    _add(
+        "Age" if LANG == "EN" else "Edad",
+        "N/A" if pd.isna(age) else f"{age:.1f}",
+        pd.notna(age) and age <= max_age,
+        f"≤ {max_age:.0f}" if LANG == "EN" else f"≤ {max_age:.0f}",
+    )
+    _add(
+        "Minutes" if LANG == "EN" else "Minutos",
+        "N/A" if pd.isna(minutes) else f"{minutes:,.0f}",
+        pd.notna(minutes) and minutes >= min_minutes,
+        f"≥ {min_minutes:,.0f}",
+    )
+    _add(
+        "Confidence" if LANG == "EN" else "Confianza",
+        "N/A" if pd.isna(confidence) else f"{confidence:.0f}",
+        pd.notna(confidence) and confidence >= min_confidence,
+        f"≥ {min_confidence:.0f}",
+    )
+    _add(
+        "Opportunity" if LANG == "EN" else "Opportunity",
+        "N/A" if pd.isna(opportunity) else f"{opportunity:.0f}",
+        pd.notna(opportunity) and os_range[0] <= opportunity <= os_range[1],
+        f"{os_range[0]:.0f}–{os_range[1]:.0f}",
+    )
+    _add(
+        "Market value" if LANG == "EN" else "Valor de mercado",
+        "N/A" if pd.isna(value) else format_money_short(value),
+        pd.notna(value) and value <= max_market_value_m * 1_000_000,
+        f"≤ €{max_market_value_m:.1f}M",
+    )
+    _add(
+        "ROI 3Y",
+        "N/A" if pd.isna(roi) else f"{roi:.0f}%",
+        pd.notna(roi) and roi >= min_roi,
+        f"≥ {min_roi:.0f}%",
+    )
+    _add(
+        "Risk" if LANG == "EN" else "Risk",
+        "N/A" if pd.isna(risk) else f"{risk:.0f}",
+        pd.notna(risk) and risk <= max_risk_filter,
+        f"≤ {max_risk_filter:.0f}",
+    )
+
+    if selected_league != T("all_f"):
+        league_val = league_display_name(safe_get(row, "league", ""))
+        selected_league_label = league_display_name(selected_league)
+        _add("League" if LANG == "EN" else "Liga", league_val, str(league_val) == str(selected_league_label), selected_league_label)
+    if selected_position != T("all_f"):
+        pos_val = str(safe_get(row, "position_group", "N/A"))
+        _add("Position" if LANG == "EN" else "Posición", pos_val, pos_val == str(selected_position), str(selected_position))
+    if selected_role != T("all_m"):
+        role_val = str(safe_get(row, "primary_role", "N/A"))
+        _add("Role" if LANG == "EN" else "Rol", role_val, role_val == str(selected_role), str(selected_role))
+    if selected_tier != T("all_m"):
+        tier_val = str(safe_get(row, "opportunity_tier_label", "N/A"))
+        _add("Tier", tier_val, tier_val == str(selected_tier), str(selected_tier))
+
+    return checks
+
+
+def render_eligibility_check_panel(checks: list[dict[str, object]], title: str | None = None) -> None:
+    """Render compact green/red eligibility cards for searched players outside active filters."""
+    if not checks:
+        return
+    passed = sum(1 for item in checks if item.get("passed"))
+    total = len(checks)
+    status_text = (
+        f"{passed}/{total} criteria passed" if LANG == "EN" else f"{passed}/{total} criterios cumplidos"
+    )
+    panel_title = title or ("Scouting Universe Eligibility" if LANG == "EN" else "Elegibilidad Scouting Universe")
+    cards = []
+    for item in checks:
+        ok = bool(item.get("passed"))
+        card_class = "eligibility-card eligibility-card-pass" if ok else "eligibility-card eligibility-card-fail"
+        cards.append(
+            f"<div class='{card_class}'>"
+            + f"<div class='eligibility-status'>{'✓' if ok else '×'}</div>"
+            + f"<div class='eligibility-label'>{html.escape(str(item.get('label', '')))}</div>"
+            + f"<div class='eligibility-value'>{html.escape(str(item.get('value', 'N/A')))}</div>"
+            + f"<div class='eligibility-detail'>{html.escape(str(item.get('detail', '')))}</div>"
+            + "</div>"
+        )
+    st.markdown(
+        f"""
+<div class="eligibility-panel">
+    <div class="eligibility-panel-head">
+        <div>
+            <div class="eligibility-eyebrow">{"SCOUTING UNIVERSE" if LANG == "EN" else "SCOUTING UNIVERSE"}</div>
+            <div class="eligibility-title">{html.escape(panel_title)}</div>
+        </div>
+        <div class="eligibility-summary">{html.escape(status_text)}</div>
+    </div>
+    <div class="eligibility-grid">{''.join(cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def role_ambiguity_label(value: object) -> str:
+    val = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(val):
+        return "N/A"
+    if val >= 75:
+        return "Highly hybrid profile" if LANG == "EN" else "Perfil híbrido alto"
+    if val >= 45:
+        return "Mixed role profile" if LANG == "EN" else "Perfil mixto"
+    return "Specialised profile" if LANG == "EN" else "Perfil especializado"
+
+
+def taxonomy_long_label(taxonomy: str) -> str:
+    labels = {
+        "GK": "Goalkeeper" if LANG == "EN" else "Portero",
+        "CB": "Centre Back" if LANG == "EN" else "Central",
+        "FB": "Full Back" if LANG == "EN" else "Lateral",
+        "DM": "Defensive Midfielder" if LANG == "EN" else "Mediocentro defensivo",
+        "CM": "Central Midfielder" if LANG == "EN" else "Mediocentro",
+        "AM": "Attacking Midfielder" if LANG == "EN" else "Mediapunta",
+        "W": "Wide Attacker" if LANG == "EN" else "Extremo / atacante exterior",
+        "CF": "Centre Forward" if LANG == "EN" else "Delantero centro",
+    }
+    return labels.get(str(taxonomy).upper(), str(taxonomy))
+
+
+
+def role_family(role: object) -> str:
+    """Map role intelligence role labels to broad football families for UX semantics."""
+    if not is_valid_role_value(role):
+        return "balanced"
+    label = normalize_join_text(role)
+    defensive_terms = ["defender", "defensive", "anchor", "ball winner", "aerial", "centre back", "center back", "stopper"]
+    build_up_terms = ["progressor", "box to box", "deep", "regista", "playmaker", "ball playing"]
+    creative_terms = ["creative", "creator", "advanced", "attacking midfielder", "chance", "wide", "wing"]
+    attacking_terms = ["finisher", "forward", "striker", "mobile", "box", "creator forward"]
+    if any(t in label for t in defensive_terms):
+        return "defensive"
+    if any(t in label for t in attacking_terms):
+        return "attacking"
+    if any(t in label for t in creative_terms):
+        return "creative"
+    if any(t in label for t in build_up_terms):
+        return "build_up"
+    return "balanced"
+
+
+def role_family_label(role: object) -> str:
+    labels = {
+        "defensive": {"ES": "Familia defensiva", "EN": "Defensive family"},
+        "build_up": {"ES": "Construcción / progresión", "EN": "Build-up / progression"},
+        "creative": {"ES": "Creación ofensiva", "EN": "Creative attacking"},
+        "attacking": {"ES": "Finalización / ataque", "EN": "Finishing / attacking"},
+        "balanced": {"ES": "Perfil mixto", "EN": "Mixed profile"},
+    }
+    family = role_family(role)
+    return labels.get(family, labels["balanced"]).get(globals().get("LANG", "ES"), family)
+
+
+def role_family_css(role: object) -> str:
+    return f"role-profile-card-family-{role_family(role)}"
+
+
+def role_description(role: object) -> str:
+    """Short scouting interpretation for visible role intelligence roles."""
+    role_text = str(role).strip() if is_valid_role_value(role) else ""
+    key = normalize_join_text(role_text)
+    lang = globals().get("LANG", "ES")
+    descriptions_es = {
+        "ball playing centre back": "Central orientado a la construcción: participa en salida de balón, progresión y distribución desde primera línea.",
+        "aerial defender": "Defensor dominante en duelos aéreos y protección del área, útil para contextos de bloque bajo o defensa del área.",
+        "aggressive defender": "Defensor proactivo, intenso en anticipación, presión y acciones defensivas lejos de portería.",
+        "defensive anchor": "Mediocentro de equilibrio: protege zonas centrales, sostiene la estructura y reduce exposición defensiva.",
+        "ball winner": "Perfil recuperador con alta actividad defensiva, presión y volumen de duelos/intercepciones.",
+        "ball progressor": "Mediocampista de progresión: conecta zonas, avanza posesiones y mejora la salida hacia campo rival.",
+        "box to box engine": "Interior de ida y vuelta, con recorrido, presencia en varias alturas y contribución mixta con y sin balón.",
+        "creative playmaker": "Creador de juego con peso en último pase, generación de ventajas y circulación ofensiva.",
+        "attacking progressor": "Perfil ofensivo que progresa posesiones, rompe líneas y acelera ataques desde zonas avanzadas.",
+        "box finisher": "Finalizador de área, orientado a remate, presencia en zonas de gol y conversión de ocasiones.",
+        "creator forward": "Delantero asociativo: combina amenaza ofensiva con creación para terceros.",
+        "mobile forward": "Atacante móvil, útil para atacar espacios, desmarques y variabilidad en el frente ofensivo.",
+    }
+    descriptions_en = {
+        "ball playing centre back": "Build-up centre-back: contributes to first-phase progression, distribution and controlled possession.",
+        "aerial defender": "Aerially dominant defender, valuable for box protection, set pieces and deeper defensive contexts.",
+        "aggressive defender": "Proactive defender with intensity in anticipation, pressure and defensive actions away from goal.",
+        "defensive anchor": "Holding midfielder who protects central zones, stabilises structure and limits defensive exposure.",
+        "ball winner": "Recovery-oriented profile with high defensive activity, pressure and duel/interception volume.",
+        "ball progressor": "Progressive midfielder who connects zones, advances possessions and improves access to the final third.",
+        "box to box engine": "High-mobility midfielder with coverage across phases and mixed contribution on and off the ball.",
+        "creative playmaker": "Creative profile with weight in chance creation, final pass and offensive circulation.",
+        "attacking progressor": "Advanced progression profile who breaks lines and accelerates attacks from higher zones.",
+        "box finisher": "Penalty-box finisher focused on shot volume, goal-area presence and chance conversion.",
+        "creator forward": "Associative forward combining attacking threat with chance creation for others.",
+        "mobile forward": "Mobile forward suited to attacking space, rotations and variability across the front line.",
+    }
+    descriptions = descriptions_en if lang == "EN" else descriptions_es
+    if key in descriptions:
+        return descriptions[key]
+    if "defender" in key or "centre back" in key or "center back" in key:
+        return descriptions["aerial defender"] if ("aerial" in key) else (descriptions_en if lang == "EN" else descriptions_es)["aggressive defender"]
+    if "progressor" in key:
+        return descriptions["ball progressor"] if "ball" in key else descriptions["attacking progressor"]
+    if "forward" in key or "finisher" in key:
+        return descriptions["creator forward"] if "creator" in key else descriptions["box finisher"]
+    return (
+        "Perfil táctico híbrido identificado por el modelo de roles; debe interpretarse junto con posición, minutos y comparables."
+        if lang == "ES"
+        else "Hybrid tactical profile identified in the role model; interpret alongside position, minutes and comparables."
+    )
+
+
+def role_purity_label(value: object) -> str:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    lang = globals().get("LANG", "ES")
+    if pd.isna(num):
+        return "No disponible" if lang == "ES" else "Not available"
+    if num >= 70:
+        return "Alta especialización táctica" if lang == "ES" else "High tactical specialisation"
+    if num >= 40:
+        return "Pureza de rol moderada" if lang == "ES" else "Moderate role purity"
+    return "Perfil híbrido / baja especialización" if lang == "ES" else "Hybrid profile / low specialisation"
+
+
+def role_hybridization_label(value: object) -> str:
+    return role_ambiguity_label(value)
+
+
+def build_role_signal_items(player_row: pd.Series) -> list[dict[str, object]]:
+    """Return the visible role composition without inventing unavailable model outputs."""
+    candidates = []
+    primary = safe_get(player_row, "primary_role", np.nan)
+    secondary = safe_get(player_row, "secondary_role", np.nan)
+    if is_valid_role_value(primary):
+        candidates.append({
+            "rank": 1,
+            "role": str(primary),
+            "score": role_metric_display(safe_get(player_row, "primary_role_similarity", np.nan)),
+            "kind": "Primary role" if globals().get("LANG", "ES") == "EN" else "Rol primario",
+        })
+    if is_valid_role_value(secondary) and str(secondary).strip() != str(primary).strip():
+        candidates.append({
+            "rank": 2,
+            "role": str(secondary),
+            "score": role_metric_display(safe_get(player_row, "secondary_role_similarity", np.nan)),
+            "kind": "Secondary tendency" if globals().get("LANG", "ES") == "EN" else "Tendencia secundaria",
+        })
+    return candidates[:3]
+
+
+
+def render_role_availability_chips(source_df: pd.DataFrame, selected_role: str | None = None, limit: int = 12) -> None:
+    """Expose available role categories so the scout does not need to guess exact labels."""
+    if not isinstance(source_df, pd.DataFrame) or source_df.empty or "primary_role" not in source_df.columns:
+        return
+    counts = (
+        source_df["primary_role"]
+        .dropna()
+        .astype(str)
+        .loc[lambda s: s.map(is_valid_role_value)]
+        .value_counts()
+    )
+    if counts.empty:
+        return
+    total = max(int(counts.sum()), 1)
+    chips = []
+    for role, count in counts.head(limit).items():
+        active = selected_role is not None and str(role) == str(selected_role)
+        css = "role-availability-chip role-availability-chip-active" if active else "role-availability-chip"
+        css = f"{css} role-badge-family-{role_family(role)}"
+        share = 100 * int(count) / total
+        chips.append(
+            f"<span class='{css}' title='{html.escape(role_description(role))}'>"
+            f"<i class='role-availability-dot'></i>{html.escape(str(role))} <b>{int(count)}</b></span>"
+        )
+    title = "Available roles" if LANG == "EN" else "Roles disponibles"
+    subtitle = (
+        "Counts and share after current age/minutes/context filters." if LANG == "EN"
+        else "Recuento y peso tras los filtros actuales de edad, minutos y contexto."
+    )
+    st.sidebar.markdown(
+        f"""
+<div class="role-availability-panel">
+    <div class="role-availability-title">{html.escape(title)}</div>
+    <div class="role-availability-subtitle">{html.escape(subtitle)}</div>
+    <div class="role-availability-chip-row">{''.join(chips)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def merge_role_intelligence(base: pd.DataFrame, role_df: pd.DataFrame) -> pd.DataFrame:
+    """Attach role intelligence Role Intelligence to the DSS universe with robust fuzzy-safe keys.
+
+    The role artefact is generated at player-season level and its canonical columns are
+    player/team/league/season. The DSS universe can expose several player-name and club
+    columns depending on the sprint version, so this merge intentionally tries a cascade:
+    name+season+club, name+season+league, name+season and finally name-only.
+    """
+    if base.empty or role_df.empty:
+        return base
+
+    left = base.copy().reset_index(drop=False).rename(columns={"index": "_role_row_id"})
+    right = role_df.copy()
+
+    if "role_player" not in right.columns:
+        return base
+    if "primary_role" in right.columns:
+        valid_primary = right["primary_role"].map(is_valid_role_value)
+        right = right.loc[valid_primary].copy()
+    if right.empty:
+        return base
+
+    role_cols = [c for c in [
+        "role_player", "role_team", "role_league", "role_season", "primary_role", "secondary_role",
+        "primary_role_similarity", "secondary_role_similarity", "role_confidence", "role_ambiguity",
+        "primary_role_cluster", "secondary_role_cluster", "role_similar_player_1", "role_similar_player_2",
+        "role_similar_player_3", "role_similar_player_4", "role_similar_player_5",
+    ] if c in right.columns]
+    if not role_cols or "primary_role" not in role_cols:
+        return base
+
+    # Initialize role columns so downstream UI never breaks when no match is found.
+    role_text_cols = {
+        "role_player", "role_team", "role_league", "role_season", "primary_role", "secondary_role",
+        "role_similar_player_1", "role_similar_player_2", "role_similar_player_3",
+        "role_similar_player_4", "role_similar_player_5",
+    }
+    for col in role_cols:
+        if col not in left.columns:
+            if col in role_text_cols:
+                left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+            else:
+                left[col] = np.nan
+        elif col in role_text_cols:
+            left[col] = left[col].astype("object")
+
+    left_name_candidates = [
+        c for c in [
+            get_player_name_column(left), "player", "player_name", "player_name_fbref", "player_name_tm",
+            "name", "short_name", "display_name",
+        ] if c and c in left.columns
+    ]
+    # Preserve order and remove duplicates.
+    left_name_candidates = list(dict.fromkeys(left_name_candidates))
+    if not left_name_candidates:
+        return left.drop(columns=["_role_row_id"], errors="ignore")
+
+    left_club_candidates = [c for c in ["club", "team", "squad", "current_club", "club_actual"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition", "league_name"] if c in left.columns]
+
+    right["_role_player_key"] = right["role_player"].map(normalize_join_text)
+    if "role_player_key" in right.columns:
+        right["_role_player_key"] = right["_role_player_key"].mask(right["_role_player_key"].eq(""), right["role_player_key"].astype(str))
+    right["_role_season_key"] = right["role_season"].map(normalize_role_season) if "role_season" in right.columns else ""
+    right["_role_team_key"] = right["role_team"].map(normalize_join_text) if "role_team" in right.columns else ""
+    right["_role_league_key"] = right["role_league"].map(normalize_join_text) if "role_league" in right.columns else ""
+
+    # Prefer the highest-confidence duplicate where the artefact has multiple rows per key.
+    if "role_confidence" in right.columns:
+        right = right.sort_values("role_confidence", ascending=False, na_position="last")
+
+    left["_role_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+
+    def _fill_from_strategy(name_col: str, extra_left_cols: list[str], extra_right_cols: list[str]) -> None:
+        nonlocal left
+        unresolved = left["primary_role"].isna()
+        if not unresolved.any():
+            return
+        tmp_left = left.loc[unresolved, ["_role_row_id", name_col, "_role_season_key"] + extra_left_cols].copy()
+        tmp_left["_role_player_key"] = tmp_left[name_col].map(normalize_join_text)
+        rename = {}
+        for l_col, r_key in zip(extra_left_cols, extra_right_cols):
+            key_col = f"_tmp_{r_key}"
+            tmp_left[key_col] = tmp_left[l_col].map(normalize_join_text)
+            rename[key_col] = r_key
+        join_left_cols = ["_role_player_key", "_role_season_key"] + list(rename.values())
+        tmp_left = tmp_left.rename(columns=rename)
+        tmp_left = tmp_left[["_role_row_id"] + join_left_cols]
+        tmp_left = tmp_left[tmp_left["_role_player_key"].astype(str).str.len() > 0]
+        if tmp_left.empty:
+            return
+        tmp_right = right.drop_duplicates(join_left_cols)[join_left_cols + role_cols]
+        matched = tmp_left.merge(tmp_right, on=join_left_cols, how="left")
+        matched = matched.dropna(subset=["primary_role"])
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_role_row_id", keep="first").set_index("_role_row_id")
+        for col in role_cols:
+            if col in matched.columns:
+                idx = matched.index.intersection(left["_role_row_id"])
+                if len(idx):
+                    left_index = left.set_index("_role_row_id").index
+                    # map by row id without changing visible ordering
+                    values = left["_role_row_id"].map(matched[col])
+                    # Fill each role column independently. Previous versions used
+                    # primary_role.isna() as the mask for every column; once the
+                    # primary role was filled, similarity/confidence/ambiguity and
+                    # top-similar fields were left as N/D.
+                    existing = left[col] if col in left.columns else pd.Series(np.nan, index=left.index)
+                    mask = unresolved & existing.isna() & values.notna()
+                    if mask.any() and col in role_text_cols:
+                        left[col] = left[col].astype("object")
+                    left.loc[mask, col] = values[mask]
+
+    for name_col in left_name_candidates:
+        for club_col in left_club_candidates:
+            _fill_from_strategy(name_col, [club_col], ["_role_team_key"])
+        for league_col in left_league_candidates:
+            _fill_from_strategy(name_col, [league_col], ["_role_league_key"])
+        _fill_from_strategy(name_col, [], [])
+
+        # Final conservative fallback: name-only. This helps when the dashboard uses a
+        # current-scouting season label while the role artefact stores the compact 2425 key.
+        unresolved = left["primary_role"].isna()
+        if unresolved.any():
+            tmp_left = left.loc[unresolved, ["_role_row_id", name_col]].copy()
+            tmp_left["_role_player_key"] = tmp_left[name_col].map(normalize_join_text)
+            tmp_left = tmp_left[tmp_left["_role_player_key"].astype(str).str.len() > 0]
+            tmp_right = right.drop_duplicates(["_role_player_key"])[["_role_player_key"] + role_cols]
+            matched = tmp_left[["_role_row_id", "_role_player_key"]].merge(tmp_right, on="_role_player_key", how="left")
+            matched = matched.dropna(subset=["primary_role"]).drop_duplicates("_role_row_id", keep="first").set_index("_role_row_id")
+            if not matched.empty:
+                for col in role_cols:
+                    values = left["_role_row_id"].map(matched[col])
+                    # Fill each role column independently. Previous versions used
+                    # primary_role.isna() as the mask for every column; once the
+                    # primary role was filled, similarity/confidence/ambiguity and
+                    # top-similar fields were left as N/D.
+                    existing = left[col] if col in left.columns else pd.Series(np.nan, index=left.index)
+                    mask = unresolved & existing.isna() & values.notna()
+                    if mask.any() and col in role_text_cols:
+                        left[col] = left[col].astype("object")
+                    left.loc[mask, col] = values[mask]
+
+    return left.drop(columns=["_role_row_id"], errors="ignore")
+
+def has_role_intelligence(row: pd.Series) -> bool:
+    value = safe_get(row, "primary_role", np.nan)
+    # The role label is the core role intelligence output. Confidence/similarity enrich it,
+    # but must not block display when an export lacks those numeric fields.
+    return is_valid_role_value(value)
+
+
+def role_metric_display(value: object, decimals: int = 1) -> str:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(num):
+        return "N/D" if globals().get("LANG", "ES") == "ES" else "N/A"
+    if abs(float(num) - round(float(num))) < 1e-9:
+        return f"{float(num):.0f}"
+    return f"{float(num):.{decimals}f}"
+
+
+def render_role_badge(row: pd.Series) -> str:
+    if not has_role_intelligence(row):
+        return ""
+    role = safe_get(row, 'primary_role')
+    family_css = f"role-badge-family-{role_family(role)}"
+    return f"<span class='role-badge {family_css}'>🧠 {html.escape(str(role))}</span>"
+
+
+def parse_role_similar(value: object) -> dict[str, object] | None:
+    if pd.isna(value) or not str(value).strip():
+        return None
+    parts = [part.strip() for part in str(value).split("|")]
+    score = pd.to_numeric(pd.Series([parts[-1] if len(parts) >= 4 else np.nan]), errors="coerce").iloc[0]
+    return {
+        "player": parts[0] if len(parts) > 0 else "N/A",
+        "club": format_club_name(parts[1] if len(parts) > 1 else "N/A"),
+        "season": parts[2] if len(parts) > 2 else "N/A",
+        "score": score,
+    }
+
+
+def role_dna_label(col: str) -> str:
+    return ROLE_DNA_LABELS.get(col, {"ES": col, "EN": col}).get(globals().get("LANG", "ES"), col)
+
+
+def role_dna_priority_columns(role: object) -> list[str]:
+    """Return role-specific tactical dimensions in product/narrative order."""
+    role_key = normalize_join_text(role)
+    priority = ROLE_DNA_ROLE_PRIORITY.get(role_key)
+    if priority:
+        return [c for c in priority if c in ROLE_DNA_COLUMNS]
+    return ROLE_DNA_COLUMNS.copy()
+
+
+def role_dna_dimension_groups(role: object, ordered_columns: list[str]) -> list[tuple[str, list[str]]]:
+    """Group role DNA into Core, Supporting and Secondary traits for scouting UX."""
+    role_key = normalize_join_text(role)
+    if role_key == "ball playing centre back":
+        groups = [
+            ("CORE DNA" if LANG == "EN" else "CORE DNA", ["passing_volume_index", "ball_progression_index", "passing_security_index"]),
+            ("SUPPORTING TRAITS" if LANG == "EN" else "RASGOS DE APOYO", ["availability_index_role", "chance_creation_index"]),
+            ("SECONDARY" if LANG == "EN" else "SECUNDARIO", ["discipline_risk_index", "finishing_index_role", "crossing_width_index"]),
+        ]
+    else:
+        groups = [
+            ("CORE DNA" if LANG == "EN" else "CORE DNA", ordered_columns[:3]),
+            ("SUPPORTING TRAITS" if LANG == "EN" else "RASGOS DE APOYO", ordered_columns[3:6]),
+            ("SECONDARY" if LANG == "EN" else "SECUNDARIO", ordered_columns[6:]),
+        ]
+    available = set(ordered_columns)
+    return [(label, [c for c in cols if c in available]) for label, cols in groups if any(c in available for c in cols)]
+
+
+def role_dna_score(value: object) -> float | None:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(num):
+        return None
+    return float(np.clip(num, 0, 100))
+
+
+def has_role_dna(row: pd.Series) -> bool:
+    return any(role_dna_score(row.get(col, np.nan)) is not None for col in ROLE_DNA_COLUMNS)
+
+
+def _role_dna_plain_explanation(role: str, player_row: pd.Series) -> str:
+    """Human-readable role explanation for a sporting director."""
+    role_clean = clean_role_display(role, "Role pending" if LANG == "EN" else "Rol pendiente")
+    role_lower = role_clean.lower()
+    default = (
+        f"The system classifies this player as {role_clean} because his tactical-index profile shows stronger signals in the dimensions associated with that role."
+        if LANG == "EN"
+        else f"El sistema clasifica a este jugador como {role_clean} porque su perfil de índices tácticos concentra la señal en las dimensiones asociadas a ese rol."
+    )
+    descriptions_es = {
+        "ball-playing centre-back": "Defensor central orientado a la construcción: alta participación en salida de balón, volumen de pase y progresión desde primera línea.",
+        "aerial defender": "Central dominante en duelos y protección del área, con lectura prioritaria defensiva y menor peso creativo.",
+        "aggressive defender": "Defensor de intervención alta: anticipa, presiona y acumula acciones defensivas con perfil proactivo.",
+        "ball winner": "Mediocentro de recuperación y equilibrio: aporta intensidad, disponibilidad y seguridad para sostener al equipo sin balón.",
+        "creative playmaker": "Organizador creativo: genera ventajas mediante pase progresivo, último pase y participación estable en zonas de creación.",
+        "attacking progressor": "Progresor ofensivo: transporta o acelera ataques, combina progresión con creación y recibe en zonas avanzadas.",
+        "box finisher": "Finalizador de área: perfil orientado a remate, xG y eficiencia de tiro más que a construcción.",
+        "creator forward": "Delantero generador: combina amenaza ofensiva con creación para compañeros y movilidad entre líneas.",
+        "mobile forward": "Atacante móvil: amenaza por desmarque, progresión y participación en diferentes alturas del ataque.",
+    }
+    descriptions_en = {
+        "ball-playing centre-back": "Build-up centre-back: high involvement in first-phase possession, passing volume and ball progression from the defensive line.",
+        "aerial defender": "Box-protection centre-back with stronger aerial/defensive identity and lower creative weight.",
+        "aggressive defender": "Proactive defender: anticipates, presses and accumulates defensive actions with an intervention-heavy profile.",
+        "ball winner": "Ball-winning midfielder: provides recovery, balance, availability and secure possession support.",
+        "creative playmaker": "Creative organizer: creates advantages through progressive passing, chance creation and stable possession involvement.",
+        "attacking progressor": "Attacking progressor: accelerates attacks through carrying, receiving and progressive actions in advanced areas.",
+        "box finisher": "Penalty-box finisher: profile driven by shot volume, xG and finishing efficiency rather than build-up.",
+        "creator forward": "Creative forward: combines attacking threat with chance creation and between-line mobility.",
+        "mobile forward": "Mobile attacker: creates threat through movement, progression and involvement across attacking zones.",
+    }
+    base = (descriptions_en if LANG == "EN" else descriptions_es).get(role_lower, default)
+    return base
+
+
+def render_role_dna_block(player_row: pd.Series) -> None:
+    """Render TM.5.5 Role DNA as the visible explanation of the tactical role."""
+    if not has_role_dna(player_row):
+        return
+
+    role = clean_role_display(safe_get(player_row, "primary_role", np.nan), "Role pending" if LANG == "EN" else "Rol pendiente")
+    fit = role_dna_score(safe_get(player_row, "role_fit_explainability_score", np.nan))
+    quality_raw = safe_get(player_row, "role_explainability_quality", "N/D" if LANG == "ES" else "N/A")
+    explanation = safe_get(player_row, "role_explanation_text", "")
+    if pd.isna(explanation) or not str(explanation).strip() or "Sin rol táctico" in str(explanation):
+        explanation = _role_dna_plain_explanation(role, player_row)
+
+    confidence = role_dna_score(safe_get(player_row, "role_confidence", np.nan))
+    ambiguity = role_dna_score(safe_get(player_row, "role_ambiguity", np.nan))
+    confidence_label = "N/D" if confidence is None else f"{confidence:.0f}%"
+    ambiguity_label = "N/D" if ambiguity is None else f"{ambiguity:.0f}%"
+    role_dna_state_label = role_hybridization_label(ambiguity) if ambiguity is not None else str(quality_raw)
+
+    values = []
+    for col in role_dna_priority_columns(role):
+        value = role_dna_score(player_row.get(col, np.nan))
+        if value is not None:
+            values.append((col, value, role_dna_label(col)))
+    if not values:
+        return
+    # Keep role-specific order. The bars explain the tactical role; they are not
+    # a generic top-percentile ranking across unrelated dimensions.
+
+    values_by_col = {col: (value, label) for col, value, label in values}
+    bars = []
+    ordered_cols = [col for col, _, _ in values]
+    for group_label, group_cols in role_dna_dimension_groups(role, ordered_cols):
+        rows = []
+        for col in group_cols:
+            if col not in values_by_col:
+                continue
+            value, label = values_by_col[col]
+            width = max(0, min(100, value))
+            rows.append(
+                f"<div class='role-dna-pro-row'>"
+                f"<div class='role-dna-pro-label'>{html.escape(label)}</div>"
+                f"<div class='role-dna-pro-track'><span style='width:{width:.0f}%'></span></div>"
+                f"<div class='role-dna-pro-score'>P{value:.0f}</div>"
+                f"</div>"
+            )
+        if rows:
+            bars.append(
+                f"<div class='role-dna-pro-group'>"
+                f"<div class='role-dna-pro-group-title'>{html.escape(group_label)}</div>"
+                f"{''.join(rows)}"
+                f"</div>"
+            )
+
+    fit_html = ""
+    if fit is not None:
+        fit_html = f"<div class='role-dna-pro-kpi'><span>{html.escape('Role fit' if LANG == 'EN' else 'Encaje rol')}</span><b>{fit:.0f}</b></div>"
+
+    title = "ROLE DNA · WHY THIS ROLE?" if LANG == "EN" else "ROLE DNA · POR QUÉ ESTE ROL"
+    subtitle = (
+        "The tactical fingerprint below turns advanced FBref metrics into a role explanation."
+        if LANG == "EN"
+        else "La huella táctica convierte métricas avanzadas de FBref en una explicación operativa del rol."
+    )
+    belief_title = "Why the system believes it" if LANG == "EN" else "Por qué el sistema lo clasifica así"
+    metrics_title = "Metrics supporting the role" if LANG == "EN" else "Métricas que sustentan el rol"
+
+    st.markdown(
+        f"""
+<div class="role-dna-pro-shell">
+    <div class="role-dna-pro-header">
+        <div>
+            <div class="role-dna-pro-eyebrow">{html.escape(title)}</div>
+            <div class="role-dna-pro-title">🧠 {html.escape(role)}</div>
+            <div class="role-dna-pro-subtitle">{html.escape(subtitle)} <span class="role-dna-quality-chip">{html.escape(str(role_dna_state_label))}</span></div>
+        </div>
+        <div class="role-dna-pro-kpis">
+            <div class="role-dna-pro-kpi"><span>{html.escape('Role purity' if LANG == 'EN' else 'Pureza de rol')}</span><b>{html.escape(confidence_label)}</b></div>
+            <div class="role-dna-pro-kpi"><span>{html.escape('Hybridization' if LANG == 'EN' else 'Hibridación')}</span><b>{html.escape(ambiguity_label)}</b></div>
+            {fit_html}
+        </div>
+    </div>
+    <div class="role-dna-pro-layout">
+        <div class="role-dna-pro-explain-card">
+            <div class="role-dna-pro-card-title">{html.escape(belief_title)}</div>
+            <div class="role-dna-pro-copy">{html.escape(_role_dna_plain_explanation(role, player_row))}</div>
+            <div class="role-dna-pro-driver">{html.escape(str(explanation))}</div>
+        </div>
+        <div class="role-dna-pro-bars-card">
+            <div class="role-dna-pro-card-title">{html.escape(metrics_title)}</div>
+            <div class="role-dna-pro-bars">{''.join(bars)}</div>
+        </div>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def render_role_dna_filters(source_df: pd.DataFrame, key_prefix: str) -> pd.DataFrame:
+    """Optional advanced tactical-index filters for Recruitment Intelligence."""
+    available = [col for col in ROLE_DNA_FILTER_COLUMNS if col in source_df.columns and pd.to_numeric(source_df[col], errors="coerce").notna().any()]
+    if source_df.empty or not available:
+        return source_df
+
+    title = "What tactical function do you need to cover?" if LANG == "EN" else "¿Qué función táctica necesitas cubrir?"
+    subtitle = (
+        "Start from a scouting need, then use thresholds to identify players with progression, creation, possession security or availability DNA."
+        if LANG == "EN"
+        else "Parte de una necesidad de scouting y usa umbrales para encontrar jugadores con ADN de construcción, creación, seguridad en posesión o disponibilidad competitiva."
+    )
+    intent_examples = (
+        ["🛡 Build-up from deep", "🎨 Offensive creation", "⚙ Possession security", "🏃 Competitive availability"]
+        if LANG == "EN"
+        else ["🛡 Construcción desde atrás", "🎨 Creación ofensiva", "⚙ Seguridad en posesión", "🏃 Disponibilidad competitiva"]
+    )
+    chips_html = "".join(f"<span>{html.escape(x)}</span>" for x in intent_examples)
+    st.markdown(
+        f"<div class='role-dna-filter-shell'><div class='role-dna-filter-title'>{html.escape(title)}</div><div class='role-dna-filter-subtitle'>{html.escape(subtitle)}</div><div class='role-dna-filter-intents'>{chips_html}</div>",
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(len(available), gap="small")
+    thresholds: dict[str, int] = {}
+    for idx, col in enumerate(available):
+        with cols[idx]:
+            thresholds[col] = st.number_input(
+                role_dna_label(col) + " ≥",
+                min_value=0,
+                max_value=100,
+                value=0,
+                step=5,
+                key=f"{key_prefix}_{col}_min_filter",
+            )
+    filtered = source_df.copy()
+    active = []
+    for col, threshold in thresholds.items():
+        if threshold > 0:
+            filtered = filtered[pd.to_numeric(filtered[col], errors="coerce").fillna(-1) >= threshold].copy()
+            active.append(f"{role_dna_label(col)} ≥ {threshold}")
+    active_label = " · ".join(active) if active else ("No Role DNA restriction" if LANG == "EN" else "Sin restricción Role DNA")
+    st.markdown(
+        f"<div class='role-dna-filter-status'>{html.escape(str(len(filtered)))} {'players' if LANG == 'EN' else 'jugadores'} · {html.escape(active_label)}</div></div>",
+        unsafe_allow_html=True,
+    )
+    return filtered
+
+
+def render_role_profile_block(player_row: pd.Series) -> None:
+    taxonomy_raw = safe_get(player_row, "position_taxonomy", "N/A")
+    taxonomy = "N/A" if pd.isna(taxonomy_raw) else str(taxonomy_raw).strip()
+    if taxonomy.lower() in {"", "nan", "none", "na"}:
+        taxonomy = "N/A"
+
+    if not has_role_intelligence(player_row) and taxonomy == "N/A":
+        position_text = str(safe_get(player_row, "position_group", safe_get(player_row, "position", safe_get(player_row, "pos_", "N/A"))))
+        msg = (
+            f"La inteligencia táctica no está disponible para este jugador. Perfil seleccionado: {position_text}."
+            if LANG == "ES"
+            else f"Tactical intelligence is not available for this player. Selected profile: {position_text}."
+        )
+        st.info(msg)
+        return
+
+    primary_raw = safe_get(player_row, "primary_role", "N/A")
+    primary = str(primary_raw).strip() if is_valid_role_value(primary_raw) else "N/A"
+    secondary_raw = safe_get(player_row, "secondary_role", "N/A")
+    secondary = "N/A" if pd.isna(secondary_raw) else str(secondary_raw).strip()
+    if secondary.lower() in {"", "nan", "none", "na"} or secondary == primary:
+        secondary = "N/A"
+
+    confidence_raw = safe_get(player_row, "role_confidence", np.nan)
+    ambiguity_raw = safe_get(player_row, "role_ambiguity", np.nan)
+    purity = role_metric_display(confidence_raw)
+    hybridization = role_metric_display(ambiguity_raw)
+    primary_sim = role_metric_display(safe_get(player_row, "primary_role_similarity", np.nan))
+    secondary_sim = role_metric_display(safe_get(player_row, "secondary_role_similarity", np.nan))
+    pos_raw = str(safe_get(player_row, "position_group", safe_get(player_row, "position", safe_get(player_row, "pos_", "N/A"))))
+    taxonomy_label = taxonomy_long_label(taxonomy)
+    hybridization_label = role_hybridization_label(ambiguity_raw)
+    purity_label = role_purity_label(confidence_raw)
+    primary_family_label = role_family_label(primary)
+    primary_description = role_description(primary)
+    primary_css = role_family_css(primary)
+    secondary_css = role_family_css(secondary)
+
+    role_signal_items = build_role_signal_items(player_row)
+    role_signal_cards = []
+    for item in role_signal_items:
+        role_name = str(item["role"])
+        score = str(item["score"])
+        family = role_family_label(role_name)
+        role_signal_cards.append(
+            f"<div class='role-top-role-row {role_family_css(role_name)}'>"
+            f"<div class='role-top-role-rank'>{int(item['rank'])}</div>"
+            f"<div class='role-top-role-name'>{html.escape(role_name)}</div>"
+            f"<div class='role-top-role-meta'>{html.escape(str(item['kind']))} · {html.escape(family)}</div>"
+            f"<div class='role-top-role-score'>{html.escape(score)} {'similarity' if LANG == 'EN' else 'similitud'}</div>"
+            f"</div>"
+        )
+    if not role_signal_cards:
+        role_signal_cards.append(
+            f"<div class='role-top-role-row role-top-role-row-family-balanced'>"
+            f"<div class='role-top-role-rank'>—</div>"
+            f"<div class='role-top-role-name'>{'No role signal' if LANG == 'EN' else 'Sin señal de rol'}</div>"
+            f"<div class='role-top-role-meta'>{'No valid tactical role is available for this player.' if LANG == 'EN' else 'No hay un rol táctico válido disponible para este jugador.'}</div>"
+            f"</div>"
+        )
+    role_signal_note = (
+        "Top role signals available in the role intelligence layer. The DSS does not invent a third role when the data only exposes primary and secondary assignments."
+        if LANG == "EN"
+        else "Señales de rol disponibles en la capa de inteligencia táctica. El DSS no inventa un tercer rol si los datos solo exponen rol primario y secundario."
+    )
+
+    st.markdown(
+        f"""
+<div class="role-identity-pipeline">
+    <div class="role-identity-eyebrow">{"PLAYER IDENTITY PIPELINE" if LANG == "EN" else "PIPELINE DE IDENTIDAD DEL JUGADOR"}</div>
+    <div class="role-identity-flow">
+        <div class="role-identity-step"><span>{"Original position" if LANG == "EN" else "Posición original"}</span><b>{html.escape(pos_raw)}</b></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step role-identity-step-tax"><span>{"Position taxonomy" if LANG == "EN" else "Taxonomía posicional"}</span><b>{html.escape(taxonomy)}</b><small>{html.escape(taxonomy_label)}</small></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step {html.escape(primary_css)}"><span>{"Primary role" if LANG == "EN" else "Rol primario"}</span><b>{html.escape(primary)}</b><small>{html.escape(primary_sim)} {"similarity" if LANG == "EN" else "similitud"}</small></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step"><span>{"Tactical read" if LANG == "EN" else "Lectura táctica"}</span><b>{html.escape(hybridization_label)}</b><small>{html.escape(purity_label)}</small></div>
+    </div>
+</div>
+
+<div class="role-profile-grid role-profile-grid-tm65">
+ <div class="role-profile-card role-profile-card-taxonomy"><div class="role-profile-label">{html.escape('Positional Identity' if LANG == 'EN' else 'Identidad posicional')}</div><div class="role-profile-value">🎯 {html.escape(taxonomy)} · {html.escape(taxonomy_label)}</div><div class="role-profile-caption">{html.escape('Calibrated positional identity' if LANG == 'EN' else 'Identidad posicional calibrada')}</div></div>
+ <div class="role-profile-card {html.escape(primary_css)}"><div class="role-profile-label">{html.escape('Primary Role' if LANG == 'EN' else 'Rol primario')}</div><div class="role-profile-value">🧠 {html.escape(primary)}</div><div class="role-profile-caption">{html.escape(primary_sim)} {'similarity' if LANG == 'EN' else 'similitud'} · {html.escape(primary_family_label)}</div></div>
+ <div class="role-profile-card {html.escape(secondary_css)}"><div class="role-profile-label">{html.escape('Secondary Role' if LANG == 'EN' else 'Rol secundario')}</div><div class="role-profile-value">{html.escape(secondary)}</div><div class="role-profile-caption">{html.escape(secondary_sim)} {'similarity' if LANG == 'EN' else 'similitud'}</div></div>
+ <div class="role-profile-card"><div class="role-profile-label">{html.escape('Role Purity' if LANG == 'EN' else 'Pureza de rol')}</div><div class="role-profile-value">{html.escape(purity)} / 100</div><div class="role-profile-caption">{html.escape(purity_label)}</div></div>
+ <div class="role-profile-card"><div class="role-profile-label">{html.escape('Role Hybridization' if LANG == 'EN' else 'Hibridación de rol')}</div><div class="role-profile-value">{html.escape(hybridization)} / 100</div><div class="role-profile-caption">{html.escape(hybridization_label)}</div></div>
+</div>
+
+<div class="role-tactical-read-card">
+    <div class="role-tactical-eyebrow">{'TACTICAL INTERPRETATION' if LANG == 'EN' else 'INTERPRETACIÓN TÁCTICA'}</div>
+    <div class="role-tactical-title">{html.escape(primary)} · {html.escape(primary_family_label)}</div>
+    <div class="role-tactical-copy">{html.escape(primary_description)}</div>
+    <div class="role-tactical-chips">
+        <span class="role-tactical-chip">{html.escape('Taxonomy' if LANG == 'EN' else 'Taxonomía')}: {html.escape(taxonomy)} · {html.escape(taxonomy_label)}</span>
+        <span class="role-tactical-chip">{html.escape('Purity' if LANG == 'EN' else 'Pureza')}: {html.escape(purity)} / 100</span>
+        <span class="role-tactical-chip">{html.escape('Hybridization' if LANG == 'EN' else 'Hibridación')}: {html.escape(hybridization)} / 100</span>
+    </div>
+</div>
+
+<div class="role-top-role-card">
+    <div class="role-top-role-title">{html.escape('Top role signals' if LANG == 'EN' else 'Top señales de rol')}</div>
+    <div class="role-top-role-subtitle">{html.escape(role_signal_note)}</div>
+    <div class="role-top-role-grid">{''.join(role_signal_cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def _build_role_similar_fallback(player_row: pd.Series, universe_df: pd.DataFrame | None = None, limit: int = 5) -> list[tuple[int, dict[str, object], str]]:
+    """Fallback role comparables when role intelligence explicit role_similar_player_* fields are not populated.
+
+    The fallback is intentionally conservative: it only compares players with the same
+    primary role, and when possible the same calibrated Position taxonomy. This keeps
+    the DSS tactically coherent even if the role-neighbour export is incomplete.
+    """
+    if universe_df is None or universe_df.empty:
+        return []
+    primary_role = safe_get(player_row, "primary_role", np.nan)
+    if not is_valid_role_value(primary_role) or "primary_role" not in universe_df.columns:
+        return []
+
+    df = universe_df.copy()
+    df = df[df["primary_role"].astype(str) == str(primary_role)].copy()
+    if df.empty:
+        return []
+
+    target_taxonomy = safe_get(player_row, "position_taxonomy", np.nan)
+    if "position_taxonomy" in df.columns and pd.notna(target_taxonomy) and str(target_taxonomy).strip().lower() not in {"", "nan", "none", "na"}:
+        same_tax = df[df["position_taxonomy"].astype(str) == str(target_taxonomy)].copy()
+        if len(same_tax) >= 3:
+            df = same_tax
+
+    name_col = get_player_name_column(df) or ("player" if "player" in df.columns else None)
+    target_name = str(safe_get(player_row, name_col, "")) if name_col else ""
+    if name_col:
+        df = df[df[name_col].astype(str) != target_name].copy()
+    if df.empty:
+        return []
+
+    sort_cols = [c for c in ["primary_role_similarity", "opportunity_score", "confidence_score", "minutes"] if c in df.columns]
+    if sort_cols:
+        for col in sort_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df = df.sort_values(sort_cols, ascending=[False] * len(sort_cols), na_position="last")
+
+    club_col = next((c for c in ["team", "club", "current_club", "team_name", "squad"] if c in df.columns), None)
+    season_col = next((c for c in ["season", "season_label", "data_season"] if c in df.columns), None)
+
+    items: list[tuple[int, dict[str, object], str]] = []
+    for rank, (_, row) in enumerate(df.head(limit).iterrows(), start=1):
+        name = safe_get(row, name_col, "N/A") if name_col else "N/A"
+        club = format_club_name(safe_get(row, club_col, "N/A") if club_col else "N/A")
+        season = safe_get(row, season_col, "N/A") if season_col else "N/A"
+        sim_value = safe_get(row, "primary_role_similarity", np.nan)
+        if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]):
+            sim_value = safe_get(row, "opportunity_score", np.nan)
+        score = "N/A" if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]) else f"{float(sim_value):.1f}"
+        items.append((rank, {"player": name, "club": club, "season": season, "score": sim_value}, score))
+    return items
+
+
+def render_role_similar_players_block(player_row: pd.Series, universe_df: pd.DataFrame | None = None) -> None:
+    similar_items = []
+    explicit_source = True
+    for i in range(1, 6):
+        item = parse_role_similar(safe_get(player_row, f"role_similar_player_{i}", np.nan))
+        if item:
+            score = "N/A" if pd.isna(item["score"]) else f"{float(item['score']):.1f}"
+            similar_items.append((i, item, score))
+
+    if not similar_items:
+        explicit_source = False
+        similar_items = _build_role_similar_fallback(player_row, universe_df=universe_df, limit=5)
+
+    title = 'Similar Players by Role' if LANG == 'EN' else 'Jugadores similares por rol'
+    if explicit_source:
+        subtitle = 'Nearest profiles in the tactical role space.' if LANG == 'EN' else 'Perfiles más cercanos en el espacio táctico de roles.'
+    else:
+        subtitle = 'Role-compatible fallback: same primary role and, when possible, same position taxonomy.' if LANG == 'EN' else 'Fallback táctico: mismo rol primario y, cuando es posible, misma taxonomía posicional.'
+
+    if not similar_items:
+        primary_role = safe_get(player_row, "primary_role", "N/A")
+        taxonomy = safe_get(player_row, "position_taxonomy", "N/A")
+        st.markdown(
+            f"<div class='top5-horizontal-card role-similar-empty-card'><div class='panel-title'>{html.escape(title)}</div>"
+            f"<div class='panel-subtitle'>{html.escape('No role-compatible players are available under the active filters.' if LANG == 'EN' else 'No hay comparables tácticamente compatibles bajo los filtros activos.')}</div>"
+            f"<div class='role-similar-empty'>"
+            f"<b>{html.escape('Role context' if LANG == 'EN' else 'Contexto de rol')}</b><br>"
+            f"{html.escape(str(primary_role))} · {html.escape(str(taxonomy))}<br>"
+            f"<span>{html.escape('Relax the role, age or minutes filters to recover comparables.' if LANG == 'EN' else 'Relaja filtros de rol, edad o minutos para recuperar comparables.')}</span>"
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    cards = []
+    for rank, item, score in similar_items:
+        cards.append(
+            f"<div class='role-similar-card'><div class='role-similar-rank'>{rank}</div>"
+            f"<div class='role-similar-name'>{html.escape(str(item['player']))}</div>"
+            f"<div class='role-similar-meta'>{html.escape(str(item['club']))}<br>{html.escape(str(item['season']))}</div>"
+            f"<div class='role-similar-score'>{html.escape(score)}</div></div>"
+        )
+    st.markdown(
+        f"<div class='top5-horizontal-card role-similar-visible-card'><div class='panel-title'>{html.escape(title)}</div><div class='panel-subtitle'>{html.escape(subtitle)}</div><div class='role-similar-grid'>{''.join(cards)}</div></div>",
+        unsafe_allow_html=True,
+    )
 
 
 def optimize_transfer_portfolio_with_style(
@@ -6121,6 +7807,7 @@ def optimize_transfer_portfolio_with_style(
     portfolio["player_budget_share"] = portfolio["portfolio_cost"] / budget
     portfolio["player_portfolio_cost_share"] = portfolio["portfolio_cost"] / portfolio["portfolio_cost"].sum()
 
+    portfolio = apply_current_club_overrides(portfolio)
     return portfolio.sort_values("optimization_score", ascending=False)
 
 
@@ -6219,12 +7906,809 @@ def format_money_readable(value):
         return "N/A"
 
 
-def format_score(value):
+def format_score(value, decimals: int = 1):
+    """Format numeric scores consistently across the product UI.
+
+    Older components call this helper with ``decimals=``; keeping the
+    argument here prevents UI regressions while preserving the original
+    default behaviour.
+    """
     try:
-        return f"{float(value):.1f}"
+        decimals = int(decimals)
+        return f"{float(value):.{decimals}f}"
     except Exception:
         return "N/A"
 
+
+# =============================================================================
+# Data freshness layer: present-club overrides and freshness badges
+# =============================================================================
+# The model datasets are player-season based and can lag behind the current market.
+# This lightweight presentation layer corrects known current-club updates without
+# changing historical modelling inputs. Extend this dictionary when validating
+# latest squad movements for the product demo.
+
+# Product-grade club aliases: UI must use short scouting names, not legal entity names.
+# Single source of truth for every visible club label in the product.
+CLUB_DISPLAY_MAP = {
+    "real club celta de vigo s a d": "Celta Vigo",
+    "real club celta de vigo sad": "Celta Vigo",
+    "celta de vigo": "Celta Vigo",
+    "real madrid club de futbol": "Real Madrid",
+    "real madrid club de fútbol": "Real Madrid",
+    "futbol club barcelona": "Barcelona",
+    "fc barcelona": "Barcelona",
+    "crystal palace football club": "Crystal Palace",
+    "nottingham forest football club": "Nottingham Forest",
+    "societa sportiva lazio s p a": "Lazio",
+    "società sportiva lazio s.p.a.": "Lazio",
+    "societa sportiva lazio spa": "Lazio",
+    "torino calcio": "Torino",
+    "athletic club bilbao": "Athletic Club",
+    "real betis balompie": "Real Betis",
+    "real betis balompié": "Real Betis",
+    "real club deportivo espanyol de barcelona s a d": "Espanyol",
+    "real club deportivo espanyol de barcelona sad": "Espanyol",
+    "valencia club de futbol s a d": "Valencia",
+    "valencia club de fútbol s. a. d.": "Valencia",
+    "villarreal club de futbol s a d": "Villarreal",
+    "villarreal club de fútbol s.a.d.": "Villarreal",
+    "borussia verein fur leibesubungen 1900 monchengladbach": "Borussia M'gladbach",
+    "borussia verein für leibesübungen 1900 mönchengladbach": "Borussia M'gladbach",
+    "borussia monchengladbach": "Borussia M'gladbach",
+    "borussia mönchengladbach": "Borussia M'gladbach",
+    "rasenballsport leipzig": "RB Leipzig",
+    "manchester united football club": "Manchester United",
+    "chelsea football club": "Chelsea",
+    "arsenal football club": "Arsenal",
+    "southampton fc": "Southampton",
+    "racing club de strasbourg alsace": "Strasbourg",
+    "real club deportivo mallorca s a d": "Mallorca",
+    "associazione calcio fiorentina": "Fiorentina",
+    "eintracht frankfurt fussball ag": "Eintracht Frankfurt",
+    "eintracht frankfurt fußball ag": "Eintracht Frankfurt",
+    "montpellier hsc": "Montpellier",
+    "athletic club": "Athletic Club",
+    "angers sporting club de l'ouest": "Angers SCO",
+    "angers sporting club de louest": "Angers SCO",
+    "angers sco": "Angers SCO",
+    "association de la jeunesse auxerroise": "Auxerre",
+    "association de la jeunesse auxerroise football": "Auxerre",
+    "aj auxerre": "Auxerre",
+    "getafe team dubai": "Getafe",
+    "getafe s a d team dubai": "Getafe",
+    "getafe club de futbol": "Getafe",
+    "getafe club de fútbol": "Getafe",
+    "getafe cf": "Getafe",
+    "girona s a d": "Girona",
+    "girona futbol club s a d": "Girona",
+    "real club deportivo mallorca sad": "Mallorca",
+    "real club deportivo mallorca s.a.d": "Mallorca",
+    "real club deportivo mallorca s.a.d.": "Mallorca",
+    "real club deportivo mallorca s a d": "Mallorca",
+    "cercle brugge koninklijke sportvereniging": "Cercle Brugge",
+    "standard liege": "Standard Liège",
+    "standard liège": "Standard Liège",
+    "sporting club de braga": "Braga",
+    "sporting clube de braga": "Braga",
+    "real sociedad de futbol": "Real Sociedad",
+    "real sociedad de fútbol": "Real Sociedad",
+    "club atletico de madrid": "Atlético Madrid",
+    "club atlético de madrid": "Atlético Madrid",
+    "real club celta de vigo s. a. d": "Celta Vigo",
+    "real club celta de vigo s.a.d": "Celta Vigo",
+    "real club celta de vigo s.a.d.": "Celta Vigo",
+    "getafe s a d": "Getafe",
+    "getafe s. a. d": "Getafe",
+    "getafe s.a.d": "Getafe",
+    "getafe s.a.d.": "Getafe",
+    "getafe sad": "Getafe",
+    "watford football club": "Watford",
+    "watford fc": "Watford",
+    "crystal palace fc": "Crystal Palace",
+    "nottingham forest fc": "Nottingham Forest",
+    "lazio s p a": "Lazio",
+    "lazio s.p.a": "Lazio",
+    "lazio s.p.a.": "Lazio",
+    "societa sportiva lazio s p a": "Lazio",
+    "societa sportiva lazio s.p.a": "Lazio",
+    "società sportiva lazio s p a": "Lazio",
+    "angies sporting club de l ouest": "Angers SCO",
+    "angers sporting club de l ouest": "Angers SCO",
+    "association jeunesse auxerroise": "Auxerre",
+    "real club deportivo espanyol": "Espanyol",
+    "girona fc": "Girona",
+
+    "reial club deportiu espanyol de barcelona s a d": "Espanyol",
+    "reial club deportiu espanyol de barcelona sad": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d.": "Espanyol",
+    "real club deportivo espanyol de barcelona s.a.d": "Espanyol",
+    "real club deportivo espanyol de barcelona s.a.d.": "Espanyol",
+    "rcd espanyol de barcelona": "Espanyol",
+    "espanyol barcelona": "Espanyol",
+    "societe sportive lazio": "Lazio",
+    "società sportiva lazio": "Lazio",
+    "ss lazio": "Lazio",
+    "lazio roma": "Lazio",
+    "association de la jeunesse auxerroise": "Auxerre",
+    "aj auxerre football": "Auxerre",
+    "auxerre football": "Auxerre",
+    "angers sporting club de l ouest": "Angers SCO",
+    "angers sporting club de l’ouest": "Angers SCO",
+    "angers sporting club de l'ouest": "Angers SCO",
+    "getafe team dubai": "Getafe",
+    "getafe s.a.d team dubai": "Getafe",
+    "getafe sad team dubai": "Getafe",
+    "crystal palace": "Crystal Palace",
+    "nottingham forest": "Nottingham Forest",
+    "watford": "Watford",
+    "borussia m'gladbach": "Borussia M'gladbach",
+    "borussia m gladbach": "Borussia M'gladbach",
+    "borussia mg": "Borussia M'gladbach",
+    "girona futbol club": "Girona",
+    "newcastle united football club": "Newcastle",
+    "newcastle united fc": "Newcastle",
+    "newcastle united": "Newcastle",
+    "newcastle": "Newcastle",
+    "vfb stuttgart": "Stuttgart",
+    "verein fur bewegungsspiele stuttgart": "Stuttgart",
+    "verein für bewegungsspiele stuttgart": "Stuttgart",
+    "stuttgart": "Stuttgart",
+    "reial club deportiu espanyol de barcelona s a d": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d.": "Espanyol",
+    "reial club deportiu espanyol de barcelona sad": "Espanyol",
+}
+
+
+# Backwards-compatible name used by older helper functions.
+CLUB_NAME_ALIASES = CLUB_DISPLAY_MAP
+
+CLUB_DISPLAY_COLUMNS = [
+    "club", "Club", "team", "Team", "Equipo", "squad", "Squad", "current_club",
+    "current_club_name_tm", "club_actual", "club_name", "team_name", "reference_club",
+    "similar_club", "replacement_club", "club_display_current", "current_club_display",
+    "role_team", "role_dna_team", "taxonomy_team",
+]
+
+
+def format_club_name(value: object, fallback: str = "N/A") -> str:
+    """Return a product-safe club name for cards, tables, labels and tooltips."""
+    try:
+        if pd.isna(value):
+            return fallback
+    except Exception:
+        pass
+    raw = str(value).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return fallback
+    key = _normalize_lookup_key(raw)
+    if key in CLUB_DISPLAY_MAP:
+        return CLUB_DISPLAY_MAP[key]
+    # Defensive substring aliases catch noisy merged labels/tooltips without touching player names.
+    for alias_key, display_name in CLUB_DISPLAY_MAP.items():
+        if alias_key and (key == alias_key or key.startswith(alias_key + " ") or key.endswith(" " + alias_key)):
+            return display_name
+    cleaned = raw
+    # Remove sponsorship/legal suffixes that are not useful in scouting UI.
+    cleaned = re.sub(r"\bTeam\s+Dubai\b", "", cleaned, flags=re.IGNORECASE).strip()
+    # Generic legal suffix cleanup for Transfermarkt-style long club names.
+    replacements = [
+        r"\bFootball Club\b", r"\bFutbol Club\b", r"\bClub de Fútbol\b", r"\bClub de Futbol\b",
+        r"\bSocietà Sportiva\b", r"\bSocieta Sportiva\b", r"\bAssociazione Calcio\b",
+        r"\bS\.\s*A\.\s*D\.\b", r"\bS\.A\.D\.\b", r"\bS\.\s*p\.\s*A\.\b", r"\bS\.p\.A\.\b",
+        r"\bFußball AG\b", r"\bFussball AG\b",
+        r"\bSporting Club de l['’]Ouest\b", r"\bAssociation de la Jeunesse Auxerroise\b",
+        r"\bKoninklijke Sportvereniging\b",
+    ]
+    for pattern in replacements:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"\bS\s*A\s*D\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bS\s*P\s*A\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bFC\b", "", cleaned, flags=re.IGNORECASE) if len(cleaned.split()) > 2 else cleaned
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" -·,.")
+    cleaned_key = _normalize_lookup_key(cleaned)
+    return CLUB_DISPLAY_MAP.get(cleaned_key, cleaned or raw)
+
+
+def apply_club_name_normalization(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty:
+        return data
+    out = data.copy()
+    for col in CLUB_DISPLAY_COLUMNS:
+        if col in out.columns:
+            out[col] = out[col].map(format_club_name)
+    # Product display consistency: when a visible current club is known, prevent
+    # cross-source mismatches such as Crystal Palace · LaLiga or Watford · Serie A.
+    club_source = next((c for c in ["club_display_current", "current_club_display", "club", "team", "squad"] if c in out.columns), None)
+    if club_source and "league" in out.columns:
+        mapped_league = out[club_source].map(lambda x: LEAGUE_DISPLAY_BY_CURRENT_CLUB.get(format_club_name(x), np.nan))
+        out["league"] = out["league"].where(mapped_league.isna(), mapped_league)
+    return out
+
+CURRENT_CLUB_OVERRIDES = {
+    "pau victor": "Braga",
+    "pau víctor": "Braga",
+    "christantus uche": "Crystal Palace",
+    "nick woltemade": "Newcastle",
+    "nick woltemade": "Newcastle",
+}
+
+# Display-level league correction for known current-club overrides and noisy
+# current-club merges. This keeps 2025/26 cards coherent when a player-season
+# source still carries the historical league from the modelling row.
+CURRENT_LEAGUE_OVERRIDES_BY_PLAYER = {
+    "pau victor": "Primeira Liga",
+    "pau víctor": "Primeira Liga",
+    "christantus uche": "Premier League",
+    "nick woltemade": "Premier League",
+}
+
+LEAGUE_DISPLAY_BY_CURRENT_CLUB = {
+    "Newcastle": "Premier League",
+    "Newcastle United": "Premier League",
+    "Stuttgart": "Bundesliga",
+    "Crystal Palace": "Premier League",
+    "Watford": "EFL Championship",
+    "Nottingham Forest": "Premier League",
+    "Braga": "Primeira Liga",
+    "Getafe": "LaLiga",
+    "Celta Vigo": "LaLiga",
+    "Espanyol": "LaLiga",
+    "Real Madrid": "LaLiga",
+    "Barcelona": "LaLiga",
+    "Lazio": "Serie A",
+    "Torino": "Serie A",
+    "Angers SCO": "Ligue 1",
+    "Auxerre": "Ligue 1",
+}
+
+
+def _normalize_lookup_key(value) -> str:
+    """Normalise entity names for product display lookup.
+
+    This intentionally removes legal punctuation and accents so variants such as
+    ``S. A. D.``, ``S.A.D`` and ``SAD`` resolve to the same display alias.
+    """
+    try:
+        value = "" if pd.isna(value) else str(value)
+    except Exception:
+        value = str(value or "")
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-zA-Z0-9]+", " ", value)
+    return re.sub(r"\s+", " ", value).strip().lower()
+
+
+def _first_existing_column_any(df_or_row, candidates):
+    if isinstance(df_or_row, pd.Series):
+        keys = set(df_or_row.index)
+    else:
+        keys = set(getattr(df_or_row, "columns", []))
+    return next((c for c in candidates if c in keys), None)
+
+
+def apply_current_club_overrides(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Add display-safe current club fields and manual freshness flags."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty:
+        return data
+    df_out = data.copy()
+    name_col = _first_existing_column_any(df_out, [
+        "player_name_fbref", "player_name_display", "player", "player_name", "name"
+    ])
+    club_col = _first_existing_column_any(df_out, [
+        "current_club", "current_club_name_tm", "club_actual", "club", "team", "squad"
+    ])
+    if name_col is None:
+        return df_out
+    base_club = df_out[club_col].astype(str) if club_col else pd.Series(["N/A"] * len(df_out), index=df_out.index)
+    normalized_names = df_out[name_col].map(_normalize_lookup_key)
+    override = normalized_names.map(CURRENT_CLUB_OVERRIDES)
+    has_override = override.notna() & override.astype(str).str.len().gt(0)
+    df_out["club_display_current"] = base_club.where(~has_override, override).map(format_club_name)
+    df_out["current_club_display"] = df_out["club_display_current"]
+    if club_col:
+        # Product views should show the current club; historical columns remain available upstream.
+        df_out[club_col] = df_out["club_display_current"]
+        if "club" in df_out.columns:
+            df_out["club"] = df_out["club_display_current"]
+    if "league" in df_out.columns:
+        player_league_override = normalized_names.map(CURRENT_LEAGUE_OVERRIDES_BY_PLAYER)
+        club_league_override = df_out["club_display_current"].map(lambda x: LEAGUE_DISPLAY_BY_CURRENT_CLUB.get(format_club_name(x), np.nan))
+        final_league_override = player_league_override.where(player_league_override.notna(), club_league_override)
+        df_out["league"] = df_out["league"].where(final_league_override.isna(), final_league_override)
+    df_out["data_freshness_status"] = np.where(has_override, "Club/league current override", "Dataset current")
+    return df_out
+
+
+def get_current_club_display(row, fallback="N/A") -> str:
+    club_col = _first_existing_column_any(row, [
+        "club_display_current", "current_club_display", "current_club", "current_club_name_tm", "club_actual", "club", "team", "squad"
+    ])
+    value = safe_get(row, club_col, fallback) if club_col else fallback
+    return format_club_name(value if value not in [None, ""] else fallback, fallback=fallback)
+
+
+def get_player_display_from_row(row, fallback="N/A") -> str:
+    player_col = _first_existing_column_any(row, ["player_name_display", "player_name_fbref", "player", "player_name", "name"])
+    value = safe_get(row, player_col, fallback) if player_col else fallback
+    return str(value if value not in [None, ""] else fallback)
+
+
+# =============================================================================
+# TM.6.5.13 Product QA closure helpers: current context, navigation, labels
+# =============================================================================
+
+# Early league display helper used by current-context functions before the
+# later i18n block is reached during Streamlit execution.
+LEAGUE_COUNTRY_LABELS_EARLY = {
+    "ENG-Premier League": {"ES": "Premier League (Inglaterra)", "EN": "Premier League (England)"},
+    "Premier League": {"ES": "Premier League (Inglaterra)", "EN": "Premier League (England)"},
+    "ESP-La Liga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
+    "LaLiga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
+    "GER-Bundesliga": {"ES": "Bundesliga (Alemania)", "EN": "Bundesliga (Germany)"},
+    "Bundesliga": {"ES": "Bundesliga (Alemania)", "EN": "Bundesliga (Germany)"},
+    "ITA-Serie A": {"ES": "Serie A (Italia)", "EN": "Serie A (Italy)"},
+    "Serie A": {"ES": "Serie A (Italia)", "EN": "Serie A (Italy)"},
+    "FRA-Ligue 1": {"ES": "Ligue 1 (Francia)", "EN": "Ligue 1 (France)"},
+    "Ligue 1": {"ES": "Ligue 1 (Francia)", "EN": "Ligue 1 (France)"},
+    "NED-Eredivisie": {"ES": "Eredivisie (Países Bajos)", "EN": "Eredivisie (Netherlands)"},
+    "Eredivisie": {"ES": "Eredivisie (Países Bajos)", "EN": "Eredivisie (Netherlands)"},
+    "POR-Primeira Liga": {"ES": "Primeira Liga (Portugal)", "EN": "Primeira Liga (Portugal)"},
+    "Primeira Liga": {"ES": "Primeira Liga (Portugal)", "EN": "Primeira Liga (Portugal)"},
+    "ENG-EFL Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
+    "EFL Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
+    "BEL-Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
+    "Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
+    "AUT-Bundesliga": {"ES": "Bundesliga (Austria)", "EN": "Bundesliga (Austria)"},
+    "ESP-Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+}
+
+
+def league_display_name(league: object) -> str:
+    """Return display-safe league name even before the late i18n block is executed."""
+    try:
+        if pd.isna(league):
+            return "N/A"
+    except Exception:
+        pass
+    raw = str(league).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return "N/A"
+    return LEAGUE_COUNTRY_LABELS_EARLY.get(raw, {}).get(globals().get("LANG", "ES"), raw)
+
+
+CURRENT_SEASON = 2526
+
+# -----------------------------------------------------------------------------
+# TM.6.5.13b — Current DSS league scope
+# -----------------------------------------------------------------------------
+# The Transfermarkt freshness overlay now uses the latest available Kaggle
+# valuation. That source is global, so the DSS must explicitly remain scoped to
+# the current project universe. At the current snapshot, Championship (GB2) and
+# Spanish Segunda (ES2) have no current Transfermarkt rows in the raw source;
+# therefore the operational DSS universe is 9 active leagues, not 11 historical
+# coverage leagues and not the wider global Transfermarkt universe.
+CURRENT_DSS_ALLOWED_LEAGUES = {
+    "Premier League",
+    "LaLiga",
+    "Bundesliga",
+    "Serie A",
+    "Ligue 1",
+    "Eredivisie",
+    "Liga Portugal",
+    "Belgian Pro League",
+    "Austrian Bundesliga",
+}
+
+CURRENT_DSS_LEAGUE_ALIASES = {
+    "premier league": "Premier League",
+    "eng premier league": "Premier League",
+    "eng-premier league": "Premier League",
+    "premier league inglaterra": "Premier League",
+    "premier league england": "Premier League",
+    "laliga": "LaLiga",
+    "la liga": "LaLiga",
+    "esp la liga": "LaLiga",
+    "esp-la liga": "LaLiga",
+    "laliga espana": "LaLiga",
+    "laliga spain": "LaLiga",
+    "bundesliga": "Bundesliga",
+    "ger bundesliga": "Bundesliga",
+    "ger-bundesliga": "Bundesliga",
+    "bundesliga alemania": "Bundesliga",
+    "bundesliga germany": "Bundesliga",
+    "serie a": "Serie A",
+    "ita serie a": "Serie A",
+    "ita-serie a": "Serie A",
+    "serie a italia": "Serie A",
+    "serie a italy": "Serie A",
+    "ligue 1": "Ligue 1",
+    "fra ligue 1": "Ligue 1",
+    "fra-ligue 1": "Ligue 1",
+    "ligue 1 francia": "Ligue 1",
+    "ligue 1 france": "Ligue 1",
+    "eredivisie": "Eredivisie",
+    "ned eredivisie": "Eredivisie",
+    "ned-eredivisie": "Eredivisie",
+    "eredivisie paises bajos": "Eredivisie",
+    "eredivisie netherlands": "Eredivisie",
+    "liga portugal": "Liga Portugal",
+    "primeira liga": "Liga Portugal",
+    "por primeira liga": "Liga Portugal",
+    "por-primeira liga": "Liga Portugal",
+    "primeira liga portugal": "Liga Portugal",
+    "belgian pro league": "Belgian Pro League",
+    "pro league": "Belgian Pro League",
+    "bel pro league": "Belgian Pro League",
+    "bel-pro league": "Belgian Pro League",
+    "pro league belgica": "Belgian Pro League",
+    "pro league belgium": "Belgian Pro League",
+    "austrian bundesliga": "Austrian Bundesliga",
+    "aut bundesliga": "Austrian Bundesliga",
+    "aut-bundesliga": "Austrian Bundesliga",
+    "bundesliga austria": "Austrian Bundesliga",
+}
+
+
+def canonical_current_dss_league(value: object) -> str | None:
+    """Return the canonical current DSS league or None if it is out of scope."""
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    raw = str(value).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return None
+
+    # Remove country suffixes added by display helpers, e.g. "LaLiga (España)".
+    raw_no_suffix = re.sub(r"\s*\([^)]*\)\s*$", "", raw).strip()
+    key = _normalize_lookup_key(raw_no_suffix)
+    canonical = CURRENT_DSS_LEAGUE_ALIASES.get(key, raw_no_suffix)
+    return canonical if canonical in CURRENT_DSS_ALLOWED_LEAGUES else None
+
+
+def enforce_current_dss_league_scope(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Keep DSS operational artefacts inside the current 9-league TM snapshot."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty or "league" not in data.columns:
+        return data
+    out = data.copy()
+    canonical = out["league"].map(canonical_current_dss_league)
+    out = out[canonical.notna()].copy()
+    out["league"] = canonical[canonical.notna()].values
+    return out
+
+
+def count_current_dss_leagues(data: pd.DataFrame | None) -> int | str:
+    """Count canonical current DSS leagues, avoiding global Transfermarkt leakage."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty or "league" not in data.columns:
+        return "N/A"
+    canonical = data["league"].map(canonical_current_dss_league).dropna()
+    return int(canonical.nunique())
+
+
+STATUS_TRANSLATION = {
+    "Development Bet": "Apuesta de desarrollo",
+    "Lower Priority": "Prioridad baja",
+    "Strong Alternative": "Alternativa fuerte",
+    "Upgrade": "Mejora clara",
+    "Similar": "Comparable similar",
+    "Higher Risk": "Mayor riesgo",
+}
+
+
+def translate_label(value):
+    """Translate residual English decision labels in Spanish UI."""
+    try:
+        if pd.isna(value):
+            return value
+    except Exception:
+        pass
+    text = str(value)
+    if globals().get("LANG", "ES") == "ES":
+        return STATUS_TRANSLATION.get(text, text)
+    return text
+
+
+def normalize_club_columns(df: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Compatibility wrapper used by the Product QA closure sprint."""
+    return apply_club_name_normalization(df)
+
+
+def resolve_display_club(row) -> str:
+    """Resolve the club shown in DSS views using current-club priority."""
+    return get_current_club_display(row)
+
+
+def build_current_context(df: pd.DataFrame | None) -> pd.DataFrame:
+    """Build a canonical player -> current display club/league context.
+
+    The DSS is player-season based, but product screens must show a coherent
+    current context. We use 2025/26 when available, otherwise the latest season
+    available, with manual overrides for validated transfers.
+    """
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return pd.DataFrame(columns=["player_name_fbref", "display_club", "display_league", "season", "context_status"])
+    current = apply_current_club_overrides(apply_club_name_normalization(df.copy()))
+    name_col = _first_existing_column_any(current, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col is None:
+        return pd.DataFrame(columns=["player_name_fbref", "display_club", "display_league", "season", "context_status"])
+    if "season" in current.columns:
+        current["_season_num"] = pd.to_numeric(current["season"], errors="coerce")
+        current = current.sort_values([name_col, "_season_num"])
+    else:
+        current["season"] = np.nan
+        current["_season_num"] = np.nan
+    latest = current.dropna(subset=[name_col]).groupby(name_col, as_index=False).tail(1).copy()
+    latest["player_name_fbref"] = latest[name_col].astype(str)
+    latest["display_club"] = latest.apply(resolve_display_club, axis=1)
+    if "league" in latest.columns:
+        latest["display_league"] = latest["league"].map(league_display_name)
+    else:
+        latest["display_league"] = np.nan
+    latest["context_status"] = np.where(
+        latest["season"].astype(str).eq(str(CURRENT_SEASON)),
+        "Actualizado 2025/26" if globals().get("LANG", "ES") == "ES" else "Updated 2025/26",
+        "Última temporada disponible" if globals().get("LANG", "ES") == "ES" else "Latest available season",
+    )
+    return latest[["player_name_fbref", "display_club", "display_league", "season", "context_status"]].drop_duplicates("player_name_fbref")
+
+
+def apply_current_context(df: pd.DataFrame | None, current_context: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Apply canonical current-club/league context to a DSS dataframe."""
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty or current_context is None or current_context.empty:
+        return apply_club_name_normalization(df)
+    out = apply_club_name_normalization(df.copy())
+    name_col = _first_existing_column_any(out, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col is None:
+        return out
+    ctx = current_context.copy()
+    ctx["_ctx_key"] = ctx["player_name_fbref"].map(normalize_join_text)
+    out["_ctx_key"] = out[name_col].map(normalize_join_text)
+    ctx_cols = ["_ctx_key", "display_club", "display_league", "season", "context_status"]
+    ctx = ctx[ctx_cols].rename(columns={"season": "current_context_season"})
+    out = out.merge(ctx.drop_duplicates("_ctx_key"), on="_ctx_key", how="left")
+    if "display_club" in out.columns:
+        for club_col in ["club", "team", "current_club", "club_actual"]:
+            if club_col in out.columns:
+                out[club_col] = out["display_club"].combine_first(out[club_col])
+        if "club" not in out.columns:
+            out["club"] = out["display_club"]
+    if "display_league" in out.columns and "league" in out.columns:
+        out["league"] = out["display_league"].combine_first(out["league"])
+    out = out.drop(columns=["_ctx_key"], errors="ignore")
+    return apply_club_name_normalization(out)
+
+
+def audit_current_season_consistency(df: pd.DataFrame | None) -> pd.DataFrame:
+    """Small QA table for checking current-season coherence."""
+    checks = []
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return pd.DataFrame({"check": ["Dataset"], "value": ["Sin datos"]})
+    if "season" in df.columns:
+        checks.append({"check": "Registros 2025/26", "value": round(float((df["season"].astype(str) == str(CURRENT_SEASON)).mean() * 100), 1)})
+    name_col = _first_existing_column_any(df, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col and "club" in df.columns:
+        multi = df.groupby(name_col)["club"].nunique(dropna=True)
+        checks.append({"check": "Jugadores con varios clubes en display", "value": int((multi > 1).sum())})
+    return pd.DataFrame(checks)
+
+
+def render_internal_nav(items, active=None):
+    """Unified internal DSS navigation toolbar."""
+    html_items = ""
+    for label, anchor in items:
+        cls = "internal-nav-chip active" if label == active else "internal-nav-chip"
+        html_items += f'<a class="{cls}" href="#{html.escape(str(anchor))}">{html.escape(str(label))}</a>'
+    st.markdown(f"<div class='internal-nav-toolbar'>{html_items}</div>", unsafe_allow_html=True)
+
+
+def section_gap():
+    st.markdown('<div class="siq-section-gap"></div>', unsafe_allow_html=True)
+
+
+def card_gap():
+    st.markdown('<div class="siq-card-gap"></div>', unsafe_allow_html=True)
+
+
+def micro_gap():
+    st.markdown('<div class="siq-micro-gap"></div>', unsafe_allow_html=True)
+
+
+# =============================================================================
+# Product finalization patch: unified cards, no internal scrolls, strategy filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Global decision navigation and product buttons */
+.product-tab-nav, .internal-nav-bar {
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    background:#ffffff; border:1px solid #dbeafe; border-radius:999px;
+    padding:6px; box-shadow:0 8px 20px rgba(15,23,42,.040); width:fit-content; max-width:100%;
+    margin:8px 0 16px 0;
+}
+.product-tab-pill, .internal-nav-pill {
+    display:inline-flex; align-items:center; justify-content:center; min-height:32px;
+    padding:7px 12px; border-radius:999px; border:1px solid transparent;
+    color:#1e3a8a; background:#eff6ff; font-size:.74rem; font-weight:950; white-space:nowrap;
+}
+.product-tab-pill.is-active, .internal-nav-pill.is-active { background:#1d4ed8; color:#ffffff; border-color:#1d4ed8; }
+
+/* Similar Players final layout */
+.similar-final-controls, .strategy-filter-panel {
+    background:#ffffff; border:1px solid #dbe3ee; border-left:5px solid #2563eb;
+    border-radius:18px; padding:15px 17px 12px 17px; box-shadow:0 12px 30px rgba(15,23,42,.055);
+    margin:8px 0 16px 0;
+}
+.similar-final-controls label p, .strategy-filter-panel label p { color:#334155 !important; font-weight:900 !important; font-size:.80rem !important; }
+.similar-final-controls div[data-baseweb="select"] > div,
+.strategy-filter-panel div[data-baseweb="select"] > div,
+.strategy-filter-panel div[data-baseweb="input"] > div {
+    min-height:46px !important; border-radius:12px !important; background:#ffffff !important;
+    border:1px solid #b9c7d9 !important; box-shadow:0 5px 14px rgba(15,23,42,.035) !important;
+    color:#0f172a !important; overflow:visible !important;
+}
+.similar-final-controls div[data-baseweb="select"] *, .strategy-filter-panel div[data-baseweb="select"] * { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
+.similar-final-grid {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:12px 0 16px 0;
+}
+.similar-final-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050); min-height:188px;
+}
+.similar-final-card.primary { border-left:5px solid #22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.similar-final-card.warning { border-left:5px solid #f59e0b; }
+.similar-final-card.blue { border-left:5px solid #2563eb; }
+.similar-final-eyebrow { color:#1d4ed8; font-size:.68rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:6px; }
+.similar-final-title { color:#0f172a; font-size:1.12rem; font-weight:950; line-height:1.12; margin-bottom:7px; }
+.similar-final-copy { color:#475569; font-size:.82rem; line-height:1.40; }
+.similar-final-kpi-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:11px; }
+.similar-final-kpi { background:#f8fbff; border:1px solid #edf2f7; border-radius:12px; padding:8px 9px; min-height:54px; }
+.similar-final-kpi span { display:block; color:#64748b; font-size:.62rem; font-weight:950; letter-spacing:.05em; text-transform:uppercase; margin-bottom:3px; }
+.similar-final-kpi b { display:block; color:#0f172a; font-size:.90rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.context-fit-row { display:grid; grid-template-columns:70px minmax(0,1fr) 36px; gap:8px; align-items:center; margin:8px 0; }
+.context-fit-label { color:#334155; font-size:.75rem; font-weight:900; }
+.context-fit-track { height:8px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.context-fit-track span { display:block; height:100%; border-radius:999px; background:#2563eb; }
+.context-fit-value { color:#0f172a; font-size:.74rem; font-weight:950; text-align:right; }
+.similar-driver-list { display:grid; gap:7px; margin-top:8px; }
+.similar-driver-item { display:flex; gap:8px; align-items:flex-start; color:#334155; font-size:.78rem; line-height:1.32; }
+.similar-driver-item b { color:#0f172a; }
+.similar-plus { color:#16a34a; font-weight:950; } .similar-minus { color:#ea580c; font-weight:950; }
+.similar-card-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:12px 0 16px 0; }
+.similar-mini-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:12px 13px; box-shadow:0 8px 20px rgba(15,23,42,.035); }
+.similar-mini-rank { width:26px; height:26px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:950; margin-bottom:8px; }
+.similar-mini-name { color:#0f172a; font-size:.90rem; font-weight:950; line-height:1.14; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.similar-mini-meta { color:#64748b; font-size:.70rem; line-height:1.28; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.similar-mini-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.similar-mini-badges span { display:inline-flex; border:1px solid #e2e8f0; border-radius:999px; padding:3px 7px; background:#f8fafc; color:#334155; font-size:.64rem; font-weight:900; }
+
+/* Replacement Finder */
+.replacement-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:12px 0 16px 0; }
+.replacement-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:13px 14px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.replacement-card:first-child { border-left:5px solid #22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.replacement-rank { width:26px; height:26px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:950; margin-bottom:8px; }
+.replacement-name { color:#0f172a; font-size:.96rem; font-weight:950; line-height:1.12; }
+.replacement-meta { color:#64748b; font-size:.72rem; line-height:1.28; margin-top:4px; }
+.replacement-badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.replacement-badges span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.66rem; font-weight:900; }
+
+/* Contract Action Board final */
+.contract-action-horizontal-board { background:#ffffff; border:1px solid #e2e8f0; border-left:5px solid #0f2f5f; border-radius:18px; padding:17px 19px; box-shadow:0 12px 30px rgba(15,23,42,.055); margin:18px 0; }
+.contract-action-horizontal-board-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:12px; }
+.contract-action-horizontal-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.contract-action-horizontal-lane { border:1px solid #e5eaf1; border-radius:16px; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); padding:12px 13px; }
+.contract-action-horizontal-lane-now { border-left:4px solid #f97316; }
+.contract-action-horizontal-lane-summer { border-left:4px solid #eab308; }
+.contract-action-horizontal-lane-track { border-left:4px solid #2563eb; }
+.contract-action-horizontal-lane-free { border-left:4px solid #22c55e; }
+.contract-action-horizontal-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:9px; border-bottom:1px solid #edf2f7; margin-bottom:8px; }
+.contract-action-horizontal-title { color:#0f172a; font-size:.92rem; font-weight:950; }
+.contract-action-horizontal-caption { color:#64748b; font-size:.70rem; margin-top:2px; }
+.contract-action-horizontal-count { min-width:30px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:999px; padding:0 8px; color:#1d4ed8; background:#eff6ff; border:1px solid #bfdbfe; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-player { display:grid; grid-template-columns:36px minmax(0,1fr) minmax(330px,.9fr); gap:10px; align-items:center; background:#ffffff; border:1px solid #edf2f7; border-radius:14px; padding:9px 10px; margin-top:8px; box-shadow:0 6px 16px rgba(15,23,42,.030); }
+.contract-action-horizontal-rank { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-name { color:#0f172a; font-size:.88rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-horizontal-meta { color:#64748b; font-size:.70rem; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-horizontal-kpis { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.contract-action-horizontal-kpis span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.66rem; font-weight:850; }
+.contract-action-horizontal-kpis b { color:#0f172a; font-weight:950; }
+.contract-action-horizontal-empty { color:#64748b; font-size:.78rem; font-weight:850; padding:8px 0 0 0; }
+
+/* Strategy Center final */
+.strategy-map-layout { display:grid; grid-template-columns:minmax(0,3fr) minmax(280px,1fr); gap:14px; align-items:start; margin-top:12px; }
+.strategy-ranking-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 15px; box-shadow:0 12px 28px rgba(15,23,42,.050); }
+.strategy-ranking-row { display:grid; grid-template-columns:28px minmax(0,1fr) 54px; gap:8px; align-items:center; padding:9px 0; border-bottom:1px solid #edf2f7; }
+.strategy-ranking-row:last-child { border-bottom:0; }
+.strategy-ranking-rank { width:25px; height:25px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.72rem; font-weight:950; }
+.strategy-ranking-name { color:#0f172a; font-size:.80rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.strategy-ranking-meta { color:#64748b; font-size:.64rem; line-height:1.18; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.strategy-ranking-score { color:#166534; font-size:.88rem; font-weight:950; text-align:right; }
+.strategy-map-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:18px !important; padding:15px 17px 8px 17px !important; box-shadow:0 12px 28px rgba(15,23,42,.050) !important; }
+.strategy-map-legend { display:flex; flex-wrap:wrap; gap:8px; margin:9px 0 2px 0; }
+.strategy-map-chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 10px; background:#ffffff; border:1px solid #e2e8f0; color:#334155; font-size:.68rem; font-weight:900; }
+.strategy-map-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+
+/* Dataframe safety: only advanced views should scroll; main cards replace long boards. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { max-height:520px; }
+@media (max-width:1350px){ .similar-final-grid,.replacement-card-grid,.strategy-map-layout{ grid-template-columns:1fr !important; } .similar-card-list{ grid-template-columns:repeat(2,minmax(0,1fr)); } .contract-action-horizontal-player{ grid-template-columns:36px minmax(0,1fr); } .contract-action-horizontal-kpis{ justify-content:flex-start; grid-column:2; } }
+@media (max-width:800px){ .similar-card-list{ grid-template-columns:1fr; } .similar-final-kpi-row{ grid-template-columns:1fr; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.5.12 Product QA polish: spacing, internal nav, table governance
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root { --siq-section-gap: 24px; --siq-card-gap: 16px; --siq-micro-gap: 8px; }
+.siq-section-gap { height: var(--siq-section-gap); }
+.siq-card-gap { height: var(--siq-card-gap); }
+.siq-micro-gap { height: var(--siq-micro-gap); }
+/* Homogeneous vertical rhythm across product sections. */
+.block-container div[data-testid="stVerticalBlock"] { gap: 1rem; }
+/* Search/context command row must have the same vertical footprint. */
+.final-search-shell, .compact-context-panel, .context-strip-v2.compact-context-panel, div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 186px !important;
+    height: 186px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+}
+.final-search-shell div[data-testid="stSelectbox"] { margin-top: auto !important; }
+.compact-context-panel .context-chip-row { max-height: 58px !important; overflow: hidden !important; }
+/* Contract workflow buttons: integrated toolbar, not isolated native buttons. */
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"],
+.contract-target-card-premium + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    margin-top: -1px !important;
+    margin-bottom: 24px !important;
+    padding: 10px 18px 14px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-left-width: 6px !important;
+    border-left-color: #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.055) !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-target-card-premium + div[data-testid="stHorizontalBlock"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 34px !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+/* Portfolio map: remove any orphan empty card/pill generated above the map. */
+.strategy-map-card:empty, .strategy-map-card .stMarkdown:empty, .strategy-map-card + div:empty,
+div[data-testid="stElementContainer"]:has(.strategy-empty-spacer) { display:none !important; height:0 !important; margin:0 !important; padding:0 !important; }
+.strategy-map-layout { margin-top: 16px !important; align-items: start !important; }
+.strategy-map-card { margin-top: 0 !important; }
+/* Secondary tables: DSS first, technical audit second. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] {
+    overflow-x: hidden !important;
+}
+.similar-advanced-view, .replacement-advanced-view { margin-top: 8px !important; }
+/* Avoid early footer feeling: add breathing room before footer only after content. */
+.scouting-iq-footer { margin-top: 42px !important; padding-top: 18px !important; }
+@media (max-width: 1200px) {
+    .final-search-shell, .compact-context-panel, .context-strip-v2.compact-context-panel { height:auto !important; min-height: 0 !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 def get_first_valid_numeric(row, columns, default=np.nan):
     """Return the first valid numeric value found in a row across candidate columns."""
@@ -6270,6 +8754,12 @@ def safe_get(row, col, default="N/A"):
         value = row[col]
         if pd.isna(value):
             return default
+        col_name = str(col) if col is not None else ""
+        # Single presentation rule: every visible club/team field is normalized
+        # at access time, so cards, tooltips, rankings and tables never expose
+        # legal entity names such as S.A.D., Football Club or Team Dubai.
+        if col_name in globals().get("CLUB_DISPLAY_COLUMNS", []) or "club" in col_name.lower() or col_name.lower() in {"team", "squad"}:
+            return format_club_name(value, fallback=default)
         return value
     except Exception:
         return default
@@ -6385,7 +8875,7 @@ def UI(text: object) -> str:
         "jugadores precandidatos": "pre-candidates",
         "cobertura competitiva": "competitive coverage",
         "calidad del ranking": "ranking quality",
-        "simulación conservadora": "conservative simulation",
+        "escenario conservador": "conservative scenario",
         "del universo": "of universe",
         "Ligas representadas": "Leagues represented",
         "Objetivos prioritarios": "Priority targets",
@@ -6662,7 +9152,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
     # changing the underlying data or keys used by the app.
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", player_name).strip()
     position = str(safe_get(row, "position_group", safe_get(row, "position", "N/A")))
-    # TM.4.1 product polish: expose a role-aware badge even before TM.5 clustering.
+    # TM.4.1 product polish: expose a role-aware badge even before role intelligence clustering.
     # This keeps the UX closer to professional scouting tools: the user sees an
     # interpreted football profile, not only a coarse position group.
     position_role_map = {
@@ -6697,7 +9187,14 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
     expected_display = format_money_short(expected_value)
     inefficiency_display = format_signed_money_short(inefficiency_eur)
     inefficiency_pct_display = "N/A" if pd.isna(inefficiency_pct) else f"{inefficiency_pct * 100:+.0f}%"
+    gap_tone = "neutral"
+    if pd.notna(inefficiency_eur):
+        if inefficiency_eur > 0:
+            gap_tone = "positive"
+        elif inefficiency_eur < 0:
+            gap_tone = "negative"
     tags_html = _build_snapshot_tags(row, market_value, expected_value, inefficiency_eur)
+    role_badge_html = render_role_badge(row)
 
     if title:
         section_title = "Player Snapshot" if globals().get("LANG") == "EN" else "Player Snapshot"
@@ -6714,14 +9211,14 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
 
     if globals().get("LANG") == "EN":
         lbl_identity = "{html.escape(lbl_identity)}"
-        lbl_archetype = "{html.escape(lbl_archetype)}"
+        lbl_archetype = "Role profile available" if has_role_intelligence(row) else "Role pending"
         lbl_age = "Age"
         lbl_position = "Position"
         lbl_context = "Context"
         lbl_market = "{html.escape(lbl_market)}"
         lbl_market_value = "Market Value"
-        lbl_expected_value = "Expected Value"
-        lbl_ineff = "{html.escape(lbl_ineff)}"
+        lbl_expected_value = "Scouting IQ Value"
+        lbl_ineff = "Scouting IQ valuation gap"
         lbl_scores = "{html.escape(lbl_scores)}"
         lbl_opportunity = "Opportunity"
         lbl_risk = "Risk"
@@ -6735,14 +9232,14 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
         lbl_status = "4. STATUS & KEY INSIGHTS"
     else:
         lbl_identity = "1. IDENTIDAD"
-        lbl_archetype = "Arquetipo · pendiente TM.5"
+        lbl_archetype = "Rol táctico disponible" if has_role_intelligence(row) else "Perfil táctico pendiente"
         lbl_age = "Edad"
         lbl_position = "Posición"
         lbl_context = "Contexto"
         lbl_market = "2. INTELIGENCIA DE MERCADO"
         lbl_market_value = "Valor de mercado"
-        lbl_expected_value = "Valor esperado"
-        lbl_ineff = "Ineficiencia de mercado estimada"
+        lbl_expected_value = "Valor Scouting IQ"
+        lbl_ineff = "Gap de valoración Scouting IQ"
         lbl_scores = "3. SCORES EJECUTIVOS"
         lbl_opportunity = "Opportunity"
         lbl_risk = "Risk"
@@ -6770,7 +9267,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
             <div class="snapshot-avatar">{html.escape(initials)}</div>
             <div class="snapshot-identity-main">
                 <div class="snapshot-section-label">{html.escape(lbl_identity)}</div>
-                <div class="snapshot-player-name">{html.escape(player_name)}</div>
+                <div class="snapshot-player-name">{html.escape(player_name)}{role_badge_html}</div>
                 <div class="snapshot-position-row">
                     <span class="snapshot-position-pill">{html.escape(position_badge)}</span>
                     <span class="snapshot-role-placeholder">{html.escape(lbl_archetype)}</span>
@@ -6796,7 +9293,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
                     <b>{html.escape(expected_display)}</b>
                 </div>
             </div>
-            <div class="snapshot-inefficiency-box">
+            <div class="snapshot-inefficiency-box snapshot-gap-{gap_tone}">
                 <b>{html.escape(inefficiency_display)}</b>
                 <b>{html.escape(inefficiency_pct_display)}</b>
                 <span>{html.escape(lbl_ineff)}</span>
@@ -6827,6 +9324,86 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
         <div class="snapshot-tags-title">{html.escape(lbl_status)}</div>
         <div class="snapshot-tags-grid">{tags_html}</div>
     </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def render_player_dossier_summary(row: pd.Series) -> None:
+    """Executive scouting dossier: summary, recruitment rationale and risk signals."""
+    if row is None or len(row) == 0:
+        return
+    is_en = globals().get("LANG") == "EN"
+    player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(get_player_name(row))).strip()
+    role = clean_role_display(safe_get(row, "primary_role", np.nan), "Role pending" if is_en else "Perfil táctico pendiente")
+    taxonomy = str(safe_get(row, "position_taxonomy", safe_get(row, "position_group", "N/A")))
+    league = league_display_name(safe_get(row, "league", "N/A"))
+    club = str(safe_get(row, "club", "N/A"))
+    age = get_numeric_value(row, "age", np.nan)
+    opp = get_numeric_value(row, "opportunity_score", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+    conf = get_numeric_value(row, "confidence_score", np.nan)
+    value = format_money_short(safe_get(row, "market_value_eur", np.nan))
+    expected_value = format_money_short(safe_get(row, "predicted_market_value_eur", safe_get(row, "projected_market_value_3y_eur", np.nan)))
+    gap = get_numeric_value(row, "market_value_gap_eur", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+
+    age_txt = "N/A" if pd.isna(age) else f"{age:.1f}"
+    opp_txt = "N/A" if pd.isna(opp) else f"{opp:.0f}/100"
+    risk_txt = "N/A" if pd.isna(risk) else f"{risk:.0f}/100"
+    conf_txt = "N/A" if pd.isna(conf) else f"{conf:.0f}/100"
+
+    if is_en:
+        sentence_1 = f"{role} profile in {taxonomy}, currently playing for {club} in {league}."
+        sentence_2 = f"Market signal: {opp_txt} Opportunity with estimated value {expected_value} vs current value {value}."
+        sentence_3 = "Profile is suitable for tactical comparison before financial due diligence." if not pd.isna(opp) and opp >= 60 else "Profile requires additional validation before entering the shortlist."
+        why_items = [
+            "Opportunity above the active universe median" if not pd.isna(opp) and opp >= 60 else "Potential upside needs validation",
+            "Financial entry point appears compatible" if not pd.isna(gap) and gap >= 0 else "Price discipline required",
+            "Tactical role is available for like-for-like comparison" if is_valid_role_value(safe_get(row, "primary_role", np.nan)) else "Tactical role still pending",
+        ]
+        risk_items = [
+            "Limited playing sample" if not pd.isna(minutes) and minutes < 1200 else "Minutes profile is stable",
+            "Model confidence requires review" if not pd.isna(conf) and conf < 70 else "Model confidence is solid",
+            "Risk score above preferred range" if not pd.isna(risk) and risk > 45 else "Risk profile is favourable",
+        ]
+        labels = {"eyebrow":"PLAYER DOSSIER", "summary":"Executive Summary", "why":"Why Recruit", "risks":"Risks", "snapshot":"Snapshot"}
+    else:
+        sentence_1 = f"Perfil {role} dentro de {taxonomy}, actualmente en {club} ({league})."
+        sentence_2 = f"Señal de mercado: Opportunity {opp_txt}, valor estimado {expected_value} frente a valor actual {value}."
+        sentence_3 = "Perfil apto para comparación táctica antes de due diligence financiera." if not pd.isna(opp) and opp >= 60 else "Perfil que requiere validación adicional antes de entrar en shortlist."
+        why_items = [
+            "Opportunity por encima de la mediana activa" if not pd.isna(opp) and opp >= 60 else "Upside potencial pendiente de validar",
+            "Punto de entrada financiero compatible" if not pd.isna(gap) and gap >= 0 else "Requiere disciplina de precio",
+            "Rol táctico disponible para comparación like-for-like" if is_valid_role_value(safe_get(row, "primary_role", np.nan)) else "Rol táctico aún pendiente",
+        ]
+        risk_items = [
+            "Muestra de minutos limitada" if not pd.isna(minutes) and minutes < 1200 else "Perfil de minutos estable",
+            "Confianza del modelo a revisar" if not pd.isna(conf) and conf < 70 else "Confianza del modelo sólida",
+            "Riesgo por encima del rango preferente" if not pd.isna(risk) and risk > 45 else "Perfil de riesgo favorable",
+        ]
+        labels = {"eyebrow":"PLAYER DOSSIER", "summary":"Executive Summary", "why":"Why Recruit", "risks":"Risks", "snapshot":"Snapshot"}
+
+    summary_html = "".join(f"<li>{html.escape(x)}</li>" for x in [sentence_1, sentence_2, sentence_3])
+    why_html = "".join(f"<li><span class='dossier-ok'>✓</span>{html.escape(x)}</li>" for x in why_items)
+    risk_html = "".join(f"<li><span class='dossier-warn'>⚠</span>{html.escape(x)}</li>" for x in risk_items)
+    st.markdown(
+        f"""
+<div class="player-dossier-shell">
+  <div class="player-dossier-head">
+    <div>
+      <div class="player-dossier-eyebrow">{labels['eyebrow']}</div>
+      <div class="player-dossier-title">{html.escape(player_name)}</div>
+      <div class="player-dossier-meta">{html.escape(role)} · {html.escape(taxonomy)} · {html.escape(age_txt)} · {html.escape(value)}</div>
+    </div>
+    <div class="player-dossier-score"><span>Opportunity</span><b>{html.escape(opp_txt)}</b></div>
+  </div>
+  <div class="player-dossier-grid">
+    <div class="player-dossier-card player-dossier-summary"><span>{labels['summary']}</span><ul>{summary_html}</ul></div>
+    <div class="player-dossier-card"><span>{labels['why']}</span><ul>{why_html}</ul></div>
+    <div class="player-dossier-card"><span>{labels['risks']}</span><ul>{risk_html}</ul></div>
+    <div class="player-dossier-card player-dossier-mini"><span>{labels['snapshot']}</span><div><b>{html.escape(risk_txt)}</b><small>Risk</small></div><div><b>{html.escape(conf_txt)}</b><small>Confidence</small></div><div><b>{html.escape(expected_value)}</b><small>Expected value</small></div></div>
+  </div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -7369,60 +9946,42 @@ def build_player_radar_chart(radar_df: pd.DataFrame, selected_player: str) -> go
         showlegend=False,
         height=300,
         margin=dict(l=4, r=4, t=10, b=4),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
     )
 
     return fig
 
 
 def render_scouting_cards(radar_df: pd.DataFrame) -> None:
-    """Render compact scouting percentile cards as native Streamlit columns.
+    """Render compact scouting percentile cards with native Streamlit elements.
 
-    Hotfix: avoid concatenating a large HTML grid because Streamlit/PDF export can
-    escape part of the string and show raw <div> fragments. Each card is rendered
-    independently with unsafe HTML, keeping a stable 3+2 layout.
+    This avoids escaped/raw HTML being displayed in Streamlit/PDF exports and
+    keeps Key Performance Signals stable across browsers and screenshots.
     """
 
     if radar_df.empty:
         return
 
-    def _card(row) -> str:
+    signal_rows = list(radar_df.iterrows())
+    cols = st.columns(min(3, max(1, len(signal_rows))), gap="medium")
+    for idx, (_, row) in enumerate(signal_rows):
         try:
             pct = float(row["percentile"])
         except Exception:
             pct = 0.0
-        label = html.escape(metric_display_name(row["label"]))
-        rating = html.escape(str(row["rating"]))
-        value = html.escape(
-            format_radar_metric_value(row["value"])
-            .replace("Valor jugador: ", "Valor: ")
-            .replace("Player value: ", "Value: ")
-        )
-        return f"""
-        <div class="tm4-signal-card-pro tm4-signal-card-native">
-            <div class="tm4-signal-card-title">{label}</div>
-            <div class="tm4-signal-card-percentile">P{pct:.0f}</div>
-            <div class="tm4-signal-card-rating">{rating}</div>
-            <div class="tm4-signal-card-value">{value}</div>
-        </div>
-        """
-
-    rows = list(radar_df.iterrows())[:5]
-    first = rows[:3]
-    second = rows[3:5]
-
-    if first:
-        cols = st.columns(3, gap="small")
-        for (_, row), col in zip(first, cols):
-            with col:
-                st.markdown(_card(row), unsafe_allow_html=True)
-
-    if second:
-        spacer_left, col_a, col_b, spacer_right = st.columns([0.5, 1, 1, 0.5], gap="small")
-        for (_, row), col in zip(second, [col_a, col_b]):
-            with col:
-                st.markdown(_card(row), unsafe_allow_html=True)
+        with cols[idx % len(cols)]:
+            st.markdown(
+                f"""
+                <div class="radar-card tm4-native-signal-card">
+                    <div class="radar-card-title">{html.escape(metric_display_name(row['label']))}</div>
+                    <div class="radar-card-percentile">P{pct:.0f}</div>
+                    <div class="radar-card-label">{html.escape(str(row['rating']))}</div>
+                    <div class="radar-card-value">{html.escape(format_radar_metric_value(row['value']).replace('Valor jugador: ', 'Valor: ').replace('Player value: ', 'Value: '))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_benchmark_context(benchmark_df: pd.DataFrame, benchmark_mode: str, player_position: str) -> None:
@@ -7479,6 +10038,13 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: 
         st.info("No hay columna de nombre de jugador disponible para el selector del radar.")
         return
 
+    # The visible page may be narrowed to one searched player. For benchmarking,
+    # use the active filter universe captured before global search. This prevents
+    # constant P100 values when only one player is selected.
+    benchmark_pool = globals().get("RADAR_BENCHMARK_POOL_DF", shortlist_df)
+    if not isinstance(benchmark_pool, pd.DataFrame) or benchmark_pool.empty:
+        benchmark_pool = shortlist_df
+
     selector_df = shortlist_df.dropna(subset=[player_name_col]).copy()
     if selector_df.empty:
         st.info("No hay jugadores con nombre disponible para el radar.")
@@ -7488,6 +10054,14 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: 
         selector_df = selector_df.sort_values("opportunity_score", ascending=False)
 
     player_options = selector_df[player_name_col].astype(str).drop_duplicates().tolist()
+    # If the searched player is not in the benchmark pool due to the exact focus
+    # filter, keep him as selector but compute percentiles against the broader pool.
+    if player_name_col in benchmark_pool.columns:
+        pool_options = benchmark_pool[player_name_col].dropna().astype(str).drop_duplicates().tolist()
+        for _name in player_options:
+            if _name not in pool_options:
+                pool_options.insert(0, _name)
+
 
     with st.container(border=True):
         radar_help = UI('percentiles del jugador frente a su benchmark posicional para detectar fortalezas, debilidades y perfil dominante.')
@@ -7530,7 +10104,11 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: 
             render_player_profile_header(player_row, player_name_col, "Selected player")
         player_position = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
 
-        benchmark_df = shortlist_df.copy()
+        benchmark_df = benchmark_pool.copy()
+        # Ensure the selected player row is present in the displayed benchmark context
+        # while keeping the denominator as the broader active universe.
+        if player_name_col in benchmark_df.columns and not (benchmark_df[player_name_col].astype(str) == str(selected_radar_player)).any():
+            benchmark_df = pd.concat([benchmark_df, player_row.to_frame().T], ignore_index=True)
         if benchmark_mode in {"Misma posición", "Same position"} and "position_group" in benchmark_df.columns:
             benchmark_df = benchmark_df[
                 benchmark_df["position_group"].apply(normalize_position_group) == player_position
@@ -7539,7 +10117,7 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: 
         radar_df, missing_metrics = build_player_radar_data(
             player_row=player_row,
             benchmark_df=benchmark_df,
-            source_df=shortlist_df,
+            source_df=benchmark_pool,
         )
 
         if radar_df.empty or len(radar_df) < 3:
@@ -8079,8 +10657,8 @@ def build_multi_player_radar_chart(
         showlegend=True,
         height=460,
         margin=dict(l=14, r=14, t=28, b=56),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -8961,9 +11539,9 @@ def similarity_recommendation_label(value: str) -> str:
         "Upgrade": {"ES": "Upgrade", "EN": "Upgrade"},
         "Strong Alternative": {"ES": "Strong Alternative", "EN": "Strong Alternative"},
         "Similar": {"ES": "Similar", "EN": "Similar"},
-        "Development Bet": {"ES": "Development Bet", "EN": "Development Bet"},
-        "Lower Priority": {"ES": "Lower Priority", "EN": "Lower Priority"},
-        "Higher Risk": {"ES": "Higher Risk", "EN": "Higher Risk"},
+        "Development Bet": {"ES": "Apuesta de desarrollo", "EN": "Development Bet"},
+        "Lower Priority": {"ES": "Prioridad baja", "EN": "Lower Priority"},
+        "Higher Risk": {"ES": "Riesgo alto", "EN": "Higher Risk"},
     }
     return labels.get(str(value), {"ES": str(value), "EN": str(value)}).get(LANG, str(value))
 
@@ -9078,8 +11656,24 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
 
     sim_threshold = float(chart["_similarity"].quantile(0.75))
     opp_threshold = float(chart["_opportunity_axis"].quantile(0.75))
-    x_min, x_max = 84.0, 103.0
-    y_min, y_max = 48.0, 104.0
+    # Product view: adapt the viewport to the visible alternatives. This avoids a
+    # notebook-like chart with one bubble lost in excessive whitespace.
+    sim_min = float(chart["_similarity"].min())
+    sim_max = float(chart["_similarity"].max())
+    opp_min = float(chart["_opportunity_axis"].min())
+    opp_max = float(chart["_opportunity_axis"].max())
+    sim_pad = max(3.5, (sim_max - sim_min) * 0.18)
+    opp_pad = max(7.0, (opp_max - opp_min) * 0.18)
+    x_min = max(0.0, sim_min - sim_pad)
+    x_max = min(104.0, sim_max + sim_pad)
+    y_min = max(0.0, opp_min - opp_pad)
+    y_max = min(104.0, opp_max + opp_pad)
+    if x_max - x_min < 12:
+        mid = (x_min + x_max) / 2
+        x_min, x_max = max(0.0, mid - 6), min(104.0, mid + 6)
+    if y_max - y_min < 24:
+        mid = (y_min + y_max) / 2
+        y_min, y_max = max(0.0, mid - 12), min(104.0, mid + 12)
 
     recommendation_order = ["Upgrade", "Strong Alternative", "Similar", "Development Bet", "Lower Priority", "Higher Risk"]
     color_map = {
@@ -9094,10 +11688,10 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
     fig = go.Figure()
 
     # More visible executive quadrants.
-    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=opp_threshold, y1=y_max, fillcolor="rgba(245, 158, 11, 0.105)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=opp_threshold, y1=y_max, fillcolor="rgba(34, 197, 94, 0.110)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=y_min, y1=opp_threshold, fillcolor="rgba(148, 163, 184, 0.075)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=y_min, y1=opp_threshold, fillcolor="rgba(96, 165, 250, 0.095)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=opp_threshold, y1=y_max, fillcolor="rgba(255, 244, 232, 0.86)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=opp_threshold, y1=y_max, fillcolor="rgba(234, 247, 238, 0.92)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=y_min, y1=opp_threshold, fillcolor="rgba(237, 243, 255, 0.88)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=y_min, y1=opp_threshold, fillcolor="rgba(239, 246, 255, 0.90)", line_width=0, layer="below")
 
     for rec_class in recommendation_order:
         group = chart[chart["_recommendation_class"] == rec_class].copy()
@@ -9118,8 +11712,8 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
                 marker=dict(
                     size=np.where(group["_is_highlighted"], marker_sizes * 1.18, marker_sizes),
                     color=color_map.get(rec_class, "#64748b"),
-                    opacity=np.where(group["_is_highlighted"], 0.96, 0.70),
-                    line=dict(width=marker_lines, color=marker_line_colors),
+                    opacity=np.where(group["_is_highlighted"], 0.96, 0.68),
+                    line=dict(width=np.where(group["_is_highlighted"], 3.4, 1.6), color=np.where(group["_is_highlighted"], "#0f172a", "#FFFFFF")),
                 ),
                 customdata=np.stack([
                     group["_player_label"], group["_club_label"], group["_league_label"], group["_position_label"],
@@ -9142,8 +11736,8 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
             )
         )
 
-    fig.add_shape(type="line", x0=sim_threshold, x1=sim_threshold, y0=y_min, y1=y_max, line=dict(color="rgba(15,47,95,.32)", width=1.1, dash="dash"), layer="above")
-    fig.add_shape(type="line", x0=x_min, x1=x_max, y0=opp_threshold, y1=opp_threshold, line=dict(color="rgba(15,47,95,.32)", width=1.1, dash="dash"), layer="above")
+    fig.add_shape(type="line", x0=sim_threshold, x1=sim_threshold, y0=y_min, y1=y_max, line=dict(color="rgba(100,116,139,.45)", width=1.2, dash="dash"), layer="above")
+    fig.add_shape(type="line", x0=x_min, x1=x_max, y0=opp_threshold, y1=opp_threshold, line=dict(color="rgba(100,116,139,.45)", width=1.2, dash="dash"), layer="above")
 
     quadrant_labels = {
         "top_right": "ELITE TARGETS" if LANG == "EN" else "ELITE TARGETS",
@@ -9159,17 +11753,17 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
     fig.update_layout(
         xaxis_title="Similarity Score",
         yaxis_title="Opportunity Score",
-        height=470,
-        margin=dict(l=58, r=24, t=16, b=46),
-        showlegend=True,
-        legend=dict(orientation="h", x=0.0, xanchor="left", y=1.08, yanchor="bottom", bgcolor="rgba(255,255,255,0)", font=dict(size=10, color="#334155"), title=None),
+        height=430,
+        margin=dict(l=48, r=20, t=18, b=42),
+        showlegend=False,
         hovermode="closest",
-        plot_bgcolor="#fbfdff",
+        hoverlabel=dict(bgcolor="#ffffff", bordercolor="#dbeafe", font_size=12, font_color="#0f172a"),
+        plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
         uniformtext=dict(minsize=9, mode="show"),
     )
-    fig.update_xaxes(range=[x_min, x_max], gridcolor="rgba(148,163,184,0.18)", showline=True, linewidth=1.1, linecolor="rgba(15,47,95,.32)", ticks="outside", zeroline=False)
-    fig.update_yaxes(range=[y_min, y_max], gridcolor="rgba(148,163,184,0.18)", showline=True, linewidth=1.1, linecolor="rgba(15,47,95,.32)", ticks="outside", zeroline=False)
+    fig.update_xaxes(range=[x_min, x_max], gridcolor="rgba(0,0,0,0.08)", showline=True, linewidth=1.2, linecolor="rgba(15,23,42,.50)", ticks="outside", zeroline=False)
+    fig.update_yaxes(range=[y_min, y_max], gridcolor="rgba(0,0,0,0.08)", showline=True, linewidth=1.2, linecolor="rgba(15,23,42,.50)", ticks="outside", zeroline=False)
     return fig
 
 
@@ -9421,12 +12015,63 @@ def render_similarity_decision_support_panel(target_row: pd.Series, best_row: pd
         compare_title = "Benchmark vs alternative"
         ref_header = "Reference"
         alt_header = "Alternative"
+        feasibility_title = "Transfer feasibility"
+        context_title = "Context fit"
+        better_title = "Why better / worse"
+        fee_label, salary_label, availability_label = "Estimated fee", "Salary tier", "Availability"
+        league_label, age_label, style_label, role_label = "League", "Age", "Style", "Role"
     else:
         action_title = "Acción recomendada DSS"
         drivers_title = "Drivers de recomendación"
         compare_title = "Benchmark vs alternativa"
         ref_header = "Referencia"
         alt_header = "Alternativa"
+        feasibility_title = "Viabilidad de fichaje"
+        context_title = "Encaje contextual"
+        better_title = "Mejor / peor que benchmark"
+        fee_label, salary_label, availability_label = "Fee estimado", "Tier salarial", "Disponibilidad"
+        league_label, age_label, style_label, role_label = "Liga", "Edad", "Estilo", "Rol"
+
+    # Executive product layer: translate similarity into recruitment feasibility.
+    market_value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    risk_value = get_numeric_value(best_row, "risk_score", np.nan)
+    sim_value = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    age_value = get_numeric_value(best_row, "age", np.nan)
+    delta_value = get_numeric_value(best_row, "delta_market_value_eur", np.nan)
+    delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(best_row, "delta_risk", np.nan)
+    estimated_fee = format_money_short(market_value)
+    salary_tier = ("Low" if LANG == "EN" else "Bajo") if pd.notna(market_value) and market_value <= 5_000_000 else (("Medium" if LANG == "EN" else "Medio") if pd.notna(market_value) and market_value <= 20_000_000 else ("High" if LANG == "EN" else "Alto"))
+    availability = ("High" if LANG == "EN" else "Alta") if pd.notna(market_value) and market_value <= 8_000_000 else (("Medium" if LANG == "EN" else "Media") if pd.notna(market_value) and market_value <= 25_000_000 else ("Low" if LANG == "EN" else "Baja"))
+    league_fit = min(100, max(35, 70 + (10 if str(safe_get(best_row, "league_quality_tier", "")).lower() in {"élite", "elite", "muy alto", "very high"} else 0)))
+    age_fit = 95 if pd.notna(age_value) and age_value <= 23 else 70
+    style_fit = min(100, max(0, sim_value if pd.notna(sim_value) else 60))
+    role_fit = 100 if is_valid_role_value(safe_get(best_row, "primary_role", np.nan)) and str(safe_get(best_row, "primary_role", "")) == str(safe_get(target_row, "primary_role", "")) else 75
+
+    def _fit_row(label, value):
+        return f"<div class='fit-row'><span>{html.escape(label)}</span><b>{value:.0f}</b><i style='width:{value:.0f}%'></i></div>"
+
+    fit_html = _fit_row(league_label, league_fit) + _fit_row(age_label, age_fit) + _fit_row(style_label, style_fit) + _fit_row(role_label, role_fit)
+
+    why_better = []
+    why_worse = []
+    if pd.notna(delta_value) and delta_value < 0:
+        why_better.append(("+", ("Cheaper than benchmark" if LANG == "EN" else "Más barato que el benchmark") + f" ({format_signed_money_short(delta_value)})"))
+    elif pd.notna(delta_value) and delta_value > 0:
+        why_worse.append(("-", ("More expensive than benchmark" if LANG == "EN" else "Más caro que el benchmark") + f" ({format_signed_money_short(delta_value)})"))
+    if pd.notna(delta_risk) and delta_risk <= 0:
+        why_better.append(("+", ("Lower risk" if LANG == "EN" else "Menor riesgo") + f" ({delta_risk:+.1f})"))
+    elif pd.notna(delta_risk) and delta_risk > 0:
+        why_worse.append(("-", ("Higher risk" if LANG == "EN" else "Mayor riesgo") + f" ({delta_risk:+.1f})"))
+    if pd.notna(delta_opp) and delta_opp >= 0:
+        why_better.append(("+", ("Higher opportunity" if LANG == "EN" else "Mayor Opportunity") + f" ({delta_opp:+.1f})"))
+    elif pd.notna(delta_opp) and delta_opp < 0:
+        why_worse.append(("-", ("Lower opportunity" if LANG == "EN" else "Menor Opportunity") + f" ({delta_opp:+.1f})"))
+    if not why_better:
+        why_better.append(("+", "Tactical comparability" if LANG == "EN" else "Comparabilidad táctica"))
+    if not why_worse:
+        why_worse.append(("-", "No major downside detected" if LANG == "EN" else "Sin debilidades materiales detectadas"))
+    why_html = "".join(f"<div class='similarity-driver-item'><span class='similarity-driver-{'plus' if sign == '+' else 'minus'}'>{html.escape(sign)}</span><span>{html.escape(text)}</span></div>" for sign, text in (why_better[:2] + why_worse[:2]))
 
     st.markdown(
         f"""
@@ -9440,6 +12085,25 @@ def render_similarity_decision_support_panel(target_row: pd.Series, best_row: pd
                 <div class="similarity-decision-eyebrow">Explainability</div>
                 <div class="similarity-decision-title">{html.escape(drivers_title)}</div>
                 <div class="similarity-driver-list">{drivers_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Transfer</div>
+                <div class="similarity-decision-title">{html.escape(feasibility_title)}</div>
+                <div class="similarity-action-list">
+                    <div class="similarity-action-item"><span>{html.escape(fee_label)}</span><b>{html.escape(estimated_fee)}</b></div>
+                    <div class="similarity-action-item"><span>{html.escape(salary_label)}</span><b>{html.escape(salary_tier)}</b></div>
+                    <div class="similarity-action-item"><span>{html.escape(availability_label)}</span><b>{html.escape(availability)}</b></div>
+                </div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Fit</div>
+                <div class="similarity-decision-title">{html.escape(context_title)}</div>
+                <div class="context-fit-bars">{fit_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Trade-off</div>
+                <div class="similarity-decision-title">{html.escape(better_title)}</div>
+                <div class="similarity-driver-list">{why_html}</div>
             </div>
             <div class="similarity-decision-card">
                 <div class="similarity-decision-eyebrow">Trade-off</div>
@@ -9658,7 +12322,7 @@ def render_shortlist_comparison_table(shortlist_df: pd.DataFrame) -> None:
         )
 
     csv_columns = [col for col in COMPARISON_CSV_COLUMNS if col in comparison_df.columns]
-    csv = comparison_df[csv_columns].to_csv(index=False).encode("utf-8")
+    csv = apply_club_name_normalization(comparison_df[csv_columns]).to_csv(index=False).encode("utf-8")
     st.download_button(
         TXT("Descargar comparación CSV"),
         data=csv,
@@ -9732,7 +12396,7 @@ def calculate_similarity_table(
 
 
 def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
-    """Similarity Engine with executive interpretation."""
+    """Executive Similar Player Intelligence without internal scrolls."""
     st.markdown(
         f"""
         <div class="similar-intel-header">
@@ -9740,7 +12404,7 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
                 <div class="similar-intel-icon">◎</div>
                 <div>
                     <div class="similar-intel-title">Similar Player Intelligence</div>
-                    <div class="similar-intel-subtitle">{html.escape('Identifica las mejores alternativas para reforzar tu plantilla con perfiles similares' if LANG == 'ES' else 'Identify the best alternatives to strengthen the squad with comparable profiles')}</div>
+                    <div class="similar-intel-subtitle">{html.escape('Identifica alternativas comparables con lectura ejecutiva de viabilidad, encaje y trade-off.' if LANG == 'ES' else 'Identify comparable alternatives with executive feasibility, fit and trade-off context.')}</div>
                 </div>
             </div>
         </div>
@@ -9766,186 +12430,175 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         st.info(TXT("No hay jugadores disponibles para el motor de similitud."))
         return
 
-    controls = st.columns([1.4, 0.8, 0.8])
+    st.markdown("<div class='similar-final-controls'>", unsafe_allow_html=True)
+    controls = st.columns([1.55, 0.75, 0.85, 0.55])
     with controls[0]:
         target_player = st.selectbox(TXT("Jugador de referencia"), options, key="sprint11_similarity_target")
     with controls[1]:
         restrict_same_position = st.checkbox(UI("Misma posición"), value=True, key="sprint11_similarity_same_position")
     with controls[2]:
-        top_n = st.slider("Top N", 5, 20, 10, key="sprint11_similarity_top_n")
+        restrict_same_role_context = st.checkbox(
+            "Rol/taxonomía" if LANG == "ES" else "Role/taxonomy",
+            value=True,
+            key="sprint11_similarity_same_role_context",
+            help="Filtra comparables por taxonomía posicional y rol primario." if LANG == "ES" else "Filters comparables by taxonomy and primary role.",
+        )
+    with controls[3]:
+        top_n = st.selectbox("Top", [5, 8, 10, 15, 20], index=2, key="sprint11_similarity_top_n_select")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     target_rows = selector_df[selector_df[name_col].astype(str) == str(target_player)]
     if target_rows.empty:
         st.info(TXT("No se encuentra el jugador de referencia seleccionado."))
         return
     target_row = target_rows.iloc[0]
+
     similarity_df = calculate_similarity_table(
         df=selector_df,
         target_player=target_player,
         name_col=name_col,
         restrict_same_position=restrict_same_position,
     )
-
     if similarity_df.empty:
         st.info(TXT("No hay suficientes variables numéricas para calcular similitud de forma robusta."))
         return
 
+    if restrict_same_role_context:
+        if "position_taxonomy" in similarity_df.columns and "position_taxonomy" in target_row.index and pd.notna(target_row.get("position_taxonomy")):
+            target_taxonomy = str(target_row.get("position_taxonomy"))
+            similarity_df = similarity_df[similarity_df["position_taxonomy"].astype(str) == target_taxonomy].copy()
+        if "primary_role" in similarity_df.columns and "primary_role" in target_row.index and is_valid_role_value(target_row.get("primary_role")):
+            target_role = str(target_row.get("primary_role"))
+            role_filtered = similarity_df[similarity_df["primary_role"].astype(str) == target_role].copy()
+            if len(role_filtered) >= max(3, min(int(top_n), 5)):
+                similarity_df = role_filtered
+        if similarity_df.empty:
+            st.info("No hay comparables con el mismo contexto táctico. Desactiva el filtro Rol/taxonomía." if LANG == "ES" else "No comparable players match the same tactical context. Disable Role/taxonomy filter.")
+            return
+
     similarity_df = add_similarity_deltas(similarity_df, target_row)
     similarity_df["_recommendation_class"] = similarity_df.apply(classify_similarity_recommendation, axis=1)
     best = similarity_df.iloc[0]
-    render_similarity_executive_cards(target_row, best, name_col, similarity_df.head(top_n))
+    best_name = get_display_name(best, name_col)
+    target_name = get_display_name(target_row, name_col)
 
-    similarity_chart_source = similarity_df.head(top_n).copy()
-    highlight_options = similarity_chart_source[name_col].astype(str).tolist() if name_col in similarity_chart_source.columns else []
-    highlighted_player = highlight_options[0] if highlight_options else None
-    if highlight_options:
-        highlighted_player = st.selectbox(
-            "Perfil destacado" if LANG == "ES" else "Highlighted profile",
-            highlight_options,
-            index=0,
-            key="similarity_highlighted_profile",
-            help="Selecciona un perfil del ranking lateral para resaltarlo en el mapa." if LANG == "ES" else "Select a profile from the side ranking to highlight it on the map.",
-        )
-    similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=highlighted_player)
-    if similarity_fig is not None:
-        render_similarity_recommendation_card(best, name_col)
-        render_similarity_decision_support_panel(target_row, best, name_col)
-        chart_col, rank_col = st.columns([3.0, 1.0], gap="large")
-        with chart_col:
-            render_similarity_benchmark_profile(target_row, name_col)
-            st.markdown(
-                f"""
-                <div class="similarity-chart-shell">
-                    <div class="similarity-chart-header-grid">
-                        <div>
-                            <div class="similarity-map-title">Similarity vs Opportunity Analysis</div>
-                            <div class="similarity-map-subtitle">{html.escape('El mapa compara alternativas reales de recruitment; el jugador referencia queda fuera del gráfico como benchmark ejecutivo.' if LANG == 'ES' else 'The map compares real recruitment alternatives; the reference player stays outside the chart as the executive benchmark.')}</div>
-                        </div>
-                        <div class="similarity-bubble-note">Bubble Size = Market Value (€)</div>
-                    </div>
-                    <div class="similarity-quadrant-legend">
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#22c55e"></i>Elite Targets</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#60a5fa"></i>Similar Replacements</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#f59e0b"></i>High Upside Prospects</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#94a3b8"></i>Low Priority</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False})
-            st.markdown(
-                f"""
-                <div class="similarity-chart-card-note">ⓘ {html.escape('El mapa cruza similitud y Opportunity Score para priorizar sustitutos comparables. El tamaño de la burbuja representa exclusivamente valor de mercado.' if LANG == 'ES' else 'The map combines similarity and Opportunity Score to prioritize comparable replacements. Bubble size represents market value only.')}</div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with rank_col:
-            render_similarity_rank_panel(similarity_chart_source, name_col, highlighted_player=highlighted_player)
-        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    similarity = get_numeric_value(best, "similarity_score_pct", np.nan)
+    fit = get_numeric_value(best, "replacement_context_fit", get_numeric_value(best, "similarity_score_pct", np.nan))
+    opp = get_numeric_value(best, "opportunity_score", np.nan)
+    risk = get_numeric_value(best, "risk_score", np.nan)
+    delta_opp = get_numeric_value(best, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(best, "delta_risk", np.nan)
+    delta_value = get_numeric_value(best, "delta_market_value_eur", np.nan)
+    market_value = get_numeric_value(best, "market_value_eur", np.nan)
+    contract_months = get_numeric_value(best, "contract_months_remaining", get_numeric_value(best, "months_remaining", np.nan))
 
-    # Executive compact view: keep only decision-relevant fields on screen.
-    # Full variables remain available in the underlying dataframe for audit/export if needed.
-    similarity_view = similarity_df.head(top_n).copy()
-    if "projected_market_value_3y_eur" in similarity_view.columns:
-        similarity_view["projected_value_3y_display"] = similarity_view["projected_market_value_3y_eur"].apply(format_money_short)
-    if "delta_projected_market_value_3y_eur" in similarity_view.columns:
-        similarity_view["delta_projected_value_3y_display"] = similarity_view["delta_projected_market_value_3y_eur"].apply(
-            lambda value: format_signed_money_short(value)
-        )
-    if "delta_market_value_eur" in similarity_view.columns:
-        similarity_view["delta_market_value_display"] = similarity_view["delta_market_value_eur"].apply(
-            lambda value: format_signed_money_short(value)
-        )
+    availability = "Alta" if LANG == "ES" else "High"
+    if pd.notna(contract_months):
+        if contract_months <= 6:
+            availability = "Muy alta" if LANG == "ES" else "Very high"
+        elif contract_months <= 18:
+            availability = "Alta" if LANG == "ES" else "High"
+        else:
+            availability = "Media" if LANG == "ES" else "Medium"
+    salary_tier = "Medio" if LANG == "ES" else "Medium"
+    if pd.notna(market_value) and market_value >= 20_000_000:
+        salary_tier = "Alto" if LANG == "ES" else "High"
+    elif pd.notna(market_value) and market_value <= 5_000_000:
+        salary_tier = "Bajo" if LANG == "ES" else "Low"
 
-    similarity_view["recommendation_label"] = similarity_view.apply(lambda row: similarity_recommendation_label(str(safe_get(row, "_recommendation_class", classify_similarity_recommendation(row)))), axis=1)
-    if "market_value_eur" in similarity_view.columns:
-        similarity_view["market_value_display"] = similarity_view["market_value_eur"].apply(format_money_short)
+    league_fit = max(0, min(100, 75 + get_numeric_value(best, "delta_league_strength", 0) * 4))
+    role_fit = max(0, min(100, similarity if pd.notna(similarity) else 0))
+    age_target = get_numeric_value(target_row, "age", np.nan)
+    age_best = get_numeric_value(best, "age", np.nan)
+    age_fit = max(0, min(100, 100 - abs((age_best if pd.notna(age_best) else 24) - (age_target if pd.notna(age_target) else 24)) * 8))
+    style_fit = max(0, min(100, fit if pd.notna(fit) else role_fit))
 
-    executive_cols = [name_col, "club", "league", "position_group", "similarity_score_pct", "opportunity_score", "risk_score", "market_value_display", "recommendation_label"]
-    executive_cols = [col for col in executive_cols if col in similarity_view.columns]
+    better_items = []
+    worse_items = []
+    if pd.notna(delta_value):
+        (better_items if delta_value < 0 else worse_items).append(("Más barato" if LANG == "ES" else "Cheaper") if delta_value < 0 else ("Más caro" if LANG == "ES" else "More expensive"))
+    if pd.notna(delta_risk):
+        (better_items if delta_risk < 0 else worse_items).append(("Menor riesgo" if LANG == "ES" else "Lower risk") if delta_risk < 0 else ("Mayor riesgo" if LANG == "ES" else "Higher risk"))
+    if pd.notna(delta_opp):
+        (better_items if delta_opp > 0 else worse_items).append(("Mayor Opportunity" if LANG == "ES" else "Higher Opportunity") if delta_opp > 0 else ("Menor Opportunity" if LANG == "ES" else "Lower Opportunity"))
+    if not better_items:
+        better_items = ["Perfil táctico muy similar" if LANG == "ES" else "Very similar tactical profile"]
+    if not worse_items:
+        worse_items = ["Sin alertas críticas" if LANG == "ES" else "No critical flags"]
 
-    matrix_title = 'Recruitment Intelligence Matrix' if LANG == 'EN' else 'Recruitment Intelligence Matrix'
-    matrix_note = 'Executive view · advanced variables remain in the expandable analytical view' if LANG == 'EN' else 'Vista ejecutiva · variables avanzadas en el desplegable analítico'
-    st.markdown(
-        f"<div class='similarity-exec-table-title'><span>{html.escape(matrix_title)}</span><span class='similarity-exec-table-note'>{html.escape(matrix_note)}</span></div>",
-        unsafe_allow_html=True,
-    )
-    st.dataframe(
-        localize_display_df(similarity_view)[executive_cols],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-            "club": st.column_config.TextColumn("Club"),
-            "league": st.column_config.TextColumn(T("league")),
-            "position_group": st.column_config.TextColumn(T("position")),
-            "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-            "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-            "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            "market_value_display": st.column_config.TextColumn("Value" if LANG == "EN" else "Valor"),
-            "recommendation_label": st.column_config.TextColumn("Assessment" if LANG == "EN" else "Assessment"),
-        },
-    )
+    def _fit_row(label, value):
+        value = max(0, min(100, float(value) if pd.notna(value) else 0))
+        return f"<div class='context-fit-row'><div class='context-fit-label'>{html.escape(label)}</div><div class='context-fit-track'><span style='width:{value:.0f}%'></span></div><div class='context-fit-value'>{value:.0f}</div></div>"
 
-    analytical_cols = [
-        name_col, "club", "league", "league_quality_tier", "position_group", "similarity_score_pct",
-        "delta_opportunity", "delta_risk", "delta_growth", "delta_league_strength",
-        "projected_value_3y_display", "asset_roi_3y_pct", "future_asset_score",
-        "opportunity_score", "risk_score",
-    ]
-    analytical_cols = [col for col in analytical_cols if col in similarity_view.columns]
-    with st.expander("Vista analítica avanzada" if LANG == "ES" else "Advanced analytical view"):
-        st.dataframe(
-            localize_display_df(similarity_view)[analytical_cols],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-                "club": st.column_config.TextColumn("Club"),
-                "league": st.column_config.TextColumn(T("league")),
-                "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
-                "position_group": st.column_config.TextColumn(T("position")),
-                "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-                "delta_opportunity": st.column_config.NumberColumn("Δ Opp.", format="%+.1f"),
-                "delta_risk": st.column_config.NumberColumn("Δ Risk", format="%+.1f"),
-                "delta_growth": st.column_config.NumberColumn("Δ Growth", format="%+.1f"),
-                "delta_league_strength": st.column_config.NumberColumn("Δ Strength", format="%+.1f"),
-                "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
-                "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
-                "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
-                "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-                "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            },
-        )
+    better_html = "".join(f"<div class='similar-driver-item'><span class='similar-plus'>+</span><span>{html.escape(item)}</span></div>" for item in better_items[:3])
+    worse_html = "".join(f"<div class='similar-driver-item'><span class='similar-minus'>−</span><span>{html.escape(item)}</span></div>" for item in worse_items[:3])
 
-    render_automated_recruitment_assessment(target_player, best, name_col)
-
-    top_similarity = similarity_df.head(top_n).copy()
-    avg_similarity = pd.to_numeric(top_similarity.get("similarity_score_pct", np.nan), errors="coerce").mean()
-    avg_market_value = pd.to_numeric(top_similarity.get("market_value_eur", np.nan), errors="coerce").mean()
-    stronger_context_count = int((pd.to_numeric(top_similarity.get("delta_league_strength", 0), errors="coerce") > 0).sum())
-    similarity_summary = (
-        f"The average similarity of the Top {len(top_similarity)} is <b>{avg_similarity:.1f}</b>. "
-        f"<b>{stronger_context_count}</b> profiles come from a stronger competitive context than the reference player. "
-        f"The average market value of similar profiles is <b>{html.escape(format_money_short(avg_market_value))}</b>."
-        if LANG == "EN"
-        else
-        f"La similitud media del Top {len(top_similarity)} es <b>{avg_similarity:.1f}</b>. "
-        f"<b>{stronger_context_count}</b> perfiles proceden de un contexto competitivo superior al jugador de referencia. "
-        f"El valor de mercado medio de los perfiles similares es <b>{html.escape(format_money_short(avg_market_value))}</b>."
-    )
     st.markdown(
         f"""
-        <div class="radar-info-box">
-            <b>{html.escape(TXT("Similarity Insight"))}</b><br><br>
-            {similarity_summary}
-        </div>
+<div class="similar-final-grid">
+  <div class="similar-final-card primary">
+    <div class="similar-final-eyebrow">{'BEST COMPARABLE' if LANG == 'EN' else 'MEJOR COMPARABLE'}</div>
+    <div class="similar-final-title">{html.escape(str(best_name))}</div>
+    <div class="similar-final-copy">{html.escape(('Closest tactical alternative to ' if LANG == 'EN' else 'Alternativa táctica más cercana a ') + str(target_name))}</div>
+    <div class="similar-final-kpi-row">
+      <div class="similar-final-kpi"><span>Similarity</span><b>{format_score(similarity)}</b></div>
+      <div class="similar-final-kpi"><span>Opportunity</span><b>{format_score(opp)}</b></div>
+      <div class="similar-final-kpi"><span>Risk</span><b>{format_score(risk)}</b></div>
+    </div>
+  </div>
+  <div class="similar-final-card">
+    <div class="similar-final-eyebrow">{'TRANSFER FEASIBILITY' if LANG == 'EN' else 'VIABILIDAD DE FICHAJE'}</div>
+    <div class="similar-final-title">{html.escape(availability)}</div>
+    <div class="similar-final-kpi-row">
+      <div class="similar-final-kpi"><span>{'Contract' if LANG == 'EN' else 'Contrato'}</span><b>{html.escape('N/A' if pd.isna(contract_months) else f'{contract_months:.0f}m')}</b></div>
+      <div class="similar-final-kpi"><span>{'Estimated Fee' if LANG == 'EN' else 'Fee estimado'}</span><b>{html.escape(format_money_short(market_value))}</b></div>
+      <div class="similar-final-kpi"><span>{'Salary Tier' if LANG == 'EN' else 'Nivel salarial'}</span><b>{html.escape(salary_tier)}</b></div>
+    </div>
+    <div class="similar-final-copy" style="margin-top:10px;">{'Availability combines contract context and market value proxy.' if LANG == 'EN' else 'La disponibilidad combina contexto contractual y proxy de valor de mercado.'}</div>
+  </div>
+  <div class="similar-final-card blue">
+    <div class="similar-final-eyebrow">{'CONTEXT FIT' if LANG == 'EN' else 'ENCAJE CONTEXTUAL'}</div>
+    { _fit_row('Liga' if LANG == 'ES' else 'League', league_fit) }
+    { _fit_row('Rol' if LANG == 'ES' else 'Role', role_fit) }
+    { _fit_row('Edad' if LANG == 'ES' else 'Age', age_fit) }
+    { _fit_row('Estilo' if LANG == 'ES' else 'Style', style_fit) }
+  </div>
+  <div class="similar-final-card warning">
+    <div class="similar-final-eyebrow">TRADE-OFF</div>
+    <div class="similar-final-title">{'Why better / Why worse' if LANG == 'EN' else 'Por qué mejora / qué pierde'}</div>
+    <div class="similar-driver-list">{better_html}<div style='height:4px'></div>{worse_html}</div>
+  </div>
+</div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.caption(TXT("Variables utilizadas") + ": " + str(similarity_df["similarity_features_used"].iloc[0]))
+    top_view = add_role_display_columns(similarity_df.head(int(top_n)).copy())
+    mini_cards = []
+    for idx, (_, row) in enumerate(top_view.head(6).iterrows(), start=1):
+        name = get_display_name(row, name_col)
+        meta = f"{safe_get(row, 'club', 'N/A')} · {league_display_name(safe_get(row, 'league', 'N/A'))} · {safe_get(row, 'position_group', 'N/A')}"
+        rec = similarity_recommendation_label(str(safe_get(row, "_recommendation_class", classify_similarity_recommendation(row))))
+        mini_cards.append(
+            f"<div class='similar-mini-card'><div class='similar-mini-rank'>{idx}</div><div class='similar-mini-name'>{html.escape(str(name))}</div><div class='similar-mini-meta'>{html.escape(meta)}</div><div class='similar-mini-badges'><span>{'Sim' if LANG == 'EN' else 'Sim'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>Opp {format_score(safe_get(row,'opportunity_score',np.nan))}</span><span>{html.escape(rec)}</span></div></div>"
+        )
+    st.markdown("<div class='similar-card-list'>" + "".join(mini_cards) + "</div>", unsafe_allow_html=True)
+
+    with st.expander("Vista ejecutiva de comparables" if LANG == "ES" else "Executive comparable view", expanded=False):
+        st.markdown("<div class='similar-advanced-view'>", unsafe_allow_html=True)
+        similarity_chart_source = apply_club_name_normalization(similarity_df.head(int(top_n)).copy())
+        similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=get_display_name(best, name_col))
+        if similarity_fig is not None:
+            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False, "displaylogo": False})
+        executive_table = build_executive_similarity_table(similarity_chart_source.head(10), name_col)
+        st.dataframe(executive_table, use_container_width=True, hide_index=True, height=min(420, 42 + 36 * max(1, len(executive_table))))
+        st.caption("Vista reducida a 8 columnas ejecutivas. Las variables metodológicas quedan fuera de la lectura DSS principal." if LANG == "ES" else "Reduced to 8 executive columns. Methodological variables are kept out of the main DSS readout.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    render_automated_recruitment_assessment(target_player, best, name_col)
+    if "similarity_features_used" in similarity_df.columns and not similarity_df.empty:
+        st.caption(TXT("Variables utilizadas") + ": " + str(similarity_df["similarity_features_used"].iloc[0]))
+
 
 def build_replacement_candidates(similarity_df: pd.DataFrame) -> pd.DataFrame:
     """Combine similarity, opportunity and risk into a replacement score."""
@@ -9984,8 +12637,60 @@ def build_replacement_candidates(similarity_df: pd.DataFrame) -> pd.DataFrame:
     return result.sort_values(sort_col, ascending=False)
 
 
+
+def build_executive_similarity_table(df: pd.DataFrame, name_col: str) -> pd.DataFrame:
+    """Return a product-safe, no-scroll executive table for Similar Players."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+    out = apply_club_name_normalization(df.copy())
+    cols = [name_col, "club", "league", "primary_role", "similarity_score_pct", "opportunity_score", "risk_score", "delta_opportunity"]
+    cols = [c for c in cols if c in out.columns]
+    out = localize_display_df(out[cols])
+    rename = {
+        name_col: "Jugador" if LANG == "ES" else "Player",
+        "club": "Club",
+        "league": "Liga" if LANG == "ES" else "League",
+        "primary_role": "Rol" if LANG == "ES" else "Role",
+        "similarity_score_pct": "Similitud" if LANG == "ES" else "Similarity",
+        "opportunity_score": "Opportunity",
+        "risk_score": "Risk" if LANG == "EN" else "Riesgo",
+        "delta_opportunity": "Delta Opp.",
+    }
+    out = out.rename(columns={k: v for k, v in rename.items() if k in out.columns})
+    for c in ["Similitud", "Similarity", "Opportunity", "Risk", "Riesgo", "Delta Opp."]:
+        if c in out.columns:
+            out[c] = pd.to_numeric(out[c], errors="coerce").map(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+    return out
+
+
+def build_executive_replacement_table(df: pd.DataFrame, name_col: str) -> pd.DataFrame:
+    """Return a product-safe executive replacement table with at most 8 columns."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+    out = apply_club_name_normalization(df.copy())
+    cols = ["replacement_rank", name_col, "club", "league", "position_group", "replacement_context_fit", "similarity_score_pct", "risk_score"]
+    cols = [c for c in cols if c in out.columns]
+    out = localize_display_df(out[cols])
+    rename = {
+        "replacement_rank": "#",
+        name_col: "Jugador" if LANG == "ES" else "Player",
+        "club": "Club",
+        "league": "Liga" if LANG == "ES" else "League",
+        "position_group": "Pos.",
+        "replacement_context_fit": "Fit" if LANG == "EN" else "Encaje",
+        "similarity_score_pct": "Similitud" if LANG == "ES" else "Similarity",
+        "risk_score": "Risk" if LANG == "EN" else "Riesgo",
+    }
+    out = out.rename(columns={k: v for k, v in rename.items() if k in out.columns})
+    for c in ["Fit", "Encaje", "Similitud", "Similarity", "Risk", "Riesgo"]:
+        if c in out.columns:
+            out[c] = pd.to_numeric(out[c], errors="coerce").map(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+    if "#" in out.columns:
+        out["#"] = pd.to_numeric(out["#"], errors="coerce").astype("Int64").astype(str).replace("<NA>", "")
+    return out
+
 def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
-    """Potential replacements based on similarity and risk-adjusted opportunity."""
+    """Potential replacements with executive cards and compact decision table."""
     st.subheader("🔁 " + ("Buscador de reemplazos" if LANG == "ES" else "Replacement Finder"))
     st.caption(TXT("Identificación automática de reemplazos según perfil deportivo, contexto competitivo, riesgo y potencial de activo."))
 
@@ -10003,23 +12708,18 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         selector_df = selector_df.sort_values("opportunity_score", ascending=False)
 
     options = selector_df[name_col].astype(str).drop_duplicates().tolist()
-    controls = st.columns([1.4, 0.8])
+    controls = st.columns([1.6, 0.6])
     with controls[0]:
         target_player = st.selectbox(TXT("Jugador a sustituir / comparar"), options, key="sprint11_replacement_target")
     with controls[1]:
-        top_n = st.slider(TXT("Número de sustitutos"), 5, 20, 10, key="sprint11_replacement_top_n")
+        top_n = st.selectbox(TXT("Número de sustitutos"), [5, 8, 10, 15, 20], index=2, key="sprint11_replacement_top_n_select")
 
     target_rows = selector_df[selector_df[name_col].astype(str) == str(target_player)]
     if target_rows.empty:
         st.info(TXT("No se encuentra el jugador seleccionado."))
         return
     target_row = target_rows.iloc[0]
-    similarity_df = calculate_similarity_table(
-        df=selector_df,
-        target_player=target_player,
-        name_col=name_col,
-        restrict_same_position=True,
-    )
+    similarity_df = calculate_similarity_table(df=selector_df, target_player=target_player, name_col=name_col, restrict_same_position=True)
     similarity_df = add_similarity_deltas(similarity_df, target_row)
     replacement_df = build_replacement_candidates(similarity_df)
 
@@ -10028,85 +12728,44 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         return
 
     replacement_df["replacement_fit"] = replacement_df.apply(classify_replacement_fit, axis=1)
-    render_replacement_executive_cards(target_player, replacement_df, name_col)
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
-
-    # Executive compact view for dashboard consumption. Full replacement_df is kept for CSV export.
-    replacement_view = replacement_df.head(top_n).copy()
+    replacement_view = replacement_df.head(int(top_n)).copy()
+    if "market_value_eur" in replacement_view.columns:
+        replacement_view["market_value_display"] = replacement_view["market_value_eur"].apply(format_money_short)
     if "projected_market_value_3y_eur" in replacement_view.columns:
         replacement_view["projected_value_3y_display"] = replacement_view["projected_market_value_3y_eur"].apply(format_money_short)
     if "asset_upside_3y_eur" in replacement_view.columns:
         replacement_view["asset_upside_3y_display"] = replacement_view["asset_upside_3y_eur"].apply(format_money_short)
-    if "delta_market_value_eur" in replacement_view.columns:
-        replacement_view["delta_market_value_display"] = replacement_view["delta_market_value_eur"].apply(
-            lambda value: format_signed_money_short(value)
+
+    cards = []
+    for idx, (_, row) in enumerate(replacement_view.head(3).iterrows(), start=1):
+        name = get_display_name(row, name_col)
+        meta = f"{safe_get(row, 'club', 'N/A')} · {league_display_name(safe_get(row, 'league', 'N/A'))} · {safe_get(row, 'position_group', 'N/A')}"
+        cards.append(
+            f"<div class='replacement-card'><div class='replacement-rank'>{idx}</div><div class='replacement-name'>{html.escape(str(name))}</div><div class='replacement-meta'>{html.escape(meta)}</div><div class='replacement-badges'><span>{'Similarity' if LANG == 'EN' else 'Similitud'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>{'Fit' if LANG == 'EN' else 'Encaje'} {format_score(safe_get(row,'replacement_context_fit',np.nan))}</span><span>{'Risk' if LANG == 'EN' else 'Riesgo'} {format_score(safe_get(row,'risk_score',np.nan))}</span><span>{html.escape(str(safe_get(row,'replacement_fit','Assessment')))}</span></div></div>"
         )
+    st.markdown("<div class='replacement-card-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
 
-    display_cols = [
-        "replacement_rank",
-        name_col,
-        "club",
-        "league",
-        "league_quality_tier",
-        "position_group",
-        "replacement_context_fit",
-        "similarity_score_pct",
-        "adaptation_risk_label",
-        "opportunity_score",
-        "risk_score",
-        "future_asset_score",
-        "asset_roi_3y_pct",
-        "projected_value_3y_display",
-        "asset_upside_3y_display",
-        "replacement_fit",
-    ]
-    display_cols = [col for col in display_cols if col in replacement_view.columns]
-
-    st.dataframe(
-        localize_display_df(replacement_view)[display_cols],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "replacement_rank": st.column_config.NumberColumn("Rank", format="%d"),
-            name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-            "club": st.column_config.TextColumn("Club"),
-            "league": st.column_config.TextColumn(T("league")),
-            "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
-            "position_group": st.column_config.TextColumn(T("position")),
-            "replacement_context_fit": st.column_config.ProgressColumn("Context fit" if LANG == "EN" else "Fit contexto", min_value=0, max_value=100, format="%.1f"),
-            "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-            "adaptation_risk_label": st.column_config.TextColumn("Adaptation" if LANG == "EN" else "Adaptación"),
-            "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-            "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
-            "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
-            "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
-            "asset_upside_3y_display": st.column_config.TextColumn("3Y Upside" if LANG == "EN" else "Upside 3Y"),
-            "replacement_fit": st.column_config.TextColumn("Replacement fit" if LANG == "EN" else "Fit de sustitución"),
-        },
-    )
+    compact = apply_club_name_normalization(replacement_view.copy())
+    with st.expander("Auditoría técnica de reemplazos" if LANG == "ES" else "Replacement technical audit", expanded=False):
+        st.markdown("<div class='replacement-advanced-view'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='replacement-table-title'>{html.escape('Vista ejecutiva reducida' if LANG == 'ES' else 'Reduced executive view')}</div>", unsafe_allow_html=True)
+        executive_replacement = build_executive_replacement_table(compact.head(10), name_col)
+        st.dataframe(
+            executive_replacement,
+            use_container_width=True,
+            hide_index=True,
+            height=min(420, 44 + 36 * max(1, len(executive_replacement))),
+        )
+        st.caption("La tabla principal se limita a 8 columnas para evitar scroll lateral. El CSV conserva todas las variables para auditoría metodológica." if LANG == "ES" else "The main table is limited to 8 columns to avoid horizontal scrolling. The CSV keeps all variables for methodological audit.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     narrative = build_replacement_narrative(target_player, replacement_df, name_col)
     if narrative:
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-        st.markdown(
-            f"""
-            <div class="radar-info-box">
-                <b>{html.escape(TXT("Replacement Insight"))}</b><br><br>
-                {narrative}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"<div class='radar-info-box'><b>{html.escape(TXT('Replacement Insight'))}</b><br><br>{narrative}</div>", unsafe_allow_html=True)
 
-    csv = replacement_df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        TXT("Descargar sustitutos CSV"),
-        data=csv,
-        file_name="replacement_candidates.csv",
-        mime="text/csv",
-        key="sprint11_download_replacement_candidates",
-    )
+    csv = apply_club_name_normalization(replacement_df).to_csv(index=False).encode("utf-8")
+    st.download_button(TXT("Descargar sustitutos CSV"), data=csv, file_name="replacement_candidates.csv", mime="text/csv", key="sprint11_download_replacement_candidates")
+
 
 
 def classify_decision_stage(score: object) -> str:
@@ -10720,14 +13379,12 @@ def render_driver_analysis(shortlist_df: pd.DataFrame) -> None:
 def render_recruitment_pipeline(shortlist_df: pd.DataFrame) -> None:
     """Simulated recruitment pipeline for product-level decision support.
 
-    The dashboard does not persist workflow status yet; this view assigns an
-    initial recommended stage from the executive decision score, risk and
-    confidence to mimic a real recruitment board.
+    This view assigns an initial recommended stage from the executive decision score, risk and confidence to mimic a real recruitment board.
     """
     st.subheader("🗂️ " + TXT("Recruitment Pipeline"))
     render_sprint11_context_box(
         TXT("Objetivo"),
-        TXT("convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.")
+        TXT("convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.")
     )
 
     decision_df = get_executive_decision_table(shortlist_df, top_n=20)
@@ -10817,11 +13474,94 @@ def render_recruitment_pipeline(shortlist_df: pd.DataFrame) -> None:
         f"""
         <div class="radar-info-box">
             <b>{html.escape(TXT("Nota operativa"))}</b><br><br>
-            {html.escape(TXT("Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting."))}
+            {html.escape(TXT("Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting."))}
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_role_market_dashboard(source_df: pd.DataFrame) -> None:
+    """Role-first scouting view: start from tactical need, then shortlist players."""
+    if source_df.empty or "primary_role" not in source_df.columns:
+        st.info("No hay roles disponibles con los filtros activos." if LANG == "ES" else "No roles are available under the active filters.")
+        return
+    df_roles = source_df[source_df["primary_role"].map(is_valid_role_value)].copy()
+    if df_roles.empty:
+        st.info("No hay roles disponibles con los filtros activos." if LANG == "ES" else "No roles are available under the active filters.")
+        return
+    role_values = sorted(df_roles["primary_role"].dropna().astype(str).unique().tolist())
+    default_role = role_values[0]
+    if "Ball Winner" in role_values:
+        default_role = "Ball Winner"
+    selected_role = st.selectbox("¿Qué función táctica necesitas cubrir?" if LANG == "ES" else "Which tactical function do you need to cover?", role_values, index=role_values.index(default_role), key="role_market_selected_role")
+    role_df = df_roles[df_roles["primary_role"].astype(str) == str(selected_role)].copy()
+    if role_df.empty:
+        st.info("No hay jugadores para este rol." if LANG == "ES" else "No players available for this role.")
+        return
+    sort_col = "decision_score" if "decision_score" in role_df.columns else ("opportunity_score" if "opportunity_score" in role_df.columns else None)
+    if sort_col:
+        role_df[sort_col] = pd.to_numeric(role_df[sort_col], errors="coerce")
+        role_df = role_df.sort_values(sort_col, ascending=False, na_position="last")
+    top = role_df.head(5).copy()
+    name_col = get_player_name_column(top) or "player_name_fbref"
+    cards = []
+    for idx, (_, row) in enumerate(top.iterrows(), start=1):
+        player = html.escape(str(get_player_name(row)))
+        club = html.escape(format_club_name(safe_get(row, "club", "")))
+        league = html.escape(league_display_name(safe_get(row, "league", "")))
+        opp = get_numeric_value(row, "opportunity_score", np.nan)
+        conf = role_metric_display(safe_get(row, "role_purity", safe_get(row, "role_confidence", np.nan)))
+        prog = role_dna_score(safe_get(row, "ball_progression_index", np.nan))
+        creation = role_dna_score(safe_get(row, "chance_creation_index", np.nan))
+        score = get_numeric_value(row, sort_col, np.nan) if sort_col else np.nan
+        score_text = "N/D" if pd.isna(score) else f"{score:.1f}"
+        chips = []
+        if prog is not None:
+            chips.append(f"Progresión P{prog:.0f}")
+        if creation is not None:
+            chips.append(f"Creación P{creation:.0f}")
+        chips.append(f"{'Pureza' if LANG == 'ES' else 'Purity'} {conf}")
+        cards.append(
+            f"<div class='role-market-player-card'>"
+            f"<div class='role-market-rank'>{idx}</div>"
+            f"<div class='role-market-name'>{player}</div>"
+            f"<div class='role-market-meta'>{club} · {league}</div>"
+            f"<div class='role-market-chip-row'>{''.join(f'<span>{html.escape(c)}</span>' for c in chips)}</div>"
+            f"<div class='role-market-score'>{html.escape(score_text)}</div>"
+            f"</div>"
+        )
+    families = {
+        "DEF": ["Ball-Playing Centre-Back", "Aerial Defender", "Aggressive Defender"],
+        "MID": ["Ball Winner", "Attacking Progressor", "Creative Playmaker"],
+        "ATT": ["Box Finisher", "Creator Forward", "Mobile Forward"],
+    }
+    family_cards = []
+    for fam, roles in families.items():
+        available_roles = [r for r in roles if r in role_values]
+        if not available_roles:
+            continue
+        pills = "".join(f"<span class='role-map-pill {'role-map-pill-active' if r == selected_role else ''}'>{html.escape(r)}</span>" for r in available_roles)
+        fam_label = {"DEF": "DEFENDERS" if LANG == "EN" else "DEFENSAS", "MID": "MIDFIELDERS" if LANG == "EN" else "CENTROCAMPISTAS", "ATT": "FORWARDS" if LANG == "EN" else "ATACANTES"}[fam]
+        family_cards.append(f"<div class='role-map-family'><b>{fam_label}</b><div>{pills}</div></div>")
+    st.markdown(
+        f"""
+<div class='role-market-shell'>
+    <div class='role-market-head'>
+        <div>
+            <div class='role-market-eyebrow'>{'ROLE-FIRST SCOUTING' if LANG == 'EN' else 'SCOUTING BASADO EN ROL'}</div>
+            <div class='role-market-title'>{html.escape('I need a ' + selected_role if LANG == 'EN' else 'Busco: ' + selected_role)}</div>
+            <div class='role-market-subtitle'>{html.escape('The DSS starts from the tactical function and returns the best available targets under the active filters.' if LANG == 'EN' else 'El DSS parte de la función táctica y devuelve los mejores targets disponibles bajo los filtros activos.')}</div>
+        </div>
+        <div class='role-market-count'><span>{len(role_df)}</span><b>{'players' if LANG == 'EN' else 'jugadores'}</b></div>
+    </div>
+    <div class='role-map-shell'><div class='role-map-title'>{html.escape('Role ecosystem' if LANG == 'EN' else 'Mapa de roles')}</div>{''.join(family_cards)}</div>
+    <div class='role-market-grid'>{''.join(cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
 
 def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
     """Unified scouting decision-support product section."""
@@ -10843,25 +13583,28 @@ def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
     render_executive_recommendation_engine(shortlist_df)
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Pipeline de reclutamiento" if LANG == "ES" else "Recruitment Pipeline",
-        "Comparación de candidatos" if LANG == "ES" else "Candidate Comparison",
-        "Buscador de reemplazos" if LANG == "ES" else "Replacement Finder",
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "Role Market" if LANG == "ES" else "Role Market",
         "Jugadores similares" if LANG == "ES" else "Similar Players",
-        "Análisis de inversión" if LANG == "ES" else "Investment Analysis",
+        "Recruitment Assessment" if LANG == "ES" else "Recruitment Assessment",
+        "Comparación de candidatos" if LANG == "ES" else "Candidate Comparison",
+        "Contrato" if LANG == "ES" else "Contract",
+        "Estrategia" if LANG == "ES" else "Strategy",
         "Drivers del modelo" if LANG == "ES" else "Model Drivers",
     ])
 
+    with tab0:
+        render_role_market_dashboard(shortlist_df)
     with tab1:
-        render_recruitment_pipeline(shortlist_df)
+        render_similarity_engine(shortlist_df)
     with tab2:
+        render_recruitment_pipeline(shortlist_df)
+    with tab3:
         render_multi_player_radar_comparison(shortlist_df)
         st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
         render_shortlist_comparison_table(shortlist_df)
-    with tab3:
-        render_replacement_analysis(shortlist_df)
     with tab4:
-        render_similarity_engine(shortlist_df)
+        render_replacement_analysis(shortlist_df)
     with tab5:
         render_asset_intelligence(shortlist_df)
     with tab6:
@@ -10908,46 +13651,41 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
     st.markdown(html_block, unsafe_allow_html=True)
 
 
-def build_opportunity_risk_top5_side_html(
-    chart_source: pd.DataFrame,
-    title: str = "Top 5 oportunidades",
-    caption: str = "Ordenados por oportunidad ajustada por riesgo",
-) -> str:
-    """Return a compact side-card HTML block for the Opportunity vs Risk matrix."""
-    if chart_source.empty or "risk_adjusted_opportunity_score" not in chart_source.columns:
-        return ""
+def opportunity_tier_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        label, cls = ("N/D" if globals().get("LANG", "ES") == "ES" else "N/A"), "neutral"
+    elif float(score) >= 85:
+        label, cls = "Elite", "success"
+    elif float(score) >= 70:
+        label, cls = ("High" if globals().get("LANG", "ES") == "EN" else "Alta"), "primary"
+    elif float(score) >= 50:
+        label, cls = ("Watch" if globals().get("LANG", "ES") == "EN" else "Seguimiento"), "warning"
+    else:
+        label, cls = ("Low" if globals().get("LANG", "ES") == "EN" else "Baja"), "neutral"
+    return f"<span class='exec-mini-badge exec-mini-badge-{cls}'>{html.escape(label)} <b>{format_score(score)}</b></span>"
 
-    top = chart_source.copy()
-    top["_score"] = pd.to_numeric(top["risk_adjusted_opportunity_score"], errors="coerce")
-    top = top.dropna(subset=["_score"]).sort_values("_score", ascending=False).head(5)
-    if top.empty:
-        return ""
 
-    rows = []
-    for idx, (_, row) in enumerate(top.iterrows(), start=1):
-        player = html.escape(str(get_player_name(row)))
-        club = html.escape(str(safe_get(row, "club", "")))
-        position = html.escape(str(safe_get(row, "position_group", "")))
-        league = html.escape(league_display_name(safe_get(row, "league", "")))
-        score = get_numeric_value(row, "risk_adjusted_opportunity_score", 0)
-        rows.append(
-            "<div class='matrix-top5-side-row'>"
-            f"<div class='matrix-top5-side-rank'>{idx}</div>"
-            "<div>"
-            f"<div class='matrix-top5-side-name'>{player}</div>"
-            f"<div class='matrix-top5-side-meta'>{club} · {position} · {league}</div>"
-            "</div>"
-            f"<div class='matrix-top5-side-score'>{score:.1f}</div>"
-            "</div>"
-        )
+def risk_tier_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        label, cls = ("N/D" if globals().get("LANG", "ES") == "ES" else "N/A"), "neutral"
+    elif float(score) <= 20:
+        label, cls = ("Low" if globals().get("LANG", "ES") == "EN" else "Bajo"), "success"
+    elif float(score) <= 45:
+        label, cls = ("Moderate" if globals().get("LANG", "ES") == "EN" else "Moderado"), "warning"
+    else:
+        label, cls = ("High" if globals().get("LANG", "ES") == "EN" else "Alto"), "danger"
+    return f"<span class='exec-mini-badge exec-mini-badge-{cls}'>{html.escape(label)} <b>{format_score(score)}</b></span>"
 
-    return (
-        "<div class='matrix-top5-side-card'>"
-        f"<div class='matrix-top5-side-title'>{html.escape(UI(title))}</div>"
-        f"<div class='matrix-top5-side-subtitle'>{html.escape(UI(caption))}</div>"
-        + "".join(rows)
-        + "</div>"
-    )
+
+def decision_stars_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        return "<span class='exec-mini-badge exec-mini-badge-neutral'>—</span>"
+    stars = max(1, min(5, int(np.ceil(float(score) / 20))))
+    return f"<span class='decision-stars' title='Decision Score {format_score(score)}'>{'★' * stars}{'☆' * (5 - stars)} <b>{format_score(score)}</b></span>"
+
 
 def build_html_table(page_df: pd.DataFrame):
     """Build a compact recruitment-board table for the main view.
@@ -10958,6 +13696,7 @@ def build_html_table(page_df: pd.DataFrame):
     """
     columns = [
         ("player_name_fbref", "Player" if LANG == "EN" else "Jugador"),
+        ("primary_role", "Role" if LANG == "EN" else "Rol"),
         ("club", "Club"),
         ("league", T("league")),
         ("position_group", "Pos."),
@@ -10999,13 +13738,19 @@ def build_html_table(page_df: pd.DataFrame):
             elif col == "recommended_action":
                 cells.append(f"<td>{recommendation_badge(str(val))}</td>")
                 continue
+            elif col == "primary_role":
+                role_text = clean_role_display(val)
+                role_cls = "role-badge role-badge-pending" if role_text in {"Role Pending", "Rol pendiente"} else "role-badge"
+                icon = "⚪" if "pending" in role_text.lower() or "pendiente" in role_text.lower() else "🧠"
+                cells.append(f"<td><span class='{role_cls}' style='margin-left:0;'>{icon} {html.escape(role_text)}</span></td>")
+                continue
 
-            if col in {"executive_decision_score_v2", "opportunity_score"}:
-                cells.append(f"<td style='font-weight:900;'>{html.escape(str(val))}</td>")
+            if col == "executive_decision_score_v2":
+                cells.append(f"<td>{decision_stars_badge(val)}</td>")
+            elif col == "opportunity_score":
+                cells.append(f"<td>{opportunity_tier_badge(val)}</td>")
             elif col == "risk_score":
-                risk_value = pd.to_numeric(pd.Series([val]), errors="coerce").iloc[0]
-                style = " style='font-weight:900;color:#b91c1c;'" if pd.notna(risk_value) and float(risk_value) >= 70 else ""
-                cells.append(f"<td{style}>{html.escape(str(val))}</td>")
+                cells.append(f"<td>{risk_tier_badge(val)}</td>")
             else:
                 cells.append(f"<td>{html.escape(str(val))}</td>")
 
@@ -11181,7 +13926,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
                 marker=dict(
                     size=tier_df["bubble_size"],
                     color=color_map.get(tier_name, "#9ca3af"),
-                    opacity=0.62,
+                    opacity=0.72,
                     line=dict(width=1.0, color="rgba(15, 23, 42, 0.22)"),
                 ),
             )
@@ -11226,7 +13971,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
             mode="text",
             text=[f"<b>{i + 1}</b>" for i in range(len(top5))],
             textfont=dict(size=15, color="white", family="Arial Black"),
-            textposition="middle center",
+            textposition="top center",
             hoverinfo="skip",
             cliponaxis=False,
             showlegend=False,
@@ -11254,8 +13999,8 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
     fig.update_layout(
         height=620,
         margin=dict(l=20, r=30, t=20, b=20),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
         showlegend=False,
         xaxis_title="Valor de mercado actual (€) — escala log",
         yaxis_title="Gap de mercado estimado (€) — escala log",
@@ -11265,7 +14010,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         type="log",
         range=[np.log10(x_min), np.log10(x_max)],
         showgrid=True,
-        gridcolor="rgba(148,163,184,0.18)",
+        gridcolor="rgba(226,232,240,0.42)",
         tickvals=[100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000],
         ticktext=["100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M", "50M"],
     )
@@ -11273,7 +14018,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         type="log",
         range=[np.log10(y_min), np.log10(y_max)],
         showgrid=True,
-        gridcolor="rgba(148,163,184,0.18)",
+        gridcolor="rgba(226,232,240,0.42)",
         tickvals=[50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000],
         ticktext=["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M"],
     )
@@ -11297,6 +14042,18 @@ def assign_decision_quadrant(row, opportunity_ref: float, risk_ref: float) -> st
         return "Perfil de bajo impacto"
     return "Riesgo elevado"
 
+
+
+def _compact_player_label(value: object, max_len: int = 16) -> str:
+    label = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(value)).strip()
+    if len(label) <= max_len:
+        return label
+    parts = label.split()
+    if len(parts) >= 2:
+        compact = f"{parts[0]} {parts[-1]}"
+        if len(compact) <= max_len:
+            return compact
+    return label[:max_len - 1] + "…"
 
 def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | None:
     required = {
@@ -11333,10 +14090,10 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     x_axis_max = max(x_axis_max, min(45.0, np.ceil((risk_ref + 5.0) / 5.0) * 5.0))
     is_en = globals().get("LANG") == "EN"
     zone_labels = {
-        "Objetivo prioritario": "Priority target" if is_en else "Objetivo prioritario",
-        "Apuesta de crecimiento": "Growth bet" if is_en else "Apuesta de crecimiento",
-        "Perfil de bajo impacto": "Low-impact profile" if is_en else "Perfil de bajo impacto",
-        "Riesgo elevado": "High risk" if is_en else "Riesgo elevado",
+        "Objetivo prioritario": "BUY NOW" if is_en else "COMPRAR AHORA",
+        "Apuesta de crecimiento": "MONITOR" if is_en else "SEGUIMIENTO",
+        "Perfil de bajo impacto": "LOW IMPACT" if is_en else "BAJO IMPACTO",
+        "Riesgo elevado": "HIGH RISK" if is_en else "RIESGO ALTO",
     }
     axis_x_title = "Risk Score"
     axis_y_title = "Market Opportunity"
@@ -11355,10 +14112,10 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     df["risk_zone"] = df.apply(assign_zone, axis=1)
 
     color_map = {
-        "Objetivo prioritario": "#22c55e",
-        "Apuesta de crecimiento": "#f97316",
-        "Perfil de bajo impacto": "#3b82f6",
-        "Riesgo elevado": "#ef4444",
+        "Objetivo prioritario": SUCCESS,
+        "Apuesta de crecimiento": WARNING,
+        "Perfil de bajo impacto": NEUTRAL,
+        "Riesgo elevado": DANGER,
     }
 
     # Bubble size prioritises business upside when available; otherwise it falls back
@@ -11402,7 +14159,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=risk_ref,
         y0=opportunity_ref,
         y1=100,
-        fillcolor="rgba(34,197,94,0.050)",
+        fillcolor="rgba(88,194,125,0.13)",
         line=dict(width=0),
         layer="below",
     )
@@ -11412,7 +14169,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=x_axis_max,
         y0=opportunity_ref,
         y1=100,
-        fillcolor="rgba(249,115,22,0.045)",
+        fillcolor="rgba(245,166,35,0.12)",
         line=dict(width=0),
         layer="below",
     )
@@ -11422,7 +14179,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=risk_ref,
         y0=0,
         y1=opportunity_ref,
-        fillcolor="rgba(59,130,246,0.040)",
+        fillcolor="rgba(124,141,181,0.13)",
         line=dict(width=0),
         layer="below",
     )
@@ -11432,7 +14189,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=x_axis_max,
         y0=0,
         y1=opportunity_ref,
-        fillcolor="rgba(239,68,68,0.035)",
+        fillcolor="rgba(224,86,88,0.10)",
         line=dict(width=0),
         layer="below",
     )
@@ -11478,8 +14235,8 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
                 marker=dict(
                     size=zone_df["bubble_size"],
                     color=color_map[zone],
-                    opacity=0.54,
-                    line=dict(width=0.9, color="rgba(15,23,42,0.16)"),
+                    opacity=0.65,
+                    line=dict(width=1.5, color="#FFFFFF"),
                 ),
             )
         )
@@ -11489,9 +14246,9 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
             x=top5["risk_score"],
             y=top5["opportunity_score"],
             mode="text",
-            text=[str(i + 1) for i in range(len(top5))],
-            textfont=dict(size=13, color="white", family="Arial Black"),
-            textposition="middle center",
+            text=[_compact_player_label(get_player_name(row)) for _, row in top5.iterrows()],
+            textfont=dict(size=10, color="#0f172a", family="Arial"),
+            textposition="top center",
             hoverinfo="skip",
             showlegend=False,
         )
@@ -11500,14 +14257,14 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     fig.add_vline(
         x=risk_ref,
         line_dash="dash",
-        line_color="rgba(15,47,95,0.34)",
+        line_color="rgba(124,141,181,0.60)",
         line_width=1.4,
     )
 
     fig.add_hline(
         y=opportunity_ref,
         line_dash="dash",
-        line_color="rgba(15,47,95,0.34)",
+        line_color="rgba(124,141,181,0.60)",
         line_width=1.4,
     )
 
@@ -11520,10 +14277,10 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         yanchor="top",
         xshift=-8,
         bgcolor="rgba(255,255,255,0.78)",
-        bordercolor="rgba(203,213,225,0.65)",
+        bordercolor="rgba(226,232,240,0.80)",
         borderwidth=1,
         borderpad=4,
-        font=dict(size=10, color="#64748b"),
+        font=dict(size=12, color="#475569"),
     )
     fig.add_annotation(
         x=x_axis_max - 0.5,
@@ -11534,21 +14291,21 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         yanchor="top",
         yshift=-8,
         bgcolor="rgba(255,255,255,0.78)",
-        bordercolor="rgba(203,213,225,0.65)",
+        bordercolor="rgba(226,232,240,0.80)",
         borderwidth=1,
         borderpad=4,
-        font=dict(size=10, color="#64748b"),
+        font=dict(size=12, color="#475569"),
     )
 
     y_axis_min = max(0, float(df["opportunity_score"].min()) - 5)
-    quadrant_font = dict(size=9, color="rgba(15,47,95,0.46)", family="Arial")
+    quadrant_font = dict(size=14, color="rgba(15,23,42,0.16)", family="Arial Black")
     label_style = dict(
         showarrow=False,
         font=quadrant_font,
-        bgcolor="rgba(255,255,255,0.18)",
+        bgcolor="rgba(255,255,255,0)",
         bordercolor="rgba(255,255,255,0)",
         borderwidth=0,
-        borderpad=2,
+        borderpad=0,
     )
     left_label_x = max(0.7, x_axis_max * 0.045)
     right_label_x = min(x_axis_max - 0.7, x_axis_max * 0.955)
@@ -11589,20 +14346,12 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     )
 
     fig.update_layout(
-        height=535,
-        margin=dict(l=28, r=28, t=12, b=38),
-        plot_bgcolor="#fbfdff",
-        paper_bgcolor="white",
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.04,
-            xanchor="center",
-            x=0.5,
-            bgcolor="rgba(255,255,255,0.86)",
-            bordercolor="rgba(226,232,240,0.9)",
-            borderwidth=1,
-        ),
+        height=560,
+        margin=dict(l=18, r=28, t=32, b=34),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        showlegend=False,
+        hoverlabel=dict(bgcolor="#ffffff", bordercolor="#dbeafe", font_size=12, font_color="#0f172a"),
         xaxis_title=axis_x_title,
         yaxis_title=axis_y_title,
     )
@@ -11610,7 +14359,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     fig.update_xaxes(
         range=[0, x_axis_max],
         showgrid=True,
-        gridcolor="rgba(148,163,184,0.18)",
+        gridcolor="rgba(226,232,240,0.42)",
         zeroline=False,
     )
 
@@ -11620,7 +14369,7 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
             101,
         ],
         showgrid=True,
-        gridcolor="rgba(148,163,184,0.18)",
+        gridcolor="rgba(226,232,240,0.42)",
         zeroline=False,
     )
 
@@ -11926,6 +14675,805 @@ def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
         )
 
 
+
+# =============================================================================
+# role intelligence.8.3 technical bugfix: search/context sizing + role cards stability
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search and active context: same visual height without inflating Contexto Activo. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card),
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    min-height: 126px !important;
+    height: 126px !important;
+    padding: 16px 18px !important;
+    display: flex !important;
+    align-items: stretch !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 54px !important;
+    height: 54px !important;
+    border-radius: 999px !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 126px !important;
+    height: 126px !important;
+    padding: 16px 18px !important;
+    overflow: hidden !important;
+}
+.compact-context-panel .context-chip-row {
+    max-height: 38px !important;
+    overflow: hidden !important;
+}
+/* Role cards: never show raw NaN-like artifacts. */
+.role-profile-card { min-height: 112px !important; }
+.role-profile-caption { color:#64748b !important; }
+/* Technical SHAP expander aligned with the rest of the product cards. */
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) {
+    border: 1px solid #dbeafe !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) details > summary {
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    min-height: 42px !important;
+    color:#0f2f5f !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) div[data-testid="stPlotlyChart"] {
+    box-shadow: none !important;
+    border-radius: 0 0 18px 18px !important;
+    background:#ffffff !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5 — Universal Role Intelligence integration helpers
+# =============================================================================
+
+ROLE_NUMERIC_COLUMNS = [
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "role_confidence",
+    "role_ambiguity",
+]
+
+ROLE_VISIBLE_COLUMNS = [
+    "position_taxonomy",
+    "primary_role",
+    "secondary_role",
+    "role_confidence",
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "role_ambiguity",
+]
+
+def find_position_taxonomy_path() -> Path | None:
+    """Locate the promoted tactical intelligence.4.2b position-taxonomy artefact only.
+
+    v2c is intentionally excluded because it was rejected after calibration due to
+    population-level distortion. tactical intelligence.5 must use v2b as the production taxonomy.
+    """
+    candidates = [
+        PROCESSED_PATH / "player_position_taxonomy_v2b.parquet",
+        ROOT / "data" / "processed" / "player_position_taxonomy_v2b.parquet",
+        Path.cwd() / "data" / "processed" / "player_position_taxonomy_v2b.parquet",
+        Path.cwd() / "player_position_taxonomy_v2b.parquet",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def load_position_taxonomy_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load and standardise tactical intelligence.4.2b position taxonomy with safe fallbacks."""
+    resolved_path = path if path is not None else find_position_taxonomy_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    tax_df = pd.read_parquet(resolved_path).copy()
+
+    rename_candidates = {
+        "player": "taxonomy_player",
+        "player_name": "taxonomy_player",
+        "name": "taxonomy_player",
+        "team": "taxonomy_team",
+        "club": "taxonomy_team",
+        "squad": "taxonomy_team",
+        "league": "taxonomy_league",
+        "competition": "taxonomy_league",
+        "season": "taxonomy_season",
+        "position_taxonomy_v2b": "position_taxonomy",
+        "taxonomy": "position_taxonomy",
+        "assigned_taxonomy": "position_taxonomy",
+        "final_taxonomy": "position_taxonomy",
+    }
+    for source, target in rename_candidates.items():
+        if source in tax_df.columns and target not in tax_df.columns:
+            tax_df = tax_df.rename(columns={source: target})
+
+    if "position_taxonomy" not in tax_df.columns:
+        return pd.DataFrame()
+
+    if "taxonomy_player" not in tax_df.columns:
+        for fallback in ["role_player", "player_name_fbref", "player_name_tm"]:
+            if fallback in tax_df.columns:
+                tax_df = tax_df.rename(columns={fallback: "taxonomy_player"})
+                break
+
+    if "taxonomy_player" not in tax_df.columns:
+        return pd.DataFrame()
+
+    allowed_taxonomies = {"CB", "FB", "DM", "CM", "AM", "W", "CF", "GK"}
+    tax_df["position_taxonomy"] = tax_df["position_taxonomy"].astype(str).str.strip().str.upper()
+    tax_df = tax_df[tax_df["position_taxonomy"].isin(allowed_taxonomies)].copy()
+    if tax_df.empty:
+        return pd.DataFrame()
+
+    for col in ["taxonomy_confidence", "position_taxonomy_confidence", "taxonomy_score", "functional_score"]:
+        if col in tax_df.columns:
+            tax_df[col] = pd.to_numeric(tax_df[col], errors="coerce")
+
+    tax_df["taxonomy_player_key"] = tax_df["taxonomy_player"].map(normalize_join_text)
+    if "taxonomy_season" in tax_df.columns:
+        tax_df["taxonomy_season_key"] = tax_df["taxonomy_season"].map(normalize_role_season)
+    else:
+        tax_df["taxonomy_season_key"] = ""
+    tax_df["taxonomy_team_key"] = tax_df["taxonomy_team"].map(normalize_join_text) if "taxonomy_team" in tax_df.columns else ""
+    tax_df["taxonomy_league_key"] = tax_df["taxonomy_league"].map(normalize_join_text) if "taxonomy_league" in tax_df.columns else ""
+
+    return tax_df.reset_index(drop=True)
+
+
+def merge_position_taxonomy(base: pd.DataFrame, tax_df: pd.DataFrame) -> pd.DataFrame:
+    """Attach Position taxonomy non-destructively to any DSS dataframe."""
+    if base.empty or tax_df.empty or "position_taxonomy" not in tax_df.columns:
+        if "position_taxonomy" not in base.columns:
+            base = base.copy()
+            base["position_taxonomy"] = np.nan
+        return base
+
+    left = base.copy().reset_index(drop=False).rename(columns={"index": "_taxonomy_row_id"})
+    right = tax_df.copy()
+
+    taxonomy_cols = [
+        c for c in [
+            "taxonomy_player",
+            "taxonomy_team",
+            "taxonomy_league",
+            "taxonomy_season",
+            "position_taxonomy",
+            "taxonomy_confidence",
+            "position_taxonomy_confidence",
+            "taxonomy_score",
+            "functional_score",
+        ]
+        if c in right.columns
+    ]
+
+    taxonomy_text_cols = {"taxonomy_player", "taxonomy_team", "taxonomy_league", "taxonomy_season", "position_taxonomy"}
+    if "position_taxonomy" not in left.columns:
+        left["position_taxonomy"] = pd.Series(pd.NA, index=left.index, dtype="object")
+    else:
+        left["position_taxonomy"] = left["position_taxonomy"].astype("object")
+
+    name_candidates = [
+        c for c in [
+            get_player_name_column(left),
+            "player",
+            "player_name",
+            "player_name_fbref",
+            "player_name_tm",
+            "role_player",
+            "name",
+            "short_name",
+            "display_name",
+        ]
+        if c and c in left.columns
+    ]
+    name_candidates = list(dict.fromkeys(name_candidates))
+    if not name_candidates:
+        return left.drop(columns=["_taxonomy_row_id"], errors="ignore")
+
+    left["_taxonomy_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+    left_club_candidates = [c for c in ["club", "team", "squad", "current_club", "club_actual", "role_team"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition", "league_name", "role_league"] if c in left.columns]
+
+    right["_taxonomy_player_key"] = right["taxonomy_player"].map(normalize_join_text)
+    right["_taxonomy_season_key"] = right["taxonomy_season"].map(normalize_role_season) if "taxonomy_season" in right.columns else ""
+    right["_taxonomy_team_key"] = right["taxonomy_team"].map(normalize_join_text) if "taxonomy_team" in right.columns else ""
+    right["_taxonomy_league_key"] = right["taxonomy_league"].map(normalize_join_text) if "taxonomy_league" in right.columns else ""
+
+    if "taxonomy_confidence" in right.columns:
+        right = right.sort_values("taxonomy_confidence", ascending=False, na_position="last")
+    elif "position_taxonomy_confidence" in right.columns:
+        right = right.sort_values("position_taxonomy_confidence", ascending=False, na_position="last")
+
+    def _fill(name_col: str, extra_left_cols: list[str], extra_right_cols: list[str]) -> None:
+        nonlocal left
+        unresolved = left["position_taxonomy"].isna()
+        if not unresolved.any():
+            return
+        tmp_left = left.loc[unresolved, ["_taxonomy_row_id", name_col, "_taxonomy_season_key"] + extra_left_cols].copy()
+        tmp_left["_taxonomy_player_key"] = tmp_left[name_col].map(normalize_join_text)
+        rename = {}
+        for l_col, r_key in zip(extra_left_cols, extra_right_cols):
+            key_col = f"_tmp_{r_key}"
+            tmp_left[key_col] = tmp_left[l_col].map(normalize_join_text)
+            rename[key_col] = r_key
+        join_cols = ["_taxonomy_player_key", "_taxonomy_season_key"] + list(rename.values())
+        tmp_left = tmp_left.rename(columns=rename)[["_taxonomy_row_id"] + join_cols]
+        tmp_left = tmp_left[tmp_left["_taxonomy_player_key"].astype(str).str.len() > 0]
+        if tmp_left.empty:
+            return
+        tmp_right = right.drop_duplicates(join_cols)[join_cols + taxonomy_cols]
+        matched = tmp_left.merge(tmp_right, on=join_cols, how="left").dropna(subset=["position_taxonomy"])
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_taxonomy_row_id", keep="first").set_index("_taxonomy_row_id")
+        row_to_pos = left["_taxonomy_row_id"].reset_index().set_index("_taxonomy_row_id")["index"]
+        for col in taxonomy_cols:
+            if col not in left.columns:
+                if col in taxonomy_text_cols:
+                    left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+                else:
+                    left[col] = np.nan
+            elif col in taxonomy_text_cols:
+                left[col] = left[col].astype("object")
+            update = matched[col].dropna()
+            if update.empty:
+                continue
+            left_idx = update.index.map(row_to_pos).dropna().astype(int)
+            left.loc[left_idx, col] = update.loc[left.loc[left_idx, "_taxonomy_row_id"].values].values
+
+    for name_col in name_candidates:
+        for club_col in left_club_candidates:
+            _fill(name_col, [club_col], ["_taxonomy_team_key"])
+        for league_col in left_league_candidates:
+            _fill(name_col, [league_col], ["_taxonomy_league_key"])
+        _fill(name_col, [], [])
+
+    return left.drop(columns=["_taxonomy_row_id", "_taxonomy_season_key"], errors="ignore")
+
+
+def get_taxonomy_dataset_status(tax_df: pd.DataFrame) -> dict[str, object]:
+    path = find_position_taxonomy_path()
+    return {
+        "path": str(path) if path is not None else "not_found",
+        "rows": int(len(tax_df)) if isinstance(tax_df, pd.DataFrame) else 0,
+        "players": int(tax_df["taxonomy_player"].nunique()) if isinstance(tax_df, pd.DataFrame) and "taxonomy_player" in tax_df.columns else 0,
+        "taxonomies": sorted(tax_df["position_taxonomy"].dropna().astype(str).unique().tolist()) if isinstance(tax_df, pd.DataFrame) and "position_taxonomy" in tax_df.columns else [],
+    }
+
+
+def role_context_label(row: pd.Series) -> str:
+    taxonomy = safe_get(row, "position_taxonomy", "")
+    primary = safe_get(row, "primary_role", "")
+    if is_valid_role_value(primary) and str(taxonomy).strip() not in {"", "nan", "N/A"}:
+        return f"{taxonomy} · {primary}"
+    if is_valid_role_value(primary):
+        return str(primary)
+    if str(taxonomy).strip() not in {"", "nan", "N/A"}:
+        return str(taxonomy)
+    return "N/D" if globals().get("LANG", "ES") == "ES" else "N/A"
+
+
+def render_role_context_filters(source_df: pd.DataFrame, key_prefix: str, expanded: bool = False) -> pd.DataFrame:
+    """Reusable role/taxonomy filtering panel for DSS modules."""
+    if source_df.empty:
+        return source_df
+
+    available_taxonomies = sorted(
+        [x for x in source_df.get("position_taxonomy", pd.Series(dtype=object)).dropna().astype(str).unique().tolist() if x and x.lower() != "nan"]
+    )
+    available_roles = sorted(
+        [x for x in source_df.get("primary_role", pd.Series(dtype=object)).dropna().astype(str).unique().tolist() if is_valid_role_value(x)]
+    )
+    available_leagues = []
+    if "league" in source_df.columns:
+        raw_leagues = sorted(source_df["league"].dropna().astype(str).unique().tolist())
+        league_display_to_raw = {league_display_name(league): league for league in raw_leagues}
+        available_leagues = sorted(league_display_to_raw.keys(), key=lambda label: (LEAGUE_DISPLAY_ORDER.get(label, 999), label))
+    else:
+        league_display_to_raw = {}
+
+    if not available_taxonomies and not available_roles and not available_leagues:
+        return source_df
+
+    title = "Tactical Filters" if globals().get("LANG", "ES") == "EN" else "Filtros tácticos"
+    caption = (
+        "Use tactical filters to compare compatible player profiles."
+        if globals().get("LANG", "ES") == "EN"
+        else "Utiliza filtros tácticos para comparar perfiles compatibles."
+    )
+
+    st.markdown(
+        f"""
+        <div class="role-filter-shell role-filter-shell-compact">
+            <div class="role-filter-title">{html.escape(title)}</div>
+            <div class="role-filter-subtitle">{html.escape(caption)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if available_roles:
+        role_counts = source_df["primary_role"].dropna().astype(str).loc[lambda s: s.map(is_valid_role_value)].value_counts()
+        role_chip_html = "".join(
+            f"<span class='role-context-chip'><i class='role-context-dot role-context-dot-{html.escape(role_family(role))}'></i>{html.escape(str(role))} <b>{int(role_counts.get(role, 0))}</b></span>"
+            for role in available_roles
+        )
+        st.markdown(
+            f"<div class='role-context-availability'><div class='role-context-availability-title'>{html.escape('Available tactical roles' if globals().get('LANG', 'ES') == 'EN' else 'Roles tácticos disponibles')}</div><div class='role-context-chip-row'>{role_chip_html}</div></div>",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div class='role-filter-controls role-filter-controls-v2 role-filter-controls-stable'>", unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns([1.0, 1.15, 0.75, 1.0], gap="medium")
+    all_tax_label = "All" if globals().get("LANG", "ES") == "EN" else "Todas"
+    all_role_label = "All" if globals().get("LANG", "ES") == "EN" else "Todos"
+    all_league_label = "All" if globals().get("LANG", "ES") == "EN" else "Todas"
+    with c1:
+        selected_taxonomy_value = st.selectbox(
+            "Taxonomy" if globals().get("LANG", "ES") == "EN" else "Taxonomía",
+            [all_tax_label] + available_taxonomies,
+            index=0,
+            key=f"{key_prefix}_position_taxonomy_filter_select",
+        )
+        selected_taxonomies = [] if selected_taxonomy_value == all_tax_label else [selected_taxonomy_value]
+    with c2:
+        selected_role_value = st.selectbox(
+            "Role" if globals().get("LANG", "ES") == "EN" else "Rol",
+            [all_role_label] + available_roles,
+            index=0,
+            key=f"{key_prefix}_primary_role_filter_select",
+        )
+        selected_roles = [] if selected_role_value == all_role_label else [selected_role_value]
+    with c3:
+        min_role_confidence = st.slider(
+            "Confidence" if globals().get("LANG", "ES") == "EN" else "Confianza",
+            min_value=0,
+            max_value=100,
+            value=0,
+            step=5,
+            key=f"{key_prefix}_role_confidence_filter",
+        )
+    with c4:
+        selected_league_value = st.selectbox(
+            "League" if globals().get("LANG", "ES") == "EN" else "Liga",
+            [all_league_label] + available_leagues,
+            index=0,
+            key=f"{key_prefix}_league_filter_select",
+        )
+        selected_leagues_display = [] if selected_league_value == all_league_label else [selected_league_value]
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    filtered = source_df.copy()
+    if selected_taxonomies and "position_taxonomy" in filtered.columns:
+        filtered = filtered[filtered["position_taxonomy"].astype(str).isin(selected_taxonomies)].copy()
+    if selected_roles and "primary_role" in filtered.columns:
+        filtered = filtered[filtered["primary_role"].astype(str).isin(selected_roles)].copy()
+    if selected_leagues_display and "league" in filtered.columns:
+        selected_raw_leagues = [league_display_to_raw.get(x, x) for x in selected_leagues_display]
+        filtered = filtered[filtered["league"].astype(str).isin(selected_raw_leagues)].copy()
+    if "role_confidence" in filtered.columns and min_role_confidence > 0:
+        filtered = filtered[pd.to_numeric(filtered["role_confidence"], errors="coerce").fillna(0) >= min_role_confidence].copy()
+
+    active_bits = []
+    if selected_taxonomies:
+        active_bits.append("Taxonomy: " + ", ".join(selected_taxonomies))
+    if selected_roles:
+        active_bits.append("Role: " + ", ".join(selected_roles[:3]) + ("…" if len(selected_roles) > 3 else ""))
+    if selected_leagues_display:
+        active_bits.append("League: " + ", ".join(selected_leagues_display[:2]) + ("…" if len(selected_leagues_display) > 2 else ""))
+    if min_role_confidence > 0:
+        active_bits.append(f"Role confidence ≥ {min_role_confidence}")
+
+    role_count = len(available_roles)
+    active_label = ' · '.join(active_bits) if active_bits else ('No tactical restriction' if globals().get('LANG', 'ES') == 'EN' else 'Sin restricción táctica')
+    st.markdown(
+        f"""
+        <div class="role-filter-status role-filter-status-v2">
+            <span>{html.escape(str(len(filtered)))} {'players' if globals().get('LANG', 'ES') == 'EN' else 'jugadores'}</span>
+            <span>{html.escape(str(role_count))} {'roles' if globals().get('LANG', 'ES') == 'EN' else 'roles'}</span>
+            <b>{html.escape(active_label)}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    return filtered
+
+def add_role_display_columns(table: pd.DataFrame) -> pd.DataFrame:
+    """Add compact display columns for role-aware tables."""
+    out = table.copy()
+    if "taxonomy_role_context" not in out.columns:
+        out["taxonomy_role_context"] = out.apply(role_context_label, axis=1)
+    for col in ROLE_NUMERIC_COLUMNS:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
+
+
+
+st.markdown(
+    """
+<style>
+.role-filter-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:12px 0 12px 0;
+}
+.role-filter-title {
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:950;
+    margin-bottom:3px;
+}
+.role-filter-subtitle {
+    color:#64748b;
+    font-size:.80rem;
+    line-height:1.35;
+}
+.role-filter-status {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:999px;
+    padding:7px 11px;
+    margin:8px 0 14px 0;
+    width:fit-content;
+    max-width:100%;
+}
+.role-filter-status span {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+.role-filter-status b {
+    color:#334155;
+    font-size:.72rem;
+    font-weight:850;
+}
+.role-profile-grid-tm65 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+.role-context-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+@media (max-width: 1350px) {
+    .role-profile-grid-tm65 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 800px) {
+    .role-profile-grid-tm65 { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.5.5.1 Role DNA DSS integration
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-dna-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:16px 18px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:16px 0 16px 0;
+}
+.role-dna-header {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:12px;
+}
+.role-dna-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.role-dna-title {
+    color:#0f172a;
+    font-size:1.05rem;
+    font-weight:950;
+    line-height:1.12;
+}
+.role-dna-subtitle {
+    color:#64748b;
+    font-size:.80rem;
+    line-height:1.35;
+    margin-top:4px;
+}
+.role-dna-fit-card {
+    min-width:126px;
+    background:#f8fbff;
+    border:1px solid #bfdbfe;
+    border-radius:14px;
+    padding:10px 12px;
+    text-align:right;
+}
+.role-dna-fit-card span {
+    display:block;
+    color:#64748b;
+    font-size:.66rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:3px;
+}
+.role-dna-fit-card b {
+    display:block;
+    color:#0f172a;
+    font-size:1.32rem;
+    font-weight:950;
+    line-height:1.0;
+}
+.role-dna-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+}
+.role-dna-item {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:10px 11px;
+    box-shadow:0 6px 16px rgba(15,23,42,.030);
+}
+.role-dna-item-top {
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    margin-bottom:7px;
+}
+.role-dna-item-label {
+    color:#334155;
+    font-size:.74rem;
+    font-weight:950;
+    line-height:1.15;
+}
+.role-dna-item-score {
+    color:#0f172a;
+    font-size:.86rem;
+    font-weight:950;
+}
+.role-dna-bar {
+    height:7px;
+    border-radius:999px;
+    background:#e8edf4;
+    overflow:hidden;
+}
+.role-dna-bar span {
+    display:block;
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,#60a5fa 0%,#2563eb 100%);
+}
+.role-dna-explanation {
+    margin-top:12px;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:14px;
+    padding:11px 12px;
+    color:#334155;
+    font-size:.82rem;
+    line-height:1.42;
+    font-weight:750;
+}
+.role-dna-quality-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:4px 8px;
+    margin-left:6px;
+    font-size:.68rem;
+    font-weight:950;
+    background:#dcfce7;
+    color:#166534;
+    border:1px solid #bbf7d0;
+}
+.role-dna-filter-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #0f2f5f;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:12px 0 14px 0;
+}
+.role-dna-filter-title { color:#0f172a; font-size:1.04rem; font-weight:950; margin-bottom:4px; }
+.role-dna-filter-subtitle { color:#64748b; font-size:.82rem; line-height:1.42; margin-bottom:12px; max-width:920px; }
+
+.role-dna-filter-intents { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:10px 0 14px 0; }
+.role-dna-filter-intents span { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:14px; padding:8px 10px; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); color:#1e3a8a; border:1px solid #bfdbfe; font-size:.76rem; font-weight:950; box-shadow:0 6px 16px rgba(37,99,235,.055); text-align:center; }
+.role-dna-filter-intents span:hover { background:#eff6ff; border-color:#93c5fd; transform:translateY(-1px); transition:all .15s ease; }
+@media (max-width:1200px){ .role-dna-filter-intents { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px){ .role-dna-filter-intents { grid-template-columns:1fr; } }
+
+.role-dna-filter-status {
+    display:inline-flex;
+    gap:8px;
+    flex-wrap:wrap;
+    border-radius:999px;
+    padding:6px 10px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:950;
+    margin-top:8px;
+}
+@media (max-width:1350px){ .role-dna-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px){ .role-dna-header { flex-direction:column; } .role-dna-grid { grid-template-columns:1fr; } .role-dna-fit-card { width:100%; text-align:left; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.5.9 Role Intelligence productization: visible Role DNA + Role Market
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-dna-pro-shell {
+    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 6px solid #2563eb;
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 38px rgba(15,23,42,.070);
+    margin: 18px 0 18px 0;
+}
+.role-dna-pro-header { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:16px; }
+.role-dna-pro-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
+.role-dna-pro-title { color:#0f172a; font-size:1.28rem; font-weight:950; line-height:1.08; }
+.role-dna-pro-subtitle { color:#475569; font-size:.84rem; line-height:1.36; margin-top:5px; }
+.role-dna-pro-kpis { display:flex; gap:9px; flex-wrap:wrap; justify-content:flex-end; }
+.role-dna-pro-kpi { min-width:108px; background:#ffffff; border:1px solid #dbeafe; border-radius:14px; padding:9px 11px; text-align:right; box-shadow:0 8px 18px rgba(15,23,42,.035); }
+.role-dna-pro-kpi span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.role-dna-pro-kpi b { display:block; color:#0f172a; font-size:1.10rem; font-weight:950; line-height:1.0; }
+.role-dna-pro-layout { display:grid; grid-template-columns:minmax(320px,.95fr) minmax(0,1.35fr); gap:14px; }
+.role-dna-pro-explain-card, .role-dna-pro-bars-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:17px; padding:14px 16px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.role-dna-pro-card-title { color:#0f2f5f; font-size:.74rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.role-dna-pro-copy { color:#0f172a; font-size:.92rem; line-height:1.45; font-weight:850; margin-bottom:10px; }
+.role-dna-pro-driver { color:#475569; font-size:.82rem; line-height:1.42; border-top:1px solid #edf2f7; padding-top:10px; }
+.role-dna-pro-bars { display:grid; gap:9px; }
+.role-dna-pro-row { display:grid; grid-template-columns:140px minmax(0,1fr) 42px; gap:10px; align-items:center; }
+.role-dna-pro-label { color:#334155; font-size:.78rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.role-dna-pro-track { height:10px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.role-dna-pro-track span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#93c5fd 0%,#2563eb 100%); }
+.role-dna-pro-score { text-align:right; color:#0f172a; font-size:.82rem; font-weight:950; }
+.role-dna-pro-group { display:grid; gap:8px; padding:8px 0 10px 0; border-top:1px solid #edf2f7; }
+.role-dna-pro-group:first-child { border-top:0; padding-top:0; }
+.role-dna-pro-group-title { color:#1d4ed8; font-size:.66rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:1px; }
+.role-market-shell { background:#ffffff; border:1px solid #dbeafe; border-left:6px solid #0f2f5f; border-radius:20px; padding:18px 20px; box-shadow:0 16px 38px rgba(15,23,42,.065); margin: 8px 0 18px 0; }
+.role-market-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:14px; }
+.role-market-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
+.role-market-title { color:#0f172a; font-size:1.32rem; font-weight:950; line-height:1.1; }
+.role-market-subtitle { color:#475569; font-size:.84rem; line-height:1.38; margin-top:5px; }
+.role-market-count { min-width:105px; background:#f8fbff; border:1px solid #bfdbfe; border-radius:14px; padding:10px 12px; text-align:right; }
+.role-market-count span { display:block; color:#0f172a; font-size:1.36rem; font-weight:950; line-height:1; }
+.role-market-count b { display:block; color:#64748b; font-size:.68rem; font-weight:950; text-transform:uppercase; margin-top:4px; }
+.role-map-shell { background:#f8fbff; border:1px solid #e2e8f0; border-radius:16px; padding:13px 14px; margin: 10px 0 15px 0; }
+.role-map-title { color:#0f2f5f; font-size:.76rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.role-map-family { display:grid; grid-template-columns:150px minmax(0,1fr); gap:10px; align-items:center; padding:7px 0; border-top:1px solid #edf2f7; }
+.role-map-family:first-of-type { border-top:0; }
+.role-map-family b { color:#0f172a; font-size:.76rem; font-weight:950; }
+.role-map-pill { display:inline-flex; border-radius:999px; border:1px solid #dbeafe; background:#ffffff; color:#1e3a8a; padding:5px 9px; font-size:.70rem; font-weight:900; margin:3px 4px 3px 0; }
+.role-map-pill-active { background:#2563eb; color:#ffffff; border-color:#2563eb; }
+.role-market-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.role-market-player-card { position:relative; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); border:1px solid #e2e8f0; border-radius:16px; padding:12px; min-height:158px; box-shadow:0 8px 20px rgba(15,23,42,.040); }
+.role-market-rank { width:26px; height:24px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:950; margin-bottom:8px; }
+.role-market-name { color:#0f172a; font-size:.92rem; font-weight:950; line-height:1.12; }
+.role-market-meta { color:#64748b; font-size:.70rem; line-height:1.28; margin-top:4px; }
+.role-market-chip-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+.role-market-chip-row span { display:inline-flex; border-radius:999px; background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; padding:3px 7px; font-size:.63rem; font-weight:900; }
+.role-market-score { position:absolute; right:12px; bottom:10px; color:#166534; font-size:1.05rem; font-weight:950; }
+@media (max-width:1350px){ .role-dna-pro-layout{grid-template-columns:1fr;} .role-market-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:760px){ .role-dna-pro-header,.role-market-head{flex-direction:column;} .role-dna-pro-row{grid-template-columns:112px minmax(0,1fr) 38px;} .role-map-family{grid-template-columns:1fr;} .role-market-grid{grid-template-columns:1fr;} }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.5.13 Product QA closure: unified internal nav, radio pills, spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+.internal-nav-toolbar {
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    padding:10px 12px; background:#ffffff; border:1px solid #dbeafe;
+    border-radius:999px; box-shadow:0 8px 20px rgba(15,23,42,.04);
+    width:fit-content; max-width:100%; margin:12px 0 18px 0;
+}
+.internal-nav-chip {
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:7px 12px; border-radius:999px;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+    border:1px solid #bfdbfe; color:#1e3a8a !important;
+    font-size:.76rem; font-weight:950; text-decoration:none !important; white-space:nowrap;
+}
+.internal-nav-chip.active { background:#1d4ed8; color:#ffffff !important; border-color:#1d4ed8; }
+/* Streamlit native horizontal radios used as internal navigation now inherit the same pill language. */
+[data-testid="stAppViewContainer"] .main .stRadio [role="radiogroup"] {
+    display:flex !important; flex-wrap:wrap !important; gap:8px !important;
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important;
+    padding:7px !important; width:fit-content !important; max-width:100% !important;
+    box-shadow:0 8px 20px rgba(15,23,42,.04) !important; margin:8px 0 16px 0 !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label {
+    display:inline-flex !important; align-items:center !important; justify-content:center !important;
+    min-height:32px !important; padding:6px 12px !important; border-radius:999px !important;
+    border:1px solid #bfdbfe !important; background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important; font-size:.76rem !important; font-weight:950 !important; white-space:nowrap !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) {
+    background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) p,
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) span { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+[data-testid="stAppViewContainer"] .main .stRadio label p { font-size:.76rem !important; font-weight:950 !important; color:inherit !important; }
+/* Product rhythm */
+.siq-section-gap { height:24px !important; }
+.siq-card-gap { height:16px !important; }
+.siq-micro-gap { height:8px !important; }
+/* Main executive tables should not feel like notebook dumps. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { overflow-x:hidden !important; }
+/* Portfolio map compactness and no blank shell above it. */
+.strategy-map-card:empty, div[data-testid="stElementContainer"]:has(.strategy-empty-spacer) { display:none !important; height:0 !important; margin:0 !important; padding:0 !important; }
+.strategy-map-card { margin-top:0 !important; }
+.scouting-iq-footer { margin-top:42px !important; padding-top:18px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Load data
 # =============================================================================
@@ -11934,17 +15482,36 @@ shortlist = load_csv(DSS_REPORTS_PATH / "global_prospect_universe.csv")
 shortlist = enrich_shortlist_with_radar_features(shortlist)
 precision = load_csv(EVALUATION_PATH / "precision_at_k.csv")
 roi = load_csv(BUSINESS_PATH / "roi_global_summary.csv")
-contract_df = load_csv(CONTRACT_REPORTS_PATH / "contract_intelligence_dataset.csv")
+contract_df = apply_club_name_normalization(load_csv(CONTRACT_REPORTS_PATH / "contract_intelligence_dataset.csv"))
 
 if shortlist.empty:
     st.warning("No se ha encontrado `reports/dss/global_prospect_universe.csv`. Ejecuta primero `python src/dss/build_global_prospect_universe.py`.")
     st.stop()
 
-df = shortlist.copy()
+df = apply_club_name_normalization(shortlist.copy())
 if "club" not in df.columns and "club_actual" in df.columns:
     df["club"] = df["club_actual"]
 if "league" in df.columns:
     df["league"] = df["league"].replace({"Liga Portugal": "Primeira Liga"})
+
+role_intelligence_df = load_role_intelligence_dataset()
+ROLE_DATASET_STATUS = get_role_dataset_status(role_intelligence_df)
+position_taxonomy_df = load_position_taxonomy_dataset()
+TAXONOMY_DATASET_STATUS = get_taxonomy_dataset_status(position_taxonomy_df)
+df = merge_role_intelligence(df, role_intelligence_df)
+df = merge_position_taxonomy(df, position_taxonomy_df)
+role_explainability_df = load_role_explainability_dataset()
+df = merge_role_explainability(df, role_explainability_df)
+df = apply_current_club_overrides(apply_club_name_normalization(df))
+# Enforce current Transfermarkt DSS scope before and after current-context resolution.
+# This prevents historical 11-league coverage or global Kaggle leagues from leaking into the product KPIs.
+df = enforce_current_dss_league_scope(df)
+contract_df = enforce_current_dss_league_scope(contract_df)
+current_context = build_current_context(pd.concat([df.copy(), contract_df.copy()], ignore_index=True, sort=False))
+df = apply_current_context(df, current_context)
+contract_df = apply_current_context(contract_df, current_context)
+df = enforce_current_dss_league_scope(df)
+contract_df = enforce_current_dss_league_scope(contract_df)
 
 numeric_cols = [
     "market_value_eur",
@@ -11986,6 +15553,24 @@ numeric_cols = [
     "contract_opportunity_score",
     "recruitment_contract_score",
     "negotiation_leverage_score",
+    "role_confidence",
+    "role_ambiguity",
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "taxonomy_confidence",
+    "position_taxonomy_confidence",
+    "taxonomy_score",
+    "functional_score",
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "passing_volume_index",
+    "crossing_width_index",
+    "availability_index_role",
+    "discipline_risk_index",
+    "role_fit_explainability_score",
+    "dominant_tactical_score",
 ]
 
 for col in numeric_cols:
@@ -12039,8 +15624,15 @@ elif "opportunity_tier_label" in df.columns:
 else:
     df["opportunity_tier_label"] = "Exploratorio"
 
-scouting_df = df.copy()
+scouting_df = apply_current_club_overrides(df.copy())
+scouting_df = apply_club_name_normalization(scouting_df)
+scouting_df = enforce_current_dss_league_scope(scouting_df)
 football_df = build_football_universe_dataset(scouting_df)
+football_df = merge_role_intelligence(football_df, role_intelligence_df)
+football_df = merge_position_taxonomy(football_df, position_taxonomy_df)
+football_df = merge_role_explainability(football_df, role_explainability_df)
+football_df = apply_current_club_overrides(football_df)
+football_df = apply_club_name_normalization(football_df)
 FOOTBALL_UNIVERSE_SIZE = len(football_df)
 
 
@@ -12161,14 +15753,13 @@ def render_dss_workflow(active_page: str) -> None:
         ("Market", "Market Intelligence"),
         ("Player", "Player Intelligence"),
         ("Recruitment", "Recruitment Intelligence"),
-        ("Similar", "Recruitment Intelligence"),
         ("Contract", "Strategy Center"),
         ("Strategy", "Strategy Center"),
         ("Decision", "Strategy Center"),
     ]
     step_html = "".join(
-        f"<span class='dss-compact-step {'is-active' if owner == active_page else ''}'>{idx}. {html.escape(label)}</span>"
-        for idx, (label, owner) in enumerate(workflow_steps, start=1)
+        f"<span class='dss-compact-step {'is-active' if owner == active_page else ''}'>{html.escape(label)}</span>"
+        for label, owner in workflow_steps
     )
     st.markdown(
         f"""
@@ -12628,7 +16219,7 @@ TEXT_EN_EXTRA = {
     "Ver explicación completa y metodología de scores": "Show full score explanation and methodology",
     "Vista compacta para priorizar revisión. El CSV y las tablas detalladas conservan las variables auxiliares.": "Compact view to prioritize review. CSV and detailed tables keep auxiliary variables.",
     "Objetivo": "Objective",
-    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "convert the analytical ranking into an operational scouting workflow. The assigned stage is an initial non-persistent simulation designed to prioritize video review, live scouting and due diligence.",
+    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "convert the analytical ranking into an operational scouting workflow. The assigned stage is an initial operational prioritisation designed to prioritize video review, live scouting and due diligence.",
     "Fase": "Stage",
     "Siguiente acción": "Next action",
     "Validar contrato, agente, salario y disponibilidad": "Validate contract, agent, salary and availability",
@@ -12643,7 +16234,7 @@ TEXT_EN_EXTRA = {
         "Due Diligence": "Due diligence",
         "Discovery": "Discovery",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sporting CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize scouting work.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sporting CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize scouting work.",
     "Identificación automática de reemplazos según perfil deportivo, contexto competitivo, riesgo y potencial de activo.": "Automatic replacement identification based on sporting profile, competitive context, risk and asset potential.",
     "Jugador a sustituir / comparar": "Player to replace / compare",
     "Número de sustitutos": "Number of replacements",
@@ -12801,7 +16392,7 @@ TEXT_EN_EXTRA.update({
     "Revisión completa de vídeo": "Full video review",
     "Informe scout inicial": "Initial scout report",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
     "Top 5 oportunidades ajustadas por riesgo": "Top 5 risk-adjusted opportunities",
     "Prioridad inicial para revisión": "Initial review priority",
     "Seguimiento activo": "Active tracking",
@@ -12888,10 +16479,10 @@ TEXT_EN_EXTRA.update({
     "Los principales elementos a validar antes de elevarlo a fase avanzada son": "The main elements to validate before moving to an advanced stage are",
     "Esta lectura resume la trazabilidad del modelo en lenguaje operativo, sin presentar SHAP como causalidad deportiva.": "This readout summarizes model traceability in operational language without presenting SHAP as sporting causality.",
     "Objetivo": "Objective",
-    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "turn the analytical ranking into an operational scouting workflow. The assigned stage is an initial non-persistent simulation designed to prioritize video review, live scouting and due diligence.",
+    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "turn the analytical ranking into an operational scouting workflow. The assigned stage is an initial operational prioritisation designed to prioritize video review, live scouting and due diligence.",
     "Siguiente acción": "Next action",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
     "Comparación de candidatos": "Candidate Comparison",
     "Jugadores similares": "Similar Players",
     "Análisis de inversión": "Investment Analysis",
@@ -12970,7 +16561,7 @@ TEXT_EN_EXTRA.update({
     "Edad media": "Average age",
     "Minutos medios": "Average minutes",
     "calidad del ranking": "ranking quality",
-    "simulación conservadora": "conservative simulation",
+    "escenario conservador": "conservative scenario",
     "Qué mide": "What it measures",
     "Lectura de negocio": "Business reading",
     "Importante": "Important",
@@ -13045,8 +16636,11 @@ def driver_display_name(value: object) -> str:
 def localize_display_df(display_df: pd.DataFrame) -> pd.DataFrame:
     """Localize categorical dataframe cells without touching the analytical dataset."""
     result = display_df.copy()
+    result = apply_club_name_normalization(result) if isinstance(result, pd.DataFrame) else result
     for col in result.columns:
-        if col == "league":
+        if str(col).lower() in {"club", "team", "squad", "current_club", "reference_club", "similar_club", "replacement_club"}:
+            result[col] = result[col].apply(format_club_name)
+        elif col == "league":
             result[col] = result[col].apply(league_display_name)
         elif col in {"recommended_action", "replacement_fit", "adaptation_risk_label", "risk_level", "future_asset_tier", "executive_priority", "next_action", "pipeline_stage"}:
             result[col] = result[col].apply(V)
@@ -13843,12 +17437,17 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
     labels: list[str] = []
     label_to_raw: dict[str, str] = {}
 
-    def add(label: str, raw: str) -> None:
+    def add(label: str, raw: str, include_unaccented_alias: bool = True) -> None:
         if raw is None or str(raw).strip() == "":
             return
         if label not in label_to_raw:
             labels.append(label)
             label_to_raw[label] = str(raw)
+        if include_unaccented_alias:
+            alias = strip_accents_for_display(label)
+            if alias and alias != label and alias not in label_to_raw:
+                labels.append(alias)
+                label_to_raw[alias] = str(raw)
 
     if "league" in df.columns:
         for league in sorted(df["league"].dropna().astype(str).unique().tolist(), key=str.lower):
@@ -14961,7 +18560,7 @@ elif global_search_display.startswith("Club ·"):
 elif global_search_display.startswith("Position ·"):
     search_entity_type = "position"
 
-search_norm = str(global_search_query).strip().casefold()
+search_norm = normalize_search_text(global_search_query)
 scouting_name_col = get_player_name_column(scouting_df)
 football_name_col = get_player_name_column(football_df)
 search_matches_scouting_universe = False
@@ -14970,10 +18569,10 @@ outside_football_profile = pd.DataFrame()
 
 if search_norm and search_entity_type == "player":
     if scouting_name_col is not None and scouting_name_col in scouting_df.columns:
-        scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).str.strip().str.casefold()
+        scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).map(normalize_search_text)
         search_matches_scouting_universe = bool((scouting_names_norm == search_norm).any())
     if not search_matches_scouting_universe and football_name_col is not None and football_name_col in football_df.columns:
-        outside_mask = football_df[football_name_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        outside_mask = football_df[football_name_col].fillna("").astype(str).map(normalize_search_text) == search_norm
         outside_football_profile = football_df[outside_mask].head(1).copy()
         search_is_outside_scouting_player = not outside_football_profile.empty
 
@@ -15117,6 +18716,16 @@ with filter_row_2[0]:
 with filter_row_2[1]:
     position_options = [T("all_f")] + sorted(base_df["position_group"].dropna().astype(str).unique().tolist())
     selected_position = st.selectbox(T("position"), position_options, key=f"position_{preset_name}")
+available_role_options = []
+if "primary_role" in base_df.columns:
+    available_role_options = sorted(
+        [role for role in base_df["primary_role"].dropna().astype(str).unique().tolist() if is_valid_role_value(role)]
+    )
+if not available_role_options:
+    available_role_options = ROLE_OPTIONS
+role_options = [T("all_m")] + available_role_options
+selected_role = st.sidebar.selectbox("Role" if LANG == "EN" else "Rol", role_options, key=f"role_{preset_name}")
+render_role_availability_chips(base_df, selected_role if selected_role != T("all_m") else None, limit=12)
 selected_tier = T("all_m")
 global_min_os = float(np.floor(base_df["opportunity_score"].min()))
 global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
@@ -15152,18 +18761,26 @@ if selected_league != T("all_f"):
     filtered_df = filtered_df[filtered_df["league"].astype(str) == selected_league]
 if selected_position != T("all_f"):
     filtered_df = filtered_df[filtered_df["position_group"].astype(str) == selected_position]
+if selected_role != T("all_m") and "primary_role" in filtered_df.columns:
+    filtered_df = filtered_df[filtered_df["primary_role"].astype(str) == selected_role]
 if selected_tier != T("all_m"):
     filtered_df = filtered_df[filtered_df["opportunity_tier_label"].astype(str) == selected_tier]
 
-search_query_clean = str(global_search_query).strip().lower()
+# role intelligence.8.2 — keep a benchmark pool before player-search narrowing.
+# The radar selector may focus one player, but percentiles must be computed
+# against the active scouting universe selected by filters, not against the
+# single selected row.
+RADAR_BENCHMARK_POOL_DF = filtered_df.copy()
+
+search_query_clean = normalize_search_text(global_search_query)
 if search_query_clean and not search_is_outside_scouting_player and not (search_entity_type == "player"):
     searchable_cols = [
-        col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group"]
+        col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group", "primary_role", "secondary_role"]
         if col in filtered_df.columns
     ]
     if searchable_cols:
         search_mask = filtered_df[searchable_cols].astype(str).apply(
-            lambda row: search_query_clean in " ".join(row.values).lower(),
+            lambda row: search_query_clean in normalize_search_text(" ".join(row.values)),
             axis=1,
         )
         filtered_df = filtered_df[search_mask].copy()
@@ -15175,8 +18792,8 @@ outside_active_profile = pd.DataFrame()
 if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player:
     player_col = get_player_name_column(base_df)
     if player_col is not None and player_col in base_df.columns:
-        base_player_mask = base_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
-        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
+        base_player_mask = base_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
         if bool(base_player_mask.any()) and not bool(active_player_mask.any()):
             search_is_outside_active_filters = True
             outside_active_profile = base_df[base_player_mask].head(1).copy()
@@ -15185,7 +18802,7 @@ if search_query_clean and search_entity_type == "player" and not search_is_outsi
 if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player and not search_is_outside_active_filters:
     player_col = get_player_name_column(filtered_df)
     if player_col is not None and player_col in filtered_df.columns:
-        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm
         if bool(active_player_mask.any()):
             filtered_df = filtered_df[active_player_mask].copy()
 
@@ -15229,13 +18846,15 @@ else:
 search_matches_selected_league = (
     selected_league != T("all_f")
     and search_query_clean
-    and str(global_search_query).strip().casefold() == str(selected_league).strip().casefold()
+    and normalize_search_text(global_search_query) == normalize_search_text(selected_league)
 )
 
 if selected_league != T("all_f") and not search_matches_selected_league:
     active_filters.append(f"{T('league')}: {league_display_name(selected_league)}")
 if selected_position != T("all_f"):
     active_filters.append(f"{T('position')}: {selected_position}")
+if selected_role != T("all_m"):
+    active_filters.append(f"Role: {selected_role}" if LANG == "EN" else f"Rol: {selected_role}")
 if selected_tier != T("all_m"):
     active_filters.append(f"{T('tier')}: {tier_display_name(selected_tier)}")
 
@@ -15333,6 +18952,24 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
         unsafe_allow_html=True,
     )
 
+    render_eligibility_check_panel(
+        build_scouting_eligibility_checks(
+            outside_row,
+            max_age=max_age,
+            min_minutes=min_minutes,
+            min_confidence=min_confidence,
+            os_range=os_range,
+            selected_league=selected_league,
+            selected_position=selected_position,
+            selected_role=selected_role,
+            selected_tier=selected_tier,
+            max_market_value_m=max_market_value_m,
+            min_roi=min_roi,
+            max_risk_filter=max_risk_filter,
+        ),
+        title="Why it does not enter the active universe" if LANG == "EN" else "Por qué no entra en el universo activo",
+    )
+
 
 if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_active_profile.empty:
     outside_row = outside_active_profile.iloc[0]
@@ -15348,6 +18985,22 @@ if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_activ
         if LANG == "EN"
         else "El jugador existe en el universo analítico del modelo, pero no entra en el preset o conjunto de filtros activo. El ranking ejecutivo, la shortlist y la matriz Opportunity/Risk se mantienen sobre el Scouting Universe activo."
     )
+    exclusion_reasons = explain_scouting_exclusion(
+        outside_row,
+        max_age=max_age,
+        min_minutes=min_minutes,
+        min_confidence=min_confidence,
+        os_range=os_range,
+        selected_league=selected_league,
+        selected_position=selected_position,
+        selected_role=selected_role,
+        selected_tier=selected_tier,
+        max_market_value_m=max_market_value_m,
+        min_roi=min_roi,
+        max_risk_filter=max_risk_filter,
+    )
+    reasons_title = "Why he is out" if LANG == "EN" else "Por qué no entra"
+    reasons_html = "<div class='outside-reasons'><b>" + html.escape(reasons_title) + "</b>" + "".join(f"<span>{html.escape(reason)}</span>" for reason in exclusion_reasons) + "</div>"
     st.markdown(
         f"""
 <div class="outside-scouting-card">
@@ -15356,10 +19009,29 @@ if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_activ
     <div class="outside-scouting-player">{outside_name}</div>
     <div class="outside-scouting-meta">{" · ".join([part for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value] if str(part).strip() and str(part).strip() != "N/A"])}</div>
     <div class="outside-scouting-text">{html.escape(text_msg)}</div>
+    {reasons_html}
     <div class="outside-scouting-cta">{'Review filters or preset' if LANG == 'EN' else 'Revisar filtros o preset'} · {'outside active criteria' if LANG == 'EN' else 'fuera de criterios activos'}</div>
 </div>
 """,
         unsafe_allow_html=True,
+    )
+
+    render_eligibility_check_panel(
+        build_scouting_eligibility_checks(
+            outside_row,
+            max_age=max_age,
+            min_minutes=min_minutes,
+            min_confidence=min_confidence,
+            os_range=os_range,
+            selected_league=selected_league,
+            selected_position=selected_position,
+            selected_role=selected_role,
+            selected_tier=selected_tier,
+            max_market_value_m=max_market_value_m,
+            min_roi=min_roi,
+            max_risk_filter=max_risk_filter,
+        ),
+        title="Active filter eligibility" if LANG == "EN" else "Elegibilidad con filtros activos",
     )
 
 # Contextual actions: clear search without detached guide duplication.
@@ -15988,6 +19660,22 @@ st.markdown(
     font-size: .76rem !important;
     font-weight: 750 !important;
 }
+
+.snapshot-inefficiency-box.snapshot-gap-negative {
+    background: #fff7ed !important;
+    border-color: #fed7aa !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-negative b { color: #c2410c !important; }
+.snapshot-inefficiency-box.snapshot-gap-neutral {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-neutral b { color: #334155 !important; }
+.snapshot-inefficiency-box.snapshot-gap-positive {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-positive b { color: #15803d !important; }
 .snapshot-score-grid {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -16354,7 +20042,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     roi_value = "N/A"
     if not roi.empty and "positive_roi_rate" in roi.columns:
         roi_value = f"{roi['positive_roi_rate'].iloc[0]:.0%}"
-    leagues = source_df["league"].nunique() if "league" in source_df.columns else "N/A"
+    leagues = count_current_dss_leagues(source_df)
     st.markdown(
         f"""
 <div class="home-hero">
@@ -16390,7 +20078,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
         render_info_kpi_card(
             "Positive ROI Rate",
             roi_value,
-            UI("simulación conservadora"),
+            UI("escenario conservador"),
             "Porcentaje de candidatos que muestran revalorización positiva bajo la simulación histórica de ROI. No equivale a beneficio garantizado ni a precio real de transferencia." if LANG == "ES" else "Share of candidates with positive revaluation under the historical ROI simulation. It is not a guaranteed profit or real transfer fee.",
         )
     st.markdown("<div class='overview-row-gap'></div>", unsafe_allow_html=True)
@@ -16466,20 +20154,20 @@ def render_transfer_strategy_placeholder() -> None:
 <div class="strategy-banner">
     <div class="strategy-eyebrow">{html.escape('Portfolio Optimization Layer' if LANG == 'EN' else 'Capa de optimización de cartera')}</div>
     <div class="strategy-title">{html.escape('From player ranking to portfolio decision.' if LANG == 'EN' else 'Del ranking de jugadores a la decisión de cartera.')}</div>
-    <div class="strategy-copy">{html.escape('This module formulates transfer planning as a Binary Integer Programming problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo formula la planificación de fichajes como un problema de Programación Entera Binaria: seleccionar la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
+    <div class="strategy-copy">{html.escape('This module converts transfer planning into a portfolio selection problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo convierte la planificación de fichajes en un problema de selección de cartera: elegir la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
     with st.expander(
-        "🧠 " + ("Optimization methodology" if LANG == "EN" else "Metodología de optimización"),
+        "🧠 " + ("How the optimizer works" if LANG == "EN" else "Cómo funciona el optimizador"),
         expanded=False,
     ):
         if LANG == "EN":
             st.markdown(
                 """
-                The engine uses the portfolio dataset and solves a 0-1 selection problem.
+                The engine uses the portfolio dataset and solves an optimal candidate selection.
 
                 **Decision variable:** `x_i = 1` if player `i` is selected, `0` otherwise.
 
@@ -16491,7 +20179,7 @@ def render_transfer_strategy_placeholder() -> None:
         else:
             st.markdown(
                 """
-                El motor utiliza el dataset de cartera y resuelve un problema de selección 0-1.
+                El motor utiliza el dataset de cartera y resuelve una selección óptima de candidatos.
 
                 **Variable de decisión:** `x_i = 1` si el jugador `i` es seleccionado, `0` en caso contrario.
 
@@ -16501,6 +20189,7 @@ def render_transfer_strategy_placeholder() -> None:
                 """
             )
 
+    st.markdown("<div class='strategy-filter-panel'><div class='contract-filter-title'>" + html.escape('Tactical portfolio filters' if LANG == 'EN' else 'Filtros tácticos de cartera') + "</div><div class='contract-filter-subtitle'>" + html.escape('Compact controls for budget, risk profile, style, squad level and positional needs.' if LANG == 'EN' else 'Controles compactos de presupuesto, riesgo, estilo, nivel de plantilla y necesidades posicionales.') + "</div>", unsafe_allow_html=True)
     controls_top = st.columns([0.95, 0.95, 0.95, 1.15, 1.15, 0.90, 0.95], gap="large")
 
     with controls_top[0]:
@@ -16625,6 +20314,7 @@ def render_transfer_strategy_placeholder() -> None:
             else "El Perfil de riesgo se muestra como capa ejecutiva de interpretación. El Estilo de cartera controla concentración y equilibrio."
         )
     )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if LANG == "EN":
         glossary_items = [
@@ -16701,6 +20391,35 @@ def render_transfer_strategy_placeholder() -> None:
         avg_risk_proxy = float(portfolio["risk_proxy"].mean()) if "risk_proxy" in portfolio.columns else np.nan
         max_player_share = float((portfolio["portfolio_cost"] / total_cost).max()) if total_cost > 0 else np.nan
 
+        # GM Simulator layer: first thing a sporting director reads before table detail.
+        pos_col = "position_group" if "position_group" in portfolio.columns else ("position" if "position" in portfolio.columns else None)
+        pos_mix = portfolio[pos_col].astype(str).value_counts().to_dict() if pos_col else {}
+        pos_mix_text = " · ".join([f"{v} {k}" for k, v in pos_mix.items()]) or ("N/A" if LANG == "EN" else "N/D")
+        key_row = portfolio.sort_values("portfolio_value_score", ascending=False).iloc[0] if not portfolio.empty else pd.Series(dtype=object)
+        key_player = get_player_display_from_row(key_row) if not portfolio.empty else "N/A"
+        if "risk_proxy" in portfolio.columns:
+            risky_row = portfolio.sort_values("risk_proxy", ascending=False).iloc[0]
+            risky_player = get_player_display_from_row(risky_row)
+        else:
+            risky_player = key_player
+        st.markdown(
+            f"""
+<div class='gm-summary-card'>
+  <div>
+    <div class='gm-summary-eyebrow'>{html.escape('GM Simulator' if LANG == 'EN' else 'GM Simulator')}</div>
+    <div class='gm-summary-title'>{html.escape(('With €' + str(budget_m) + 'M the DSS recommends') if LANG == 'EN' else ('Con €' + str(budget_m) + 'M el DSS recomienda'))}</div>
+    <div class='gm-summary-copy'>{html.escape(pos_mix_text)} · ROI {expected_roi:.0%} · Upside {format_money_short(expected_upside)}</div>
+  </div>
+  <div class='gm-summary-kpis'>
+    <div><span>{html.escape('Key player' if LANG == 'EN' else 'Jugador clave')}</span><b>{html.escape(key_player)}</b></div>
+    <div><span>{html.escape('Highest risk' if LANG == 'EN' else 'Mayor riesgo')}</span><b>{html.escape(risky_player)}</b></div>
+    <div><span>{html.escape('Budget use' if LANG == 'EN' else 'Uso presupuesto')}</span><b>{budget_utilization:.1%}</b></div>
+  </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
         st.success(
             "Optimal transfer portfolio generated."
             if LANG == "EN"
@@ -16773,6 +20492,7 @@ def render_transfer_strategy_placeholder() -> None:
         display_cols = [
             "player_name_fbref",
             "club",
+            "data_freshness_status",
             "league",
             "position_group",
             "age",
@@ -16790,6 +20510,7 @@ def render_transfer_strategy_placeholder() -> None:
         rename_map = {
             "player_name_fbref": "Player" if LANG == "EN" else "Jugador",
             "club": "Club",
+            "data_freshness_status": "Data Freshness" if LANG == "EN" else "Actualización",
             "league": "League" if LANG == "EN" else "Liga",
             "position_group": "Position" if LANG == "EN" else "Posición",
             "age": "Age" if LANG == "EN" else "Edad",
@@ -16821,6 +20542,10 @@ def render_transfer_strategy_placeholder() -> None:
                 lambda x: f"{x:.1%}" if pd.notna(x) else "N/A"
             )
 
+        freshness_cols = [col for col in ["Data Freshness", "Actualización"] if col in display.columns]
+        for col in freshness_cols:
+            display[col] = display[col].map(lambda x: ("Club actualizado" if str(x) in {"Updated club override", "Club/league current override"} else ("Actualizado" if LANG == "ES" else "Current")))
+
         share_cols = [col for col in ["Portfolio Share", "Peso cartera"] if col in display.columns]
         for col in share_cols:
             display[col] = pd.to_numeric(display[col], errors="coerce").map(
@@ -16851,88 +20576,92 @@ def render_transfer_strategy_placeholder() -> None:
         )
 
         if {"portfolio_cost", "expected_upside", "portfolio_value_score", "position_group"}.issubset(portfolio.columns):
-            st.subheader("📈 " + ("Portfolio Map" if LANG == "EN" else "Mapa de cartera"))
-            st.caption(
-                "Hover each bubble to inspect player, club, cost, upside, ROI and portfolio score."
-                if LANG == "EN"
-                else "Pasa el ratón por cada burbuja para consultar jugador, club, coste, upside, ROI y score de cartera."
-            )
-            fig = go.Figure()
-            for position_group, group_df in portfolio.groupby("position_group"):
-                fig.add_trace(
-                    go.Scatter(
-                        x=group_df["portfolio_cost"] / 1_000_000,
-                        y=group_df["expected_upside"] / 1_000_000,
-                        mode="markers",
-                        customdata=np.stack(
-                            [
-                                group_df["player_name_fbref"].astype(str),
-                                group_df["club"].astype(str) if "club" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
-                                group_df["position_group"].astype(str),
-                                group_df["player_level_tier"].astype(str).map(player_level_display_name) if "player_level_tier" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                            ],
-                            axis=-1,
-                        ),
-                        marker=dict(
-                            size=(pd.to_numeric(group_df["portfolio_value_score"], errors="coerce").fillna(50) / 4).clip(13, 30),
-                            opacity=0.85,
-                            line=dict(color="white", width=2),
-                        ),
-                        name=str(position_group),
-                        hovertemplate=(
-                            "<b>%{customdata[0]}</b><br>"
-                            + ("Club" if LANG == "EN" else "Club")
-                            + ": %{customdata[1]}<br>"
-                            + ("Position" if LANG == "EN" else "Posición")
-                            + ": %{customdata[2]}<br>"
-                            + ("Player Level" if LANG == "EN" else "Nivel jugador")
-                            + ": %{customdata[3]}<br>"
-                            + ("Age" if LANG == "EN" else "Edad")
-                            + ": %{customdata[4]:.1f}<br>"
-                            + ("Cost" if LANG == "EN" else "Coste")
-                            + ": €%{x:.1f}M<br>"
-                            + ("Upside" if LANG == "EN" else "Upside")
-                            + ": €%{y:.1f}M<br>"
-                            + ("ROI" if LANG == "EN" else "ROI")
-                            + ": %{customdata[5]:.1%}<br>"
-                            + ("Portfolio Score" if LANG == "EN" else "Score cartera")
-                            + ": %{customdata[6]:.1f}<extra></extra>"
-                        ),
-                    )
+            map_col, rank_col = st.columns([3.0, 1.0], gap="large")
+            with map_col:
+                st.markdown(
+                    f"<div class='strategy-map-card'><div class='strategy-map-title'>{html.escape('Portfolio Map' if LANG == 'EN' else 'Mapa de cartera')}</div>"
+                    f"<div class='strategy-map-subtitle'>{html.escape('Decision map: cost, upside and portfolio score. Hover for player detail.' if LANG == 'EN' else 'Mapa decisional: coste, upside y score de cartera. Pasa el ratón para consultar detalle del jugador.')}</div>"
+                    "<div class='strategy-map-legend'>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#2563eb'></i>DEF</span>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#22c55e'></i>MID</span>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#f97316'></i>ATT</span>"
+                    "</div></div>",
+                    unsafe_allow_html=True,
                 )
-            fig.update_layout(
-                xaxis_title="Cost (€M)" if LANG == "EN" else "Coste (€M)",
-                yaxis_title="Expected Upside (€M)" if LANG == "EN" else "Upside esperado (€M)",
-                height=540,
-                paper_bgcolor="white",
-                plot_bgcolor="white",
-                margin=dict(l=70, r=90, t=42, b=70),
-                legend_title="Position" if LANG == "EN" else "Posición",
-            )
-            fig.update_xaxes(
-                rangemode="tozero",
-                automargin=True,
-                showgrid=True,
-                zeroline=False,
-                showline=True,
-                linewidth=1,
-                linecolor="rgba(120,120,120,0.6)",
-                mirror=False,
-            )
-            fig.update_yaxes(
-                rangemode="tozero",
-                automargin=True,
-                showgrid=True,
-                zeroline=False,
-                showline=True,
-                linewidth=1,
-                linecolor="rgba(120,120,120,0.6)",
-                mirror=False,
-            )
-            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+                fig = go.Figure()
+                for position_group, group_df in portfolio.groupby("position_group"):
+                    fig.add_trace(
+                        go.Scatter(
+                            x=group_df["portfolio_cost"] / 1_000_000,
+                            y=group_df["expected_upside"] / 1_000_000,
+                            mode="markers",
+                            customdata=np.stack(
+                                [
+                                    group_df["player_name_fbref"].astype(str),
+                                    group_df.apply(get_current_club_display, axis=1),
+                                    group_df["position_group"].astype(str),
+                                    group_df["player_level_tier"].astype(str).map(player_level_display_name) if "player_level_tier" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                ],
+                                axis=-1,
+                            ),
+                            marker=dict(
+                                size=(pd.to_numeric(group_df["portfolio_value_score"], errors="coerce").fillna(50) / 4).clip(13, 30),
+                                opacity=0.68,
+                                line=dict(color="white", width=2),
+                            ),
+                            name=str(position_group),
+                            hovertemplate=(
+                                "<b>%{customdata[0]}</b><br>"
+                                + ("Club" if LANG == "EN" else "Club") + ": %{customdata[1]}<br>"
+                                + ("Position" if LANG == "EN" else "Posición") + ": %{customdata[2]}<br>"
+                                + ("Player Level" if LANG == "EN" else "Nivel jugador") + ": %{customdata[3]}<br>"
+                                + ("Age" if LANG == "EN" else "Edad") + ": %{customdata[4]:.1f}<br>"
+                                + ("Cost" if LANG == "EN" else "Coste") + ": €%{x:.1f}M<br>"
+                                + ("Upside" if LANG == "EN" else "Upside") + ": €%{y:.1f}M<br>"
+                                + ("ROI" if LANG == "EN" else "ROI") + ": %{customdata[5]:.1%}<br>"
+                                + ("Portfolio Score" if LANG == "EN" else "Score cartera") + ": %{customdata[6]:.1f}<extra></extra>"
+                            ),
+                        )
+                    )
+                label_df = portfolio.sort_values("portfolio_value_score", ascending=False).head(3).copy()
+                if not label_df.empty:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=label_df["portfolio_cost"] / 1_000_000,
+                            y=label_df["expected_upside"] / 1_000_000,
+                            mode="text",
+                            text=label_df.apply(get_player_display_from_row, axis=1).astype(str).str.split().str[:2].str.join(" "),
+                            textposition="top center",
+                            textfont=dict(size=11, color="#0f172a", family="Inter, Arial, sans-serif"),
+                            hoverinfo="skip",
+                            showlegend=False,
+                        )
+                    )
+                fig.update_layout(
+                    xaxis_title="Cost (€M)" if LANG == "EN" else "Coste (€M)",
+                    yaxis_title="Expected Upside (€M)" if LANG == "EN" else "Upside esperado (€M)",
+                    height=420,
+                    paper_bgcolor="#FFFFFF",
+                    plot_bgcolor="#FBFDFF",
+                    margin=dict(l=58, r=28, t=14, b=58),
+                    legend_title=None,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    hoverlabel=dict(bgcolor="#ffffff", font_size=12, font_family="Inter, Arial, sans-serif", bordercolor="#e2e8f0"),
+                )
+                fig.update_xaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
+                fig.update_yaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
+                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "displayModeBar": False})
+            with rank_col:
+                rank_rows = []
+                for idx, (_, row) in enumerate(portfolio.sort_values("portfolio_value_score", ascending=False).head(7).iterrows(), start=1):
+                    player = get_player_display_from_row(row)
+                    meta = f"{get_current_club_display(row)} · {row.get('position_group', 'N/A')}"
+                    score = get_numeric_value(row, "portfolio_value_score", np.nan)
+                    rank_rows.append(f"<div class='strategy-ranking-row'><div class='strategy-ranking-rank'>{idx}</div><div><div class='strategy-ranking-name'>{html.escape(player)}</div><div class='strategy-ranking-meta'>{html.escape(meta)}</div></div><div class='strategy-ranking-score'>{format_score(score)}</div></div>")
+                st.markdown("<div class='strategy-ranking-card'><div class='contract-panel-title'>" + html.escape('Recommended portfolio' if LANG == 'EN' else 'Cartera recomendada') + "</div><div class='contract-panel-subtitle'>" + html.escape('Ranking by portfolio score' if LANG == 'EN' else 'Ranking por score de cartera') + "</div>" + "".join(rank_rows) + "</div>", unsafe_allow_html=True)
 
     except ModuleNotFoundError:
         st.error(
@@ -16963,7 +20692,7 @@ def render_transfer_strategy_placeholder() -> None:
                     "increase max signings, remove a required position, or switch portfolio style to Value Opportunities."
                 )
                 st.caption(
-                    "Methodological note: this is an infeasible optimization case, not a system error. "
+                    "Operational note: this is an infeasible optimization case, not a system error. "
                     "The selected constraints leave no valid combination of players."
                 )
             else:
@@ -16973,7 +20702,7 @@ def render_transfer_strategy_placeholder() -> None:
                     "aumentar el máximo de fichajes, quitar alguna posición obligatoria o cambiar el estilo de cartera a Value Opportunities."
                 )
                 st.caption(
-                    "Nota metodológica: es un caso de optimización no factible, no un error del sistema. "
+                    "Nota operativa: es un caso de optimización no factible, no un error del sistema. "
                     "Las restricciones seleccionadas no dejan ninguna combinación válida de jugadores."
                 )
         else:
@@ -17004,52 +20733,33 @@ def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     if fig is None:
         st.info("Not enough data to build the Opportunity vs Risk matrix with current filters." if LANG == "EN" else "No hay datos suficientes para generar la matriz Opportunity vs Risk con los filtros actuales.")
     else:
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div class="matrix-pro-header">
-                    <div>
-                        <div class="matrix-pro-eyebrow">{'EXECUTIVE SCOUTING MATRIX' if LANG == 'EN' else 'MATRIZ EJECUTIVA DE SCOUTING'}</div>
-                        <div class="matrix-pro-title">{'Opportunity vs Risk Map' if LANG == 'EN' else 'Mapa Opportunity vs Risk'}</div>
-                        <div class="matrix-pro-subtitle">{'Prioritise players by market opportunity, estimated risk and adjusted decision signal.' if LANG == 'EN' else 'Prioriza jugadores por oportunidad de mercado, riesgo estimado y señal ajustada de decisión.'}</div>
-                    </div>
-                    <div class="matrix-pro-bubble-note">{'Bubble size = adjusted opportunity' if LANG == 'EN' else 'Tamaño = oportunidad ajustada'}</div>
-                </div>
-                <div class="matrix-pro-legend">
-                    <span><i class="dot-green"></i>{html.escape('Priority target' if LANG == 'EN' else 'Objetivo prioritario')}</span>
-                    <span><i class="dot-orange"></i>{html.escape('Growth bet' if LANG == 'EN' else 'Apuesta de crecimiento')}</span>
-                    <span><i class="dot-blue"></i>{html.escape('Low-impact profile' if LANG == 'EN' else 'Perfil de bajo impacto')}</span>
-                    <span><i class="dot-red"></i>{html.escape('High risk' if LANG == 'EN' else 'Riesgo elevado')}</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            matrix_cols = st.columns([3.1, 0.95], gap="large")
-            with matrix_cols[0]:
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"]})
-            with matrix_cols[1]:
-                st.markdown(
-                    build_opportunity_risk_top5_side_html(
-                        source_df,
-                        T("top5_title"),
-                        T("top5_caption"),
-                    ),
-                    unsafe_allow_html=True,
-                )
-            with st.expander(T("methodology"), expanded=False):
-                st.markdown("""
+        st.markdown(
+            f"""
+            <div class='matrix-exec-legend'>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#58C27D'></i>{html.escape('Priority Targets' if LANG == 'EN' else 'Objetivos prioritarios')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#F5A623'></i>{html.escape('Growth Bets' if LANG == 'EN' else 'Apuestas de crecimiento')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#7C8DB5'></i>{html.escape('Low Impact' if LANG == 'EN' else 'Bajo impacto')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#E05658'></i>{html.escape('High Risk' if LANG == 'EN' else 'Riesgo elevado')}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.expander(T("methodology"), expanded=False):
+            st.markdown("""
 - **X-axis:** Risk Score.
 - **Y-axis:** Market Opportunity.
 - **Bubble size:** risk-adjusted opportunity.
 - **Dashed lines:** dynamic thresholds calculated on the filtered sample.
 - **Quadrants:** priority target, growth bet, low-impact profile and high-risk profile.
-                """ if LANG == "EN" else """
+            """ if LANG == "EN" else """
 - **Eje X:** Risk Score.
 - **Eje Y:** Market Opportunity.
 - **Tamaño de burbuja:** oportunidad ajustada por riesgo.
 - **Líneas discontinuas:** umbrales dinámicos calculados sobre la muestra filtrada.
 - **Cuadrantes:** objetivo prioritario, apuesta de crecimiento, perfil de bajo impacto y riesgo elevado.
-                """)
+            """)
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"]})
+        render_opportunity_risk_top5_vertical(source_df, T("top5_title"), T("top5_caption"))
         render_opportunity_risk_insight(source_df)
     st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
     render_layer_badge("OPERATIONAL SCOUTING LAYER")
@@ -17183,9 +20893,8 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
                         candidate_df[candidate_name_col]
                         .fillna("")
                         .astype(str)
-                        .str.strip()
-                        .str.casefold()
-                        == str(player_name_value).strip().casefold()
+                        .map(normalize_search_text)
+                        == normalize_search_text(player_name_value)
                     )
                     if bool(name_mask.any()):
                         candidate_subset = candidate_df[name_mask]
@@ -17351,20 +21060,22 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
             x=shap_display["impact"],
             y=shap_display["feature"],
             orientation="h",
-            marker_color=np.where(shap_display["impact"] >= 0, "#2563eb", "#ef4444"),
+            marker_color=np.where(shap_display["impact"] >= 0, "#22c55e", "#ef4444"),
             text=[f"{v:+.2f}" for v in shap_display["impact"]],
             textposition="outside",
         )
     )
     fig_shap.update_layout(
-        height=320,
-        margin=dict(l=10, r=30, t=18, b=32),
+        height=285,
+        margin=dict(l=12, r=34, t=12, b=30),
+        bargap=0.32,
+        font=dict(color="#334155", family="Inter, Arial, sans-serif"),
         xaxis_title=("Contribution on estimated log-value" if LANG == "EN" else "Contribución sobre log-valor estimado"),
         yaxis_title="",
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
     )
-    fig_shap.update_xaxes(showgrid=True, gridcolor="rgba(148,163,184,0.18)", zeroline=True)
+    fig_shap.update_xaxes(showgrid=True, gridcolor="rgba(226,232,240,0.42)", zeroline=True)
     fig_shap.update_yaxes(showgrid=False)
     with st.expander(TXT("Ver contribución técnica detallada"), expanded=False):
         st.plotly_chart(fig_shap, use_container_width=True)
@@ -17372,7 +21083,7 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
 
 def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Player Intelligence", "Player Profile Intelligence Platform", "Player snapshot, benchmark and market value drivers." if LANG == "EN" else "Player Snapshot, benchmark y drivers de valor.")
-    table = build_ranked_table_df(source_df)
+    table = add_role_display_columns(build_ranked_table_df(source_df))
 
     # TM.4.1 final UX: the Player Snapshot is the first analytical block.
     # The scout should understand who the player is, where he plays, market value,
@@ -17389,6 +21100,14 @@ def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
             except Exception:
                 snapshot_row = table.iloc[0]
             render_player_profile_header(snapshot_row, name_col, "Selected player")
+            render_player_dossier_summary(snapshot_row)
+            st.markdown(
+                f"<div class='role-section-card'><div class='role-section-title'>{html.escape('ROLE PROFILE')}</div><div class='role-section-subtitle'>{html.escape('Role classification, profile purity and nearest role-based comparables.' if LANG == 'EN' else 'Clasificación de rol, pureza del perfil y comparables más cercanos por rol.')}</div></div>",
+                unsafe_allow_html=True,
+            )
+            render_role_profile_block(snapshot_row)
+            render_role_dna_block(snapshot_row)
+            render_role_similar_players_block(snapshot_row, table)
 
     st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
     render_player_radar_benchmarking(table, show_snapshot=False)
@@ -17398,7 +21117,9 @@ def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
 
 def render_recruitment_board_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Recruitment Intelligence", "Player Recruitment Intelligence Platform", "Operational scouting workspace: target validation, similar players, replacement analysis, investment view and model drivers." if LANG == "EN" else "Validación de targets, comparables, assessment y soporte a la decisión.")
-    table = build_ranked_table_df(source_df)
+    table = add_role_display_columns(build_ranked_table_df(source_df))
+    table = render_role_context_filters(table, "recruitment_center", expanded=False)
+    table = render_role_dna_filters(table, "recruitment_center")
     st.markdown(
         f"""
         <div class="recruitment-center-hero">
@@ -17408,6 +21129,7 @@ def render_recruitment_board_page(source_df: pd.DataFrame) -> None:
                 <div class="recruitment-center-copy">{html.escape('Similar Players and Recruitment Assessment are prioritised as the core validation workflow before contract timing and portfolio strategy.' if LANG == 'EN' else 'Similar Players y Recruitment Assessment quedan priorizados como flujo principal de validación antes del timing contractual y la estrategia de cartera.')}</div>
             </div>
             <div class="recruitment-center-actions">
+                <span>Role Market</span>
                 <span>Similar Players</span>
                 <span>Recruitment Assessment</span>
                 <span>{'Contract Analysis' if LANG == 'EN' else 'Análisis contractual'}</span>
@@ -18386,7 +22108,7 @@ def _render_contract_opportunity_matrix(data: pd.DataFrame, matrix_view: str | N
 
     # No in-plot labels in the final demo view: the Top 5 side card carries identity,
     # while the hover keeps the scatter readable even when targets cluster tightly.
-    fig.update_layout(height=465, margin=dict(l=45, r=20, t=10, b=35), xaxis_title="Contract days remaining" if LANG == "EN" else "Días restantes de contrato", yaxis_title="Opportunity Score", paper_bgcolor="white", plot_bgcolor="white", font=dict(color="#0f172a"), showlegend=False)
+    fig.update_layout(height=465, margin=dict(l=45, r=20, t=10, b=35), xaxis_title="Contract days remaining" if LANG == "EN" else "Días restantes de contrato", yaxis_title="Opportunity Score", paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color="#0f172a"), showlegend=False)
     fig.update_xaxes(showgrid=True, gridcolor="#edf2f7", range=[-30, 1200], zeroline=True, zerolinecolor="#334155")
     y_min = max(0, float(matrix_df["opportunity_score"].min()) - 5)
     fig.update_yaxes(showgrid=True, gridcolor="#edf2f7", range=[y_min, 105])
@@ -18421,12 +22143,8 @@ def _render_contract_opportunity_matrix(data: pd.DataFrame, matrix_view: str | N
             unsafe_allow_html=True,
         )
 
-def _render_contract_action_board(data: pd.DataFrame, max_items: int = 4) -> None:
-    """Render a four-lane Action Board using native Streamlit containers.
-
-    This avoids raw HTML cards being interpreted as literal text in some
-    Streamlit/PDF rendering paths while preserving a professional lane layout.
-    """
+def _render_contract_action_board(data: pd.DataFrame, max_items: int = 3) -> None:
+    """Render clean horizontal Priority Actions cards for contract timing."""
     if data.empty:
         return
 
@@ -18434,10 +22152,10 @@ def _render_contract_action_board(data: pd.DataFrame, max_items: int = 4) -> Non
     board_df["_rc"] = pd.to_numeric(board_df.get("recruitment_contract_score"), errors="coerce")
     board_df = board_df.dropna(subset=["_rc"]).copy()
     if board_df.empty:
-        st.info("No scored players available for the Action Board." if LANG == "EN" else "No hay jugadores con RC disponible para el Action Board.")
+        st.info("No scored players available for Priority Actions." if LANG == "EN" else "No hay jugadores con RC disponible para Acciones prioritarias.")
         return
 
-    actions = board_df["contract_action_recommended"].astype(str).str.lower()
+    actions = board_df["contract_action_recommended"].astype(str).str.lower() if "contract_action_recommended" in board_df.columns else pd.Series([""] * len(board_df), index=board_df.index)
     days = pd.to_numeric(board_df.get("contract_days_remaining_dynamic"), errors="coerce")
 
     def _lane_df(kind: str) -> pd.DataFrame:
@@ -18447,105 +22165,75 @@ def _render_contract_action_board(data: pd.DataFrame, max_items: int = 4) -> Non
             mask = (days.between(0, 30, inclusive="both")) | actions.isin({"contact now", "contactar ya"})
             mask = mask & ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}))
         elif kind == "summer":
-            mask = (
-                actions.isin({"pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"})
-                | days.between(31, 365, inclusive="both")
-            )
+            mask = actions.isin({"pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"}) | days.between(31, 365, inclusive="both")
             mask = mask & ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}))
         else:
-            mask = ~(
-                (days < 0)
-                | actions.isin({"free-agent check", "verificar agente libre"})
-                | days.between(0, 365, inclusive="both")
-                | actions.isin({"contact now", "contactar ya", "pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"})
-            )
+            mask = ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}) | days.between(0, 365, inclusive="both") | actions.isin({"contact now", "contactar ya", "pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"}))
         return board_df[mask].sort_values("_rc", ascending=False, na_position="last")
 
     lanes = [
-        ("Verify free agent" if LANG == "EN" else "Verificar agente libre", "urgent", _lane_df("free_agent")),
-        ("Contact now" if LANG == "EN" else "Contactar ahora", "now", _lane_df("now")),
-        ("Summer negotiation" if LANG == "EN" else "Negociación de verano", "summer", _lane_df("summer")),
-        ("Tracking" if LANG == "EN" else "Seguimiento", "track", _lane_df("tracking")),
+        ("🔥 Contact Now" if LANG == "EN" else "🔥 Contactar ahora", "now", _lane_df("now"), "0-30 días" if LANG == "ES" else "0-30 days"),
+        ("⏳ Summer Targets" if LANG == "EN" else "⏳ Objetivos de verano", "summer", _lane_df("summer"), "1-12 meses" if LANG == "ES" else "1-12 months"),
+        ("👁 Monitor" if LANG == "EN" else "👁 Seguimiento", "track", _lane_df("tracking"), "Seguimiento activo" if LANG == "ES" else "Active monitoring"),
+        ("🆓 Free Agents" if LANG == "EN" else "🆓 Oportunidades de mercado", "free", _lane_df("free_agent"), "Libre / expirado" if LANG == "ES" else "Free / expired"),
     ]
 
-    st.markdown(
-        "<div class='contract-action-board-title-wrap contract-action-board-premium'>"
-        f"<div class='contract-panel-title'>{html.escape('Action Board')}</div>"
+    def _player_row(item_idx: int, row: pd.Series) -> str:
+        days_value = safe_get(row, "contract_days_remaining_dynamic", np.nan)
+        days_txt = "N/A" if pd.isna(days_value) else f"{int(float(days_value))}d"
+        upside_txt = format_signed_money_short(safe_get(row, "market_value_gap_eur", np.nan))
+        score_txt = _contract_score_display(safe_get(row, "recruitment_contract_score", np.nan))
+        opp_txt = format_score(safe_get(row, "opportunity_score", np.nan), decimals=0)
+        name_txt = str(safe_get(row, "player_name_display", safe_get(row, "player_name_fbref", "N/A")))
+        meta_txt = f"{safe_get(row, 'age_display', 'N/A')} · {safe_get(row, 'position_display', 'N/A')} · {safe_get(row, 'league_display', 'N/A')}"
+        return (
+            "<div class='contract-action-horizontal-player'>"
+            f"<div class='contract-action-horizontal-rank'>#{item_idx}</div>"
+            "<div class='contract-action-horizontal-main'>"
+            f"<div class='contract-action-horizontal-name'>{html.escape(name_txt)}</div>"
+            f"<div class='contract-action-horizontal-meta'>{html.escape(meta_txt)}</div>"
+            "</div>"
+            "<div class='contract-action-horizontal-kpis'>"
+            f"<span>{html.escape('Days' if LANG == 'EN' else 'Días')}: <b>{html.escape(days_txt)}</b></span>"
+            f"<span>{html.escape('Upside' if LANG == 'EN' else 'Plusvalía')}: <b>{html.escape(upside_txt)}</b></span>"
+            f"<span>Opp: <b>{html.escape(str(opp_txt))}</b></span>"
+            f"<span>RC: <b>{html.escape(score_txt)}</b></span>"
+            "</div>"
+            "</div>"
+        )
+
+    lane_blocks = []
+    for title, lane_class, lane, lane_caption in lanes:
+        if lane.empty:
+            rows_html = f"<div class='contract-action-horizontal-empty'>{html.escape('No players in this action lane' if LANG == 'EN' else 'Sin jugadores en esta acción')}</div>"
+        else:
+            rows_html = "".join(_player_row(item_idx, row) for item_idx, (_, row) in enumerate(lane.head(max_items).iterrows(), start=1))
+        lane_blocks.append(
+            "<div class='contract-action-horizontal-lane contract-action-horizontal-lane-{}'>"
+            "<div class='contract-action-horizontal-head'>"
+            "<div>"
+            "<div class='contract-action-horizontal-title'>{}</div>"
+            "<div class='contract-action-horizontal-caption'>{}</div>"
+            "</div>"
+            "<div class='contract-action-horizontal-count'>{}</div>"
+            "</div>"
+            "{}"
+            "</div>".format(html.escape(lane_class), html.escape(title), html.escape(lane_caption), len(lane), rows_html)
+        )
+
+    board_html = (
+        "<div class='contract-action-horizontal-board'>"
+        "<div class='contract-action-horizontal-board-head'>"
+        "<div>"
+        f"<div class='contract-panel-title'>{html.escape('Priority Actions' if LANG == 'EN' else 'Acciones prioritarias')}</div>"
         f"<div class='contract-panel-subtitle'>{html.escape('Prioritise negotiation actions by urgency, recruitment value and upside.' if LANG == 'EN' else 'Prioriza acciones negociadoras por urgencia, valor de recruitment y plusvalía.')}</div>"
-        "</div>",
-        unsafe_allow_html=True,
+        "</div>"
+        "</div>"
+        f"<div class='contract-action-horizontal-grid'>{''.join(lane_blocks)}</div>"
+        "</div>"
     )
+    st.markdown(board_html, unsafe_allow_html=True)
 
-    st.markdown("<div class='contract-board-shell-anchor'></div>", unsafe_allow_html=True)
-    lane_cols = st.columns(4, gap="medium")
-    for idx, (title, lane_class, lane) in enumerate(lanes):
-        with lane_cols[idx]:
-            lane_tone = {
-                "urgent": "free",
-                "now": "now",
-                "summer": "summer",
-                "track": "track",
-            }.get(lane_class, "track")
-            with st.container(border=True):
-                st.markdown(
-                    f"""
-<div class='contract-premium-lane contract-premium-lane--{html.escape(lane_tone)}'>
-  <div class='contract-premium-lane-header'>
-    <div class='contract-premium-lane-title'>{html.escape(title)}</div>
-    <div class='contract-premium-lane-count'>{len(lane)}</div>
-  </div>
-</div>
-""",
-                    unsafe_allow_html=True,
-                )
-                if lane.empty:
-                    st.markdown(
-                        f"<div class='contract-premium-empty'>{html.escape('No players in this lane' if LANG == 'EN' else 'Sin jugadores en esta categoría')}</div>",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    for item_idx, (_, row) in enumerate(lane.head(max_items).iterrows(), start=1):
-                        days_value = safe_get(row, "contract_days_remaining_dynamic", np.nan)
-                        days_txt = "N/A" if pd.isna(days_value) else f"{int(float(days_value))}d"
-                        upside_txt = format_signed_money_short(safe_get(row, "market_value_gap_eur", np.nan))
-                        score_txt = _contract_score_display(safe_get(row, "recruitment_contract_score", np.nan))
-                        name_txt = str(safe_get(row, "player_name_display", "N/A"))
-                        age_txt = str(safe_get(row, "age_display", "N/A"))
-                        pos_txt = str(safe_get(row, "position_display", "N/A"))
-                        league_txt = str(safe_get(row, "league_display", "N/A"))
-
-                        card_col, arrow_col = st.columns([0.88, 0.12], gap="small")
-                        with card_col:
-                            st.markdown(
-                                f"""
-<div class='contract-premium-player-card'>
-  <div class='contract-premium-player-top'>
-    <span class='contract-premium-rank'>#{item_idx}</span>
-    <span class='contract-premium-name'>{html.escape(name_txt)}</span>
-  </div>
-  <div class='contract-premium-meta'>{html.escape(age_txt)} {html.escape('years' if LANG == 'EN' else 'años')} · {html.escape(pos_txt)} · {html.escape(league_txt)}</div>
-  <div class='contract-premium-kpis'>
-    <span>{html.escape('Days' if LANG == 'EN' else 'Días')}: <b>{html.escape(days_txt)}</b></span>
-    <span>{html.escape('Upside' if LANG == 'EN' else 'Plusvalía')}: <b>{html.escape(upside_txt)}</b></span>
-    <span>RC: <b>{html.escape(score_txt)}</b></span>
-  </div>
-</div>
-""",
-                                unsafe_allow_html=True,
-                            )
-                        with arrow_col:
-                            st.markdown("<div class='contract-premium-arrow-anchor'></div>", unsafe_allow_html=True)
-                            if st.button("›", key=f"contract_board_open_{lane_class}_{item_idx}_{name_txt}", help=("Open profile" if LANG == "EN" else "Abrir perfil")):
-                                _contract_nav_to("Player Intelligence", name_txt, "Profile")
-                st.markdown("<div class='contract-premium-view-all-anchor'></div>", unsafe_allow_html=True)
-                if st.button(("View all →" if LANG == "EN" else "Ver todos →"), key=f"contract_board_view_all_{lane_class}", use_container_width=True):
-                    # Do not mutate contract_quick_preset_v36 after its radio widget has
-                    # been instantiated. Streamlit forbids that and raises a
-                    # StreamlitAPIException. The Action Board uses an independent lane
-                    # filter so the CTA remains robust and predictable.
-                    st.session_state["contract_action_board_lane"] = lane_class
-                    st.session_state.dashboard_navigation_page = "Contract Intelligence"
-                    st.rerun()
 
 def _render_contract_window_distribution(data: pd.DataFrame) -> None:
     if data.empty or "contract_window_display" not in data.columns:
@@ -18569,11 +22257,11 @@ def _render_contract_window_distribution(data: pd.DataFrame) -> None:
         margin=dict(l=10, r=40, t=20, b=20),
         xaxis_title="Players" if LANG == "EN" else "Jugadores",
         yaxis_title="",
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
         font=dict(color="#0f172a"),
     )
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(148,163,184,0.18)")
+    fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
@@ -18601,11 +22289,11 @@ def _render_contract_league_distribution(data: pd.DataFrame) -> None:
         margin=dict(l=10, r=40, t=20, b=20),
         xaxis_title="Players" if LANG == "EN" else "Jugadores",
         yaxis_title="",
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
         font=dict(color="#0f172a"),
     )
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(148,163,184,0.18)")
+    fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
 
@@ -18788,19 +22476,22 @@ def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
         unsafe_allow_html=True,
     )
     st.markdown("<div class='contract-native-toolbar-anchor'></div>", unsafe_allow_html=True)
-    wf_cols = st.columns([1.05, 1.45, 1.35, 1.20, 4.95], gap="small")
+    wf_cols = st.columns([1.15, 1.35, 1.25, 1.15, 1.10], gap="small")
     with wf_cols[0]:
-        if st.button("👤 " + ("Profile" if LANG == "EN" else "Perfil"), key=f"contract_top_profile_{player_name_top}"):
+        if st.button(("Player Dossier" if LANG == "EN" else "Perfil"), key=f"contract_top_profile_{player_name_top}"):
             _contract_nav_to("Player Intelligence", player_name_top, "Profile")
     with wf_cols[1]:
-        if st.button("🔁 " + ("Comparables" if LANG == "EN" else "Comparables"), key=f"contract_top_similar_{player_name_top}"):
+        if st.button(("Similar Profiles" if LANG == "EN" else "Comparables"), key=f"contract_top_similar_{player_name_top}"):
             _contract_nav_to("Recruitment Intelligence", player_name_top, "Similar Players")
     with wf_cols[2]:
-        if st.button("📋 Assessment", key=f"contract_top_assessment_{player_name_top}"):
+        if st.button("Assessment", key=f"contract_top_assessment_{player_name_top}"):
             _contract_nav_to("Recruitment Intelligence", player_name_top, "Recruitment Assessment")
     with wf_cols[3]:
-        if st.button("⏱ " + ("Contract" if LANG == "EN" else "Contrato"), key=f"contract_top_contract_{player_name_top}"):
+        if st.button(("Contract" if LANG == "EN" else "Contrato"), key=f"contract_top_contract_{player_name_top}"):
             _contract_nav_to("Strategy Center", player_name_top, "Contract Detail")
+    with wf_cols[4]:
+        if st.button(("Strategy" if LANG == "EN" else "Estrategia"), key=f"contract_top_strategy_{player_name_top}"):
+            _contract_nav_to("Strategy Center", player_name_top, "Transfer Strategy")
 
     st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
     kpi_cols = st.columns(6)
@@ -18904,6 +22595,516 @@ def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
         st.markdown("""`Recruitment Contract Score = 0.70 × Opportunity Score + 0.30 × Contract Opportunity Score`\n\nRisk Score is not included in this composite metric because it is not available homogeneously for the full universe. Contract Intelligence is an operational decision layer and does not modify the econometric or Machine Learning models.""" if LANG == "EN" else """`Recruitment Contract Score = 0.70 × Opportunity Score + 0.30 × Contract Opportunity Score`\n\nRisk Score no se incorpora a esta métrica compuesta porque no está disponible de forma homogénea para todo el universo. Contract Intelligence es una capa operativa de decisión y no modifica los modelos econométricos ni de Machine Learning.""")
 
 
+st.markdown(
+    """
+<style>
+.snapshot-health-panel {
+    margin: 18px 0 18px 0;
+    padding: 20px 22px;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+.snapshot-health-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+.snapshot-health-kicker {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+.snapshot-health-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.15;
+}
+.snapshot-health-subtitle,
+.snapshot-health-muted {
+    margin-top: 6px;
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+.snapshot-health-scorebox {
+    min-width: 168px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    text-align: right;
+}
+.snapshot-health-score {
+    margin-top: 8px;
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+.snapshot-health-score-caption {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.snapshot-health-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+.snapshot-health-card {
+    padding: 12px 13px;
+    border-radius: 15px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+.snapshot-health-card span {
+    display: block;
+    color: #64748b;
+    font-size: 0.73rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+}
+.snapshot-health-card b {
+    color: #0f172a;
+    font-size: 0.94rem;
+    font-weight: 900;
+}
+.snapshot-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+}
+.snapshot-status-green {
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+}
+.snapshot-status-yellow {
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+.snapshot-status-red {
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+}
+.snapshot-status-neutral {
+    color: #334155;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+.snapshot-metric-card .metric-value,
+.snapshot-metric-badge-value {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    font-size: 1rem !important;
+    line-height: 1.1 !important;
+}
+.snapshot-metric-card .snapshot-status-badge {
+    margin-top: 2px;
+}
+@media (max-width: 1100px) {
+    .snapshot-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .snapshot-health-header { flex-direction: column; }
+    .snapshot-health-scorebox { text-align: left; width: 100%; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+
+# =============================================================================
+# TM.6.6c — Snapshot Governance visual polish: KPI icons, traceability and architecture
+# =============================================================================
+st.markdown(
+    """
+<style>
+.snapshot-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+    min-height: 116px;
+}
+.snapshot-kpi-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 8px;
+}
+.snapshot-kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 0.88rem;
+    font-weight: 950;
+}
+.snapshot-kpi-label {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+.snapshot-kpi-value {
+    color: #0f172a;
+    font-size: 1.62rem;
+    font-weight: 950;
+    line-height: 1.05;
+}
+.snapshot-kpi-caption {
+    color: #64748b;
+    font-size: 0.75rem;
+    line-height: 1.30;
+    margin-top: 6px;
+}
+.snapshot-kpi-card .snapshot-status-badge {
+    margin-top: 1px;
+}
+.snapshot-source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 8px 0 14px 0;
+}
+.snapshot-source-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 11px 12px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.snapshot-source-card span {
+    display: block;
+    color: #64748b;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.snapshot-source-card b {
+    display: block;
+    color: #0f172a;
+    font-size: .88rem;
+    font-weight: 950;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+.snapshot-architecture-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #2563eb;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.045);
+    margin: 12px 0 14px 0;
+}
+.snapshot-architecture-title {
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 950;
+    margin-bottom: 10px;
+}
+.snapshot-architecture-flow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+}
+.snapshot-architecture-node {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 10px 11px;
+    min-height: 72px;
+    position: relative;
+}
+.snapshot-architecture-node:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2563eb;
+    font-weight: 950;
+    z-index: 2;
+}
+.snapshot-architecture-node span {
+    display: block;
+    color: #1d4ed8;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.snapshot-architecture-node b {
+    display: block;
+    color: #0f172a;
+    font-size: .84rem;
+    font-weight: 950;
+    line-height: 1.16;
+}
+.snapshot-governance-conclusion {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 11px 12px;
+    color: #334155;
+    font-size: .82rem;
+    line-height: 1.42;
+    margin-top: 12px;
+}
+.snapshot-governance-conclusion b {
+    color: #0f172a;
+}
+@media (max-width: 1200px) {
+    .snapshot-source-grid { grid-template-columns: 1fr; }
+    .snapshot-architecture-flow { grid-template-columns: 1fr; }
+    .snapshot-architecture-node:not(:last-child)::after { display: none; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.6c — Snapshot Governance: Health Report UI
+# =============================================================================
+def _safe_json_load(path: Path) -> dict:
+    """Load a JSON file safely for dashboard governance panels."""
+    try:
+        if path.exists():
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+    return {}
+
+
+def load_snapshot_health_report() -> dict:
+    """Load the official snapshot health report generated by TM.6.6c."""
+    return _safe_json_load(ROOT / "reports" / "data_quality" / "snapshot_health_report.json")
+
+
+def _status_badge_html(status: object) -> str:
+    status_text = str(status or "UNKNOWN").upper()
+    cls = "green" if status_text == "GREEN" else "yellow" if status_text == "YELLOW" else "red" if status_text == "RED" else "neutral"
+    return f"<span class='snapshot-status-badge snapshot-status-{cls}'>{html.escape(status_text)}</span>"
+
+
+def _fmt_pct(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{float(value):.2f}%"
+    except Exception:
+        return "N/A"
+
+
+def _fmt_score(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{float(value):.1f}/100"
+    except Exception:
+        return "N/A"
+
+
+def render_snapshot_health_panel() -> None:
+    """Render current-player-snapshot freshness, coverage, quality, traceability and architecture status."""
+    report = load_snapshot_health_report()
+    if not report:
+        st.markdown(
+            "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Data Freshness & Snapshot Status</div>"
+            "<p class='snapshot-health-muted'>Snapshot health report not found. Run <code>python src/dss/build_snapshot_health_report.py</code>.</p></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    snapshot = report.get("snapshot", {}) if isinstance(report.get("snapshot"), dict) else {}
+    freshness = report.get("freshness", {}) if isinstance(report.get("freshness"), dict) else {}
+    coverage = report.get("coverage", {}) if isinstance(report.get("coverage"), dict) else {}
+    quality = report.get("quality", {}) if isinstance(report.get("quality"), dict) else {}
+    recommendation = report.get("recommendation", {}) if isinstance(report.get("recommendation"), dict) else {}
+
+    title = "Data Freshness & Snapshot Status" if LANG == "EN" else "Actualidad de datos y estado del snapshot"
+    subtitle = (
+        "Current market context is monitored separately from historical player-season observations."
+        if LANG == "EN"
+        else "El contexto actual de mercado se monitoriza separado de las observaciones históricas player-season."
+    )
+    status = report.get("snapshot_status", "UNKNOWN")
+    score = report.get("snapshot_score", np.nan)
+    score_text = _fmt_score(score)
+
+    snapshot_version = snapshot.get("snapshot_version", "N/A")
+    snapshot_date = snapshot.get("snapshot_date", "N/A")
+    latest_valuation_date = snapshot.get("latest_valuation_date", "N/A")
+    match_key = snapshot.get("match_key", "N/A")
+    fallback_match_key = snapshot.get("fallback_match_key", "N/A")
+    source = snapshot.get("source", "N/A")
+    players_total = snapshot.get("players_total", "N/A")
+    leagues_total = snapshot.get("leagues_total", "N/A")
+    next_action = recommendation.get("next_action", "")
+    governance_note = report.get("governance_note", "")
+
+    players_display = f"{int(players_total):,}" if isinstance(players_total, (int, float)) and not pd.isna(players_total) else str(players_total)
+
+    st.markdown(
+        f"""
+        <div class='snapshot-health-panel'>
+            <div class='snapshot-health-header'>
+                <div>
+                    <div class='snapshot-health-kicker'>TM.6.6c · Snapshot Governance</div>
+                    <div class='snapshot-health-title'>{html.escape(title)}</div>
+                    <div class='snapshot-health-subtitle'>{html.escape(subtitle)}</div>
+                </div>
+                <div class='snapshot-health-scorebox'>
+                    {_status_badge_html(status)}
+                    <div class='snapshot-health-score'>{html.escape(score_text)}</div>
+                    <div class='snapshot-health-score-caption'>Snapshot Health Score</div>
+                </div>
+            </div>
+            <div class='snapshot-health-grid'>
+                <div class='snapshot-health-card'><span>Snapshot version</span><b>{html.escape(str(snapshot_version))}</b></div>
+                <div class='snapshot-health-card'><span>Snapshot date</span><b>{html.escape(str(snapshot_date))}</b></div>
+                <div class='snapshot-health-card'><span>Latest valuation</span><b>{html.escape(str(latest_valuation_date))}</b></div>
+                <div class='snapshot-health-card'><span>Match key</span><b>{html.escape(str(match_key))}</b></div>
+                <div class='snapshot-health-card'><span>Players</span><b>{html.escape(players_display)}</b></div>
+                <div class='snapshot-health-card'><span>Leagues</span><b>{html.escape(str(leagues_total))}</b></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    freshness_status_html = _status_badge_html(freshness.get("status", "N/A"))
+    coverage_status_html = _status_badge_html(coverage.get("status", "N/A"))
+    quality_status_html = _status_badge_html(quality.get("status", "N/A"))
+
+    h1, h2, h3 = st.columns(3)
+    with h1:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🟢</div><div class="snapshot-kpi-label">Freshness</div></div>
+                <div class="snapshot-kpi-value">{freshness_status_html}</div>
+                <div class="snapshot-kpi-caption">valuation age: {html.escape(str(freshness.get('valuation_age_days', 'N/A')))} days · snapshot age: {html.escape(str(freshness.get('snapshot_age_days', 'N/A')))} days</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with h2:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🛡</div><div class="snapshot-kpi-label">Coverage</div></div>
+                <div class="snapshot-kpi-value">{html.escape(_fmt_pct(coverage.get('dss_pct')))}</div>
+                <div class="snapshot-kpi-caption">portfolio {_fmt_pct(coverage.get('portfolio_pct'))} · contract {_fmt_pct(coverage.get('contract_pct'))} · {coverage_status_html}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with h3:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🔍</div><div class="snapshot-kpi-label">Quality</div></div>
+                <div class="snapshot-kpi-value">{html.escape(str(quality.get('homonym_names', 'N/A')))}</div>
+                <div class="snapshot-kpi-caption">homonym names monitored · {quality_status_html}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("Snapshot health details" if LANG == "EN" else "Detalle del estado del snapshot", expanded=False):
+        st.markdown(
+            f"""
+            <div class="snapshot-source-grid">
+                <div class="snapshot-source-card"><span>Snapshot source</span><b>{html.escape(str(source))}</b></div>
+                <div class="snapshot-source-card"><span>Valuation date max</span><b>{html.escape(str(latest_valuation_date))}</b></div>
+                <div class="snapshot-source-card"><span>Monitoring cadence</span><b>Monthly</b></div>
+                <div class="snapshot-source-card"><span>Official match key</span><b>{html.escape(str(match_key))}</b></div>
+                <div class="snapshot-source-card"><span>Fallback match key</span><b>{html.escape(str(fallback_match_key))}</b></div>
+                <div class="snapshot-source-card"><span>Refresh command</span><b>build_current_player_snapshot.py</b></div>
+            </div>
+            <div class="snapshot-architecture-card">
+                <div class="snapshot-architecture-title">Snapshot architecture</div>
+                <div class="snapshot-architecture-flow">
+                    <div class="snapshot-architecture-node"><span>01 Raw source</span><b>Transfermarkt Raw</b></div>
+                    <div class="snapshot-architecture-node"><span>02 Current layer</span><b>Current Player Snapshot</b></div>
+                    <div class="snapshot-architecture-node"><span>03 Overlay</span><b>DSS Current Context</b></div>
+                    <div class="snapshot-architecture-node"><span>04 Product modules</span><b>Market · Player · Recruitment · Strategy</b></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        detail_rows = [
+            ["Snapshot status", str(status)],
+            ["Snapshot score", score_text],
+            ["Snapshot age", f"{freshness.get('snapshot_age_days', 'N/A')} days"],
+            ["Valuation age", f"{freshness.get('valuation_age_days', 'N/A')} days"],
+            ["DSS coverage", _fmt_pct(coverage.get("dss_pct"))],
+            ["Contract coverage", _fmt_pct(coverage.get("contract_pct"))],
+            ["Portfolio coverage", _fmt_pct(coverage.get("portfolio_pct"))],
+            ["DSS unmatched", str((coverage.get("unmatched_rows") or {}).get("dss", "N/A"))],
+            ["Portfolio unmatched", str((coverage.get("unmatched_rows") or {}).get("portfolio", "N/A"))],
+            ["Recommendation", str(next_action or "N/A")],
+        ]
+        details_df = pd.DataFrame(detail_rows, columns=["Metric", "Value"])
+        st.dataframe(details_df, width="stretch", hide_index=True)
+        conclusion_text = (
+            "Snapshot health is GREEN. No refresh action is required under the current governance thresholds. "
+            "Current market context remains suitable for decision support."
+            if str(status).upper() == "GREEN"
+            else "Snapshot governance requires review according to the current thresholds before release promotion."
+        )
+        st.markdown(
+            f"""
+            <div class="snapshot-governance-conclusion">
+                <b>Governance conclusion.</b> {html.escape(conclusion_text)}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if governance_note:
+            st.caption(governance_note)
+
 def render_methodology_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Methodology", "Methodology", "Data, modeling, validation and business evaluation." if LANG == "EN" else "Datos, modelización, validación y evaluación de negocio.")
     st.markdown('<div class="methodology-grid">', unsafe_allow_html=True)
@@ -18911,7 +23112,7 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
     with m1:
         render_metric_card_with_caption("Dataset", f"{len(source_df):,}", "eligible prospects" if LANG == "EN" else "prospects elegibles")
     with m2:
-        render_metric_card_with_caption("Coverage", f"{source_df['league'].nunique() if 'league' in source_df.columns else 'N/A'}", "European leagues" if LANG == "EN" else "ligas europeas")
+        render_metric_card_with_caption("Coverage", f"{count_current_dss_leagues(source_df)}", "European leagues" if LANG == "EN" else "ligas europeas")
     with m3:
         render_metric_card_with_caption("Model", "XGBoost", "production ML estimator" if LANG == "EN" else "estimador ML productivo")
     with m4:
@@ -18926,6 +23127,9 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
         render_metric_card_with_caption("Tuned XGBoost", "R² 0.5664", "mejor validación externa" if LANG == "ES" else "best external validation")
     with c3:
         render_metric_card_with_caption("Precision@K", "90%", "Ranking evaluation" if LANG == "EN" else "Evaluación de ranking")
+
+    render_snapshot_health_panel()
+
     with st.expander("CRISP-DM / Del Dato al Conocimiento", expanded=False):
         st.markdown("""
 Business Understanding → Data Understanding → Data Preparation → Modeling → Evaluation → Deployment
@@ -18987,7 +23191,9 @@ def render_strategy_center_page(source_df: pd.DataFrame, contract_source_df: pd.
         if LANG == "EN"
         else "Optimización de cartera, timing contractual y planificación de mercado.",
     )
+    source_df = add_role_display_columns(source_df)
     view_options = ["Contract Intelligence", "Transfer Strategy"]
+    st.markdown("<div class='product-tab-nav'><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Contract Intelligence" else "") + "'>Contrato</span><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Transfer Strategy" else "") + "'>Estrategia</span></div>", unsafe_allow_html=True)
     selected_view = st.radio(
         "Strategy Center view" if LANG == "EN" else "Vista Strategy Center",
         view_options,
@@ -18998,6 +23204,17 @@ def render_strategy_center_page(source_df: pd.DataFrame, contract_source_df: pd.
     )
     st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
     if selected_view == "Transfer Strategy":
+        segment_df = render_role_context_filters(source_df, "strategy_center_transfer", expanded=False)
+        if not segment_df.empty:
+            top_contexts = (
+                segment_df["taxonomy_role_context"].value_counts().head(5).index.tolist()
+                if "taxonomy_role_context" in segment_df.columns
+                else []
+            )
+            st.markdown(
+                f"<div class='radar-info-box'><b>{html.escape('Role segmentation active' if LANG == 'EN' else 'Segmentación táctica activa')}:</b> {html.escape(', '.join(map(str, top_contexts)) if top_contexts else ('No role context available' if LANG == 'EN' else 'Sin contexto de rol disponible'))}</div>",
+                unsafe_allow_html=True,
+            )
         render_transfer_strategy_placeholder()
     else:
         render_contract_intelligence_page(contract_source_df)
@@ -19679,7 +23896,7 @@ st.markdown(
 <div class="scouting-iq-footer">
     <b>SCOUTING IQ PLATFORM</b>
     <div>Market Value Intelligence System</div>
-    <div>Master Thesis · Sports Analytics &amp; Data Science</div>
+    <div>Football Recruitment Decision Support System</div>
 </div>
 """,
     unsafe_allow_html=True,
@@ -22245,550 +26462,936 @@ div[data-testid="stHorizontalBlock"]:has(.final-search-shell):has(.compact-conte
 
 
 # =============================================================================
-# TM.4.1 Final close polish: matrix, search, benchmark cards and report border
+# role intelligence.8.1 Role Intelligence + Player Profile UX repair
 # =============================================================================
 st.markdown(
     """
 <style>
-/* Global Search: make it closer in height and presence to Contexto Activo. */
+/* Command/search row: align the search module with Contexto Activo. */
 .final-search-shell,
-.global-search-shell,
-[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
-[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) {
-    min-height: 184px !important;
-    padding: 20px 22px 22px 22px !important;
-    border-radius: 22px !important;
-}
-.final-search-title,
-.global-search-title {
-    margin-bottom: 8px !important;
-}
-.final-search-caption,
-.global-search-caption {
-    margin-bottom: 12px !important;
-}
-[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
-[data-testid="stVerticalBlockBorderWrapper"]:has(.global-search-title) div[data-baseweb="select"] > div,
-.final-search-shell div[data-baseweb="select"] > div,
-.global-search-shell div[data-baseweb="select"] > div {
-    min-height: 68px !important;
-    border-radius: 18px !important;
-    padding: .75rem 1rem !important;
-}
-
-/* Performance Benchmark: one premium scouting engine. */
-[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
-    background: #ffffff !important;
-    border: 1px solid #dbe3ee !important;
-    border-radius: 20px !important;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, .060) !important;
-    padding: 18px 20px 18px 20px !important;
-}
-[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-info-box {
-    margin-top: 10px !important;
-    margin-bottom: 14px !important;
-    box-shadow: none !important;
-    background: #f8fbff !important;
-}
-[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 18px !important;
-    box-shadow: 0 12px 28px rgba(15,23,42,.040) !important;
-    padding: 8px !important;
-}
-.tm4-signals-title { margin-bottom: 8px !important; }
-.tm4-signal-grid {
-    display: grid !important;
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    gap: 10px !important;
-    align-items: stretch !important;
-}
-.tm4-signal-card-item {
-    grid-column: span 2 !important;
-    min-height: 132px !important;
-    padding: 15px 16px !important;
-}
-.tm4-signal-grid .tm4-signal-card-item:nth-last-child(2):nth-child(4) {
-    grid-column: 2 / span 2 !important;
-}
-.tm4-signal-grid .tm4-signal-card-item:last-child:nth-child(5) {
-    grid-column: 4 / span 2 !important;
-}
-.radar-readout-card {
-    margin-top: 14px !important;
-    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%) !important;
-    border: 1px solid #dbeafe !important;
-    border-left: 5px solid #2563eb !important;
-    border-radius: 14px !important;
-    padding: 11px 14px !important;
-    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
-}
-@media (max-width: 1200px) {
-    .tm4-signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-    .tm4-signal-card-item,
-    .tm4-signal-grid .tm4-signal-card-item:nth-last-child(2):nth-child(4),
-    .tm4-signal-grid .tm4-signal-card-item:last-child:nth-child(5) { grid-column: auto !important; }
-}
-
-/* Market/Opportunity matrix: professional SaaS card instead of raw chart. */
-.matrix-pro-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin: 2px 0 12px 0;
-}
-.matrix-pro-eyebrow {
-    color: #1d4ed8;
-    font-size: .70rem;
-    font-weight: 950;
-    letter-spacing: .085em;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-.matrix-pro-title {
-    color: #0f172a;
-    font-size: 1.20rem;
-    font-weight: 950;
-    line-height: 1.08;
-}
-.matrix-pro-subtitle {
-    color: #64748b;
-    font-size: .82rem;
-    line-height: 1.35;
-    margin-top: 4px;
-}
-.matrix-pro-bubble-note {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    border: 1px solid #dbeafe;
-    background: #eff6ff;
-    color: #1e3a8a;
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-size: .72rem;
-    font-weight: 950;
-}
-.matrix-pro-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 0 0 12px 0;
-}
-.matrix-pro-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #334155;
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-size: .70rem;
-    font-weight: 900;
-}
-.matrix-pro-legend i { width: 9px; height: 9px; border-radius: 999px; display: inline-block; }
-.dot-green { background:#22c55e; }
-.dot-orange { background:#f97316; }
-.dot-blue { background:#3b82f6; }
-.dot-red { background:#ef4444; }
-.matrix-top5-side-card {
-    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    padding: 14px 15px;
-    box-shadow: 0 12px 28px rgba(15,23,42,.050);
-    min-height: 440px;
-}
-.matrix-top5-side-title { color:#0f172a; font-size:.92rem; font-weight:950; margin-bottom:3px; }
-.matrix-top5-side-subtitle { color:#64748b; font-size:.70rem; line-height:1.3; margin-bottom:10px; }
-.matrix-top5-side-row {
-    display:grid;
-    grid-template-columns:28px minmax(0,1fr) 48px;
-    gap:8px;
-    align-items:center;
-    padding:9px 0;
-    border-bottom:1px solid #edf2f7;
-}
-.matrix-top5-side-row:last-child { border-bottom:0; }
-.matrix-top5-side-rank {
-    width:25px; height:25px; border-radius:8px; background:#eff6ff; color:#1d4ed8;
-    display:flex; align-items:center; justify-content:center; font-weight:950; font-size:.72rem;
-}
-.matrix-top5-side-name { color:#0f172a; font-size:.80rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.matrix-top5-side-meta { color:#64748b; font-size:.64rem; line-height:1.18; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.matrix-top5-side-score { text-align:right; color:#166534; font-size:.90rem; font-weight:950; }
-
-/* Scouting Report: analytical read should guide, not dominate. */
-.analytical-read-card,
-.tm4-analytical-read-card,
-.scouting-report-analytical-card {
-    border-color: #e2e8f0 !important;
-    border-left: 4px solid #8b5cf6 !important;
-    box-shadow: 0 10px 24px rgba(15,23,42,.040) !important;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-
-# =============================================================================
-# TM.4.1 v13 Professional visual coherence patch
-# =============================================================================
-st.markdown(
-    """
-<style>
-/* ---------- Product navigation / CTA buttons ---------- */
-.quick-action-grid,
-.recruitment-center-actions,
-.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"],
-.contract-workflow-toolbar + div[data-testid="stHorizontalBlock"] {
-    gap: 10px !important;
-}
-.quick-action-card {
-    border: 1px solid #dbeafe !important;
-    border-left: 4px solid #2563eb !important;
-    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%) !important;
-    border-radius: 18px !important;
-    box-shadow: 0 12px 28px rgba(15,23,42,.055) !important;
-}
-div[data-testid="stButton"] button,
-.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button,
-.contract-cta-shell + div[data-testid="stHorizontalBlock"] button {
-    border-radius: 999px !important;
-    border: 1px solid #bfdbfe !important;
-    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
-    color: #0f2f5f !important;
-    font-weight: 900 !important;
-    box-shadow: 0 6px 16px rgba(37,99,235,.08) !important;
-}
-div[data-testid="stButton"] button:hover,
-.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button:hover,
-.contract-cta-shell + div[data-testid="stHorizontalBlock"] button:hover {
-    border-color:#93c5fd !important;
-    background:#dbeafe !important;
-    transform: translateY(-1px);
-}
-
-/* ---------- Global visual language: blue is primary; green/orange are signals, not blocks ---------- */
-.contract-target-card,
-.contract-target-card-premium,
-.contract-target-card-pro,
-.contract-target-card-premium.contract-target-card-pro,
-.similarity-recommended-card,
-.similarity-recommended-card-compact,
-.similarity-decision-card-primary {
-    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%) !important;
-    border-color: #bfdbfe !important;
-    border-left-color: #2563eb !important;
-    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
-}
-.contract-target-eyebrow,
-.contract-workflow-embedded .contract-workflow-title,
-.similarity-recommended-eyebrow,
-.similarity-decision-eyebrow {
-    color:#1d4ed8 !important;
-}
-.contract-target-card-premium .contract-quick-actions,
-.contract-workflow-embedded {
-    border-top-color:#dbeafe !important;
-}
-.contract-action-pill.contract-action-urgent,
-.contract-action-pill.contract-action-high,
-.contract-action-pill.contract-action-medium,
-.contract-action-pill.contract-action-watch {
-    background:#eff6ff !important;
-    color:#1e3a8a !important;
-    border-color:#bfdbfe !important;
-}
-
-/* ---------- Performance Benchmark: stable professional card layout ---------- */
-[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
-    background:#ffffff !important;
-    border:1px solid #dbe3ee !important;
-    border-radius:20px !important;
-    box-shadow:0 16px 36px rgba(15,23,42,.060) !important;
-    padding:18px 20px !important;
-}
-.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
-[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
-    background:#ffffff !important;
-    border:1px solid #e2e8f0 !important;
-    border-radius:18px !important;
-    box-shadow:0 10px 24px rgba(15,23,42,.035) !important;
-    padding:8px !important;
-    overflow:hidden !important;
-}
-.tm4-signals-title {
-    margin: 0 0 10px 0 !important;
-}
-.tm4-signal-grid-pro {
-    display:flex !important;
-    flex-direction:column !important;
-    gap:10px !important;
-    width:100% !important;
-}
-.tm4-signal-row {
-    display:grid !important;
-    gap:10px !important;
-    align-items:stretch !important;
-}
-.tm4-signal-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-.tm4-signal-row-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    width:66.666% !important;
-    margin:0 auto !important;
-}
-.tm4-signal-card-pro {
-    background:#ffffff !important;
-    border:1px solid #e2e8f0 !important;
-    border-radius:16px !important;
-    box-shadow:0 10px 24px rgba(15,23,42,.045) !important;
-    padding:14px 15px !important;
-    min-height:122px !important;
-    display:flex !important;
-    flex-direction:column !important;
-    justify-content:center !important;
-}
-.tm4-signal-card-title {
-    color:#0f2f5f !important;
-    font-size:.70rem !important;
-    font-weight:950 !important;
-    line-height:1.15 !important;
-    margin-bottom:8px !important;
-    white-space:normal !important;
-}
-.tm4-signal-card-percentile {
-    color:#071426 !important;
-    font-size:1.62rem !important;
-    line-height:1 !important;
-    font-weight:950 !important;
-}
-.tm4-signal-card-rating {
-    color:#166534 !important;
-    font-size:.72rem !important;
-    font-weight:900 !important;
-    margin-top:6px !important;
-}
-.tm4-signal-card-value {
-    color:#64748b !important;
-    font-size:.68rem !important;
-    margin-top:8px !important;
-}
-@media (max-width:1200px){
-    .tm4-signal-row-3, .tm4-signal-row-2 { grid-template-columns: 1fr !important; width:100% !important; }
-}
-
-/* ---------- Similar players: reduce voids and align map with product chart style ---------- */
-.similarity-professional-layout {
-    grid-template-columns: minmax(0, 2.8fr) minmax(320px, .9fr) !important;
-    gap:16px !important;
-}
-.similarity-chart-shell {
-    border:1px solid #e2e8f0 !important;
-    border-radius:18px 18px 0 0 !important;
-    background:#ffffff !important;
-    padding:15px 17px 10px 17px !important;
-    box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
-}
-.similarity-chart-shell + div[data-testid="stPlotlyChart"] {
-    border:1px solid #e2e8f0 !important;
-    border-top:0 !important;
-    border-radius:0 0 18px 18px !important;
-    background:#ffffff !important;
-    box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
-    padding:4px 8px 10px 8px !important;
-}
-.similarity-map-title { color:#0f172a !important; font-size:1.02rem !important; }
-.similarity-map-subtitle { color:#64748b !important; font-size:.76rem !important; }
-.similarity-quadrant-chip,
-.matrix-pro-legend span {
-    background:#f8fbff !important;
-    border-color:#dbeafe !important;
-    color:#0f2f5f !important;
-}
-.similarity-bubble-note,
-.matrix-pro-bubble-note {
-    background:#eff6ff !important;
-    border-color:#bfdbfe !important;
-    color:#1e3a8a !important;
-}
-.similarity-rank-card,
-.similarity-rank-card-compact,
-.matrix-top5-side-card,
-.contract-matrix-top5-card {
-    border:1px solid #e2e8f0 !important;
-    border-radius:18px !important;
-    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
-    box-shadow:0 12px 28px rgba(15,23,42,.050) !important;
-}
-.similarity-recommended-card-compact,
-.similarity-decision-card,
-.similarity-benchmark-card,
-.similarity-assessment-card {
-    border-radius:18px !important;
-    box-shadow:0 10px 24px rgba(15,23,42,.045) !important;
-}
-
-/* ---------- Opportunity / Risk matrix: professional chart shell ---------- */
-.matrix-pro-header {
-    background:#ffffff !important;
-    border:1px solid #e2e8f0 !important;
-    border-bottom:0 !important;
-    border-radius:18px 18px 0 0 !important;
-    padding:16px 18px 8px 18px !important;
-    margin:0 !important;
-    box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
-}
-.matrix-pro-legend {
-    background:#ffffff !important;
-    border-left:1px solid #e2e8f0 !important;
-    border-right:1px solid #e2e8f0 !important;
-    padding:0 18px 12px 18px !important;
-    margin:0 !important;
-}
-.matrix-pro-legend + div[data-testid="stHorizontalBlock"],
-.matrix-pro-header + .matrix-pro-legend + div[data-testid="stHorizontalBlock"] {
-    background:#ffffff !important;
-    border:1px solid #e2e8f0 !important;
-    border-top:0 !important;
-    border-radius:0 0 18px 18px !important;
-    box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
-    padding:0 16px 16px 16px !important;
-}
-
-/* ---------- Scouting report: softer purple rail ---------- */
-.analytical-read-card,
-.tm4-analytical-read-card,
-.scouting-report-analytical-card {
-    border-color:#e2e8f0 !important;
-    border-left:3px solid #a78bfa !important;
-    box-shadow:0 10px 24px rgba(15,23,42,.035) !important;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-# =============================================================================
-# TM.4.1 hotfix closure: radar cards + larger global search
-# =============================================================================
-st.markdown(
-    """
-<style>
-/* Global Scouting Search: align visual weight with Contexto Activo. */
-.final-search-shell,
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
-div[data-testid="stElementContainer"]:has(.final-search-title) {
-    min-height: 188px !important;
-    padding: 20px 22px 22px 22px !important;
-    border-radius: 22px !important;
-    border: 1px solid #d5e3f6 !important;
-    border-left: 5px solid #2563eb !important;
-    background: #ffffff !important;
-    box-shadow: 0 18px 44px rgba(15, 23, 42, .075) !important;
-}
-.final-search-title {
-    font-size: 1.00rem !important;
-    line-height: 1.15 !important;
-    margin-bottom: 8px !important;
-}
-.final-search-caption {
-    font-size: .88rem !important;
-    line-height: 1.35 !important;
-    margin-bottom: 10px !important;
-}
-.final-search-microcopy,
-.final-search-examples {
-    margin-bottom: 14px !important;
-}
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
-div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
-    min-height: 68px !important;
-    border-radius: 18px !important;
-    border: 2px solid #2563eb !important;
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-shell {
+    min-height: 208px !important;
+    height: 100% !important;
     display: flex !important;
-    align-items: center !important;
-    box-shadow: 0 12px 30px rgba(37, 99, 235, .13) !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 20px 22px !important;
 }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] span,
-div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] input,
-div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] span {
-    font-size: 1.04rem !important;
-    font-weight: 760 !important;
+.final-search-title { font-size: .98rem !important; margin-bottom: 9px !important; }
+.final-search-caption { font-size: .86rem !important; margin-bottom: 12px !important; }
+.final-search-shell div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 64px !important;
+    border-radius: 18px !important;
+    align-items: center !important;
+}
+.context-strip-v2.compact-context-panel {
+    min-height: 208px !important;
+    height: 100% !important;
+    padding: 20px 22px !important;
 }
 
-/* Performance Benchmark: stable native KPI cards, no raw HTML leakage. */
-.tm4-signal-card-native,
-.tm4-signal-card-pro {
-    width: 100% !important;
-    min-height: 132px !important;
-    background: #ffffff !important;
-    border: 1px solid #dbe3ee !important;
+/* Role Intelligence: stronger premium cards, close to the Joao Neves visual reference. */
+.role-section-card {
+    margin-top: 18px !important;
+    margin-bottom: 16px !important;
+    border-radius: 20px !important;
+    border-left-width: 6px !important;
+    box-shadow: 0 16px 38px rgba(15,23,42,.065) !important;
+}
+.role-profile-grid {
+    gap: 16px !important;
+    margin: 14px 0 20px 0 !important;
+}
+.role-profile-card {
+    min-height: 118px !important;
     border-radius: 18px !important;
     padding: 16px 18px !important;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, .055) !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.055) !important;
+}
+.role-profile-value { font-size: 1.16rem !important; }
+.role-similar-grid { gap: 14px !important; }
+.role-similar-card {
+    min-height: 128px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.052) !important;
+}
+
+/* Performance Benchmark: give radar signal cards more air and a modern SaaS card feel. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    padding: 22px 24px !important;
+    border-radius: 22px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"] {
+    gap: 1.05rem !important;
+}
+.tm4-native-signal-card,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-card.tm4-native-signal-card {
+    min-height: 136px !important;
+    padding: 18px 20px !important;
+    border-radius: 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 16px 34px rgba(15,23,42,.060) !important;
+}
+.tm4-native-signal-card .radar-card-title { font-size: .74rem !important; margin-bottom: 10px !important; }
+.tm4-native-signal-card .radar-card-percentile { font-size: 1.58rem !important; margin-bottom: 8px !important; }
+.tm4-native-signal-card .radar-card-label { font-size: .76rem !important; margin-top: 5px !important; }
+.tm4-native-signal-card .radar-card-value { font-size: .68rem !important; margin-top: 10px !important; }
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"] {
+    border-radius: 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.045) !important;
+}
+.radar-readout-card {
+    margin-top: 16px !important;
+    min-height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Market Value Drivers / SHAP: avoid raw-looking technical chart when expanded. */
+.market-drivers-shell {
+    border-radius: 22px !important;
+    box-shadow: 0 18px 42px rgba(15,23,42,.060) !important;
+    margin-top: 24px !important;
+}
+.market-driver-card {
+    border-radius: 18px !important;
+    padding: 18px 20px !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) {
+    border-radius: 18px !important;
+    border: 1px solid #dbeafe !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.050) !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) details > summary {
+    min-height: 48px !important;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    color: #0f2f5f !important;
+    font-weight: 950 !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) div[data-testid="stPlotlyChart"] {
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: none !important;
+    border-top: 1px solid #edf2f7 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# role intelligence.8.2 UX repair: search/context height, Role cards and SHAP technical chart
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search and context must read as sibling modules. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+.final-search-shell {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 18px 20px !important;
+    box-sizing: border-box !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 18px 20px !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
 }
-.tm4-signal-card-title {
-    color: #0f2f5f !important;
-    font-size: .78rem !important;
-    font-weight: 950 !important;
-    line-height: 1.15 !important;
-    margin-bottom: 12px !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere !important;
+.context-current-value { font-size: 1.55rem !important; line-height: 1.0 !important; }
+.compact-context-panel .context-chip-row { max-height: 48px !important; overflow: hidden !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 58px !important;
+    border-radius: 18px !important;
 }
-.tm4-signal-card-percentile {
-    color: #061426 !important;
-    font-size: 2.00rem !important;
-    line-height: .95 !important;
-    font-weight: 950 !important;
-    margin-bottom: 8px !important;
+/* Role cards: no NaN visual leakage and closer to the premium player-card system. */
+.role-profile-grid { gap: 18px !important; margin: 18px 0 24px 0 !important; }
+.role-profile-card {
+    border-radius: 18px !important;
+    padding: 18px 20px !important;
+    min-height: 112px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050) !important;
 }
-.tm4-signal-card-rating {
-    color: #0f2f5f !important;
-    font-size: .82rem !important;
-    font-weight: 900 !important;
-    margin-bottom: 8px !important;
+.role-profile-value { font-size: 1.13rem !important; line-height: 1.16 !important; }
+.role-profile-caption { color:#64748b !important; font-weight:750 !important; }
+.snapshot-role-placeholder { background:#f8fafc !important; color:#475569 !important; border-color:#e2e8f0 !important; }
+/* SHAP technical chart in the expander should no longer look like a raw notebook plot. */
+div[data-testid="stExpander"]:has(.js-plotly-plot) {
+    border-radius: 18px !important;
+    border: 1px solid #dbe3ee !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    overflow: hidden !important;
 }
-.tm4-signal-card-value {
-    color: #64748b !important;
-    font-size: .74rem !important;
-    font-weight: 760 !important;
+div[data-testid="stExpander"]:has(.js-plotly-plot) details > summary {
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    color:#0f2f5f !important;
+    font-weight:950 !important;
 }
-.tm4-signals-title {
-    margin-bottom: 10px !important;
+div[data-testid="stExpander"]:has(.js-plotly-plot) div[data-testid="stPlotlyChart"] {
+    background:#ffffff !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: none !important;
+    padding: 8px 12px 12px 12px !important;
 }
-/* Keep card rows tight and centered when Streamlit columns are used. */
-div[data-testid="column"]:has(.tm4-signal-card-native) {
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# tactical intelligence.5.1 Role Intelligence visibility patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-identity-pipeline {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 14px 0;
+}
+.role-identity-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+}
+.role-identity-flow {
+    display:grid;
+    grid-template-columns: minmax(160px,1fr) 24px minmax(160px,1fr) 24px minmax(180px,1.15fr) 24px minmax(160px,1fr);
+    gap:8px;
+    align-items:center;
+}
+.role-identity-step {
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    padding:10px 12px;
+    min-height:72px;
+}
+.role-identity-step-tax { border-color:#bfdbfe; background:#eff6ff; }
+.role-identity-step span {
+    display:block;
+    color:#64748b;
+    font-size:.66rem;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.055em;
+    margin-bottom:4px;
+}
+.role-identity-step b {
+    display:block;
+    color:#0f172a;
+    font-size:.92rem;
+    font-weight:950;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.role-identity-step small {
+    display:block;
+    color:#475569;
+    font-size:.70rem;
+    font-weight:800;
+    margin-top:4px;
+    line-height:1.25;
+}
+.role-identity-arrow {
+    color:#2563eb;
+    font-weight:950;
+    text-align:center;
+    font-size:1.05rem;
+}
+.role-profile-card-taxonomy {
+    border-left:4px solid #2563eb !important;
+}
+.role-context-availability {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:11px 13px;
+    box-shadow:0 8px 20px rgba(15,23,42,.035);
+    margin: 0 0 12px 0;
+}
+.role-context-availability-title {
+    color:#0f172a;
+    font-size:.80rem;
+    font-weight:950;
+    margin-bottom:7px;
+}
+.role-context-chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+.role-context-chip {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:900;
+}
+.role-context-chip b {
+    color:#0f172a;
+    font-weight:950;
+}
+[data-testid="stSidebar"] .role-availability-panel {
+    margin: 0.25rem 0 0.95rem 0;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(219,234,254,.10);
+    border: 1px solid rgba(191,219,254,.24);
+}
+[data-testid="stSidebar"] .role-availability-title {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    font-size:.74rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:3px;
+}
+[data-testid="stSidebar"] .role-availability-subtitle {
+    color:#b9d4f5 !important;
+    -webkit-text-fill-color:#b9d4f5 !important;
+    font-size:.66rem;
+    line-height:1.25;
+    margin-bottom:7px;
+}
+[data-testid="stSidebar"] .role-availability-chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+}
+[data-testid="stSidebar"] .role-availability-chip {
+    display:inline-flex;
+    gap:5px;
+    border-radius:999px;
+    padding:4px 7px;
+    color:#dbeafe !important;
+    -webkit-text-fill-color:#dbeafe !important;
+    background:rgba(239,246,255,.10);
+    border:1px solid rgba(191,219,254,.22);
+    font-size:.64rem;
+    font-weight:850;
+    line-height:1.1;
+}
+[data-testid="stSidebar"] .role-availability-chip b {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    font-weight:950;
+}
+[data-testid="stSidebar"] .role-availability-chip-active {
+    background:#2563eb !important;
+    border-color:#93c5fd !important;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+}
+.eligibility-panel {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-left:5px solid #0f2f5f;
+    border-radius:18px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    padding:14px 16px;
+    margin: 12px 0 18px 0;
+}
+.eligibility-panel-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:10px;
+}
+.eligibility-eyebrow {
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:4px;
+}
+.eligibility-title {
+    color:#0f172a;
+    font-size:.96rem;
+    font-weight:950;
+}
+.eligibility-summary {
+    display:inline-flex;
+    border-radius:999px;
+    padding:6px 10px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+.eligibility-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:9px;
+}
+.eligibility-card {
+    border-radius:13px;
+    padding:9px 10px;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    min-height:86px;
+}
+.eligibility-card-pass {
+    background:#f0fdf4;
+    border-color:#bbf7d0;
+}
+.eligibility-card-fail {
+    background:#fef2f2;
+    border-color:#fecaca;
+}
+.eligibility-status {
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.78rem;
+    font-weight:950;
+    margin-bottom:5px;
+}
+.eligibility-card-pass .eligibility-status { background:#dcfce7; color:#166534; }
+.eligibility-card-fail .eligibility-status { background:#fee2e2; color:#991b1b; }
+.eligibility-label {
+    color:#64748b;
+    font-size:.64rem;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:2px;
+}
+.eligibility-value {
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+    line-height:1.1;
+}
+.eligibility-detail {
+    color:#475569;
+    font-size:.66rem;
+    font-weight:800;
+    margin-top:4px;
+}
+.outside-reasons {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:11px;
+}
+.outside-reasons b {
+    width:100%;
+    color:#0f172a;
+    font-size:.76rem;
+    font-weight:950;
+}
+.outside-reasons span {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 8px;
+    background:#fef2f2;
+    color:#991b1b;
+    border:1px solid #fecaca;
+    font-size:.70rem;
+    font-weight:850;
+}
+@media (max-width: 1350px) {
+    .role-identity-flow { grid-template-columns: 1fr; }
+    .role-identity-arrow { display:none; }
+    .eligibility-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 800px) {
+    .eligibility-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5.1 UX Harmonization & Visual Intelligence Refactor
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root {
+    --iq-primary:#2F5BFF;
+    --iq-success:#58C27D;
+    --iq-warning:#F5A623;
+    --iq-danger:#E05658;
+    --iq-neutral:#7C8DB5;
+}
+/* Executive SaaS chips replacing academic legends */
+.matrix-exec-legend {
+    display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin: 8px 0 12px 0;
+}
+.matrix-exec-chip {
+    display:inline-flex; align-items:center; gap:7px; padding:7px 11px; border-radius:999px;
+    background:#ffffff; border:1px solid #e2e8f0; color:#334155; font-size:.74rem; font-weight:950;
+    box-shadow:0 6px 14px rgba(15,23,42,.035);
+}
+.matrix-exec-dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+.matrix-exec-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050); margin: 10px 0 16px 0;
+}
+/* Role filters: readable pills, no white-on-white mini-bars */
+.role-context-availability {
+    background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:18px !important;
+    padding:14px 16px !important; box-shadow:0 10px 24px rgba(15,23,42,.045) !important; margin: 10px 0 14px 0 !important;
+}
+.role-context-availability-title {
+    color:#0f172a !important; font-size:.80rem !important; font-weight:950 !important; margin-bottom:10px !important;
+}
+.role-context-chip-row { display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
+.role-context-chip, .role-badge {
+    display:inline-flex !important; align-items:center !important; gap:5px !important; border-radius:999px !important;
+    padding:6px 10px !important; background:#eff6ff !important; color:#1e3a8a !important;
+    -webkit-text-fill-color:#1e3a8a !important; border:1px solid #bfdbfe !important;
+    font-size:.72rem !important; font-weight:950 !important; white-space:nowrap !important;
+}
+.role-context-chip b { color:#0f2f5f !important; -webkit-text-fill-color:#0f2f5f !important; }
+.role-badge-pending { background:#f8fafc !important; color:#475569 !important; -webkit-text-fill-color:#475569 !important; border-color:#e2e8f0 !important; }
+.role-filter-controls {
+    display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr) minmax(230px,.7fr); gap:16px; align-items:end; margin: 6px 0 8px 0;
+}
+.role-filter-controls div[data-baseweb="select"] > div { min-height:46px !important; border-radius:14px !important; background:#ffffff !important; }
+/* Recruitment table executive badges */
+.exec-mini-badge, .decision-stars {
+    display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 9px;
+    font-size:.70rem; font-weight:950; white-space:nowrap; border:1px solid #e2e8f0; background:#ffffff; color:#334155;
+}
+.exec-mini-badge b, .decision-stars b { font-size:.68rem; opacity:.82; }
+.exec-mini-badge-success { background:#eaf7ee; color:#166534; border-color:#bbf7d0; }
+.exec-mini-badge-primary { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+.exec-mini-badge-warning { background:#fff4e8; color:#92400e; border-color:#fed7aa; }
+.exec-mini-badge-danger { background:#fdecec; color:#991b1b; border-color:#fecaca; }
+.exec-mini-badge-neutral { background:#f8fafc; color:#475569; border-color:#e2e8f0; }
+.decision-stars { color:#b45309; background:#fffbeb; border-color:#fde68a; letter-spacing:.02em; }
+/* Similar Players: balanced 2x2 decision layout */
+.similarity-recommended-card-compact { max-width:100% !important; margin-bottom:14px !important; }
+.similarity-decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items:stretch !important; }
+.similarity-decision-card { min-height: 210px !important; }
+.similarity-decision-grid .similarity-decision-card:nth-child(3) { grid-column: 2 / 3 !important; }
+.similarity-chart-shell, .similarity-rank-card, .similarity-assessment-card, .contract-card, .contract-action-board, .contract-target-card-premium {
+    border-radius:18px !important; box-shadow:0 12px 28px rgba(15,23,42,.05) !important;
+}
+/* DSS bar: product navigation, not numbered wireframe */
+.dss-compact-step { padding:6px 11px !important; border-radius:999px !important; }
+.dss-compact-step.is-active { background:#eff6ff !important; color:#1d4ed8 !important; border:1px solid #bfdbfe !important; }
+/* Plotly charts inherit the card look */
+div[data-testid="stPlotlyChart"] { border-radius:18px !important; box-shadow:0 8px 20px rgba(15,23,42,.035) !important; }
+@media (max-width: 1200px) {
+    .role-filter-controls, .similarity-decision-grid { grid-template-columns:1fr !important; }
+    .similarity-decision-grid .similarity-decision-card:nth-child(3) { grid-column:auto !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5.2 Senior Product UX patch: roles, similarity, contract and GM simulator
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root {
+  --siq-primary:#2F5BFF; --siq-success:#58C27D; --siq-warning:#F5A623;
+  --siq-danger:#E05658; --siq-neutral:#7C8DB5; --siq-border:#e2e8f0;
+}
+.metric-card,.scouting-hero-card,.exec-player-card,.exec-score-card,.exec-kpi-card,.radar-card,.compact-top5-card,.pro-section-card,
+.similarity-decision-card,.similarity-benchmark-card,.similarity-recommended-card,.similarity-chart-shell,.similarity-rank-card,
+.contract-card,.contract-target-card-premium,.contract-action-board-title-wrap,.contract-premium-player-card,.contract-premium-lane,
+.contract-matrix-shell,.contract-matrix-top5-card,.player-table,.radar-info-box {
+    border-radius:16px !important;
+    box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
+}
+/* Sidebar roles: replace unreadable mini-bars with tactical pills. */
+[data-testid="stSidebar"] .role-availability-panel {
+    background:rgba(15, 42, 75, .88) !important;
+    border:1px solid rgba(147,197,253,.28) !important;
+    border-radius:16px !important;
+    padding:11px 12px !important;
+    margin: 0.45rem 0 1.05rem 0 !important;
+}
+[data-testid="stSidebar"] .role-availability-title {
+    color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;
+    font-size:.76rem !important; font-weight:950 !important; letter-spacing:.075em !important;
+}
+[data-testid="stSidebar"] .role-availability-subtitle {
+    color:#bfdbfe !important; -webkit-text-fill-color:#bfdbfe !important;
+    font-size:.67rem !important; line-height:1.32 !important; margin-bottom:9px !important;
+}
+[data-testid="stSidebar"] .role-availability-chip-row { gap:7px !important; }
+[data-testid="stSidebar"] .role-availability-chip,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-defensive,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-build_up,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-creative,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-attacking,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-balanced {
+    display:inline-flex !important; align-items:center !important; gap:6px !important;
+    background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important;
+    border:1px solid #bfdbfe !important; border-radius:999px !important;
+    padding:5px 8px !important; font-size:.68rem !important; font-weight:900 !important; line-height:1.05 !important;
+    box-shadow:0 4px 12px rgba(2,6,23,.14) !important;
+}
+[data-testid="stSidebar"] .role-availability-chip b { color:#1d4ed8 !important; -webkit-text-fill-color:#1d4ed8 !important; font-weight:950 !important; }
+[data-testid="stSidebar"] .role-availability-share { display:none !important; }
+[data-testid="stSidebar"] .role-availability-dot { width:8px; height:8px; border-radius:999px; background:#60a5fa; display:inline-block; flex:0 0 auto; }
+[data-testid="stSidebar"] .role-badge-family-defensive .role-availability-dot { background:#3b82f6; }
+[data-testid="stSidebar"] .role-badge-family-build_up .role-availability-dot { background:#8b5cf6; }
+[data-testid="stSidebar"] .role-badge-family-creative .role-availability-dot { background:#22c55e; }
+[data-testid="stSidebar"] .role-badge-family-attacking .role-availability-dot { background:#f97316; }
+[data-testid="stSidebar"] .role-availability-chip-active { outline:2px solid #60a5fa !important; }
+/* Better role select dropdown: never looks truncated. */
+[data-testid="stSidebar"] div[data-baseweb="popover"] ul,
+[data-testid="stSidebar"] div[role="listbox"] { max-height:360px !important; }
+[data-testid="stSidebar"] div[role="option"] { min-height:34px !important; }
+/* Similar Players decision support. */
+.similarity-decision-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; align-items:stretch !important; }
+.context-fit-bars { display:grid; gap:8px; }
+.fit-row { display:grid; grid-template-columns:70px 38px minmax(0,1fr); gap:8px; align-items:center; color:#334155; font-size:.74rem; font-weight:850; }
+.fit-row span { color:#64748b; }
+.fit-row b { color:#0f172a; text-align:right; font-weight:950; }
+.fit-row i { display:block; height:7px; border-radius:999px; background:linear-gradient(90deg,#22c55e var(--w,70%),#e5eaf1 var(--w,70%)); position:relative; overflow:hidden; }
+.fit-row i::before { content:""; display:block; height:100%; width:inherit; max-width:100%; background:#22c55e; border-radius:999px; }
+/* Contract Intelligence as CRM-like action board. */
+.contract-action-board-title-wrap.contract-action-board-premium {
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%) !important;
+    border-left:6px solid #0f2f5f !important;
+    margin-top:22px !important;
+}
+.contract-premium-lane-header { min-height:54px !important; }
+.contract-premium-lane-title { font-size:.92rem !important; }
+.contract-premium-player-card { border-left:3px solid #bfdbfe !important; }
+.contract-premium-lane--now .contract-premium-player-card { border-left-color:#f97316 !important; }
+.contract-premium-lane--summer .contract-premium-player-card { border-left-color:#eab308 !important; }
+.contract-premium-lane--track .contract-premium-player-card { border-left-color:#2563eb !important; }
+.contract-premium-lane--free .contract-premium-player-card { border-left-color:#22c55e !important; }
+/* Recruitment tables: more product-board, less CSV. */
+.player-table td .exec-mini-badge, .player-table td .decision-stars, .player-table td .role-badge { white-space:nowrap !important; }
+.player-table th { background:#f8fbff !important; color:#334155 !important; font-weight:950 !important; }
+.player-table tr:hover td { background:#f8fbff !important; }
+/* GM Simulator executive summary. */
+.gm-summary-card {
+    display:grid; grid-template-columns:minmax(0,1.1fr) minmax(420px,1.35fr); gap:18px; align-items:center;
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); border:1px solid #bfdbfe; border-left:6px solid #2F5BFF;
+    border-radius:18px; box-shadow:0 14px 34px rgba(15,23,42,.06); padding:16px 18px; margin: 0 0 16px 0;
+}
+.gm-summary-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:5px; }
+.gm-summary-title { color:#0f172a; font-size:1.18rem; font-weight:950; line-height:1.12; }
+.gm-summary-copy { color:#475569; font-size:.86rem; margin-top:6px; line-height:1.35; }
+.gm-summary-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.gm-summary-kpis div { background:#ffffff; border:1px solid #e2e8f0; border-radius:13px; padding:10px 11px; }
+.gm-summary-kpis span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.gm-summary-kpis b { display:block; color:#0f172a; font-size:.90rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media(max-width:1200px){ .similarity-decision-grid,.gm-summary-card { grid-template-columns:1fr !important; } .gm-summary-kpis { grid-template-columns:1fr !important; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Product UX v3: dossier, tactical filters, horizontal priority actions, unified nav
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Global design system stabilization */
+.metric-card,.scouting-hero-card,.exec-player-card,.exec-score-card,.exec-kpi-card,.radar-card,.compact-top5-card,.pro-section-card,
+.similarity-decision-card,.similarity-benchmark-card,.similarity-recommended-card,.similarity-chart-shell,.similarity-rank-card,
+.contract-card,.contract-target-card-premium,.contract-action-horizontal-board,.contract-action-horizontal-lane,.contract-matrix-shell,
+.contract-matrix-top5-card,.player-table,.radar-info-box,.role-filter-shell,.role-context-availability,.player-dossier-shell {
+    border-radius:16px !important;
+    box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
 }
 
-/* Benchmark module: more product-card feel around radar + signals + readout. */
-.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 18px !important;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, .045) !important;
-    padding: 8px !important;
+/* Player Dossier: executive scouting card */
+.player-dossier-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    padding:16px 18px;
+    margin: 0 0 18px 0;
 }
-.radar-readout-card {
-    margin-top: 14px !important;
-    border-left: 4px solid #2563eb !important;
-    background: #ffffff !important;
-    border-radius: 14px !important;
-    border-top: 1px solid #dbeafe !important;
-    border-right: 1px solid #dbeafe !important;
-    border-bottom: 1px solid #dbeafe !important;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, .040) !important;
+.player-dossier-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:14px; }
+.player-dossier-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:5px; }
+.player-dossier-title { color:#0f172a; font-size:1.25rem; font-weight:950; line-height:1.08; }
+.player-dossier-meta { color:#64748b; font-size:.80rem; font-weight:750; margin-top:5px; }
+.player-dossier-score { min-width:128px; background:#f8fbff; border:1px solid #bfdbfe; border-radius:14px; padding:10px 12px; text-align:right; }
+.player-dossier-score span { display:block; color:#64748b; font-size:.68rem; font-weight:950; letter-spacing:.06em; text-transform:uppercase; }
+.player-dossier-score b { display:block; color:#166534; font-size:1.25rem; font-weight:950; margin-top:2px; }
+.player-dossier-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr .85fr; gap:12px; align-items:stretch; }
+.player-dossier-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 13px; min-height:132px; }
+.player-dossier-card span { display:block; color:#1d4ed8; font-size:.68rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.player-dossier-card ul { margin:0; padding-left:0; list-style:none; display:grid; gap:7px; }
+.player-dossier-card li { color:#334155; font-size:.78rem; line-height:1.35; font-weight:750; }
+.dossier-ok { display:inline !important; color:#16a34a !important; margin-right:7px !important; }
+.dossier-warn { display:inline !important; color:#f97316 !important; margin-right:7px !important; }
+.player-dossier-mini { display:grid; grid-template-columns:1fr; gap:7px; }
+.player-dossier-mini div { display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #edf2f7; border-radius:10px; padding:6px 8px; }
+.player-dossier-mini b { color:#0f172a; font-size:.82rem; font-weight:950; }
+.player-dossier-mini small { color:#64748b; font-size:.66rem; font-weight:900; text-transform:uppercase; }
+
+/* Tactical filters: compact four-column professional layout */
+.role-filter-shell-compact { margin:10px 0 10px 0 !important; padding:14px 16px !important; }
+.role-filter-controls-v2 { margin: 4px 0 8px 0 !important; }
+.role-filter-controls-v2 div[data-baseweb="select"] > div,
+.role-filter-controls-v2 div[data-baseweb="slider"] {
+    background:#ffffff !important;
+    border-color:#cbd5e1 !important;
+    min-height:46px !important;
 }
+.role-filter-controls-v2 div[data-baseweb="select"] input,
+.role-filter-controls-v2 div[data-baseweb="select"] span,
+.role-filter-controls-v2 div[data-baseweb="select"] div { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
+.role-filter-status-v2 { border-radius:999px !important; display:inline-flex !important; gap:9px !important; background:#ffffff !important; }
+.role-context-dot { width:8px; height:8px; border-radius:999px; display:inline-block; background:#60a5fa; }
+.role-context-dot-defensive { background:#3b82f6; }
+.role-context-dot-build_up { background:#8b5cf6; }
+.role-context-dot-creative { background:#22c55e; }
+.role-context-dot-attacking { background:#f97316; }
+
+/* Sidebar roles: readable chips over dark chrome */
+[data-testid="stSidebar"] .role-availability-panel { background:rgba(15,42,75,.88) !important; border:1px solid rgba(147,197,253,.32) !important; border-radius:16px !important; padding:11px 12px !important; }
+[data-testid="stSidebar"] .role-availability-chip,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-defensive,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-build_up,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-creative,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-attacking,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-balanced {
+    background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important;
+    border:1px solid #bfdbfe !important; padding:5px 8px !important; font-size:.68rem !important;
+}
+[data-testid="stSidebar"] .role-availability-chip b { color:#1d4ed8 !important; -webkit-text-fill-color:#1d4ed8 !important; }
+[data-testid="stSidebar"] .role-availability-title { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+[data-testid="stSidebar"] .role-availability-subtitle { color:#bfdbfe !important; -webkit-text-fill-color:#bfdbfe !important; }
+[data-testid="stSidebar"] div[data-baseweb="popover"] ul, [data-testid="stSidebar"] div[role="listbox"] { max-height:420px !important; }
+
+/* Opportunity Matrix legend and quadrant labels */
+.matrix-exec-legend { gap:7px !important; margin:5px 0 8px 0 !important; }
+.matrix-exec-chip { padding:5px 9px !important; font-size:.68rem !important; box-shadow:none !important; }
+
+/* Horizontal Contract Priority Actions: no Trello/Kanban feel */
+.contract-action-horizontal-board { background:#ffffff; border:1px solid #e2e8f0; border-left:5px solid #0f2f5f; padding:16px 18px; margin:18px 0; }
+.contract-action-horizontal-board-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.contract-action-horizontal-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.contract-action-horizontal-lane { background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); border:1px solid #dbe3ee; padding:13px 14px; }
+.contract-action-horizontal-lane-now { border-left:4px solid #f97316; }
+.contract-action-horizontal-lane-summer { border-left:4px solid #eab308; }
+.contract-action-horizontal-lane-track { border-left:4px solid #2563eb; }
+.contract-action-horizontal-lane-free { border-left:4px solid #ef4444; }
+.contract-action-horizontal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid #edf2f7; margin-bottom:8px; }
+.contract-action-horizontal-title { color:#0f172a; font-size:.92rem; font-weight:950; }
+.contract-action-horizontal-count { min-width:30px; height:24px; padding:0 8px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-player { display:grid; grid-template-columns:38px minmax(0,1fr) minmax(300px,.95fr); gap:12px; align-items:center; border-top:1px solid #edf2f7; padding:9px 0; }
+.contract-action-horizontal-player:first-of-type { border-top:0; }
+.contract-action-horizontal-rank { width:28px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-name { color:#0f172a; font-size:.88rem; font-weight:950; line-height:1.15; }
+.contract-action-horizontal-meta { color:#64748b; font-size:.70rem; line-height:1.25; margin-top:3px; }
+.contract-action-horizontal-kpis { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.contract-action-horizontal-kpis span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.67rem; font-weight:850; }
+.contract-action-horizontal-kpis b { color:#0f172a; font-weight:950; }
+.contract-action-horizontal-empty { color:#64748b; font-size:.78rem; font-weight:850; padding:8px 0; }
+
+/* Unified internal navigation buttons */
+button[kind="secondary"], button[kind="primary"] { border-radius:999px !important; font-weight:900 !important; }
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button,
+.quick-action-grid + div[data-testid="stHorizontalBlock"] button {
+    border-radius:999px !important;
+    border:1px solid #bfdbfe !important;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important;
+    min-height:34px !important;
+    box-shadow:0 4px 12px rgba(37,99,235,.08) !important;
+}
+
+/* Similar Players product cards */
+.fit-row i { height:8px; border-radius:999px; background:linear-gradient(90deg,#2563eb,#22c55e); display:block; }
+.similarity-decision-card { min-height:190px !important; }
+.similarity-professional-layout { margin-top:14px !important; }
+
+/* GM simulator hero */
+.gm-summary-card { background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); border:1px solid #bfdbfe; border-left:5px solid #2563eb; border-radius:18px; padding:16px 18px; box-shadow:0 12px 28px rgba(15,23,42,.05); margin: 14px 0 18px 0; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(420px,1fr); gap:18px; align-items:center; }
+.gm-summary-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:5px; }
+.gm-summary-title { color:#0f172a; font-size:1.20rem; font-weight:950; line-height:1.12; }
+.gm-summary-copy { color:#475569; font-size:.86rem; line-height:1.35; margin-top:6px; }
+.gm-summary-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.gm-summary-kpis div { background:#ffffff; border:1px solid #e2e8f0; border-radius:13px; padding:10px 11px; }
+.gm-summary-kpis span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.gm-summary-kpis b { display:block; color:#0f172a; font-size:.86rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width: 1280px) {
+  .player-dossier-grid { grid-template-columns:1fr 1fr; }
+  .contract-action-horizontal-player { grid-template-columns:32px minmax(0,1fr); }
+  .contract-action-horizontal-kpis { grid-column: 2 / 3; justify-content:flex-start; }
+  .gm-summary-card { grid-template-columns:1fr; }
+}
+@media (max-width: 760px) {
+  .player-dossier-grid { grid-template-columns:1fr; }
+  .player-dossier-head { flex-direction:column; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.5.6 Director Sporting polish: no phantom modules, professional tabs, compact filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove phantom empty shell generated by legacy markdown wrappers around Similar Player controls. */
+.similar-final-controls:empty,
+.similar-final-controls { display:none !important; height:0 !important; min-height:0 !important; padding:0 !important; margin:0 !important; border:0 !important; box-shadow:none !important; }
+/* Rebuild the Similar controls with native widgets only; no empty white card. */
+div[data-testid="stHorizontalBlock"]:has(#sprint11_similarity_target),
+div[data-testid="stHorizontalBlock"]:has(input[aria-label="Jugador de referencia"]) {
+    background:#ffffff !important; border:1px solid #dbe3ee !important; border-left:5px solid #2563eb !important;
+    border-radius:18px !important; padding:14px 16px !important; box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
+    margin: 8px 0 18px 0 !important;
+}
+/* Stable 2x2 Similar Player decision board. */
+.similar-final-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px !important; align-items:stretch !important; }
+.similar-final-card { min-height:190px !important; height:100% !important; }
+.similar-card-list { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { max-height: none !important; }
+.replacement-table-title { color:#0f172a; font-size:.90rem; font-weight:950; margin: 2px 0 8px 0; }
+/* Recruitment and Strategy tactical filters: readable input text, no cropped placeholders. */
+.role-filter-controls-stable div[data-baseweb="select"] > div {
+    min-height:48px !important; background:#ffffff !important; border:1px solid #cbd5e1 !important; border-radius:14px !important;
+    display:flex !important; align-items:center !important; overflow:visible !important;
+}
+.role-filter-controls-stable div[data-baseweb="select"] input,
+.role-filter-controls-stable div[data-baseweb="select"] span,
+.role-filter-controls-stable div[data-baseweb="select"] div {
+    color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-weight:800 !important; line-height:1.35 !important;
+}
+.role-filter-controls-stable label p { color:#334155 !important; font-weight:900 !important; }
+.role-filter-status-v2 { margin: 12px 0 12px 0 !important; }
+/* Contract target hero: align identity, action and KPIs as a professional target dossier. */
+.contract-target-card-final { padding:18px 20px !important; }
+.contract-target-main-final { display:grid !important; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr) !important; gap:22px !important; align-items:center !important; }
+.contract-target-identity-final { align-items:center !important; }
+.contract-target-primary-action { margin-top:8px !important; }
+.contract-target-primary-action .contract-action-pill { background:#eff6ff !important; border-color:#bfdbfe !important; color:#1e3a8a !important; }
+.contract-target-metric-strip { display:grid !important; grid-template-columns:repeat(6,minmax(0,1fr)) !important; gap:10px !important; align-items:stretch !important; }
+.contract-target-metric-strip .contract-target-kpi { min-height:86px !important; background:#ffffff !important; }
+/* Contract workflow: professional tabs, no emoji dashboard buttons. */
+.contract-native-toolbar-shell { display:none !important; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    width:fit-content !important; max-width:100% !important; margin: 0 0 20px 0 !important; padding:7px !important;
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important; box-shadow:0 8px 20px rgba(15,23,42,.045) !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] { flex:0 0 auto !important; width:auto !important; min-width:0 !important; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button {
+    border-radius:999px !important; border:1px solid transparent !important; background:#ffffff !important; color:#1e3a8a !important;
+    font-size:.76rem !important; font-weight:950 !important; min-height:34px !important; padding:.30rem .74rem !important; box-shadow:none !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button:hover { background:#eff6ff !important; border-color:#bfdbfe !important; transform:translateY(-1px); }
+/* Priority Actions: horizontal CRM-style rows instead of Kanban lanes. */
+.contract-action-horizontal-grid { grid-template-columns:1fr !important; gap:12px !important; }
+.contract-action-horizontal-lane { border-radius:18px !important; padding:13px 15px !important; }
+.contract-action-horizontal-player { grid-template-columns:38px minmax(0,1fr) minmax(320px,.95fr) !important; }
+/* Portfolio map: white premium card, reduced notebook feel. */
+.strategy-map-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+.strategy-map-card + div[data-testid="stPlotlyChart"], .strategy-map-card div[data-testid="stPlotlyChart"] { box-shadow:none !important; }
+.strategy-ranking-card { border-radius:20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+/* Tables: main views use cards; advanced tables can scroll but stay visually contained. */
+.replacement-advanced-view div[data-testid="stDataFrame"], .similar-advanced-view div[data-testid="stDataFrame"] { border-radius:16px !important; }
+@media (max-width: 1300px) {
+  .contract-target-main-final { grid-template-columns:1fr !important; }
+  .contract-target-metric-strip { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+  .contract-action-horizontal-player { grid-template-columns:36px minmax(0,1fr) !important; }
+  .contract-action-horizontal-kpis { grid-column:2 !important; justify-content:flex-start !important; }
+}
+@media (max-width: 900px) {
+  .similar-final-grid,.similar-card-list { grid-template-columns:1fr !important; }
+  .contract-target-metric-strip { grid-template-columns:1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.5.7 Director Sporting final polish: data freshness, tabs and pro visuals
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Data freshness and product-grade internal navigation */
+.data-freshness-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 8px; background:#ecfdf5; color:#166534; border:1px solid #bbf7d0; font-size:.68rem; font-weight:950; }
+.data-freshness-badge.warning { background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"],
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"],
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important; padding:7px !important;
+    box-shadow:0 10px 24px rgba(15,23,42,.055) !important; width:fit-content !important; max-width:100% !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button {
+    border:1px solid transparent !important; background:#ffffff !important; color:#1e3a8a !important; border-radius:999px !important;
+    min-height:36px !important; padding:.34rem .82rem !important; font-size:.78rem !important; font-weight:950 !important; box-shadow:none !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button:hover,
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button:hover { background:#eff6ff !important; border-color:#bfdbfe !important; transform:translateY(-1px); }
+/* Strategy: more like a portfolio room, less like a notebook */
+.strategy-filter-panel { background:#ffffff !important; border:1px solid #dbe3ee !important; border-left:5px solid #2563eb !important; border-radius:20px !important; padding:18px 20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+.strategy-filter-panel div[data-baseweb="select"] > div, .strategy-filter-panel div[data-baseweb="slider"] { background:#ffffff !important; border-radius:14px !important; border-color:#cbd5e1 !important; min-height:46px !important; }
+.gm-summary-card { border-radius:22px !important; border-left-width:6px !important; box-shadow:0 18px 42px rgba(15,23,42,.075) !important; }
+.strategy-map-card { padding:16px 18px !important; border-radius:22px !important; border:1px solid #e2e8f0 !important; background:#ffffff !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.strategy-map-title { font-size:1.06rem !important; font-weight:950 !important; color:#0f172a !important; margin-bottom:4px !important; }
+.strategy-map-subtitle { color:#64748b !important; font-size:.80rem !important; margin-bottom:10px !important; }
+.strategy-ranking-card { border-radius:22px !important; border:1px solid #e2e8f0 !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.strategy-ranking-row { border:1px solid #edf2f7 !important; border-radius:14px !important; padding:8px 9px !important; margin-bottom:8px !important; background:#ffffff !important; }
+/* Tables remain advanced artefacts, not the dominant product surface */
+div[data-testid="stDataFrame"] { max-height:520px !important; border-radius:18px !important; }
+/* Contract Priority Actions: CRM-style action rows */
+.contract-action-horizontal-board { border-radius:22px !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.contract-action-horizontal-lane { border-radius:18px !important; box-shadow:0 8px 20px rgba(15,23,42,.035) !important; }
+.contract-action-horizontal-player { min-height:52px !important; }
+/* Similar Player: eliminate phantom block impression */
+.similar-intel-header { margin-bottom:10px !important; }
+.similar-final-grid { margin-top:12px !important; }
+.similar-final-card { border-radius:18px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+/* Input readability in Recruitment and Strategy */
+.role-filter-controls-stable div[data-baseweb="select"] > div, .strategy-filter-panel div[data-baseweb="select"] > div { overflow:visible !important; }
+.role-filter-controls-stable div[data-baseweb="select"] span, .strategy-filter-panel div[data-baseweb="select"] span { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
 </style>
 """,
     unsafe_allow_html=True,

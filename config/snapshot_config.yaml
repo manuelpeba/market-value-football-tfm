@@ -1,0 +1,80 @@
+# =============================================================================
+# TM.6.6c — Snapshot Governance & Refresh Framework
+# Entregable 4 — Snapshot Config
+# =============================================================================
+# Purpose:
+#   Central configuration for current_player_snapshot governance.
+#   The historical player-season layer remains frozen; this config only governs
+#   the current market context overlay used by DSS/product modules.
+# =============================================================================
+
+snapshot:
+  official_source: current_player_snapshot
+  source_dataset: transfermarkt_features_v13a
+  source_path: data/processed/current_player_snapshot.parquet
+  metadata_path: data/processed/current_player_snapshot_metadata.json
+  health_report_path: reports/data_quality/snapshot_health_report.json
+  refresh_frequency_days: 30
+  match_key: player_id_tm
+  fallback_match_key: player_name_norm_unique_only
+  valuation_date_field: current_valuation_date
+  snapshot_version: v1.0.0
+
+scope:
+  expected_league_count: 9
+  expected_leagues:
+    - Austrian Bundesliga
+    - Belgian Pro League
+    - Bundesliga
+    - Eredivisie
+    - LaLiga
+    - Liga Portugal
+    - Ligue 1
+    - Premier League
+    - Serie A
+
+thresholds:
+  coverage:
+    green:
+      min_dss_coverage_pct: 90
+      min_contract_coverage_pct: 90
+      min_portfolio_coverage_pct: 85
+    yellow:
+      min_dss_coverage_pct: 85
+      min_contract_coverage_pct: 85
+      min_portfolio_coverage_pct: 80
+  freshness:
+    green_max_valuation_age_days: 120
+    yellow_max_valuation_age_days: 180
+    max_snapshot_age_days: 180
+  quality:
+    green_max_homonym_names: 1000
+    yellow_max_homonym_names: 2000
+
+scoring_weights:
+  freshness: 0.40
+  coverage: 0.40
+  quality: 0.20
+
+status_rules:
+  green_min_snapshot_score: 95
+  yellow_min_snapshot_score: 80
+  red_below_snapshot_score: 80
+  global_status_logic: any_red_then_red_else_any_yellow_then_yellow_else_green
+
+outputs:
+  apply_summary_path: reports/data_quality/current_snapshot_apply/current_snapshot_apply_summary.json
+  dss_dataset: reports/dss/global_prospect_universe.csv
+  contract_dataset: reports/tm3_contract_intelligence/contract_intelligence_dataset.csv
+  portfolio_dataset: reports/strategy/transfer_portfolio_dataset.csv
+
+governance:
+  monitoring_cadence: Monthly
+  refresh_command: python src/dss/run_snapshot_refresh.py
+  promotion_policy: promote_only_if_health_status_green
+  preserve_historical_values: true
+  do_not_overwrite_historical_market_value: true
+  governance_note: >-
+    Historical player-season values remain unchanged. Current club, league and
+    market value are provided by current_player_snapshot and should be interpreted
+    as current market context.

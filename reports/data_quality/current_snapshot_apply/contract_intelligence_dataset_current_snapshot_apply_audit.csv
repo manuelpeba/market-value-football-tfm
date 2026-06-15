@@ -1,0 +1,2 @@
+dataset,path,rows,matched_total,matched_pct,matched_by_player_id,matched_by_unique_name,unmatched,homonym_review_rows,current_leagues
+contract_intelligence_dataset,C:\Users\manue\Projects\market-value-football-tfm\reports\tm3_contract_intelligence\contract_intelligence_dataset.csv,757,698,92.21,698,0,59,23,Austrian Bundesliga | Belgian Pro League | Bundesliga | Eredivisie | LaLiga | Liga Portugal | Ligue 1 | Premier League | Serie A

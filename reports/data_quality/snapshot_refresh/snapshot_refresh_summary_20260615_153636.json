@@ -1,0 +1,80 @@
+{
+  "run_id": "20260615_153636",
+  "generated_at_utc": "2026-06-15T15:36:36+00:00",
+  "pipeline": "TM.6.6c Official Current Snapshot Refresh Pipeline",
+  "root": "C:\\Users\\manue\\Projects\\market-value-football-tfm",
+  "config_path": "config\\snapshot_config.yaml",
+  "raw_dir": "data\\raw\\transfermarkt\\kaggle_player_scores",
+  "scope": "productive",
+  "status": "ok",
+  "final_snapshot_status": null,
+  "final_snapshot_score": null,
+  "steps": [
+    {
+      "step": "build_snapshot",
+      "status": "dry_run",
+      "command": [
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\src\\dss\\build_current_player_snapshot.py",
+        "--raw-dir",
+        "data\\raw\\transfermarkt\\kaggle_player_scores",
+        "--output-dir",
+        "data\\processed",
+        "--scope",
+        "productive"
+      ],
+      "returncode": 0
+    },
+    {
+      "step": "apply_snapshot",
+      "status": "dry_run",
+      "command": [
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\src\\dss\\apply_current_player_snapshot.py",
+        "--snapshot",
+        "data\\processed\\current_player_snapshot.parquet",
+        "--audit-dir",
+        "reports\\data_quality\\current_snapshot_apply"
+      ],
+      "returncode": 0
+    },
+    {
+      "step": "build_metadata",
+      "status": "dry_run",
+      "command": [
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\src\\dss\\build_current_player_snapshot_metadata.py",
+        "--snapshot",
+        "data\\processed\\current_player_snapshot.parquet",
+        "--snapshot-audit",
+        "data\\processed\\current_player_snapshot_audit.json",
+        "--apply-summary",
+        "reports\\data_quality\\current_snapshot_apply\\current_snapshot_apply_summary.json",
+        "--output",
+        "data\\processed\\current_player_snapshot_metadata.json",
+        "--snapshot-version",
+        "v1.0.0",
+        "--source",
+        "transfermarkt_features_v13a"
+      ],
+      "returncode": 0
+    },
+    {
+      "step": "build_health_report",
+      "status": "dry_run",
+      "command": [
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\.venv\\Scripts\\python.exe",
+        "C:\\Users\\manue\\Projects\\market-value-football-tfm\\src\\dss\\build_snapshot_health_report.py"
+      ],
+      "returncode": 0
+    }
+  ],
+  "outputs": {
+    "snapshot_csv": "data/processed/current_player_snapshot.csv",
+    "snapshot_parquet": "data/processed/current_player_snapshot.parquet",
+    "metadata": "data/processed/current_player_snapshot_metadata.json",
+    "health_report_json": "reports/data_quality/snapshot_health_report.json",
+    "health_report_md": "reports/data_quality/snapshot_health_report.md",
+    "apply_summary": "reports/data_quality/current_snapshot_apply/current_snapshot_apply_summary.json"
+  }
+}

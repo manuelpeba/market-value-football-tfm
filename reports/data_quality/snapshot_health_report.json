@@ -1,0 +1,67 @@
+{
+  "snapshot_status": "GREEN",
+  "snapshot_score": 96.72,
+  "generated_at_utc": "2026-06-15T15:41:08+00:00",
+  "metadata_source": "data\\processed\\current_player_snapshot_metadata.json",
+  "snapshot": {
+    "snapshot_version": "v1.0.0",
+    "snapshot_date": "2026-06-15",
+    "source": "transfermarkt_features_v13a",
+    "latest_valuation_date": "2026-02-27",
+    "players_total": 16546,
+    "leagues_total": 9,
+    "match_key": "player_id_tm",
+    "fallback_match_key": "player_name_norm_unique_only"
+  },
+  "freshness": {
+    "snapshot_age_days": 0,
+    "valuation_age_days": 108,
+    "score": 100.0,
+    "status": "GREEN",
+    "thresholds": {
+      "green_max_valuation_age_days": 120,
+      "yellow_max_valuation_age_days": 180
+    }
+  },
+  "coverage": {
+    "dss_pct": 92.21,
+    "contract_pct": 92.21,
+    "portfolio_pct": 90.85,
+    "matched_rows": {
+      "dss": 698,
+      "contract": 698,
+      "portfolio": 5640
+    },
+    "unmatched_rows": {
+      "dss": 59,
+      "contract": 59,
+      "portfolio": 568
+    },
+    "score": 91.8,
+    "status": "GREEN",
+    "thresholds": {
+      "green_min_dss_pct": 90,
+      "green_min_portfolio_pct": 85,
+      "yellow_min_dss_pct": 85,
+      "yellow_min_portfolio_pct": 80
+    }
+  },
+  "quality": {
+    "homonym_names": 412,
+    "score": 100.0,
+    "status": "GREEN",
+    "thresholds": {
+      "green_max_homonym_names": 1000,
+      "yellow_max_homonym_names": 2000
+    }
+  },
+  "recommendation": {
+    "action_required": false,
+    "refresh_recommended": false,
+    "next_action": "No action required. Continue standard monthly monitoring."
+  },
+  "warnings": [
+    "No action required under current governance thresholds."
+  ],
+  "governance_note": "Historical player-season values remain unchanged. Current club, league and market value are provided by current_player_snapshot and should be interpreted as current market context."
+}

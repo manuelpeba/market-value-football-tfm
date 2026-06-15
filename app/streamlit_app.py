@@ -13465,7 +13465,15 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     roi_value = "N/A"
     if not roi.empty and "positive_roi_rate" in roi.columns:
         roi_value = f"{roi['positive_roi_rate'].iloc[0]:.0%}"
-    leagues = source_df["league"].nunique() if "league" in source_df.columns else "N/A"
+
+    league_source_df = shortlist if "league" in shortlist.columns else source_df
+
+    leagues = (
+        league_source_df["league"].dropna().nunique()
+        if "league" in league_source_df.columns
+        else "N/A"
+    )
+
     st.markdown(
         f"""
 <div class="home-hero">
@@ -14260,7 +14268,13 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
     with m1:
         render_metric_card_with_caption("Dataset", f"{len(source_df):,}", "eligible prospects" if LANG == "EN" else "prospects elegibles")
     with m2:
-        render_metric_card_with_caption("Coverage", f"{source_df['league'].nunique() if 'league' in source_df.columns else 'N/A'}", "European leagues" if LANG == "EN" else "ligas europeas")
+        league_source_df = shortlist if "league" in shortlist.columns else source_df
+
+        render_metric_card_with_caption(
+            "Coverage",
+            f"{league_source_df['league'].dropna().nunique() if 'league' in league_source_df.columns else 'N/A'}",
+            "European leagues" if LANG == "EN" else "ligas europeas"
+        )
     with m3:
         render_metric_card_with_caption("Model", "XGBoost", "production ML estimator" if LANG == "EN" else "estimador ML productivo")
     with m4:
