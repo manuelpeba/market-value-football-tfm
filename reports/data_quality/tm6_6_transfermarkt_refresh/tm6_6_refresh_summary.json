@@ -1,0 +1,72 @@
+{
+  "run_tag": "20260615_092110",
+  "raw_audit": {
+    "raw_dir": "data\\raw\\transfermarkt\\kaggle_player_scores_new",
+    "valuations_rows": 507815,
+    "players_rows": 47716,
+    "valuation_date_min": "2000-01-20",
+    "valuation_date_max": "2026-02-27",
+    "latest_players_total": 31507,
+    "latest_players_in_9_league_scope": 15513,
+    "competition_counts_top30": {
+      "TR1": 2763,
+      "IT1": 2734,
+      "GR1": 2295,
+      "PO1": 2134,
+      "NaN": 2076,
+      "RU1": 1907,
+      "NL1": 1865,
+      "FR1": 1789,
+      "ES1": 1778,
+      "GB1": 1774,
+      "BE1": 1750,
+      "UKR1": 1668,
+      "SC1": 1639,
+      "L1": 1598,
+      "DK1": 1343,
+      "BRA1": 261,
+      "MLS1": 230,
+      "PL1": 227,
+      "SA1": 179,
+      "RO1": 161,
+      "SE1": 144,
+      "SER1": 143,
+      "C1": 138,
+      "ARG1": 129,
+      "NO1": 113,
+      "KR1": 104,
+      "AUS1": 96,
+      "TS1": 93,
+      "JAP1": 92,
+      "A1": 91
+    }
+  },
+  "new_features_audit": {
+    "new_features_path": "data\\processed\\transfermarkt_features_v13c.parquet",
+    "new_features_rows": 507814,
+    "new_features_players": 31507,
+    "new_features_valuation_date_max": "2026-02-27"
+  },
+  "old_features_backup": "artifacts\\backups\\tm6_6_transfermarkt_refresh\\20260615_092110\\processed_before_refresh\\transfermarkt_features_v13a.parquet",
+  "comparison": {
+    "status": "ok",
+    "old_rows": 616377,
+    "new_rows": 507814,
+    "old_latest_players": 39361,
+    "new_latest_players": 31507,
+    "players_added": 135,
+    "players_removed": 7854,
+    "market_value_changed_rows": 4106,
+    "club_changed_rows": 8093
+  },
+  "promoted_to_official": false,
+  "snapshot_result": {
+    "status": "skipped"
+  },
+  "reports": {
+    "raw_audit": "reports\\data_quality\\tm6_6_transfermarkt_refresh\\raw_transfermarkt_audit.json",
+    "latest_diff": "reports\\data_quality\\tm6_6_transfermarkt_refresh\\transfermarkt_refresh_latest_diff.csv",
+    "top_market_value_changes": "reports\\data_quality\\tm6_6_transfermarkt_refresh\\transfermarkt_refresh_top_market_value_changes.csv",
+    "club_changes": "reports\\data_quality\\tm6_6_transfermarkt_refresh\\transfermarkt_refresh_club_changes.csv"
+  }
+}

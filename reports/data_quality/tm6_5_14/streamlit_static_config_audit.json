@@ -1,0 +1,27 @@
+{
+  "CURRENT_CLUB_OVERRIDES": {
+    "pau victor": "Braga",
+    "pau víctor": "Braga",
+    "christantus uche": "Crystal Palace",
+    "nick woltemade": "Newcastle"
+  },
+  "CURRENT_LEAGUE_OVERRIDES_BY_PLAYER": {
+    "pau victor": "Primeira Liga",
+    "pau víctor": "Primeira Liga",
+    "christantus uche": "Premier League",
+    "nick woltemade": "Premier League"
+  },
+  "LEAGUE_STRENGTH_INDEX": {
+    "Premier League": 100,
+    "LaLiga": 96,
+    "La Liga": 96,
+    "Bundesliga": 94,
+    "Serie A": 93,
+    "Ligue 1": 89,
+    "Eredivisie": 84,
+    "Liga Portugal": 83,
+    "Primeira Liga": 83,
+    "Belgian Pro League": 80,
+    "Jupiler Pro League": 80
+  }
+}

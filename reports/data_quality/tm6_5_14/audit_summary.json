@@ -1,0 +1,36 @@
+{
+  "root": "C:\\Users\\manue\\Projects\\market-value-football-tfm",
+  "app_path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\streamlit_app.py",
+  "expected_league_count": 9,
+  "expected_leagues": [
+    "Premier League",
+    "LaLiga",
+    "Bundesliga",
+    "Serie A",
+    "Ligue 1",
+    "Eredivisie",
+    "Primeira Liga",
+    "EFL Championship",
+    "Pro League"
+  ],
+  "datasets_loaded": [
+    "reports\\dss\\global_prospect_universe.csv",
+    "reports\\tm3_contract_intelligence\\contract_intelligence_dataset.csv",
+    "reports\\strategy\\transfer_portfolio_dataset.csv",
+    "data\\processed\\player_season_modeling_v13b_productive_candidate.parquet",
+    "data\\processed\\transfermarkt_features_v13a.parquet",
+    "data\\processed\\player_role_dss.parquet",
+    "data\\processed\\player_position_taxonomy.parquet"
+  ],
+  "current_reference_used": false,
+  "outputs": [
+    "club_current_context_audit.csv",
+    "dataset_inventory_and_scope.csv",
+    "duplicate_key_audit.csv",
+    "market_value_consistency_audit.csv",
+    "player_profile_validation_sample_random20.csv",
+    "player_profile_validation_sample_top20.csv",
+    "player_profile_validation_sample_transfer_proxy20.csv",
+    "streamlit_static_config_audit.json"
+  ]
+}
