@@ -1,0 +1,334 @@
+{
+  "sprint": "TM.6.7",
+  "audit_date": "2026-06-15",
+  "source_dataset": "C:/Users/manue/Projects/market-value-football-tfm/data/processed/player_season_modeling_v13b_productive_candidate.parquet",
+  "rows": 5527,
+  "columns_total": 78,
+  "columns": [
+    "player_name_fbref",
+    "club",
+    "league",
+    "season",
+    "season_start_year_fbref",
+    "position",
+    "position_group",
+    "age_fbref",
+    "matches_played",
+    "starts",
+    "minutes_played",
+    "nineties",
+    "goals",
+    "assists",
+    "g_a",
+    "goals_minus_pk",
+    "penalties_scored",
+    "penalties_attempted",
+    "yellow_cards",
+    "red_cards",
+    "goals_per90",
+    "assists_per90",
+    "g_a_per90",
+    "goals_minus_pk_per90",
+    "g_a_minus_pk_per90",
+    "player_name_norm",
+    "player_id_tm",
+    "player_name_tm",
+    "season_start_year_tm",
+    "valuation_date",
+    "market_value_eur",
+    "log_market_value_eur",
+    "market_value_prev_eur",
+    "market_value_next_eur",
+    "market_value_growth_1y",
+    "delta_log_market_value_1y",
+    "age_tm",
+    "date_of_birth",
+    "nationality",
+    "position_tm",
+    "sub_position_tm",
+    "foot",
+    "height_in_cm",
+    "current_club_name_tm",
+    "current_club_id_tm",
+    "competition_id_tm",
+    "source",
+    "matching_method",
+    "matching_confidence",
+    "age_diff",
+    "club_score",
+    "matching_status",
+    "season_start_year",
+    "age",
+    "player_name_normalized",
+    "adv_goals",
+    "adv_shots",
+    "adv_shots_on_target",
+    "adv_shots_per90",
+    "adv_shots_on_target_per90",
+    "adv_minutes",
+    "adv_starts",
+    "adv_complete_matches",
+    "adv_interceptions",
+    "adv_tackles_won",
+    "goals_position_pct",
+    "shots_position_pct",
+    "shots_on_target_position_pct",
+    "shots_per90_position_pct",
+    "shots_on_target_per90_position_pct",
+    "starts_position_pct",
+    "minutes_position_pct",
+    "complete_matches_position_pct",
+    "interceptions_position_pct",
+    "tackles_won_position_pct",
+    "finishing_index_v2",
+    "availability_index",
+    "defensive_activity_index"
+  ],
+  "id_column": "player_id_tm",
+  "name_column": "player_name_fbref",
+  "season_column": "season",
+  "team_column": "club",
+  "league_column": "league",
+  "seasons_available": [
+    "2019-2020",
+    "2020-2021",
+    "2021-2022",
+    "2022-2023",
+    "2023-2024",
+    "2024-2025",
+    "2025-2026"
+  ],
+  "latest_performance_season": "2025-2026",
+  "leagues_total": 11,
+  "leagues": [
+    "Austrian Bundesliga",
+    "Belgian Pro League",
+    "Bundesliga",
+    "Championship",
+    "Eredivisie",
+    "LaLiga",
+    "Liga Portugal",
+    "Ligue 1",
+    "Premier League",
+    "Serie A",
+    "Spanish Segunda División"
+  ],
+  "players_unique_by_id": 2867,
+  "players_unique_by_name": 2867,
+  "duplicate_player_season_team_rows": 0,
+  "available_performance_features": [
+    "assists",
+    "availability_index",
+    "defensive_activity_index",
+    "finishing_index_v2",
+    "goals",
+    "minutes_played"
+  ],
+  "feature_availability": {
+    "current_minutes": "minutes_played",
+    "current_goals": "goals",
+    "current_assists": "assists",
+    "current_xg": null,
+    "current_xag": null,
+    "current_npxg": null,
+    "current_progressive_passes": null,
+    "current_progressive_carries": null,
+    "current_key_passes": null,
+    "current_sca": null,
+    "current_gca": null,
+    "current_aerials_won": null,
+    "current_availability_index": "availability_index",
+    "current_finishing_index": "finishing_index_v2",
+    "current_defensive_activity_index": "defensive_activity_index"
+  },
+  "missingness_top_30": [
+    {
+      "column": "delta_log_market_value_1y",
+      "missing_count": 261,
+      "missing_pct": 4.7223,
+      "dtype": "float64"
+    },
+    {
+      "column": "market_value_growth_1y",
+      "missing_count": 261,
+      "missing_pct": 4.7223,
+      "dtype": "float64"
+    },
+    {
+      "column": "market_value_next_eur",
+      "missing_count": 261,
+      "missing_pct": 4.7223,
+      "dtype": "float64"
+    },
+    {
+      "column": "market_value_prev_eur",
+      "missing_count": 151,
+      "missing_pct": 2.732,
+      "dtype": "float64"
+    },
+    {
+      "column": "adv_interceptions",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_shots",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_shots_on_target",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_shots_on_target_per90",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "adv_shots_per90",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "adv_tackles_won",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Int64"
+    },
+    {
+      "column": "defensive_activity_index",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "finishing_index_v2",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "interceptions_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "shots_on_target_per90_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "shots_on_target_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "shots_per90_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "shots_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "tackles_won_position_pct",
+      "missing_count": 87,
+      "missing_pct": 1.5741,
+      "dtype": "Float64"
+    },
+    {
+      "column": "competition_id_tm",
+      "missing_count": 27,
+      "missing_pct": 0.4885,
+      "dtype": "object"
+    },
+    {
+      "column": "current_club_name_tm",
+      "missing_count": 27,
+      "missing_pct": 0.4885,
+      "dtype": "object"
+    },
+    {
+      "column": "foot",
+      "missing_count": 21,
+      "missing_pct": 0.38,
+      "dtype": "object"
+    },
+    {
+      "column": "height_in_cm",
+      "missing_count": 10,
+      "missing_pct": 0.1809,
+      "dtype": "float64"
+    },
+    {
+      "column": "nationality",
+      "missing_count": 9,
+      "missing_pct": 0.1628,
+      "dtype": "object"
+    },
+    {
+      "column": "adv_complete_matches",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_goals",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_minutes",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Int64"
+    },
+    {
+      "column": "adv_starts",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Int64"
+    },
+    {
+      "column": "availability_index",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Float64"
+    },
+    {
+      "column": "complete_matches_position_pct",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Float64"
+    },
+    {
+      "column": "starts_position_pct",
+      "missing_count": 5,
+      "missing_pct": 0.0905,
+      "dtype": "Float64"
+    }
+  ],
+  "key_stability": {
+    "has_player_id_tm": true,
+    "has_any_id": true,
+    "has_normalizable_name": true,
+    "has_season": true,
+    "has_team": true,
+    "has_league": true
+  }
+}
