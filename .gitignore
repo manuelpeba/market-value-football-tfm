@@ -140,3 +140,4 @@ artifacts/predictions/*
 
 # MLflow metadata
 artifacts/metadata/*.db
+artifacts/backups/
