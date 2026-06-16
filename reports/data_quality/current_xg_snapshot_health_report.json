@@ -1,0 +1,55 @@
+{
+  "snapshot_name": "current_xg_snapshot",
+  "snapshot_status": "GREEN",
+  "health_score": 90.59,
+  "report_date": "2026-06-16",
+  "snapshot_date": "2026-06-16",
+  "source": "understat",
+  "snapshot_version": "v1.0.0",
+  "season": "2025-2026",
+  "coverage": {
+    "score": 76.48,
+    "dss_big5_pct": 76.99,
+    "portfolio_big5_pct": 75.46,
+    "contract_big5_pct": 76.99
+  },
+  "freshness": {
+    "snapshot_age_days": 0,
+    "score": 100,
+    "status": "GREEN"
+  },
+  "feature_availability": {
+    "score": 100.0,
+    "features": {
+      "current_xg": 100.0,
+      "current_xa": 100.0,
+      "current_npxg": 100.0,
+      "current_xg_per90": 100.0,
+      "current_xa_per90": 100.0,
+      "current_expected_contribution": 100.0,
+      "current_expected_contribution_per90": 100.0
+    }
+  },
+  "identity": {
+    "rows": 2775,
+    "unique_understat_players": 2693,
+    "leagues": 5,
+    "homonym_groups": 1,
+    "homonym_rows": 2,
+    "homonym_risk_pct": 0.07
+  },
+  "governance": {
+    "score": 100.0,
+    "checks": {
+      "snapshot_path_exists": true,
+      "metadata_path_exists": true,
+      "snapshot_version_present": true,
+      "snapshot_date_present": true,
+      "source_present": true,
+      "understat_player_id_present": true
+    },
+    "governance_note": "Current xG snapshot generated from Understat. This artifact is a current performance layer and must not be used to retrain historical market value models without temporal validation."
+  },
+  "health_score_file": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\data_quality\\current_xg_snapshot_health_score.json",
+  "recommendation": "APPROVED_FOR_DSS_ENRICHMENT"
+}

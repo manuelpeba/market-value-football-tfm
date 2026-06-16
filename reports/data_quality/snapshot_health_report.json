@@ -7,21 +7,22 @@
     "snapshot_version": "v1.0.0",
     "snapshot_date": "2026-06-15",
     "source": "transfermarkt_features_v13a",
-    "latest_valuation_date": "2026-02-27",
-    "players_total": 16546,
+    "latest_valuation_date": "2026-03-27",
+    "players_total": 17430,
     "leagues_total": 9,
     "match_key": "player_id_tm",
     "fallback_match_key": "player_name_norm_unique_only"
   },
   "freshness": {
     "snapshot_age_days": 0,
-    "valuation_age_days": 108,
+    "valuation_age_days": 81,
     "score": 100.0,
     "status": "GREEN",
     "thresholds": {
       "green_max_valuation_age_days": 120,
       "yellow_max_valuation_age_days": 180
-    }
+    },
+    "latest_valuation_date": "2026-03-27"
   },
   "coverage": {
     "dss_pct": 92.21,
@@ -47,7 +48,7 @@
     }
   },
   "quality": {
-    "homonym_names": 412,
+    "homonym_names": 507,
     "score": 100.0,
     "status": "GREEN",
     "thresholds": {
@@ -63,5 +64,9 @@
   "warnings": [
     "No action required under current governance thresholds."
   ],
-  "governance_note": "Historical player-season values remain unchanged. Current club, league and market value are provided by current_player_snapshot and should be interpreted as current market context."
+  "governance_note": "Historical player-season values remain unchanged. Current club, league and market value are provided by current_player_snapshot and should be interpreted as current market context.",
+  "players_total": 17430,
+  "leagues_total": 9,
+  "latest_valuation_date": "2026-03-27",
+  "metadata_resynced_at_utc": "2026-06-16T18:43:23+00:00"
 }

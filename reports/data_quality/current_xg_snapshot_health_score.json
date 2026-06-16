@@ -1,0 +1,68 @@
+{
+  "snapshot_name": "current_xg_snapshot",
+  "score_name": "current_xg_snapshot_health_score",
+  "report_date": "2026-06-16",
+  "snapshot_date": "2026-06-16",
+  "health_score": 90.59,
+  "status": "GREEN",
+  "weights": {
+    "coverage": 0.4,
+    "freshness": 0.3,
+    "feature_availability": 0.2,
+    "governance": 0.1
+  },
+  "components": {
+    "coverage": {
+      "raw_score": 76.48,
+      "weight": 0.4,
+      "weighted_score": 30.59,
+      "inputs": {
+        "dss_big5_pct": 76.99,
+        "portfolio_big5_pct": 75.46,
+        "contract_big5_pct": 76.99
+      }
+    },
+    "freshness": {
+      "raw_score": 100,
+      "weight": 0.3,
+      "weighted_score": 30.0,
+      "inputs": {
+        "snapshot_age_days": 0,
+        "freshness_status": "GREEN"
+      }
+    },
+    "feature_availability": {
+      "raw_score": 100.0,
+      "weight": 0.2,
+      "weighted_score": 20.0,
+      "inputs": {
+        "current_xg": 100.0,
+        "current_xa": 100.0,
+        "current_npxg": 100.0,
+        "current_xg_per90": 100.0,
+        "current_xa_per90": 100.0,
+        "current_expected_contribution": 100.0,
+        "current_expected_contribution_per90": 100.0
+      }
+    },
+    "governance": {
+      "raw_score": 100.0,
+      "weight": 0.1,
+      "weighted_score": 10.0,
+      "inputs": {
+        "snapshot_path_exists": true,
+        "metadata_path_exists": true,
+        "snapshot_version_present": true,
+        "snapshot_date_present": true,
+        "source_present": true,
+        "understat_player_id_present": true
+      }
+    }
+  },
+  "thresholds": {
+    "GREEN": ">= 90",
+    "YELLOW": "75-89",
+    "RED": "< 75"
+  },
+  "interpretation": "The score is a weighted operational health indicator for the current xG snapshot. Coverage is intentionally limited to Big Five eligible rows because Understat does not cover non-Big Five leagues."
+}

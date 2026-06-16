@@ -1,0 +1,56 @@
+{
+  "audit_name": "TM.6.8c Understat DSS Matching Coverage Audit",
+  "audit_date": "2026-06-16",
+  "source": "understat",
+  "snapshot": "current_xg_snapshot",
+  "matching_strategy": {
+    "primary_current_method": "player_name_norm + league",
+    "future_target_method": "player_id_tm + understat_player_id crosswalk",
+    "risk_note": "Name-based matching is acceptable for coverage estimation, but final productive enrichment should use a controlled mapping layer between player_id_tm and understat_player_id."
+  },
+  "results": [
+    {
+      "dataset": "DSS",
+      "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\dss\\global_prospect_universe.csv",
+      "status": "OK",
+      "rows_total": 757,
+      "rows_big5": 478,
+      "matched_rows": 368,
+      "coverage_big5_pct": 76.99,
+      "coverage_total_pct": 48.61,
+      "unmatched_big5": 110,
+      "player_column_used": "player_name_norm",
+      "league_column_used": "display_league"
+    },
+    {
+      "dataset": "Portfolio",
+      "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\strategy\\transfer_portfolio_dataset.csv",
+      "status": "OK",
+      "rows_total": 6208,
+      "rows_big5": 3912,
+      "matched_rows": 2952,
+      "coverage_big5_pct": 75.46,
+      "coverage_total_pct": 47.55,
+      "unmatched_big5": 960,
+      "player_column_used": "player_name_norm",
+      "league_column_used": "display_league"
+    },
+    {
+      "dataset": "Contract",
+      "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\tm3_contract_intelligence\\contract_intelligence_dataset.csv",
+      "status": "OK",
+      "rows_total": 757,
+      "rows_big5": 478,
+      "matched_rows": 368,
+      "coverage_big5_pct": 76.99,
+      "coverage_total_pct": 48.61,
+      "unmatched_big5": 110,
+      "player_column_used": "player_name_norm",
+      "league_column_used": "display_league"
+    }
+  ],
+  "assessment": {
+    "status": "PENDING_REVIEW",
+    "approval_rule": "APPROVED if DSS Big5 coverage >= 70% and no critical schema issue."
+  }
+}

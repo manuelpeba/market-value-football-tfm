@@ -1,0 +1,103 @@
+{
+  "audit_name": "TM.6.8a.2 Understat League Coverage Audit",
+  "audit_date": "2026-06-16",
+  "source": "understat",
+  "leagues_tested": [
+    "Premier League",
+    "LaLiga",
+    "Bundesliga",
+    "Serie A",
+    "Ligue 1"
+  ],
+  "seasons_tested": [
+    "2014-2015",
+    "2015-2016",
+    "2016-2017",
+    "2017-2018",
+    "2018-2019",
+    "2019-2020",
+    "2020-2021",
+    "2021-2022",
+    "2022-2023",
+    "2023-2024",
+    "2024-2025",
+    "2025-2026",
+    "2026-2027"
+  ],
+  "latest_available_season": "2025-2026",
+  "league_summary": [
+    {
+      "league": "Bundesliga",
+      "first_season": "2014-2015",
+      "latest_season": "2025-2026",
+      "seasons_available": 12,
+      "max_players": 511,
+      "latest_players": 499,
+      "latest_teams": 26
+    },
+    {
+      "league": "LaLiga",
+      "first_season": "2014-2015",
+      "latest_season": "2025-2026",
+      "seasons_available": 12,
+      "max_players": 603,
+      "latest_players": 600,
+      "latest_teams": 31
+    },
+    {
+      "league": "Ligue 1",
+      "first_season": "2014-2015",
+      "latest_season": "2025-2026",
+      "seasons_available": 12,
+      "max_players": 589,
+      "latest_players": 553,
+      "latest_teams": 27
+    },
+    {
+      "league": "Premier League",
+      "first_season": "2014-2015",
+      "latest_season": "2025-2026",
+      "seasons_available": 12,
+      "max_players": 570,
+      "latest_players": 537,
+      "latest_teams": 34
+    },
+    {
+      "league": "Serie A",
+      "first_season": "2014-2015",
+      "latest_season": "2025-2026",
+      "seasons_available": 12,
+      "max_players": 608,
+      "latest_players": 586,
+      "latest_teams": 40
+    }
+  ],
+  "metrics_available": [
+    "assists",
+    "games",
+    "goals",
+    "id",
+    "key_passes",
+    "npg",
+    "npxG",
+    "player_name",
+    "position",
+    "red_cards",
+    "shots",
+    "team_title",
+    "time",
+    "xA",
+    "xG",
+    "xGBuildup",
+    "xGChain",
+    "yellow_cards"
+  ],
+  "raw_output": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\data_quality\\tm6_8_understat_league_coverage_audit.csv",
+  "assessment": {
+    "current_layer_viability": "PENDING_DSS_MATCHING",
+    "notes": [
+      "This audit measures source availability only.",
+      "DSS viability requires matching coverage against global_prospect_universe."
+    ]
+  }
+}

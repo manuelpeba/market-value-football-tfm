@@ -1,0 +1,124 @@
+{
+  "audit_name": "TM.6.8a.3 Metrics Availability Audit",
+  "audit_date": "2026-06-16",
+  "season": "2025-2026",
+  "rows": 2775,
+  "columns": [
+    "assists",
+    "games",
+    "goals",
+    "id",
+    "key_passes",
+    "league",
+    "npg",
+    "npxG",
+    "player_name",
+    "position",
+    "red_cards",
+    "shots",
+    "team_title",
+    "time",
+    "xA",
+    "xG",
+    "xGBuildup",
+    "xGChain",
+    "yellow_cards"
+  ],
+  "availability": [
+    {
+      "column": "assists",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "games",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "goals",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "id",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "key_passes",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "league",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "npg",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "npxG",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "player_name",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "position",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "red_cards",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "shots",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "team_title",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "time",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "xA",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "xG",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "xGBuildup",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "xGChain",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    },
+    {
+      "column": "yellow_cards",
+      "non_null": 2775,
+      "coverage_pct": 100.0
+    }
+  ]
+}

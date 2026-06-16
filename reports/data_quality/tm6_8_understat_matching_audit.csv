@@ -1,0 +1,4 @@
+dataset,path,status,rows_total,rows_big5,matched_rows,coverage_big5_pct,coverage_total_pct,unmatched_big5,player_column_used,league_column_used
+DSS,C:\Users\manue\Projects\market-value-football-tfm\reports\dss\global_prospect_universe.csv,OK,757,478,368,76.99,48.61,110,player_name_norm,display_league
+Portfolio,C:\Users\manue\Projects\market-value-football-tfm\reports\strategy\transfer_portfolio_dataset.csv,OK,6208,3912,2952,75.46,47.55,960,player_name_norm,display_league
+Contract,C:\Users\manue\Projects\market-value-football-tfm\reports\tm3_contract_intelligence\contract_intelligence_dataset.csv,OK,757,478,368,76.99,48.61,110,player_name_norm,display_league

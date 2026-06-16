@@ -1,0 +1,62 @@
+{
+  "audit_name": "TM.6.8 Understat Source Audit",
+  "audit_date": "2026-06-16",
+  "source": "understat",
+  "status": "APPROVED",
+  "coverage": {
+    "leagues": 5,
+    "latest_season": "2025-2026",
+    "players_total": 2775
+  },
+  "metrics": {
+    "total_columns": 18,
+    "available_columns": [
+      "assists",
+      "games",
+      "goals",
+      "id",
+      "key_passes",
+      "npg",
+      "npxG",
+      "player_name",
+      "position",
+      "red_cards",
+      "shots",
+      "team_title",
+      "time",
+      "xA",
+      "xG",
+      "xGBuildup",
+      "xGChain",
+      "yellow_cards"
+    ],
+    "core_xg_features": [
+      "xG",
+      "xA",
+      "npxG",
+      "shots",
+      "key_passes",
+      "time",
+      "xGChain",
+      "xGBuildup"
+    ],
+    "feature_availability": {
+      "xG": 100.0,
+      "xA": 100.0,
+      "npxG": 100.0,
+      "shots": 100.0,
+      "key_passes": 100.0,
+      "time": 100.0,
+      "xGChain": 100.0,
+      "xGBuildup": 100.0
+    }
+  },
+  "assessment": {
+    "supports_current_snapshot": true,
+    "supports_historical_training": false,
+    "snapshot_ready": true,
+    "governance_ready": true,
+    "risk": "LOW"
+  },
+  "recommendation": "APPROVED_FOR_CURRENT_XG_LAYER"
+}
