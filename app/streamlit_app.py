@@ -1,12 +1,47 @@
 from pathlib import Path
 from math import ceil
+from datetime import date, datetime, timezone
+import json
+import re
 import html
 import sys
-
+import unicodedata
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+
+# =============================================================================
+# tactical intelligence.5.1 visual design tokens
+# =============================================================================
+PRIMARY = "#2F5BFF"
+SUCCESS = "#58C27D"
+WARNING = "#F5A623"
+DANGER = "#E05658"
+NEUTRAL = "#7C8DB5"
+SURFACE = "#FFFFFF"
+SOFT_SUCCESS = "#EAF7EE"
+SOFT_WARNING = "#FFF4E8"
+SOFT_DANGER = "#FDECEC"
+SOFT_NEUTRAL = "#EDF3FF"
+
+
+def clean_role_display(value, pending_label: str | None = None) -> str:
+    """Return a product-safe role label; never expose NaN/N/A in the UI."""
+    if pending_label is None:
+        pending_label = "Role Pending" if globals().get("LANG", "ES") == "EN" else "Rol pendiente"
+    if value is None:
+        return pending_label
+    try:
+        if pd.isna(value):
+            return pending_label
+    except Exception:
+        pass
+    role = str(value).strip()
+    if not role or role.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return pending_label
+    return role
 
 
 def find_project_root() -> Path:
@@ -30,6 +65,7 @@ EVALUATION_PATH = ROOT / "reports" / "evaluation"
 PROCESSED_PATH = ROOT / "data" / "processed"
 STRATEGY_REPORTS_PATH = ROOT / "reports" / "strategy"
 DSS_REPORTS_PATH = ROOT / "reports" / "dss"
+CONTRACT_REPORTS_PATH = ROOT / "reports" / "tm3_contract_intelligence"
 STRATEGY_SRC_PATH = ROOT / "src" / "strategy"
 
 SCORED_UNIVERSE_SIZE = 1_138
@@ -3841,7 +3877,7 @@ st.markdown(
 <style>
 .similarity-decision-grid {
     display:grid;
-    grid-template-columns: minmax(260px,.85fr) minmax(360px,1.1fr) minmax(360px,1.1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap:12px;
     margin: 0 0 14px 0;
 }
@@ -3949,18 +3985,3039 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# TM.3 Contract Intelligence DSS integration
+# =============================================================================
+st.markdown(
+    """
+<style>
+.contract-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin: 8px 0 18px 0;
+}
+.contract-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050);
+    min-height: 94px;
+}
+.contract-card-label {
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.065em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+}
+.contract-card-value {
+    color:#0f172a;
+    font-size:1.70rem;
+    font-weight:950;
+    line-height:1.05;
+}
+.contract-card-caption {
+    color:#64748b;
+    font-size:.75rem;
+    margin-top:6px;
+    line-height:1.25;
+}
+.contract-exec-banner {
+    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060);
+    padding: 16px 18px;
+    margin: 0 0 18px 0;
+}
+.contract-exec-eyebrow {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.contract-exec-title {
+    color:#0f172a;
+    font-size:1.22rem;
+    font-weight:950;
+    line-height:1.12;
+    margin-bottom:6px;
+}
+.contract-exec-copy {
+    color:#475569;
+    font-size:.88rem;
+    line-height:1.42;
+}
+.contract-filter-card {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:14px 16px;
+    box-shadow:0 10px 26px rgba(15,23,42,.045);
+    margin-bottom:16px;
+}
+.contract-score-pill {
+    display:inline-flex;
+    border-radius:999px;
+    padding:4px 9px;
+    font-size:.70rem;
+    font-weight:950;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+}
+@media (max-width: 1350px) {
+    .contract-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+    .contract-kpi-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.4.1 Contract Intelligence professional hotfix
+# =============================================================================
+st.markdown(
+    """
+<style>
+.contract-command-panel {
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060);
+    margin: 0 0 16px 0;
+}
+.contract-command-title {
+    color:#0f172a;
+    font-size:1.05rem;
+    font-weight:950;
+    margin-bottom:4px;
+}
+.contract-command-copy {
+    color:#475569;
+    font-size:.86rem;
+    line-height:1.42;
+}
+.contract-target-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%);
+    border: 1px solid #86efac;
+    border-left: 5px solid #22c55e;
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060);
+    padding: 16px 18px;
+    margin: 0 0 16px 0;
+}
+.contract-target-eyebrow {
+    color:#15803d;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.contract-target-name {
+    color:#0f172a;
+    font-size:1.36rem;
+    font-weight:950;
+    line-height:1.08;
+    margin-bottom:5px;
+}
+.contract-target-meta {
+    color:#475569;
+    font-size:.84rem;
+    line-height:1.35;
+    margin-bottom:10px;
+}
+.contract-target-grid {
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+.contract-target-kpi {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:13px;
+    padding:9px 10px;
+}
+.contract-target-kpi span {
+    display:block;
+    color:#64748b;
+    font-size:.64rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:3px;
+}
+.contract-target-kpi b {
+    display:block;
+    color:#0f172a;
+    font-size:.94rem;
+    font-weight:950;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.contract-action-pill {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    font-size:.68rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+.contract-action-urgent { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+.contract-action-high { background:#ffedd5; color:#9a3412; border:1px solid #fed7aa; }
+.contract-action-medium { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+.contract-action-watch { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+.contract-action-low { background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+.contract-window-pill {
+    display:inline-flex;
+    border-radius:999px;
+    padding:4px 8px;
+    font-size:.68rem;
+    font-weight:900;
+    background:#f8fafc;
+    color:#334155;
+    border:1px solid #e2e8f0;
+}
+.contract-filter-shell {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    padding:15px 17px 12px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 0 0 16px 0;
+}
+.contract-filter-title {
+    color:#0f172a;
+    font-size:.96rem;
+    font-weight:950;
+    margin-bottom:2px;
+}
+.contract-filter-subtitle {
+    color:#64748b;
+    font-size:.78rem;
+    line-height:1.35;
+    margin-bottom:10px;
+}
+.contract-tabs-spacer { height: 4px; }
+@media (max-width: 1200px) {
+    .contract-target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+    .contract-target-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.4.2 Contract Intelligence professional UX refinement
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Contract page: remove sprint/project language and tighten vertical rhythm. */
+.contract-product-hero {
+    margin-top: 2px !important;
+    margin-bottom: 18px !important;
+}
+.contract-product-hero .contract-exec-eyebrow {
+    color:#1d4ed8 !important;
+}
+.contract-filter-shell-pro {
+    background:#ffffff !important;
+    border:1px solid #dbe3ee !important;
+    border-left:4px solid #2563eb !important;
+    border-radius:18px !important;
+    padding:16px 18px 14px 18px !important;
+    box-shadow:0 12px 30px rgba(15,23,42,.055) !important;
+    margin: 18px 0 16px 0 !important;
+}
+.contract-filter-shell-pro div[data-baseweb="select"] > div {
+    background:#ffffff !important;
+    border:1px solid #b9c7d9 !important;
+    border-radius:12px !important;
+    min-height:44px !important;
+    box-shadow:0 5px 14px rgba(15,23,42,.035) !important;
+}
+.contract-filter-shell-pro div[data-baseweb="select"] input,
+.contract-filter-shell-pro div[data-baseweb="select"] span,
+.contract-filter-shell-pro div[data-baseweb="select"] div {
+    color:#0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+    font-weight:750 !important;
+}
+.contract-filter-shell-pro label p {
+    color:#334155 !important;
+    font-weight:850 !important;
+    font-size:.80rem !important;
+}
+.contract-filter-shell-pro .stSlider label p {
+    color:#334155 !important;
+}
+.contract-filter-shell-pro [data-baseweb="radio"] {
+    gap:8px !important;
+}
+.contract-filter-shell-pro .stRadio label {
+    border:1px solid #dbeafe !important;
+    border-radius:999px !important;
+    padding:5px 10px !important;
+    background:#f8fbff !important;
+    margin-right:4px !important;
+}
+.contract-filter-shell-pro .stRadio label p {
+    font-size:.76rem !important;
+    color:#1e3a8a !important;
+    font-weight:900 !important;
+}
+.contract-target-card-pro {
+    margin-top: 4px !important;
+}
+.contract-target-main {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:12px;
+}
+.contract-target-action {
+    white-space:nowrap;
+    padding-top:2px;
+}
+.contract-target-card-pro .contract-target-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+}
+.contract-panel-title {
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:950;
+    margin: 12px 0 8px 0;
+}
+.contract-insight-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-top:12px;
+}
+.contract-insight-card {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:13px 14px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+    min-height:96px;
+}
+.contract-insight-label {
+    color:#64748b;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.contract-insight-value {
+    color:#0f172a;
+    font-size:1.22rem;
+    font-weight:950;
+    line-height:1.08;
+}
+.contract-insight-caption {
+    color:#64748b;
+    font-size:.74rem;
+    margin-top:6px;
+    line-height:1.3;
+}
+.contract-result-caption {
+    margin: 12px 0 6px 0 !important;
+}
+.contract-table-wrapper .contract-table th {
+    white-space:nowrap;
+}
+.contract-table-wrapper .contract-table td {
+    vertical-align:middle !important;
+}
+.contract-table-wrapper .contract-table td:nth-child(2) {
+    font-weight:850;
+}
+/* Prevent empty white orphan boxes around the contract module. */
+.contract-kpi-grid:empty,
+.contract-tabs-spacer:empty {
+    display:none !important;
+}
+@media (max-width: 1300px) {
+    .contract-target-card-pro .contract-target-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    .contract-insight-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 860px) {
+    .contract-target-card-pro .contract-target-grid { grid-template-columns: 1fr !important; }
+    .contract-target-main { flex-direction:column; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.5 Contract Intelligence product UX finalization
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Fix multiselect placeholders and prevent cropped filter text. */
+.contract-filter-shell-pro div[data-baseweb="select"] > div {
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+.contract-filter-shell-pro div[data-baseweb="select"] input,
+.contract-filter-shell-pro div[data-baseweb="select"] span,
+.contract-filter-shell-pro div[data-baseweb="select"] div {
+    line-height: 1.35 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: visible !important;
+}
+.contract-filter-shell-pro .stSlider { padding-top: 6px !important; }
+/* Hide orphan/empty contract spacers. */
+.contract-tabs-spacer, .contract-tabs-spacer:empty { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+/* Executive top-target card. */
+.contract-target-card-premium {
+    background: linear-gradient(135deg,#ffffff 0%,#f7fff9 100%) !important;
+    border-left: 6px solid #22c55e !important;
+}
+.contract-target-identity { display:flex; gap:14px; align-items:center; }
+.contract-player-avatar {
+    width:58px; height:58px; border-radius:999px; background:#0f2f5f; color:#ffffff;
+    display:flex; align-items:center; justify-content:center; font-weight:950; font-size:1.05rem;
+    box-shadow:0 10px 22px rgba(15,23,42,.16); border:3px solid #ffffff;
+}
+.contract-quick-actions {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; padding-top:12px; border-top:1px solid #dcfce7;
+}
+.contract-quick-actions span {
+    display:inline-flex; border-radius:999px; padding:6px 10px; background:#ffffff; color:#1e3a8a;
+    border:1px solid #bfdbfe; font-size:.72rem; font-weight:950;
+}
+.contract-panel-subtitle { color:#64748b; font-size:.80rem; margin:-3px 0 8px 0; }
+.contract-top-target-strip {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050); margin:16px 0 14px 0;
+}
+.contract-top-target-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-top:10px; }
+.contract-top-target-item { border:1px solid #e5eaf1; border-radius:14px; background:#f8fbff; padding:11px 12px; min-height:112px; }
+.contract-top-target-rank { width:26px; height:26px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-weight:950; font-size:.78rem; margin-bottom:8px; }
+.contract-top-target-name { color:#0f172a; font-size:.90rem; font-weight:950; line-height:1.14; }
+.contract-top-target-meta { color:#64748b; font-size:.72rem; line-height:1.28; margin-top:4px; }
+.contract-top-target-score { color:#166534; font-size:1.05rem; font-weight:950; margin-top:8px; }
+.contract-gap-positive { color:#15803d; font-weight:950; }
+.contract-gap-neutral { color:#64748b; font-weight:850; }
+.contract-table th { white-space:nowrap !important; }
+.contract-table td { white-space:nowrap !important; }
+.quick-action-card .quick-action-title { color:#0f172a !important; }
+@media (max-width: 1300px) { .contract-top-target-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 800px) { .contract-top-target-grid { grid-template-columns:1fr; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Recruitment Center product prominence patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+.recruitment-center-hero {
+    display:flex; align-items:center; justify-content:space-between; gap:18px;
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #bfdbfe; border-left:5px solid #2563eb; border-radius:18px;
+    padding:16px 18px; box-shadow:0 14px 34px rgba(15,23,42,.060); margin:4px 0 16px 0;
+}
+.recruitment-center-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:5px; }
+.recruitment-center-title { color:#0f172a; font-size:1.16rem; font-weight:950; line-height:1.12; margin-bottom:5px; }
+.recruitment-center-copy { color:#475569; font-size:.84rem; line-height:1.38; }
+.recruitment-center-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.recruitment-center-actions span { display:inline-flex; border-radius:999px; padding:7px 11px; background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; font-size:.74rem; font-weight:950; white-space:nowrap; }
+@media (max-width: 1100px) { .recruitment-center-hero { flex-direction:column; align-items:flex-start; } .recruitment-center-actions { justify-content:flex-start; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.6 Contract Intelligence professional UX final pass
+# =============================================================================
+st.markdown(
+    """
+<style>
+.contract-filter-shell-v3 { background:#ffffff !important; border:1px solid #dbe3ee !important; border-left:5px solid #2563eb !important; border-radius:18px !important; padding:16px 18px 14px 18px !important; box-shadow:0 12px 30px rgba(15,23,42,.055) !important; margin: 16px 0 16px 0 !important; }
+.contract-filter-shell-v3 div[data-baseweb="select"] > div, .contract-filter-shell-v3 div[data-baseweb="input"] > div { min-height:50px !important; height:auto !important; display:flex !important; align-items:center !important; overflow:visible !important; background:#ffffff !important; border:1px solid #b9c7d9 !important; border-radius:12px !important; box-shadow:0 5px 14px rgba(15,23,42,.035) !important; }
+.contract-filter-shell-v3 div[data-baseweb="select"] input, .contract-filter-shell-v3 div[data-baseweb="select"] span, .contract-filter-shell-v3 div[data-baseweb="select"] div { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; line-height:1.35 !important; padding-top:0 !important; padding-bottom:0 !important; overflow:visible !important; }
+.contract-filter-shell-v3 label p { color:#334155 !important; font-weight:850 !important; font-size:.80rem !important; }
+.contract-filter-shell-v3 .stRadio label { border:1px solid #bfdbfe !important; border-radius:999px !important; padding:6px 11px !important; background:#f8fbff !important; margin-right:5px !important; min-height:34px !important; }
+.contract-filter-shell-v3 .stRadio label p { color:#1e3a8a !important; font-weight:950 !important; font-size:.76rem !important; line-height:1.1 !important; }
+.contract-filter-shell-v3 div[data-testid="stExpander"] { margin: 12px 0 0 0 !important; box-shadow:none !important; border-color:#e2e8f0 !important; }
+.contract-active-summary { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 2px 0; }
+.contract-chip { display:inline-flex; align-items:center; border-radius:999px; padding:6px 10px; background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; font-size:.72rem; font-weight:950; }
+.contract-chip-muted { background:#f8fafc; color:#475569; border-color:#e2e8f0; }
+.contract-kpi-grid-v3 { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin:12px 0 18px 0; }
+.contract-kpi-grid-v3 .contract-card { min-height:92px !important; }
+.contract-action-board { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:16px 18px; box-shadow:0 12px 28px rgba(15,23,42,.050); margin:16px 0 16px 0; }
+.contract-action-board-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:10px; }
+.contract-action-lane { border:1px solid #e5eaf1; border-radius:16px; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); padding:12px; min-height:180px; }
+.contract-action-lane-title { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#0f172a; font-size:.88rem; font-weight:950; margin-bottom:8px; }
+.contract-action-lane-count { border-radius:999px; padding:3px 8px; font-size:.68rem; font-weight:950; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.contract-action-player { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:8px; align-items:center; border-top:1px solid #edf2f7; padding:8px 0; }
+.contract-action-player:first-of-type { border-top:0; }
+.contract-action-name { color:#0f172a; font-size:.80rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-meta { color:#64748b; font-size:.68rem; line-height:1.2; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-score { color:#166534; font-size:.88rem; font-weight:950; text-align:right; }
+.contract-matrix-shell { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 16px 6px 16px; box-shadow:0 12px 28px rgba(15,23,42,.050); margin:14px 0 16px 0; }
+.contract-table-wrapper { overflow-x:auto; border-radius:16px; }
+.contract-table-wrapper .contract-table { min-width:1180px; }
+.contract-product-hero .contract-exec-copy { display:none !important; }
+@media (max-width: 1450px) { .contract-kpi-grid-v3 { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width: 1100px) { .contract-action-board-grid { grid-template-columns:1fr; } .contract-kpi-grid-v3 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 760px) { .contract-kpi-grid-v3 { grid-template-columns:1fr; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.3.7 Contract Intelligence executive hierarchy final pass
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Advanced filters: two-row layout remains in Streamlit columns, but select placeholders must be fully readable. */
+.contract-filter-shell-pro div[data-baseweb="select"] > div,
+.contract-filter-shell-v3 div[data-baseweb="select"] > div {
+    min-height: 56px !important;
+    height: auto !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+
+.contract-filter-shell-pro div[data-baseweb="select"] span,
+.contract-filter-shell-v3 div[data-baseweb="select"] span {
+    line-height: 1.4 !important;
+    padding-top: 2px !important;
+}
+
+/* Give visual air between KPI cards and the top target card. */
+.contract-kpi-grid-v3,
+.contract-active-summary + div,
+div:has(> .contract-card) {
+    margin-bottom: 18px !important;
+}
+.contract-target-card-premium {
+    margin-top: 18px !important;
+    margin-bottom: 18px !important;
+}
+
+/* Action Board becomes the primary decision block below the top target. */
+.contract-action-board-prominent {
+    border-left: 5px solid #0f2f5f !important;
+    padding: 18px 20px !important;
+    margin: 18px 0 18px 0 !important;
+}
+.contract-action-board-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+}
+.contract-action-lane {
+    min-height: 230px !important;
+}
+.contract-action-player {
+    grid-template-columns: minmax(0, 1fr) 52px !important;
+}
+.contract-action-meta {
+    white-space: normal !important;
+}
+
+/* Executive insight between Action Board and Matrix. */
+.contract-executive-insight {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050);
+    padding: 14px 17px;
+    margin: 16px 0 18px 0;
+}
+.contract-executive-insight-label {
+    color: #1d4ed8;
+    font-size: .70rem;
+    font-weight: 950;
+    letter-spacing: .085em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.contract-executive-insight-text {
+    color: #334155;
+    font-size: .88rem;
+    line-height: 1.45;
+    font-weight: 750;
+}
+
+/* Matrix should read as an exploratory layer, not as the first decision object. */
+.contract-matrix-shell,
+div[data-testid="stPlotlyChart"] {
+    margin-top: 8px !important;
+}
+
+/* Compact table controls. */
+div[data-testid="stSelectbox"]:has(input[aria-autocomplete="list"]) {
+    margin-bottom: 8px !important;
+}
+
+@media (max-width: 1450px) {
+    .contract-action-board-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 900px) {
+    .contract-action-board-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.8 Contract Intelligence final stability pass
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Air between chips, KPI cards and top-target card. */
+.contract-active-summary { margin: 14px 0 18px 0 !important; }
+.contract-kpi-grid-v3 { gap: 16px !important; margin: 18px 0 28px 0 !important; }
+.contract-section-gap { height: 16px !important; }
+.contract-target-card-premium { margin-top: 22px !important; margin-bottom: 12px !important; }
+
+/* Advanced filters now use stable selectboxes/number inputs instead of multiselects. */
+div[data-testid="stExpander"] div[data-baseweb="select"] > div,
+div[data-testid="stExpander"] div[data-baseweb="input"] > div {
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+    border-radius: 12px !important;
+}
+div[data-testid="stExpander"] div[data-baseweb="select"] input,
+div[data-testid="stExpander"] div[data-baseweb="select"] span,
+div[data-testid="stExpander"] div[data-baseweb="select"] div,
+div[data-testid="stExpander"] div[data-baseweb="input"] input {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    line-height: 1.35 !important;
+    font-weight: 750 !important;
+}
+
+/* Native Action Board cards. */
+.contract-action-board-title-wrap {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-left:5px solid #0f2f5f;
+    border-radius:18px;
+    padding:16px 18px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:18px 0 12px 0;
+}
+.native-action-player-card {
+    border-top:1px solid #edf2f7;
+    padding:9px 0 8px 0;
+}
+.native-action-player-card:first-of-type { border-top:0; }
+.native-action-player-rank { color:#1d4ed8; font-size:.68rem; font-weight:950; margin-bottom:2px; }
+.native-action-player-name { color:#0f172a; font-size:.86rem; font-weight:950; line-height:1.15; }
+.native-action-player-meta { color:#64748b; font-size:.70rem; line-height:1.28; margin-top:3px; }
+.native-action-player-bottom { display:flex; flex-wrap:wrap; gap:7px; margin-top:6px; color:#334155; font-size:.68rem; }
+.native-action-player-bottom b { color:#0f172a; font-weight:950; }
+
+/* Contract CTA buttons under Top Contract Target. */
+button[kind="secondary"] { border-radius:999px !important; font-weight:900 !important; }
+
+/* Table readability and money/gap formatting. */
+.contract-table td:nth-child(2), .contract-table th:nth-child(2) {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 2 !important;
+    background:#ffffff !important;
+    box-shadow: 1px 0 0 #e2e8f0 !important;
+}
+.contract-table th:nth-child(2) { background:#f8fafc !important; z-index:3 !important; }
+.contract-gap-negative { color:#b91c1c !important; font-weight:950; }
+.contract-gap-positive { color:#15803d !important; font-weight:950; }
+.contract-table-wrapper .contract-table { min-width: 1280px !important; }
+
+/* Matrix is an exploratory top-list by default, not an unreadable full cloud. */
+.contract-matrix-shell + div[data-testid="stPlotlyChart"] { margin-top: 6px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.9 Contract Intelligence product polish: club aliases, premium board, CTAs
+# =============================================================================
+st.markdown(
+    """
+<style>
+.contract-action-board-title-wrap {
+    border-left: 5px solid #0f2f5f !important;
+    margin-top: 22px !important;
+    margin-bottom: 14px !important;
+}
+.native-action-lane-premium {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #dbe3ee;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(15,23,42,.055);
+    padding: 14px 14px 12px 14px;
+    min-height: 300px;
+}
+.native-action-lane-premium--urgent { border-top: 4px solid #ef4444; }
+.native-action-lane-premium--now { border-top: 4px solid #f97316; }
+.native-action-lane-premium--summer { border-top: 4px solid #eab308; }
+.native-action-lane-premium--track { border-top: 4px solid #2563eb; }
+.native-action-lane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.native-action-lane-title {
+    color: #0f172a;
+    font-size: .90rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+.native-action-lane-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 24px;
+    border-radius: 999px;
+    padding: 0 8px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    font-size: .70rem;
+    font-weight: 950;
+}
+.native-action-player-card {
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 14px;
+    padding: 10px 11px;
+    margin-bottom: 9px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.native-action-player-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15,23,42,.055);
+    transition: all .15s ease;
+}
+.native-action-player-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: .68rem;
+    font-weight: 950;
+    margin-bottom: 5px;
+}
+.native-action-player-name {
+    color: #0f172a;
+    font-size: .86rem;
+    font-weight: 950;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.native-action-player-meta {
+    color: #64748b;
+    font-size: .70rem;
+    line-height: 1.28;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.native-action-player-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.native-action-player-bottom span {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 3px 7px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: .66rem;
+    font-weight: 850;
+}
+.native-action-player-bottom b { color: #0f172a; font-weight: 950; }
+.contract-cta-shell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: -2px 0 18px 0;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040);
+    width: fit-content;
+}
+.contract-cta-label {
+    color: #64748b;
+    font-size: .70rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 0 4px 0 2px;
+}
+.contract-cta-shell + div[data-testid="stHorizontalBlock"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 36px !important;
+    padding: 0.35rem 0.78rem !important;
+    box-shadow: 0 6px 16px rgba(37,99,235,.08) !important;
+}
+.contract-cta-shell + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+.contract-matrix-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 3.1fr) minmax(270px, .9fr);
+    gap: 14px;
+    align-items: stretch;
+}
+.contract-matrix-top5-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 14px 15px;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050);
+    min-height: 500px;
+}
+.contract-matrix-top5-title {
+    color: #0f172a;
+    font-size: .90rem;
+    font-weight: 950;
+    margin-bottom: 4px;
+}
+.contract-matrix-top5-subtitle {
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.3;
+    margin-bottom: 10px;
+}
+.contract-matrix-top5-row {
+    display: grid;
+    grid-template-columns: 28px minmax(0,1fr) 48px;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+.contract-matrix-top5-row:last-child { border-bottom: 0; }
+.contract-matrix-top5-rank {
+    width: 25px;
+    height: 25px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: .72rem;
+    font-weight: 950;
+}
+.contract-matrix-top5-name {
+    color: #0f172a;
+    font-size: .78rem;
+    font-weight: 950;
+    line-height: 1.12;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contract-matrix-top5-meta {
+    color: #64748b;
+    font-size: .64rem;
+    line-height: 1.18;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contract-matrix-top5-score {
+    text-align: right;
+    color: #166534;
+    font-size: .86rem;
+    font-weight: 950;
+}
+.contract-table-wrapper .contract-table { min-width: 1060px !important; }
+.contract-table td[title] { cursor: help; }
+.contract-table th, .contract-table td { white-space: nowrap !important; }
+@media (max-width: 1300px) {
+    .contract-matrix-layout { grid-template-columns: 1fr; }
+    .contract-matrix-top5-card { min-height: 0; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.10 Final visual hotfix: compact Action Board, clean matrix and CTA toolbar
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Action Board: remove empty vertical lane areas and keep cards close to headers. */
+.native-action-lane-premium {
+    min-height: 0 !important;
+    padding: 13px 13px 10px 13px !important;
+}
+.native-action-lane-header {
+    margin-bottom: 8px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #edf2f7 !important;
+}
+.native-action-player-card {
+    margin-bottom: 8px !important;
+    padding: 9px 10px !important;
+}
+.native-action-empty {
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 850;
+    padding: 10px 0 2px 0;
+}
+/* Advanced filters remain secondary and closed by default; when opened they are compact. */
+div[data-testid="stExpander"]:has(input[id*="contract_filter_"]) {
+    margin-top: 10px !important;
+    margin-bottom: 14px !important;
+}
+div[data-testid="stExpander"]:has(input[id*="contract_filter_"]) summary {
+    min-height: 40px !important;
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
+}
+/* CTA workflow: visually read as one compact toolbar. */
+.contract-cta-shell {
+    margin: -4px 0 8px 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 16px !important;
+}
+.contract-cta-shell + div[data-testid="stHorizontalBlock"] {
+    width: fit-content !important;
+    max-width: 100% !important;
+    gap: 6px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-radius: 999px !important;
+    padding: 6px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040) !important;
+    margin-bottom: 14px !important;
+}
+.contract-cta-shell + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+}
+.contract-cta-shell + div[data-testid="stHorizontalBlock"] button {
+    min-height: 32px !important;
+    padding: 0.26rem 0.60rem !important;
+    font-size: .76rem !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+/* Matrix: no in-plot band text, so windows do not overlap visually. */
+.contract-matrix-shell + div[data-testid="stPlotlyChart"] {
+    margin-top: 6px !important;
+}
+/* Price validation action has a neutral/warning style. */
+.contract-action-pill.contract-action-medium {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #fde68a !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.10 Final Contract Intelligence stability patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Action Board: native cards, no raw HTML rendering. */
+.contract-action-board-title-wrap {
+    margin-top: 20px !important;
+    margin-bottom: 12px !important;
+}
+.contract-native-lane-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #dbe3ee;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050);
+    padding: 13px 14px 12px 14px;
+    min-height: 0;
+}
+.contract-native-lane-card--urgent { border-top: 4px solid #ef4444; }
+.contract-native-lane-card--now { border-top: 4px solid #f97316; }
+.contract-native-lane-card--summer { border-top: 4px solid #eab308; }
+.contract-native-lane-card--track { border-top: 4px solid #2563eb; }
+.contract-native-lane-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #edf2f7;
+}
+.contract-native-lane-title {
+    color:#0f172a;
+    font-size:.90rem;
+    font-weight:950;
+    line-height:1.15;
+}
+.contract-native-lane-count {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:30px;
+    height:24px;
+    border-radius:999px;
+    padding:0 8px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:950;
+}
+.contract-native-player-card {
+    background:#ffffff;
+    border:1px solid #edf2f7;
+    border-radius:14px;
+    padding:9px 10px;
+    margin-bottom:8px;
+    box-shadow:0 6px 16px rgba(15,23,42,.030);
+}
+.contract-native-player-rank {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;
+    height:22px;
+    border-radius:8px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    margin-bottom:5px;
+}
+.contract-native-player-name {
+    color:#0f172a;
+    font-size:.86rem;
+    font-weight:950;
+    line-height:1.15;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.contract-native-player-meta {
+    color:#64748b;
+    font-size:.70rem;
+    line-height:1.28;
+    margin-top:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.contract-native-player-bottom {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:8px;
+}
+.contract-native-player-bottom span {
+    display:inline-flex;
+    border-radius:999px;
+    padding:3px 7px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#334155;
+    font-size:.66rem;
+    font-weight:850;
+}
+.contract-native-player-bottom b { color:#0f172a; font-weight:950; }
+.contract-native-empty { color:#64748b; font-size:.76rem; font-weight:850; padding:8px 0 2px 0; }
+
+/* Player workflow: one compact toolbar integrated with the target card. */
+.contract-workflow-toolbar {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-radius:18px;
+    padding:10px 12px;
+    box-shadow:0 8px 20px rgba(15,23,42,.040);
+    margin: 0 0 16px 0;
+}
+.contract-workflow-title {
+    color:#64748b;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-bottom:7px;
+}
+.contract-workflow-toolbar + div[data-testid="stHorizontalBlock"] {
+    margin-top: -10px !important;
+    margin-bottom: 18px !important;
+    padding: 0 10px 10px 10px !important;
+    background:#ffffff !important;
+    border:1px solid #dbeafe !important;
+    border-top:0 !important;
+    border-radius:0 0 18px 18px !important;
+    box-shadow:0 8px 20px rgba(15,23,42,.040) !important;
+    width: fit-content !important;
+    max-width:100% !important;
+}
+.contract-workflow-toolbar + div[data-testid="stHorizontalBlock"] button {
+    border-radius:999px !important;
+    border:1px solid #bfdbfe !important;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important;
+    font-weight:950 !important;
+    min-height:34px !important;
+    padding:.30rem .70rem !important;
+    white-space:nowrap !important;
+    box-shadow:none !important;
+}
+
+/* Matrix: avoid internal vertical scroll sensation and reduce plot height. */
+.contract-matrix-top5-card { min-height: 430px !important; }
+div[data-testid="stPlotlyChart"] { overflow: visible !important; }
+.contract-matrix-shell + div[data-testid="stPlotlyChart"] { margin-top: 4px !important; }
+
+/* Restore a slightly richer scouting table without making it unreadable. */
+.contract-table-wrapper .contract-table { min-width: 1220px !important; }
+.contract-table th, .contract-table td { white-space: nowrap !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.11 Contract Intelligence final demo polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Matrix: compact demo view, no internal vertical scroll sensation. */
+.contract-matrix-top5-card { min-height: 360px !important; }
+.contract-matrix-top5-row { padding: 7px 0 !important; }
+.contract-matrix-top5-title { font-size: .86rem !important; }
+.contract-matrix-top5-subtitle { font-size: .68rem !important; margin-bottom: 6px !important; }
+div[data-testid="stPlotlyChart"] { overflow: visible !important; }
+.contract-matrix-shell + div[data-testid="stPlotlyChart"] { margin-top: 0 !important; }
+
+/* Top target workflow is visually integrated with the player card. */
+.contract-target-card-premium { margin-bottom: 0 !important; }
+.contract-workflow-embedded {
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.contract-workflow-embedded .contract-workflow-title { margin-bottom: 0 !important; color:#15803d !important; }
+.contract-workflow-copy { color:#64748b; font-size:.74rem; font-weight:750; line-height:1.25; }
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] {
+    width: fit-content !important;
+    max-width: 100% !important;
+    margin-top: -1px !important;
+    margin-bottom: 18px !important;
+    padding: 8px 10px 10px 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040) !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 32px !important;
+    padding: .26rem .62rem !important;
+    box-shadow: none !important;
+    white-space: nowrap !important;
+}
+
+/* Advanced filters are secondary in demo mode. */
+div[data-testid="stExpander"]:has(input[id*="contract_filter_"]) {
+    margin-top: 10px !important;
+    margin-bottom: 12px !important;
+}
+div[data-testid="stExpander"]:has(input[id*="contract_filter_"]) details:not([open]) {
+    max-height: 46px !important;
+}
+
+/* Keep the richer contract table readable. */
+.contract-table-wrapper .contract-table { min-width: 1220px !important; }
+.contract-table th, .contract-table td { white-space: nowrap !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.12 Final demo closure: embedded workflow toolbar and compact matrix
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Top target workflow: make the CTA row read as the lower band of the green card. */
+.contract-target-card-premium {
+    margin-bottom: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+}
+.contract-workflow-embedded {
+    margin-top: 12px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #dcfce7 !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: -16px !important;
+    margin-bottom: 18px !important;
+    padding: 10px 18px 14px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-left-width: 6px !important;
+    border-left-color: #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+    gap: 8px !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button {
+    min-height: 31px !important;
+    padding: 0.24rem 0.62rem !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+/* Matrix: compact final-demo view, no internal scroll sensation. */
+.contract-matrix-top5-card {
+    min-height: 315px !important;
+    padding: 12px 13px !important;
+}
+.contract-matrix-top5-row { padding: 5px 0 !important; }
+.contract-matrix-top5-rank { width: 22px !important; height: 22px !important; font-size: .66rem !important; }
+.contract-matrix-top5-name { font-size: .74rem !important; }
+.contract-matrix-top5-meta { font-size: .60rem !important; }
+.contract-matrix-top5-score { font-size: .80rem !important; }
+.contract-matrix-top5-title { font-size: .82rem !important; }
+.contract-matrix-top5-subtitle { font-size: .64rem !important; margin-bottom: 4px !important; }
+.contract-panel-subtitle { margin-bottom: 4px !important; }
+div[data-testid="stPlotlyChart"] { overflow: visible !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.13 Final closure patch: large matrix with controlled spacing + embedded toolbar
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Matrix: keep analytical detail; solve perceived scroll by margins and spacing, not by shrinking. */
+.contract-matrix-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 3.2fr) minmax(285px, .85fr) !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+}
+.contract-matrix-top5-card {
+    min-height: 455px !important;
+    padding: 14px 15px !important;
+}
+.contract-matrix-top5-row { padding: 8px 0 !important; }
+.contract-matrix-top5-rank { width: 24px !important; height: 24px !important; font-size: .70rem !important; }
+.contract-matrix-top5-name { font-size: .78rem !important; }
+.contract-matrix-top5-meta { font-size: .64rem !important; }
+.contract-matrix-top5-score { font-size: .86rem !important; }
+.contract-matrix-top5-title { font-size: .88rem !important; }
+.contract-matrix-top5-subtitle { font-size: .70rem !important; margin-bottom: 8px !important; }
+.contract-matrix-shell {
+    padding: 12px 14px 8px 14px !important;
+    margin: 14px 0 16px 0 !important;
+    overflow: visible !important;
+}
+.contract-matrix-shell + div[data-testid="stPlotlyChart"] {
+    margin-top: 2px !important;
+    overflow: visible !important;
+}
+div[data-testid="stPlotlyChart"] {
+    overflow: visible !important;
+}
+@media (max-width: 1300px) {
+    .contract-matrix-layout { grid-template-columns: 1fr !important; }
+    .contract-matrix-top5-card { min-height: 0 !important; }
+}
+
+/* Top Target workflow: functional Streamlit buttons visually become the lower toolbar of the green card. */
+.contract-target-card-premium {
+    margin-bottom: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+.contract-workflow-embedded {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    margin-top: 12px !important;
+    padding-top: 11px !important;
+    border-top: 1px solid #dcfce7 !important;
+}
+.contract-workflow-embedded .contract-workflow-title {
+    color: #15803d !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+.contract-workflow-copy {
+    color: #64748b !important;
+    font-size: .72rem !important;
+    font-weight: 750 !important;
+    line-height: 1.25 !important;
+}
+.contract-workflow-button-anchor {
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: -18px !important;
+    margin-bottom: 20px !important;
+    padding: 11px 18px 15px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-left-width: 6px !important;
+    border-left-color: #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button {
+    min-height: 32px !important;
+    padding: 0.25rem 0.68rem !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: #ffffff !important;
+    color: #1e3a8a !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 4px 10px rgba(37,99,235,.055) !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.3.14 Final fix: embedded visual toolbar + large matrix spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Keep the Top Contract Target as a single, closed green card. */
+.contract-target-card-premium {
+    border-radius: 18px !important;
+    margin-bottom: 20px !important;
+}
+.contract-player-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin-top: 13px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid #dcfce7 !important;
+}
+.contract-player-toolbar-label {
+    color: #15803d !important;
+    font-size: .70rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .065em !important;
+    text-transform: uppercase !important;
+    margin-right: 4px !important;
+    white-space: nowrap !important;
+}
+.contract-player-toolbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+.contract-player-toolbar-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-height: 31px !important;
+    padding: 6px 11px !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    box-shadow: 0 5px 14px rgba(37,99,235,.065) !important;
+}
+.contract-player-toolbar-chip:hover {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+}
+/* Remove obsolete Streamlit-button toolbar wrappers if older CSS remains in cache. */
+.contract-workflow-button-anchor,
+.contract-workflow-toolbar {
+    display: none !important;
+}
+/* Matrix: preserve analytical size and solve spacing with layout rather than shrinking. */
+.contract-matrix-layout {
+    grid-template-columns: minmax(0, 3.25fr) minmax(300px, .85fr) !important;
+    gap: 28px !important;
+}
+.contract-matrix-top5-card {
+    min-height: 465px !important;
+}
+.contract-matrix-shell {
+    padding: 10px 12px 6px 12px !important;
+    margin: 14px 0 18px 0 !important;
+}
+.contract-matrix-shell + div[data-testid="stPlotlyChart"],
+div[data-testid="stPlotlyChart"] {
+    overflow: visible !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.14 Final interaction polish: clickable embedded workflow + frameless Action Board
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Embedded player workflow: keep the chips inside the green card, but make them real links. */
+.contract-player-toolbar-chip,
+a.contract-player-toolbar-chip {
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+a.contract-player-toolbar-chip:visited {
+    color: #1e3a8a !important;
+}
+.contract-player-toolbar-chip:focus,
+a.contract-player-toolbar-chip:focus {
+    outline: 2px solid rgba(37,99,235,.22) !important;
+    outline-offset: 2px !important;
+}
+/* Action Board: remove the outer grey Streamlit lane frame; player cards remain the visual unit. */
+.contract-native-lane-head {
+    background: transparent !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 2px 2px 9px 2px !important;
+    margin-bottom: 10px !important;
+}
+.contract-action-board-grid-clean {
+    margin-top: 10px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.15 Premium UX alignment: top target, workflow band and action board
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Contract Intelligence: premium SaaS rhythm while preserving global header/footer. */
+.contract-kpi-grid-v3 .contract-card,
+.contract-card {
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+}
+
+/* Top Contract Target: one integrated green decision card. */
+.contract-target-card-final {
+    background: linear-gradient(135deg,#ffffff 0%,#f7fff9 100%) !important;
+    border: 1px solid #22c55e !important;
+    border-left: 3px solid #22c55e !important;
+    border-radius: 18px 18px 0 0 !important;
+    padding: 18px 20px 0 20px !important;
+    margin: 20px 0 0 0 !important;
+    box-shadow: 0 16px 38px rgba(15,23,42,.065) !important;
+}
+.contract-target-main-final {
+    display: grid !important;
+    grid-template-columns: minmax(330px, 1.05fr) minmax(0, 2.25fr) !important;
+    gap: 22px !important;
+    align-items: center !important;
+    margin-bottom: 16px !important;
+}
+.contract-target-identity-final {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+}
+.contract-player-photo-shell {
+    width: 92px !important;
+    height: 92px !important;
+    border-radius: 16px !important;
+    background: radial-gradient(circle at 35% 25%, #eaf2ff 0%, #dbeafe 42%, #f8fafc 100%) !important;
+    border: 1px solid #dbeafe !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9) !important;
+}
+.contract-player-avatar-final {
+    width: 48px !important;
+    height: 48px !important;
+    background: #22c55e !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 10px 20px rgba(34,197,94,.20) !important;
+}
+.contract-target-copy-final .contract-target-name {
+    font-size: 1.42rem !important;
+    letter-spacing: -.02em !important;
+}
+.contract-target-primary-action { margin-top: 10px !important; }
+.contract-target-primary-action .contract-action-pill {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: 1px solid #16a34a !important;
+    padding: 7px 13px !important;
+    font-size: .76rem !important;
+}
+.contract-target-metric-strip {
+    display: grid !important;
+    grid-template-columns: .82fr .82fr 1fr 1fr 1fr .9fr !important;
+    gap: 0 !important;
+    align-items: stretch !important;
+    background: transparent !important;
+}
+.contract-target-metric-strip .contract-target-kpi {
+    background: transparent !important;
+    border: 0 !important;
+    border-left: 1px solid #dbe3ee !important;
+    border-radius: 0 !important;
+    padding: 8px 16px 10px 16px !important;
+    min-height: 78px !important;
+    box-shadow: none !important;
+}
+.contract-target-metric-strip .contract-target-kpi:first-child { border-left: 0 !important; }
+.contract-target-metric-strip .contract-target-kpi span {
+    color: #334155 !important;
+    font-size: .66rem !important;
+    letter-spacing: .055em !important;
+    line-height: 1.15 !important;
+}
+.contract-target-metric-strip .contract-target-kpi b {
+    font-size: 1.48rem !important;
+    line-height: 1.0 !important;
+    margin-top: 5px !important;
+}
+.contract-target-metric-strip .contract-target-kpi small {
+    display: block !important;
+    color: #64748b !important;
+    font-size: .70rem !important;
+    font-weight: 750 !important;
+    margin-top: 6px !important;
+}
+.contract-target-kpi-score b { color: #15803d !important; font-size: 1.82rem !important; }
+.contract-target-kpi-score i {
+    display: block !important;
+    height: 6px !important;
+    width: 76px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(90deg,#16a34a,#22c55e) !important;
+    margin-top: 10px !important;
+}
+.contract-days-highlight { color: #ea580c !important; }
+.contract-player-toolbar-final {
+    display: grid !important;
+    grid-template-columns: 250px minmax(0,1fr) !important;
+    align-items: center !important;
+    min-height: 46px !important;
+    margin: 12px -20px 0 -20px !important;
+    padding: 0 20px !important;
+    border-top: 1px solid #dcfce7 !important;
+    background: rgba(255,255,255,.78) !important;
+}
+.contract-player-toolbar-final .contract-player-toolbar-label {
+    color: #334155 !important;
+    text-align: center !important;
+    margin: 0 !important;
+    font-size: .72rem !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: -46px !important;
+    margin-bottom: 20px !important;
+    margin-left: 250px !important;
+    padding: 6px 12px 7px 0 !important;
+    min-height: 46px !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: none !important;
+    gap: 0 !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    border-left: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] button {
+    width: 100% !important;
+    min-height: 34px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: #0f172a !important;
+    font-size: .86rem !important;
+    font-weight: 850 !important;
+    box-shadow: none !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    transform: none !important;
+}
+
+/* Action Board: one premium command center, lanes as decision columns. */
+.contract-action-board-premium {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-left: 0 !important;
+    padding: 18px 20px 8px 20px !important;
+    margin: 10px 0 0 0 !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.055) !important;
+}
+.contract-action-board-premium .contract-panel-title {
+    font-size: 1.02rem !important;
+    letter-spacing: .01em !important;
+    text-transform: uppercase !important;
+}
+.contract-action-board-grid-clean,
+.contract-action-board-premium + div[data-testid="stHorizontalBlock"] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-top: 0 !important;
+    border-radius: 0 0 18px 18px !important;
+    padding: 10px 20px 16px 20px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.055) !important;
+    gap: 16px !important;
+    margin-bottom: 18px !important;
+}
+.contract-native-lane-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    margin: 0 0 8px 0 !important;
+    border: 0 !important;
+    border-radius: 12px 12px 0 0 !important;
+    background: #f8fafc !important;
+}
+.contract-native-lane-title { font-size: .86rem !important; }
+.contract-native-player-card {
+    position: relative !important;
+    border: 0 !important;
+    border-bottom: 1px solid #edf2f7 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 9px 34px 10px 10px !important;
+    margin-bottom: 0 !important;
+    background: #ffffff !important;
+}
+.contract-native-player-card:hover {
+    background: #f8fbff !important;
+    transform: none !important;
+    box-shadow: inset 3px 0 0 #2563eb !important;
+}
+.contract-native-player-rank {
+    background: transparent !important;
+    color: #1d4ed8 !important;
+    width: auto !important;
+    height: auto !important;
+    margin-bottom: 2px !important;
+}
+.contract-native-player-name { font-size: .82rem !important; }
+.contract-native-player-meta { font-size: .68rem !important; }
+.contract-native-player-bottom {
+    gap: 8px !important;
+    margin-top: 5px !important;
+    color: #64748b !important;
+}
+.contract-native-player-bottom span {
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: .66rem !important;
+}
+/* Convert the Streamlit profile button into a compact row chevron. */
+.contract-card-button-anchor + div[data-testid="stButton"] {
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.contract-card-button-anchor + div[data-testid="stButton"] button {
+    position: relative !important;
+    float: right !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    margin-top: -49px !important;
+    margin-right: 8px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: #334155 !important;
+    font-size: 1.20rem !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+    z-index: 10 !important;
+}
+.contract-card-button-anchor + div[data-testid="stButton"] button:hover {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    transform: none !important;
+}
+.contract-lane-footer-anchor + div[data-testid="stButton"] button {
+    margin-top: 10px !important;
+    min-height: 32px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-top: 1px solid #edf2f7 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 950 !important;
+}
+
+@media (max-width: 1300px) {
+    .contract-target-main-final { grid-template-columns: 1fr !important; }
+    .contract-target-metric-strip { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+    .contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] { margin-left: 0 !important; margin-top: 0 !important; background: #ffffff !important; border: 1px solid #86efac !important; border-top: 0 !important; padding: 8px 12px !important; }
+    .contract-player-toolbar-final { display: block !important; min-height: 0 !important; padding: 10px 20px !important; }
+}
+@media (max-width: 800px) {
+    .contract-target-metric-strip { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# role intelligence.8 Role Intelligence CSS
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid #bfdbfe;
+    background:linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);
+    color:#1e3a8a; border-radius:999px; padding:5px 10px;
+    font-size:.74rem; font-weight:950; margin-left:8px;
+    vertical-align:middle; white-space:nowrap;
+}
+.role-profile-grid {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px; margin:12px 0 18px 0;
+}
+.role-profile-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:16px;
+    padding:13px 14px; min-height:92px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+}
+.role-profile-label {
+    color:#64748b; font-size:.72rem; font-weight:950;
+    text-transform:uppercase; letter-spacing:.055em; margin-bottom:6px;
+}
+.role-profile-value {
+    color:#0f172a; font-size:1.04rem; font-weight:950; line-height:1.15;
+}
+.role-profile-caption {
+    color:#94a3b8; font-size:.72rem; margin-top:5px; line-height:1.25;
+}
+.role-similar-grid {
+    display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:12px; margin:12px 0 22px 0;
+}
+.role-similar-card {
+    background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+    border:1px solid #e2e8f0; border-radius:16px;
+    padding:13px 14px; min-height:112px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+}
+.role-similar-rank {
+    width:26px; height:26px; border-radius:8px; background:#eff6ff;
+    color:#1d4ed8; display:flex; align-items:center; justify-content:center;
+    font-weight:950; font-size:.78rem; margin-bottom:8px;
+}
+.role-similar-name { color:#0f172a; font-size:.90rem; font-weight:950; line-height:1.15; }
+.role-similar-meta { color:#64748b; font-size:.72rem; line-height:1.28; margin-top:5px; }
+.role-similar-score { color:#166534; font-size:1.00rem; font-weight:950; margin-top:8px; }
+.role-section-card {
+    background:#ffffff; border:1px solid #dbeafe; border-left:5px solid #2563eb;
+    border-radius:18px; padding:15px 17px; box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:10px 0 18px 0;
+}
+.role-section-title { color:#0f172a; font-size:.98rem; font-weight:950; margin-bottom:3px; }
+.role-section-subtitle { color:#64748b; font-size:.78rem; line-height:1.35; }
+@media(max-width:1300px){
+    .role-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .role-similar-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:760px){
+    .role-profile-grid,.role-similar-grid{grid-template-columns:1fr;}
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5 final Role Intelligence UX polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-badge-family-defensive,
+.role-profile-card-family-defensive,
+.role-top-role-row-family-defensive { border-color:#bfdbfe !important; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important; }
+.role-badge-family-build_up,
+.role-profile-card-family-build_up,
+.role-top-role-row-family-build_up { border-color:#ddd6fe !important; background:linear-gradient(180deg,#ffffff 0%,#fbfaff 100%) !important; }
+.role-badge-family-creative,
+.role-profile-card-family-creative,
+.role-top-role-row-family-creative { border-color:#bbf7d0 !important; background:linear-gradient(180deg,#ffffff 0%,#f7fff9 100%) !important; }
+.role-badge-family-attacking,
+.role-profile-card-family-attacking,
+.role-top-role-row-family-attacking { border-color:#fed7aa !important; background:linear-gradient(180deg,#ffffff 0%,#fffaf5 100%) !important; }
+.role-badge-family-balanced,
+.role-profile-card-family-balanced,
+.role-top-role-row-family-balanced { border-color:#e2e8f0 !important; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%) !important; }
+
+.role-badge-family-defensive { color:#1d4ed8 !important; }
+.role-badge-family-build_up { color:#6d28d9 !important; }
+.role-badge-family-creative { color:#15803d !important; }
+.role-badge-family-attacking { color:#ea580c !important; }
+.role-badge-family-balanced { color:#334155 !important; }
+
+.role-tactical-read-card {
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #bfdbfe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 18px 0;
+}
+.role-tactical-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.role-tactical-title {
+    color:#0f172a;
+    font-size:1.06rem;
+    font-weight:950;
+    line-height:1.15;
+    margin-bottom:6px;
+}
+.role-tactical-copy {
+    color:#334155;
+    font-size:.86rem;
+    line-height:1.44;
+    font-weight:750;
+}
+.role-tactical-chips {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:10px;
+}
+.role-tactical-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:950;
+}
+.role-top-role-card {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 18px 0;
+}
+.role-top-role-title {
+    color:#0f172a;
+    font-size:.96rem;
+    font-weight:950;
+    margin-bottom:3px;
+}
+.role-top-role-subtitle {
+    color:#64748b;
+    font-size:.76rem;
+    line-height:1.35;
+    margin-bottom:10px;
+}
+.role-top-role-grid {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+}
+.role-top-role-row {
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:10px 11px;
+    min-height:92px;
+    box-shadow:0 6px 16px rgba(15,23,42,.030);
+}
+.role-top-role-rank {
+    display:inline-flex;
+    width:24px;
+    height:22px;
+    border-radius:8px;
+    align-items:center;
+    justify-content:center;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    margin-bottom:6px;
+}
+.role-top-role-name {
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+    line-height:1.14;
+}
+.role-top-role-meta {
+    color:#64748b;
+    font-size:.70rem;
+    line-height:1.28;
+    margin-top:4px;
+}
+.role-top-role-score {
+    color:#166534;
+    font-size:.92rem;
+    font-weight:950;
+    margin-top:6px;
+}
+.role-availability-chip b::before {
+    content: "";
+}
+.role-availability-share {
+    opacity:.72;
+    font-weight:850;
+    margin-left:4px;
+}
+@media(max-width:1200px){
+    .role-top-role-grid { grid-template-columns:1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.9 — Executive Scouting Card & Player Identity Layer
+# =============================================================================
+st.markdown(
+    """
+<style>
+.exec-card-shell {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #dbe7f5;
+    border-radius: 24px;
+    box-shadow: 0 22px 52px rgba(15, 23, 42, 0.090);
+    padding: 20px 22px;
+    margin: 10px 0 24px 0;
+}
+.exec-card-top {
+    display: grid;
+    grid-template-columns: 1.15fr 1.05fr;
+    gap: 18px;
+    align-items: stretch;
+}
+.exec-identity-panel, .exec-signals-panel, .exec-role-panel, .exec-market-panel, .exec-recommendation-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.050);
+}
+.exec-identity-panel { padding: 18px; }
+.exec-identity-grid {
+    display: grid;
+    grid-template-columns: 106px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+.exec-player-avatar {
+    width: 96px;
+    height: 116px;
+    border-radius: 20px;
+    background: linear-gradient(160deg, #0b1f3a 0%, #1d4ed8 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.05rem;
+    font-weight: 950;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 12px 26px rgba(29,78,216,.22);
+}
+.exec-club-shield {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    margin: 10px auto 0 auto;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 950;
+    font-size: .94rem;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .12);
+}
+.exec-kicker {
+    color: #1d4ed8;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.exec-player-title {
+    color: #0f172a;
+    font-size: 2.05rem;
+    font-weight: 950;
+    line-height: 1.02;
+    letter-spacing: -.035em;
+    margin-bottom: 8px;
+}
+.exec-player-clubline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    color: #334155;
+    font-weight: 850;
+    font-size: .92rem;
+    margin-bottom: 12px;
+}
+.exec-league-pill, .exec-position-pill, .exec-role-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: .76rem;
+    font-weight: 900;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+.exec-role-pill { background:#f8fafc; border-color:#e2e8f0; color:#0f172a; }
+.exec-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+.exec-meta-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 9px 10px;
+    min-height: 62px;
+}
+.exec-meta-item span, .exec-mini-label {
+    display: block;
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .045em;
+    margin-bottom: 4px;
+}
+.exec-meta-item b, .exec-mini-value {
+    display: block;
+    color: #0f172a;
+    font-size: .94rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+.exec-signals-panel { padding: 16px; }
+.exec-signals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+.exec-signal-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 12px 12px 11px 12px;
+    min-height: 132px;
+    border: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+.exec-signal-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--accent);
+}
+.exec-signal-label {
+    color: #64748b;
+    font-size: .66rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+.exec-signal-value {
+    color: #0f172a;
+    font-size: 2.28rem;
+    line-height: .98;
+    font-weight: 950;
+    letter-spacing: -.04em;
+    margin: 14px 0 5px 0;
+}
+.exec-signal-status {
+    display: inline-flex;
+    width: fit-content;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: var(--soft);
+    color: var(--dark);
+    font-size: .70rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+.exec-assessment-strip {
+    margin-top: 12px;
+    border-radius: 16px;
+    padding: 11px 13px;
+    border: 1px solid #dbeafe;
+    background: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%);
+    color: #334155;
+    font-size: .82rem;
+    line-height: 1.35;
+    font-weight: 650;
+}
+.exec-mid-grid {
+    display: grid;
+    grid-template-columns: .92fr 1.08fr;
+    gap: 18px;
+    margin-top: 18px;
+}
+.exec-role-panel, .exec-market-panel, .exec-recommendation-panel { padding: 16px 18px; }
+.exec-panel-title {
+    color: #0f172a;
+    font-size: .96rem;
+    font-weight: 950;
+    margin-bottom: 4px;
+}
+.exec-panel-subtitle {
+    color: #64748b;
+    font-size: .78rem;
+    line-height: 1.35;
+    margin-bottom: 13px;
+}
+.exec-pitch {
+    position: relative;
+    height: 270px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.55);
+    background:
+        linear-gradient(90deg, rgba(255,255,255,.15) 49.7%, rgba(255,255,255,.55) 50%, rgba(255,255,255,.15) 50.3%),
+        radial-gradient(circle at 50% 50%, transparent 0 34px, rgba(255,255,255,.58) 35px 36px, transparent 37px),
+        linear-gradient(135deg, #0f7a4f 0%, #15803d 100%);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.42), 0 12px 28px rgba(15, 23, 42, .08);
+    overflow: hidden;
+}
+.exec-pitch::before, .exec-pitch::after {
+    content: "";
+    position: absolute;
+    left: 36%;
+    right: 36%;
+    height: 46px;
+    border: 1px solid rgba(255,255,255,.58);
+}
+.exec-pitch::before { top: 0; border-top: 0; border-radius: 0 0 12px 12px; }
+.exec-pitch::after { bottom: 0; border-bottom: 0; border-radius: 12px 12px 0 0; }
+.exec-pos-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    min-width: 38px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: .76rem;
+    font-weight: 950;
+    background: rgba(15, 23, 42, .34);
+    border: 1px solid rgba(255,255,255,.28);
+    backdrop-filter: blur(3px);
+}
+.exec-pos-marker.primary {
+    background: #2563eb;
+    border-color: #bfdbfe;
+    box-shadow: 0 0 0 5px rgba(37,99,235,.24), 0 10px 22px rgba(37,99,235,.22);
+}
+.exec-pos-marker.secondary {
+    background: rgba(219,234,254,.96);
+    color: #1e3a8a;
+    border-color: #ffffff;
+}
+.exec-flex-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 12px;
+}
+.exec-dna-row { margin-bottom: 11px; }
+.exec-dna-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.exec-dna-head span {
+    color:#334155;
+    font-size:.79rem;
+    font-weight:900;
+}
+.exec-dna-head b {
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+}
+.exec-dna-track {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eaf0f7;
+}
+.exec-dna-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb 0%, #38bdf8 100%);
+}
+.exec-role-interpretation {
+    margin-top: 12px;
+    border-radius: 16px;
+    padding: 11px 13px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#334155;
+    font-size:.82rem;
+    line-height:1.42;
+}
+.exec-market-grid {
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:10px;
+}
+.exec-recommendation-panel {
+    margin-top: 18px;
+    border-left: 5px solid #2563eb;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+.exec-reco-status {
+    display:inline-flex;
+    border-radius:999px;
+    padding:7px 11px;
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    color:#1e3a8a;
+    font-size:.76rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+}
+.exec-reco-text {
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:750;
+    line-height:1.45;
+    max-width: 1180px;
+}
+.exec-chip-row { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.exec-driver-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:6px 10px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    color:#334155;
+    font-size:.75rem;
+    font-weight:900;
+}
+@media(max-width:1300px){
+    .exec-card-top, .exec-mid-grid { grid-template-columns: 1fr !important; }
+    .exec-signals-grid, .exec-meta-grid, .exec-market-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media(max-width:760px){
+    .exec-identity-grid { grid-template-columns: 1fr !important; }
+    .exec-signals-grid, .exec-meta-grid, .exec-market-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.9 product coherence hotfix: i18n, pitch hierarchy and non-ambiguous club mark
+# =============================================================================
+st.markdown(
+    """
+<style>
+.exec-club-shield {
+    width: 64px !important;
+    height: 58px !important;
+    border-radius: 18px !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    font-size: .92rem !important;
+    line-height: 1.0 !important;
+}
+.exec-club-shield-label {
+    display: block;
+    color: #64748b;
+    font-size: .50rem;
+    font-weight: 950;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.exec-club-shield-code {
+    display: block;
+    color: #1e3a8a;
+    font-size: .88rem;
+    font-weight: 950;
+}
+.exec-pos-marker {
+    opacity: .34;
+    min-width: 34px !important;
+    height: 28px !important;
+    background: rgba(15, 23, 42, .22) !important;
+    border-color: rgba(255,255,255,.18) !important;
+}
+.exec-pos-marker.secondary {
+    opacity: .72;
+    background: rgba(219,234,254,.90) !important;
+    color: #1e3a8a !important;
+    border-color: rgba(255,255,255,.82) !important;
+}
+.exec-pos-marker.primary {
+    opacity: 1;
+    min-width: 48px !important;
+    height: 38px !important;
+    font-size: .86rem !important;
+    background: #2563eb !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 0 7px rgba(37,99,235,.28), 0 14px 26px rgba(37,99,235,.30) !important;
+    z-index: 5;
+}
+.exec-pitch-legend {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:10px;
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:850;
+}
+.exec-pitch-legend span {
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    border:1px solid #e2e8f0;
+    background:#ffffff;
+    border-radius:999px;
+    padding:5px 8px;
+}
+.exec-pitch-dot {
+    width:9px;
+    height:9px;
+    border-radius:999px;
+    display:inline-block;
+    background:#94a3b8;
+}
+.exec-pitch-dot-primary { background:#2563eb; }
+.exec-pitch-dot-secondary { background:#93c5fd; }
+.exec-flex-line .exec-position-pill strong {
+    font-weight:950;
+}
+.exec-reco-text b { color:#0f172a; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 UX compact final: director deportivo hierarchy, horizontal pitch and progressive disclosure
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* TM.6.9: the executive card must fit as a decision summary, not as a long report. */
+.exec-card-shell {
+    padding: 18px 20px !important;
+    margin-bottom: 18px !important;
+}
+.exec-card-top {
+    grid-template-columns: minmax(0, 1.02fr) minmax(470px, .98fr) !important;
+    gap: 16px !important;
+}
+.exec-identity-panel,
+.exec-signals-panel,
+.exec-role-panel,
+.exec-market-panel,
+.exec-recommendation-panel {
+    border-radius: 18px !important;
+}
+.exec-player-avatar {
+    height: 104px !important;
+    width: 88px !important;
+    border-radius: 18px !important;
+    font-size: 1.72rem !important;
+}
+.exec-club-shield {
+    width: 88px !important;
+    height: auto !important;
+    min-height: 42px !important;
+    margin-top: 8px !important;
+    padding: 7px 8px !important;
+    border-radius: 14px !important;
+}
+.exec-club-shield-label { font-size: .48rem !important; }
+.exec-club-shield-code { font-size: .72rem !important; line-height: 1.10 !important; text-align:center !important; }
+.exec-player-title { font-size: 1.78rem !important; }
+.exec-meta-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 8px !important; }
+.exec-meta-item { min-height: 54px !important; padding: 8px 9px !important; }
+.exec-meta-item span, .exec-mini-label { font-size: .62rem !important; }
+.exec-meta-item b, .exec-mini-value { font-size: .86rem !important; }
+.exec-signals-grid { gap: 8px !important; }
+.exec-signal-card { min-height: 106px !important; padding: 10px 10px 9px 10px !important; border-radius: 16px !important; }
+.exec-signal-value { font-size: 1.90rem !important; margin: 10px 0 5px 0 !important; }
+.exec-assessment-strip { margin-top: 9px !important; padding: 9px 11px !important; font-size: .78rem !important; }
+.exec-mid-grid { margin-top: 14px !important; gap: 14px !important; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr) !important; }
+.exec-role-panel, .exec-market-panel, .exec-recommendation-panel { padding: 14px 16px !important; }
+.exec-dna-row { margin-bottom: 8px !important; }
+.exec-dna-track { height: 8px !important; }
+.exec-role-interpretation { margin-top: 10px !important; font-size: .78rem !important; }
+.exec-recommendation-panel {
+    margin-top: 0 !important;
+    border-left: 5px solid #2563eb !important;
+    display: grid !important;
+    grid-template-columns: 150px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+}
+.exec-target-score {
+    border-radius: 17px;
+    background: linear-gradient(180deg,#eff6ff 0%,#ffffff 100%);
+    border: 1px solid #bfdbfe;
+    padding: 12px 10px;
+    text-align: center;
+    min-height: 122px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.exec-target-score span {
+    color:#1d4ed8;
+    font-size:.62rem;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.exec-target-score b {
+    color:#0f172a;
+    font-size:2.15rem;
+    font-weight:950;
+    line-height:.95;
+}
+.exec-target-score small {
+    color:#475569;
+    font-size:.68rem;
+    font-weight:900;
+    margin-top:6px;
+}
+.exec-reco-content { min-width: 0; }
+.exec-reco-status { margin-bottom: 7px !important; }
+.exec-reco-text { font-size: .90rem !important; line-height: 1.40 !important; }
+.exec-chip-row { margin-top: 9px !important; }
+.exec-driver-chip { padding: 5px 9px !important; font-size: .70rem !important; }
+/* Horizontal pitch: goals on the short left/right ends, halfway line in the middle. */
+.exec-pitch {
+    height: 190px !important;
+    border-radius: 18px !important;
+    background:
+        linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.62) 49.8%, rgba(255,255,255,.62) 50.2%, transparent 50.45%),
+        radial-gradient(circle at 50% 50%, transparent 0 28px, rgba(255,255,255,.62) 29px 30px, transparent 31px),
+        linear-gradient(135deg, #0f7a4f 0%, #15803d 100%) !important;
+}
+.exec-pitch::before, .exec-pitch::after {
+    top: 28% !important;
+    bottom: 28% !important;
+    width: 52px !important;
+    height: auto !important;
+    left: auto !important;
+    right: auto !important;
+    border: 1px solid rgba(255,255,255,.62) !important;
+}
+.exec-pitch::before {
+    left: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 12px 12px 0 !important;
+}
+.exec-pitch::after {
+    right: 0 !important;
+    border-right: 0 !important;
+    border-radius: 12px 0 0 12px !important;
+}
+.exec-pos-marker { min-width: 30px !important; height: 25px !important; font-size: .68rem !important; }
+.exec-pos-marker.primary { min-width: 44px !important; height: 34px !important; font-size: .80rem !important; }
+.exec-context-details {
+    margin-top: 14px;
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 18px;
+    box-shadow: 0 8px 22px rgba(15,23,42,.040);
+    overflow: hidden;
+}
+.exec-context-details summary {
+    list-style: none;
+    cursor: pointer;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 15px;
+    color: #0f172a;
+    font-size: .86rem;
+    font-weight: 950;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+}
+.exec-context-details summary::-webkit-details-marker { display:none; }
+.exec-context-details summary::before { content: "›"; font-size: 1.20rem; font-weight: 950; color:#2563eb; }
+.exec-context-details[open] summary::before { transform: rotate(90deg); }
+.exec-context-details[open] summary { border-bottom: 1px solid #e2e8f0; }
+.exec-context-body {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    gap: 14px;
+    padding: 14px;
+    background: #ffffff;
+}
+.exec-compact-note {
+    color:#64748b;
+    font-size:.73rem;
+    font-weight:750;
+    margin-left:auto;
+}
+.exec-market-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.player-intelligence-report-gap { height: 12px !important; }
+@media(max-width:1300px){
+    .exec-card-top, .exec-mid-grid, .exec-context-body { grid-template-columns: 1fr !important; }
+    .exec-recommendation-panel { grid-template-columns: 1fr !important; }
+    .exec-target-score { min-height: 96px !important; }
+}
+@media(max-width:760px){
+    .exec-market-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9.1 Director Deportivo UX v2: decision hierarchy, no duplication, tooltips
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* --- TM.6.9 executive card v2 --- */
+.exec-card-shell {
+    padding: 18px 20px !important;
+    border-radius: 22px !important;
+}
+.exec-card-top {
+    grid-template-columns: minmax(0, 1.08fr) minmax(480px, .92fr) !important;
+}
+.exec-identity-panel,
+.exec-signals-panel,
+.exec-role-panel,
+.exec-market-panel,
+.exec-recommendation-panel,
+.exec-decision-panel,
+.exec-comparables-panel {
+    border-radius: 18px !important;
+    border: 1px solid #dfe7f2 !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.046) !important;
+}
+.exec-info {
+    display:inline-flex;
+    width:17px;
+    height:17px;
+    border-radius:999px;
+    align-items:center;
+    justify-content:center;
+    margin-left:6px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    border:1px solid #bfdbfe;
+    font-size:11px;
+    font-weight:950;
+    cursor:help;
+    vertical-align:1px;
+}
+.exec-section-header-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.exec-player-title { font-size: 1.70rem !important; }
+.exec-player-clubline { margin-bottom: 10px !important; }
+.exec-meta-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.exec-meta-item { min-height: 52px !important; }
+.exec-meta-item.is-secondary { background:#ffffff !important; }
+.exec-signals-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.exec-signal-card { min-height: 102px !important; }
+.exec-signal-value { font-size: 1.84rem !important; }
+.exec-decision-drivers {
+    margin-top: 10px;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:8px;
+}
+.exec-decision-driver {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    border:1px solid #e2e8f0;
+    border-radius:13px;
+    background:#ffffff;
+    padding:8px 10px;
+    color:#334155;
+    font-size:.73rem;
+    font-weight:850;
+}
+.exec-decision-driver b { color:#0f172a; font-weight:950; white-space:nowrap; }
+.exec-decision-driver.positive { border-color:#bbf7d0; background:#f7fff9; }
+.exec-decision-driver.warning { border-color:#fed7aa; background:#fff7ed; }
+.exec-decision-driver.neutral { border-color:#dbeafe; background:#f8fbff; }
+.exec-mid-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+}
+.exec-role-panel, .exec-recommendation-panel { min-height: 245px !important; }
+.exec-recommendation-panel {
+    display:grid !important;
+    grid-template-columns: 138px minmax(0, 1fr) !important;
+    gap:14px !important;
+    align-items: stretch !important;
+    padding: 14px 16px !important;
+}
+.exec-target-score {
+    min-height: 0 !important;
+    height: 100% !important;
+    border-radius: 16px !important;
+    padding: 12px 10px !important;
+}
+.exec-target-score b { font-size: 2.25rem !important; }
+.exec-reco-text { font-size: .86rem !important; line-height:1.36 !important; }
+.exec-chip-row { margin-top: 8px !important; }
+.exec-driver-chip { font-size: .68rem !important; padding: 5px 8px !important; }
+.exec-next-actions {
+    margin-top: 10px;
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:7px;
+}
+.exec-next-action {
+    border:1px solid #dbeafe;
+    background:#f8fbff;
+    border-radius:12px;
+    padding:8px 9px;
+    color:#1e3a8a;
+    font-size:.70rem;
+    font-weight:900;
+    line-height:1.25;
+}
+.exec-context-details { margin-top: 14px !important; }
+.exec-context-body {
+    grid-template-columns: minmax(0,.78fr) minmax(0,1.22fr) !important;
+}
+.exec-context-right-stack {
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:12px;
+}
+.exec-market-panel { padding: 14px 16px !important; }
+.exec-market-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.exec-market-panel .exec-meta-item { min-height: 56px !important; }
+.exec-transfer-feasibility {
+    display:grid;
+    grid-template-columns: 120px minmax(0,1fr);
+    gap:12px;
+    align-items:center;
+}
+.exec-feasibility-badge {
+    border-radius:18px;
+    border:1px solid var(--feas-border,#bfdbfe);
+    background:var(--feas-bg,#eff6ff);
+    color:var(--feas-color,#1e3a8a);
+    min-height:82px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-weight:950;
+}
+.exec-feasibility-badge span { font-size:.62rem; letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px; }
+.exec-feasibility-badge b { font-size:1.18rem; }
+.exec-feasibility-copy { color:#475569; font-size:.78rem; line-height:1.38; font-weight:700; }
+.exec-pitch {
+    aspect-ratio: 1.62 / 1 !important;
+    height: auto !important;
+    max-height: 205px !important;
+    min-height: 170px !important;
+    width: 100% !important;
+}
+.exec-pitch::before, .exec-pitch::after { width: 44px !important; }
+.exec-pos-marker { opacity:.26 !important; }
+.exec-pos-marker.secondary { opacity:.52 !important; }
+.exec-pos-marker.primary { opacity:1 !important; }
+.exec-position-bars {
+    display:grid;
+    gap:7px;
+    margin-top:10px;
+}
+.exec-position-bar-row {
+    display:grid;
+    grid-template-columns:42px minmax(0,1fr) 42px;
+    gap:8px;
+    align-items:center;
+    font-size:.72rem;
+    color:#334155;
+    font-weight:900;
+}
+.exec-position-bar-track { height:8px; border-radius:999px; background:#eaf0f7; overflow:hidden; }
+.exec-position-bar-fill { height:100%; border-radius:999px; background:#2563eb; }
+.exec-position-bar-fill.secondary { background:#93c5fd; }
+.exec-comparables-panel {
+    padding: 14px 16px;
+    background:#ffffff;
+}
+.exec-comparable-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:9px;
+    margin-top:10px;
+}
+.exec-comparable-card {
+    border:1px solid #e2e8f0;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+    border-radius:14px;
+    padding:10px 11px;
+    min-height:74px;
+}
+.exec-comparable-card span { display:block; color:#64748b; font-size:.64rem; font-weight:950; text-transform:uppercase; letter-spacing:.055em; margin-bottom:3px; }
+.exec-comparable-card b { display:block; color:#0f172a; font-size:.84rem; font-weight:950; line-height:1.15; }
+.exec-comparable-card small { display:block; color:#475569; font-size:.68rem; font-weight:800; margin-top:4px; }
+.exec-scouting-fit-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:8px;
+    margin-top:10px;
+}
+.exec-fit-pill {
+    border:1px solid #e2e8f0;
+    border-radius:13px;
+    padding:8px 9px;
+    background:#ffffff;
+}
+.exec-fit-pill span { display:block; color:#64748b; font-size:.64rem; font-weight:950; text-transform:uppercase; letter-spacing:.05em; }
+.exec-fit-pill b { color:#0f172a; font-size:.86rem; font-weight:950; }
+/* Lower scouting report: avoid re-stating static identity already shown in the Executive Card. */
+.scouting-report-kpi-grid { display:none !important; }
+.scouting-report-grid { grid-template-columns: minmax(0,.92fr) minmax(0,1.08fr) !important; }
+.scouting-report-card-details .scouting-report-card-eyebrow::after { content: " · operativo"; text-transform:none; letter-spacing:0; color:#64748b; }
+@media(max-width:1300px){
+    .exec-card-top, .exec-mid-grid, .exec-context-body { grid-template-columns: 1fr !important; }
+    .exec-recommendation-panel { grid-template-columns: 1fr !important; }
+    .exec-next-actions, .exec-decision-drivers, .exec-comparable-grid, .exec-scouting-fit-grid { grid-template-columns: 1fr !important; }
+    .exec-transfer-feasibility { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+st.markdown(
+    """
+<style>
+/* TM.6.9 Director Deportivo v3: acquisition-decision layer */
+.exec-decision-hero {
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) 150px minmax(420px,.95fr);
+    gap:16px;
+    align-items:stretch;
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border:1px solid #bfdbfe;
+    border-left:6px solid #2563eb;
+    border-radius:22px;
+    padding:18px 20px;
+    box-shadow:0 16px 36px rgba(15,23,42,.070);
+    margin:0 0 16px 0;
+}
+.exec-decision-eyebrow,.exec-recruitment-eyebrow{color:#1d4ed8;font-size:.70rem;font-weight:950;letter-spacing:.09em;text-transform:uppercase;margin-bottom:6px;}
+.exec-decision-name{color:#0f172a;font-size:1.65rem;font-weight:950;line-height:1.05;margin-bottom:5px;}
+.exec-decision-meta{color:#475569;font-size:.84rem;font-weight:750;line-height:1.35;margin-bottom:9px;}
+.exec-decision-status{display:inline-flex;border-radius:999px;padding:6px 10px;background:#dcfce7;color:#166534;border:1px solid #86efac;font-size:.74rem;font-weight:950;margin-bottom:9px;}
+.exec-decision-thesis{color:#334155;font-size:.86rem;line-height:1.42;font-weight:750;max-width:760px;}
+.exec-decision-scorebox{border:1px solid #bfdbfe;background:#ffffff;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 10px;box-shadow:0 10px 24px rgba(37,99,235,.075);}
+.exec-decision-scorebox span{color:#1e3a8a;font-size:.66rem;font-weight:950;letter-spacing:.07em;text-transform:uppercase;text-align:center;}
+.exec-decision-scorebox b{color:#0f172a;font-size:2.65rem;font-weight:950;line-height:.95;margin-top:7px;}
+.exec-decision-scorebox small{color:#64748b;font-size:.78rem;font-weight:950;margin-top:3px;}
+.exec-decision-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+.exec-decision-kpis div{background:#ffffff;border:1px solid #e2e8f0;border-radius:14px;padding:9px 10px;box-shadow:0 7px 18px rgba(15,23,42,.035);}
+.exec-decision-kpis span{display:block;color:#64748b;font-size:.63rem;font-weight:950;text-transform:uppercase;letter-spacing:.055em;margin-bottom:3px;}
+.exec-decision-kpis b{display:block;color:#0f172a;font-size:.91rem;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.exec-decision-kpis small{display:block;color:#64748b;font-size:.67rem;font-weight:800;margin-top:2px;}
+.exec-card-top{margin-top:14px!important;}
+.exec-identity-panel{min-height:210px!important;}
+.exec-target-score{display:none!important;}
+.exec-recommendation-panel{grid-template-columns:1fr!important;}
+.exec-reco-content{padding-left:0!important;}
+.exec-recommendation-panel .exec-panel-title{font-size:1.08rem!important;}
+.exec-next-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+.exec-market-ranking-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:10px;}
+.exec-market-ranking-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:13px;padding:9px 10px;}
+.exec-market-ranking-card span{display:block;color:#64748b;font-size:.62rem;font-weight:950;text-transform:uppercase;letter-spacing:.055em;margin-bottom:3px;}
+.exec-market-ranking-card b{display:block;color:#0f172a;font-size:.96rem;font-weight:950;}
+.exec-market-ranking-card small{display:block;color:#64748b;font-size:.67rem;font-weight:800;margin-top:3px;}
+.exec-benchmark-market,.exec-trajectory-card,.exec-recruitment-engine{background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px;box-shadow:0 10px 26px rgba(15,23,42,.046);}
+.exec-benchmark-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:9px 0;}
+.exec-benchmark-summary div,.exec-recruitment-grid div{background:#f8fbff;border:1px solid #e2e8f0;border-radius:13px;padding:9px 10px;}
+.exec-benchmark-summary span,.exec-recruitment-grid span{display:block;color:#64748b;font-size:.62rem;font-weight:950;text-transform:uppercase;letter-spacing:.055em;margin-bottom:3px;}
+.exec-benchmark-summary b,.exec-recruitment-grid b{display:block;color:#0f172a;font-size:.92rem;font-weight:950;}
+.exec-benchmark-list{display:grid;gap:6px;}
+.exec-benchmark-row{display:grid;grid-template-columns:minmax(0,1fr) 62px 82px;gap:8px;align-items:center;border-top:1px solid #edf2f7;padding:7px 0;color:#334155;font-size:.74rem;font-weight:800;}
+.exec-benchmark-row b{color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.exec-benchmark-row span{color:#64748b;text-align:right;font-size:.68rem;}
+.exec-benchmark-row strong{text-align:right;color:#166534;font-size:.78rem;}
+.exec-trajectory-card{margin-top:12px;}
+.exec-trajectory-step{display:grid;grid-template-columns:48px minmax(0,1fr) 78px;gap:8px;align-items:center;margin-top:8px;font-size:.72rem;font-weight:850;color:#334155;}
+.exec-trajectory-track{height:9px;border-radius:999px;background:#eaf0f7;overflow:hidden;}
+.exec-trajectory-track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#93c5fd,#2563eb);}
+.exec-trajectory-step b{text-align:right;color:#0f172a;font-weight:950;}
+.exec-recruitment-engine{border-left:5px solid #22c55e;background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%);margin:14px 0 0 0;}
+.exec-recruitment-title{font-size:1.10rem;color:#0f172a;font-weight:950;margin-bottom:4px;}
+.exec-recruitment-copy{color:#475569;font-size:.82rem;line-height:1.38;font-weight:750;margin-bottom:10px;}
+.exec-recruitment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
+.exec-context-body{grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr)!important;}
+.exec-context-right-stack{gap:14px!important;}
+.exec-pos-marker{transform:translate(-50%,-50%)!important;}
+.exec-pitch{aspect-ratio:1.82/1!important;max-height:185px!important;min-height:145px!important;}
+.exec-pitch::before,.exec-pitch::after{width:36px!important;}
+/* Lower modules should read as supporting evidence, not duplicate the decision card. */
+.tm4-section-title{font-size:.95rem!important;}
+.scouting-report-title{font-size:.98rem!important;}
+.scouting-report-card-details .scouting-report-card-title{font-size:.98rem!important;}
+@media(max-width:1400px){.exec-decision-hero{grid-template-columns:1fr!important}.exec-decision-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.exec-market-ranking-grid,.exec-benchmark-summary,.exec-recruitment-grid{grid-template-columns:1fr!important}}
+@media(max-width:900px){.exec-decision-kpis,.exec-next-actions{grid-template-columns:1fr!important}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Helpers
 # =============================================================================
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path)
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_parquet(path: Path) -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
@@ -4015,6 +7072,1439 @@ def player_level_display_name(level: object) -> str:
         "Unclassified": {"ES": "Sin clasificar", "EN": "Unclassified"},
     }
     return labels.get(str(level), {"ES": str(level), "EN": str(level)}).get(globals().get("LANG", "ES"), str(level))
+
+
+ROLE_OPTIONS = ["Defensive Anchor", "Ball Progressor", "Box-to-Box Engine", "Creative Playmaker"]  # fallback only; sidebar uses all roles found in data
+ROLE_DATASET_PATH = PROCESSED_PATH / "player_role_dss.parquet"
+ROLE_EXPLAINABILITY_PATH = PROCESSED_PATH / "player_role_explainability.parquet"
+
+ROLE_DNA_COLUMNS = [
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "passing_volume_index",
+    "crossing_width_index",
+    "availability_index_role",
+    "discipline_risk_index",
+]
+
+ROLE_DNA_LABELS = {
+    "finishing_index_role": {"ES": "Finalización", "EN": "Finishing"},
+    "chance_creation_index": {"ES": "Creación", "EN": "Chance Creation"},
+    "ball_progression_index": {"ES": "Progresión", "EN": "Ball Progression"},
+    "passing_security_index": {"ES": "Seguridad pase", "EN": "Passing Security"},
+    "passing_volume_index": {"ES": "Volumen pase", "EN": "Passing Volume"},
+    "crossing_width_index": {"ES": "Amplitud/Centros", "EN": "Crossing Width"},
+    "availability_index_role": {"ES": "Disponibilidad", "EN": "Availability"},
+    "discipline_risk_index": {"ES": "Disciplina", "EN": "Discipline"},
+}
+
+ROLE_DNA_FILTER_COLUMNS = [
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "availability_index_role",
+]
+
+# Product-facing Role DNA order: the bars should explain the role, not merely sort
+# every available index by magnitude. This prevents CB profiles from being led by
+# finishing when the role definition is build-up, progression and security.
+ROLE_DNA_ROLE_PRIORITY = {
+    "ball playing centre back": [
+        "passing_volume_index",
+        "ball_progression_index",
+        "passing_security_index",
+        "availability_index_role",
+        "chance_creation_index",
+        "discipline_risk_index",
+        "finishing_index_role",
+        "crossing_width_index",
+    ],
+    "aerial defender": [
+        "availability_index_role",
+        "passing_security_index",
+        "ball_progression_index",
+        "discipline_risk_index",
+        "crossing_width_index",
+    ],
+    "aggressive defender": [
+        "ball_progression_index",
+        "availability_index_role",
+        "passing_security_index",
+        "discipline_risk_index",
+        "crossing_width_index",
+    ],
+    "ball winner": [
+        "availability_index_role",
+        "ball_progression_index",
+        "passing_security_index",
+        "passing_volume_index",
+        "discipline_risk_index",
+        "chance_creation_index",
+    ],
+    "creative playmaker": [
+        "chance_creation_index",
+        "ball_progression_index",
+        "passing_security_index",
+        "passing_volume_index",
+        "crossing_width_index",
+        "availability_index_role",
+    ],
+    "attacking progressor": [
+        "ball_progression_index",
+        "chance_creation_index",
+        "passing_volume_index",
+        "availability_index_role",
+        "crossing_width_index",
+        "finishing_index_role",
+    ],
+    "box finisher": [
+        "finishing_index_role",
+        "chance_creation_index",
+        "availability_index_role",
+        "ball_progression_index",
+    ],
+    "creator forward": [
+        "chance_creation_index",
+        "finishing_index_role",
+        "ball_progression_index",
+        "availability_index_role",
+    ],
+    "mobile forward": [
+        "ball_progression_index",
+        "finishing_index_role",
+        "chance_creation_index",
+        "availability_index_role",
+    ],
+}
+
+
+def find_role_explainability_path() -> Path | None:
+    """Locate TM.5.5 Role Explainability Engine output."""
+    candidates = [
+        PROCESSED_PATH / "player_role_explainability.parquet",
+        ROOT / "data" / "processed" / "player_role_explainability.parquet",
+        ROOT / "reports" / "roles" / "player_role_dna.csv",
+        ROOT / "reports" / "roles" / "player_role_explainability.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_explainability.parquet",
+        Path.cwd() / "reports" / "roles" / "player_role_dna.csv",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    search_roots = [PROCESSED_PATH, ROOT / "data" / "processed", ROOT / "reports" / "roles", ROOT / "reports", Path.cwd()]
+    patterns = ["player_role_explainability*.parquet", "player_role_dna*.csv"]
+    discovered = []
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            discovered.extend(root.rglob(pattern))
+    discovered = [x for x in discovered if x.is_file()]
+    if discovered:
+        return sorted(set(discovered), key=lambda x: (0 if x.suffix == ".parquet" else 1, len(str(x)), str(x)))[0]
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def load_role_explainability_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load TM.5.5 role explainability / Role DNA artefact.
+
+    The artefact is optional: the DSS must keep working when the pipeline has not
+    been executed yet. When available, it adds tactical indices and explanatory
+    role text to player-season rows.
+    """
+    resolved_path = path if path is not None else find_role_explainability_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    resolved_path = Path(resolved_path)
+    if resolved_path.suffix.lower() == ".csv":
+        dna = pd.read_csv(resolved_path, low_memory=False)
+    else:
+        dna = pd.read_parquet(resolved_path)
+    dna = apply_club_name_normalization(dna.copy())
+
+    rename_candidates = {
+        "player_name_fbref": "role_dna_player",
+        "player_name": "role_dna_player",
+        "player": "role_dna_player",
+        "team": "role_dna_team",
+        "club": "role_dna_team",
+        "squad": "role_dna_team",
+        "league": "role_dna_league",
+        "season": "role_dna_season",
+    }
+    for source, target in rename_candidates.items():
+        if source in dna.columns and target not in dna.columns:
+            dna = dna.rename(columns={source: target})
+
+    for col in ROLE_DNA_COLUMNS + ["role_fit_explainability_score", "dominant_tactical_score"]:
+        if col in dna.columns:
+            dna[col] = pd.to_numeric(dna[col], errors="coerce")
+
+    if "role_dna_player" in dna.columns:
+        dna["role_dna_player_key"] = dna["role_dna_player"].map(normalize_join_text)
+    if "role_dna_team" in dna.columns:
+        dna["role_dna_team_key"] = dna["role_dna_team"].map(normalize_join_text)
+    if "role_dna_league" in dna.columns:
+        dna["role_dna_league_key"] = dna["role_dna_league"].map(normalize_join_text)
+    if "role_dna_season" in dna.columns:
+        dna["role_dna_season_key"] = dna["role_dna_season"].map(normalize_role_season)
+
+    return dna
+
+
+def merge_role_explainability(base: pd.DataFrame, dna_df: pd.DataFrame) -> pd.DataFrame:
+    """Merge Role DNA features into a DSS dataframe using conservative fallbacks."""
+    if base.empty or dna_df.empty:
+        return base
+    if "role_dna_player_key" not in dna_df.columns:
+        return base
+
+    left = base.copy()
+    left["_role_dna_row_id"] = np.arange(len(left))
+    right = dna_df.copy()
+
+    dna_cols = [
+        c for c in ROLE_DNA_COLUMNS + [
+            "role_fit_explainability_score",
+            "role_explainability_quality",
+            "dominant_tactical_dimension",
+            "dominant_tactical_score",
+            "role_explanation_text",
+        ]
+        if c in right.columns
+    ]
+    if not dna_cols:
+        return left.drop(columns=["_role_dna_row_id"], errors="ignore")
+
+    # Do not let Role Explainability overwrite the role labels produced by TM.5.
+    right_cols = ["role_dna_player_key", "role_dna_team_key", "role_dna_league_key", "role_dna_season_key"] + dna_cols
+    right_cols = [c for c in right_cols if c in right.columns]
+    right = right[right_cols].copy()
+
+    left_name_candidates = [c for c in ["player_name_fbref", "player_name_tm", "player", "name"] if c in left.columns]
+    left_club_candidates = [c for c in ["club", "team", "current_club_name_tm", "current_club", "squad"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition"] if c in left.columns]
+    left["_role_dna_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+
+    text_dna_cols = {"role_explainability_quality", "dominant_tactical_dimension", "role_explanation_text"}
+    for col in dna_cols:
+        if col not in left.columns:
+            if col in text_dna_cols:
+                left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+            else:
+                left[col] = np.nan
+        elif col in text_dna_cols:
+            left[col] = left[col].astype("object")
+
+    def _merge_fill(name_col: str, extra_left_cols: list[str], extra_right_keys: list[str]) -> None:
+        nonlocal left
+        unresolved = left[dna_cols].isna().all(axis=1)
+        if not unresolved.any():
+            return
+        tmp = left.loc[unresolved, ["_role_dna_row_id", name_col, "_role_dna_season_key"] + extra_left_cols].copy()
+        tmp["role_dna_player_key"] = tmp[name_col].map(normalize_join_text)
+        rename = {"_role_dna_season_key": "role_dna_season_key"}
+        tmp = tmp.rename(columns=rename)
+        for l_col, r_key in zip(extra_left_cols, extra_right_keys):
+            tmp[r_key] = tmp[l_col].map(normalize_join_text)
+        join_cols = ["role_dna_player_key", "role_dna_season_key"] + extra_right_keys
+        join_cols = [c for c in join_cols if c in tmp.columns]
+        tmp = tmp[["_role_dna_row_id"] + join_cols]
+        tmp = tmp[tmp["role_dna_player_key"].astype(str).str.len() > 0]
+        available_join_cols = [c for c in join_cols if c in right.columns]
+        if not available_join_cols or tmp.empty:
+            return
+        tmp_right = right.drop_duplicates(available_join_cols)[available_join_cols + dna_cols]
+        matched = tmp.merge(tmp_right, on=available_join_cols, how="left")
+        matched = matched.dropna(subset=dna_cols, how="all")
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_role_dna_row_id", keep="first").set_index("_role_dna_row_id")
+        for col in dna_cols:
+            values = left["_role_dna_row_id"].map(matched[col])
+            mask = left[col].isna() & values.notna()
+            left.loc[mask, col] = values[mask]
+
+    for name_col in left_name_candidates:
+        for club_col in left_club_candidates:
+            _merge_fill(name_col, [club_col], ["role_dna_team_key"])
+        for league_col in left_league_candidates:
+            _merge_fill(name_col, [league_col], ["role_dna_league_key"])
+        _merge_fill(name_col, [], [])
+
+        # Last fallback: name-only, useful for current-season DSS rows when the
+        # tactical dataset stores compact season labels differently.
+        unresolved = left[dna_cols].isna().all(axis=1)
+        if unresolved.any():
+            tmp = left.loc[unresolved, ["_role_dna_row_id", name_col]].copy()
+            tmp["role_dna_player_key"] = tmp[name_col].map(normalize_join_text)
+            tmp = tmp[tmp["role_dna_player_key"].astype(str).str.len() > 0]
+            tmp_right = right.drop_duplicates(["role_dna_player_key"])[["role_dna_player_key"] + dna_cols]
+            matched = tmp[["_role_dna_row_id", "role_dna_player_key"]].merge(tmp_right, on="role_dna_player_key", how="left")
+            matched = matched.dropna(subset=dna_cols, how="all").drop_duplicates("_role_dna_row_id", keep="first").set_index("_role_dna_row_id")
+            if not matched.empty:
+                for col in dna_cols:
+                    values = left["_role_dna_row_id"].map(matched[col])
+                    mask = left[col].isna() & values.notna()
+                    left.loc[mask, col] = values[mask]
+
+    return left.drop(columns=["_role_dna_row_id", "_role_dna_season_key"], errors="ignore")
+
+
+def find_role_dataset_path() -> Path | None:
+    """Locate the role intelligence role artefact across the project layouts used in the sprints.
+
+    role intelligence has moved artefacts between data/processed, reports and artifacts during
+    sprint iterations. The previous app only checked a small fixed list; if the
+    parquet was exported with a suffix, the DSS silently displayed "pending role intelligence".
+    """
+    candidates = [
+        PROCESSED_PATH / "player_role_labels.parquet",
+        PROCESSED_PATH / "player_role_dss.parquet",
+        ROOT / "data" / "processed" / "player_role_labels.parquet",
+        ROOT / "data" / "processed" / "player_role_dss.parquet",
+        ROOT / "reports" / "dss" / "player_role_dss.parquet",
+        ROOT / "reports" / "tm5_role_intelligence" / "player_role_dss.parquet",
+        ROOT / "reports" / "role_intelligence" / "player_role_dss.parquet",
+        ROOT / "artifacts" / "player_role_dss.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_labels.parquet",
+        Path.cwd() / "data" / "processed" / "player_role_dss.parquet",
+        Path.cwd() / "player_role_labels.parquet",
+        Path.cwd() / "player_role_dss.parquet",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    # Fallback: discover suffixed artefacts, preferring processed data over reports.
+    search_roots = [PROCESSED_PATH, ROOT / "data" / "processed", ROOT / "reports", ROOT / "artifacts", Path.cwd()]
+    patterns = ["player_role_labels*.parquet", "player_role_dss*.parquet", "*role*dss*.parquet", "*role*intelligence*.parquet"]
+    discovered = []
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in patterns:
+            discovered.extend(root.rglob(pattern))
+    discovered = [x for x in discovered if x.is_file()]
+    if discovered:
+        priority = {"processed": 0, "dss": 1, "tm5": 2, "role": 3}
+        def _rank(path: Path) -> tuple[int, int, str]:
+            lower = str(path).lower()
+            score = min([v for k, v in priority.items() if k in lower] or [9])
+            return (score, len(str(path)), str(path))
+        return sorted(set(discovered), key=_rank)[0]
+    return None
+
+
+def normalize_join_text(value: object) -> str:
+    """Normalize player/club/league strings for stable joins across FBref/TM exports."""
+    if pd.isna(value):
+        return ""
+    text = str(value).strip().casefold()
+    text = text.translate(str.maketrans("áàäâãéèëêíìïîóòöôõúùüûñç", "aaaaaeeeeiiiiooooouuuunc"))
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+
+
+def normalize_search_text(value: object) -> str:
+    """Accent-insensitive, case-insensitive text normalisation for scouting search."""
+    return normalize_join_text(value)
+
+def strip_accents_for_display(value: object) -> str:
+    """Return a readable label without diacritics for autocomplete aliases."""
+    if value is None or pd.isna(value):
+        return ""
+    raw = str(value).strip()
+    decomposed = unicodedata.normalize("NFKD", raw)
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+def is_valid_role_value(value: object) -> bool:
+    if pd.isna(value):
+        return False
+    text = str(value).strip()
+    return text != "" and text.casefold() not in {"nan", "none", "n/a", "na", "null", "sin rol", "no role"}
+
+
+def has_valid_role_metrics(row: pd.Series) -> bool:
+    metric_cols = ["primary_role_similarity", "role_confidence", "role_ambiguity"]
+    available = []
+    for col in metric_cols:
+        if col in row.index:
+            num = pd.to_numeric(pd.Series([row.get(col)]), errors="coerce").iloc[0]
+            available.append(pd.notna(num))
+    return any(available)
+
+
+def normalize_role_season(value: object) -> str:
+    if pd.isna(value):
+        return ""
+    raw = str(value).strip()
+    if "-" in raw:
+        parts = raw.split("-")
+        if len(parts) >= 2 and parts[0][-2:].isdigit() and parts[1][-2:].isdigit():
+            return parts[0][-2:] + parts[1][-2:]
+    digits = "".join(ch for ch in raw if ch.isdigit())
+    if len(digits) == 8:
+        return digits[2:4] + digits[6:8]
+    if len(digits) == 4:
+        return digits
+    return raw
+
+
+@st.cache_data(show_spinner=False)
+def load_role_intelligence_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load and standardise the role intelligence role discovery artefact.
+
+    The previous integration assumed one fixed path and one exact schema. This version
+    resolves the artefact path defensively, harmonises common column names and removes
+    invalid role rows before the merge.
+    """
+    resolved_path = path if path is not None else find_role_dataset_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    role_df = pd.read_parquet(resolved_path).copy()
+
+    rename_candidates = {
+        "player": "role_player",
+        "player_name": "role_player",
+        "name": "role_player",
+        "team": "role_team",
+        "club": "role_team",
+        "squad": "role_team",
+        "league": "role_league",
+        "competition": "role_league",
+        "season": "role_season",
+    }
+    for source, target in rename_candidates.items():
+        if source in role_df.columns and target not in role_df.columns:
+            role_df = role_df.rename(columns={source: target})
+
+    for col in ["primary_role_similarity", "secondary_role_similarity", "role_confidence", "role_ambiguity"]:
+        if col in role_df.columns:
+            role_df[col] = pd.to_numeric(role_df[col], errors="coerce")
+
+    # Keep every valid role label. Similarity/confidence can be unavailable in some
+    # role intelligence exports; the UI will show N/D instead of suppressing the role entirely.
+    if "primary_role" in role_df.columns:
+        valid_primary = role_df["primary_role"].map(is_valid_role_value)
+        role_df = role_df.loc[valid_primary].copy()
+
+    if "role_player" in role_df.columns:
+        role_df["role_player_key"] = role_df["role_player"].map(normalize_join_text)
+    return role_df
+
+
+def get_role_dataset_status(role_df: pd.DataFrame) -> dict[str, object]:
+    path = find_role_dataset_path()
+    status = {
+        "path": str(path) if path is not None else "not_found",
+        "rows": int(len(role_df)) if isinstance(role_df, pd.DataFrame) else 0,
+        "players": int(role_df["role_player"].nunique()) if isinstance(role_df, pd.DataFrame) and "role_player" in role_df.columns else 0,
+        "roles": sorted(role_df["primary_role"].dropna().astype(str).unique().tolist()) if isinstance(role_df, pd.DataFrame) and "primary_role" in role_df.columns else [],
+    }
+    return status
+
+def explain_scouting_exclusion(row: pd.Series, *, max_age: float, min_minutes: float, min_confidence: float, os_range: tuple[float, float], selected_league: str, selected_position: str, selected_role: str, selected_tier: str, max_market_value_m: float, min_roi: float, max_risk_filter: float) -> list[str]:
+    """Return human-readable reasons explaining why a searched player is outside active scouting criteria."""
+    reasons = []
+    age = get_numeric_value(row, "age", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+    confidence = get_numeric_value(row, "confidence_score", np.nan)
+    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
+    value = get_numeric_value(row, "market_value_eur", np.nan)
+    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+
+    if pd.notna(age) and age > max_age:
+        reasons.append((f"Age {age:.1f} > active max {max_age:.0f}" if LANG == "EN" else f"Edad {age:.1f} > máximo activo {max_age:.0f}"))
+    if pd.notna(minutes) and minutes < min_minutes:
+        reasons.append((f"Minutes {minutes:,.0f} < minimum {min_minutes:,.0f}" if LANG == "EN" else f"Minutos {minutes:,.0f} < mínimo {min_minutes:,.0f}"))
+    if pd.notna(confidence) and confidence < min_confidence:
+        reasons.append((f"Confidence {confidence:.1f} < minimum {min_confidence:.0f}" if LANG == "EN" else f"Confidence {confidence:.1f} < mínimo {min_confidence:.0f}"))
+    if pd.notna(opportunity) and not (os_range[0] <= opportunity <= os_range[1]):
+        reasons.append((f"Opportunity {opportunity:.1f} outside active range {os_range[0]:.0f}–{os_range[1]:.0f}" if LANG == "EN" else f"Opportunity {opportunity:.1f} fuera del rango activo {os_range[0]:.0f}–{os_range[1]:.0f}"))
+    if pd.notna(value) and value > max_market_value_m * 1_000_000:
+        reasons.append((f"Market value {format_money_short(value)} > cap {max_market_value_m:.1f}M" if LANG == "EN" else f"Valor de mercado {format_money_short(value)} > límite €{max_market_value_m:.1f}M"))
+    if pd.notna(roi) and roi < min_roi:
+        reasons.append((f"3Y ROI {roi:.0f}% < minimum {min_roi:.0f}%" if LANG == "EN" else f"ROI 3Y {roi:.0f}% < mínimo {min_roi:.0f}%"))
+    if pd.notna(risk) and risk > max_risk_filter:
+        reasons.append((f"Risk {risk:.1f} > max {max_risk_filter:.0f}" if LANG == "EN" else f"Risk {risk:.1f} > máximo {max_risk_filter:.0f}"))
+
+    league_val = safe_get(row, "league", "")
+    if selected_league != T("all_f") and str(league_val) != str(selected_league):
+        reasons.append((f"League {league_display_name(league_val)} ≠ active league {league_display_name(selected_league)}" if LANG == "EN" else f"Liga {league_display_name(league_val)} ≠ liga activa {league_display_name(selected_league)}"))
+    pos_val = safe_get(row, "position_group", "")
+    if selected_position != T("all_f") and str(pos_val) != str(selected_position):
+        reasons.append((f"Position {pos_val} ≠ active position {selected_position}" if LANG == "EN" else f"Posición {pos_val} ≠ posición activa {selected_position}"))
+    if selected_role != T("all_m"):
+        role_val = safe_get(row, "primary_role", "")
+        if str(role_val) != str(selected_role):
+            reasons.append((f"Role {role_val or 'N/A'} ≠ active role {selected_role}" if LANG == "EN" else f"Rol {role_val or 'N/A'} ≠ rol activo {selected_role}"))
+    if selected_tier != T("all_m"):
+        tier_val = safe_get(row, "opportunity_tier_label", "")
+        if str(tier_val) != str(selected_tier):
+            reasons.append((f"Tier {tier_val or 'N/A'} ≠ active tier {selected_tier}" if LANG == "EN" else f"Tier {tier_val or 'N/A'} ≠ tier activo {selected_tier}"))
+
+    if not reasons:
+        reasons.append("No specific exclusion reason detected; review search key or duplicated player identity." if LANG == "EN" else "No se detecta una causa específica; revisar clave de búsqueda o identidad duplicada del jugador.")
+    return reasons[:6]
+
+
+
+def build_scouting_eligibility_checks(
+    row: pd.Series,
+    *,
+    max_age: float,
+    min_minutes: float,
+    min_confidence: float,
+    os_range: tuple[float, float],
+    selected_league: str,
+    selected_position: str,
+    selected_role: str,
+    selected_tier: str,
+    max_market_value_m: float,
+    min_roi: float,
+    max_risk_filter: float,
+) -> list[dict[str, object]]:
+    """Build pass/fail cards explaining Scouting Universe eligibility.
+
+    This is intentionally UI-facing: scouts need to understand why an informative
+    player profile does or does not alter rankings, matrices and recommendations.
+    """
+    checks: list[dict[str, object]] = []
+
+    def _add(label: str, value: str, passed: bool, detail: str) -> None:
+        checks.append({"label": label, "value": value, "passed": bool(passed), "detail": detail})
+
+    age = get_numeric_value(row, "age", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+    confidence = get_numeric_value(row, "confidence_score", np.nan)
+    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
+    value = get_numeric_value(row, "market_value_eur", np.nan)
+    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+
+    _add(
+        "Age" if LANG == "EN" else "Edad",
+        "N/A" if pd.isna(age) else f"{age:.1f}",
+        pd.notna(age) and age <= max_age,
+        f"≤ {max_age:.0f}" if LANG == "EN" else f"≤ {max_age:.0f}",
+    )
+    _add(
+        "Minutes" if LANG == "EN" else "Minutos",
+        "N/A" if pd.isna(minutes) else f"{minutes:,.0f}",
+        pd.notna(minutes) and minutes >= min_minutes,
+        f"≥ {min_minutes:,.0f}",
+    )
+    _add(
+        "Confidence" if LANG == "EN" else "Confianza",
+        "N/A" if pd.isna(confidence) else f"{confidence:.0f}",
+        pd.notna(confidence) and confidence >= min_confidence,
+        f"≥ {min_confidence:.0f}",
+    )
+    _add(
+        "Opportunity" if LANG == "EN" else "Opportunity",
+        "N/A" if pd.isna(opportunity) else f"{opportunity:.0f}",
+        pd.notna(opportunity) and os_range[0] <= opportunity <= os_range[1],
+        f"{os_range[0]:.0f}–{os_range[1]:.0f}",
+    )
+    _add(
+        "Market value" if LANG == "EN" else "Valor de mercado",
+        "N/A" if pd.isna(value) else format_money_short(value),
+        pd.notna(value) and value <= max_market_value_m * 1_000_000,
+        f"≤ €{max_market_value_m:.1f}M",
+    )
+    _add(
+        "ROI 3Y",
+        "N/A" if pd.isna(roi) else f"{roi:.0f}%",
+        pd.notna(roi) and roi >= min_roi,
+        f"≥ {min_roi:.0f}%",
+    )
+    _add(
+        "Risk" if LANG == "EN" else "Risk",
+        "N/A" if pd.isna(risk) else f"{risk:.0f}",
+        pd.notna(risk) and risk <= max_risk_filter,
+        f"≤ {max_risk_filter:.0f}",
+    )
+
+    if selected_league != T("all_f"):
+        league_val = league_display_name(safe_get(row, "league", ""))
+        selected_league_label = league_display_name(selected_league)
+        _add("League" if LANG == "EN" else "Liga", league_val, str(league_val) == str(selected_league_label), selected_league_label)
+    if selected_position != T("all_f"):
+        pos_val = str(safe_get(row, "position_group", "N/A"))
+        _add("Position" if LANG == "EN" else "Posición", pos_val, pos_val == str(selected_position), str(selected_position))
+    if selected_role != T("all_m"):
+        role_val = str(safe_get(row, "primary_role", "N/A"))
+        _add("Role" if LANG == "EN" else "Rol", role_val, role_val == str(selected_role), str(selected_role))
+    if selected_tier != T("all_m"):
+        tier_val = str(safe_get(row, "opportunity_tier_label", "N/A"))
+        _add("Tier", tier_val, tier_val == str(selected_tier), str(selected_tier))
+
+    return checks
+
+
+def render_eligibility_check_panel(checks: list[dict[str, object]], title: str | None = None) -> None:
+    """Render compact green/red eligibility cards for searched players outside active filters."""
+    if not checks:
+        return
+    passed = sum(1 for item in checks if item.get("passed"))
+    total = len(checks)
+    status_text = (
+        f"{passed}/{total} criteria passed" if LANG == "EN" else f"{passed}/{total} criterios cumplidos"
+    )
+    panel_title = title or ("Scouting Universe Eligibility" if LANG == "EN" else "Elegibilidad Scouting Universe")
+    cards = []
+    for item in checks:
+        ok = bool(item.get("passed"))
+        card_class = "eligibility-card eligibility-card-pass" if ok else "eligibility-card eligibility-card-fail"
+        cards.append(
+            f"<div class='{card_class}'>"
+            + f"<div class='eligibility-status'>{'✓' if ok else '×'}</div>"
+            + f"<div class='eligibility-label'>{html.escape(str(item.get('label', '')))}</div>"
+            + f"<div class='eligibility-value'>{html.escape(str(item.get('value', 'N/A')))}</div>"
+            + f"<div class='eligibility-detail'>{html.escape(str(item.get('detail', '')))}</div>"
+            + "</div>"
+        )
+    st.markdown(
+        f"""
+<div class="eligibility-panel">
+    <div class="eligibility-panel-head">
+        <div>
+            <div class="eligibility-eyebrow">{"SCOUTING UNIVERSE" if LANG == "EN" else "SCOUTING UNIVERSE"}</div>
+            <div class="eligibility-title">{html.escape(panel_title)}</div>
+        </div>
+        <div class="eligibility-summary">{html.escape(status_text)}</div>
+    </div>
+    <div class="eligibility-grid">{''.join(cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def role_ambiguity_label(value: object) -> str:
+    val = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(val):
+        return "N/A"
+    if val >= 75:
+        return "Highly hybrid profile" if LANG == "EN" else "Perfil híbrido alto"
+    if val >= 45:
+        return "Mixed role profile" if LANG == "EN" else "Perfil mixto"
+    return "Specialised profile" if LANG == "EN" else "Perfil especializado"
+
+
+def taxonomy_long_label(taxonomy: str) -> str:
+    labels = {
+        "GK": "Goalkeeper" if LANG == "EN" else "Portero",
+        "CB": "Centre Back" if LANG == "EN" else "Central",
+        "FB": "Full Back" if LANG == "EN" else "Lateral",
+        "DM": "Defensive Midfielder" if LANG == "EN" else "Mediocentro defensivo",
+        "CM": "Central Midfielder" if LANG == "EN" else "Mediocentro",
+        "AM": "Attacking Midfielder" if LANG == "EN" else "Mediapunta",
+        "W": "Wide Attacker" if LANG == "EN" else "Extremo / atacante exterior",
+        "CF": "Centre Forward" if LANG == "EN" else "Delantero centro",
+    }
+    return labels.get(str(taxonomy).upper(), str(taxonomy))
+
+
+
+def role_family(role: object) -> str:
+    """Map role intelligence role labels to broad football families for UX semantics."""
+    if not is_valid_role_value(role):
+        return "balanced"
+    label = normalize_join_text(role)
+    defensive_terms = ["defender", "defensive", "anchor", "ball winner", "aerial", "centre back", "center back", "stopper"]
+    build_up_terms = ["progressor", "box to box", "deep", "regista", "playmaker", "ball playing"]
+    creative_terms = ["creative", "creator", "advanced", "attacking midfielder", "chance", "wide", "wing"]
+    attacking_terms = ["finisher", "forward", "striker", "mobile", "box", "creator forward"]
+    if any(t in label for t in defensive_terms):
+        return "defensive"
+    if any(t in label for t in attacking_terms):
+        return "attacking"
+    if any(t in label for t in creative_terms):
+        return "creative"
+    if any(t in label for t in build_up_terms):
+        return "build_up"
+    return "balanced"
+
+
+def role_family_label(role: object) -> str:
+    labels = {
+        "defensive": {"ES": "Familia defensiva", "EN": "Defensive family"},
+        "build_up": {"ES": "Construcción / progresión", "EN": "Build-up / progression"},
+        "creative": {"ES": "Creación ofensiva", "EN": "Creative attacking"},
+        "attacking": {"ES": "Finalización / ataque", "EN": "Finishing / attacking"},
+        "balanced": {"ES": "Perfil mixto", "EN": "Mixed profile"},
+    }
+    family = role_family(role)
+    return labels.get(family, labels["balanced"]).get(globals().get("LANG", "ES"), family)
+
+
+def role_family_css(role: object) -> str:
+    return f"role-profile-card-family-{role_family(role)}"
+
+
+def role_description(role: object) -> str:
+    """Short scouting interpretation for visible role intelligence roles."""
+    role_text = str(role).strip() if is_valid_role_value(role) else ""
+    key = normalize_join_text(role_text)
+    lang = globals().get("LANG", "ES")
+    descriptions_es = {
+        "ball playing centre back": "Central orientado a la construcción: participa en salida de balón, progresión y distribución desde primera línea.",
+        "aerial defender": "Defensor dominante en duelos aéreos y protección del área, útil para contextos de bloque bajo o defensa del área.",
+        "aggressive defender": "Defensor proactivo, intenso en anticipación, presión y acciones defensivas lejos de portería.",
+        "defensive anchor": "Mediocentro de equilibrio: protege zonas centrales, sostiene la estructura y reduce exposición defensiva.",
+        "ball winner": "Perfil recuperador con alta actividad defensiva, presión y volumen de duelos/intercepciones.",
+        "ball progressor": "Mediocampista de progresión: conecta zonas, avanza posesiones y mejora la salida hacia campo rival.",
+        "box to box engine": "Interior de ida y vuelta, con recorrido, presencia en varias alturas y contribución mixta con y sin balón.",
+        "creative playmaker": "Creador de juego con peso en último pase, generación de ventajas y circulación ofensiva.",
+        "attacking progressor": "Perfil ofensivo que progresa posesiones, rompe líneas y acelera ataques desde zonas avanzadas.",
+        "box finisher": "Finalizador de área, orientado a remate, presencia en zonas de gol y conversión de ocasiones.",
+        "creator forward": "Delantero asociativo: combina amenaza ofensiva con creación para terceros.",
+        "mobile forward": "Atacante móvil, útil para atacar espacios, desmarques y variabilidad en el frente ofensivo.",
+    }
+    descriptions_en = {
+        "ball playing centre back": "Build-up centre-back: contributes to first-phase progression, distribution and controlled possession.",
+        "aerial defender": "Aerially dominant defender, valuable for box protection, set pieces and deeper defensive contexts.",
+        "aggressive defender": "Proactive defender with intensity in anticipation, pressure and defensive actions away from goal.",
+        "defensive anchor": "Holding midfielder who protects central zones, stabilises structure and limits defensive exposure.",
+        "ball winner": "Recovery-oriented profile with high defensive activity, pressure and duel/interception volume.",
+        "ball progressor": "Progressive midfielder who connects zones, advances possessions and improves access to the final third.",
+        "box to box engine": "High-mobility midfielder with coverage across phases and mixed contribution on and off the ball.",
+        "creative playmaker": "Creative profile with weight in chance creation, final pass and offensive circulation.",
+        "attacking progressor": "Advanced progression profile who breaks lines and accelerates attacks from higher zones.",
+        "box finisher": "Penalty-box finisher focused on shot volume, goal-area presence and chance conversion.",
+        "creator forward": "Associative forward combining attacking threat with chance creation for others.",
+        "mobile forward": "Mobile forward suited to attacking space, rotations and variability across the front line.",
+    }
+    descriptions = descriptions_en if lang == "EN" else descriptions_es
+    if key in descriptions:
+        return descriptions[key]
+    if "defender" in key or "centre back" in key or "center back" in key:
+        return descriptions["aerial defender"] if ("aerial" in key) else (descriptions_en if lang == "EN" else descriptions_es)["aggressive defender"]
+    if "progressor" in key:
+        return descriptions["ball progressor"] if "ball" in key else descriptions["attacking progressor"]
+    if "forward" in key or "finisher" in key:
+        return descriptions["creator forward"] if "creator" in key else descriptions["box finisher"]
+    return (
+        "Perfil táctico híbrido identificado por el modelo de roles; debe interpretarse junto con posición, minutos y comparables."
+        if lang == "ES"
+        else "Hybrid tactical profile identified in the role model; interpret alongside position, minutes and comparables."
+    )
+
+
+def role_purity_label(value: object) -> str:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    lang = globals().get("LANG", "ES")
+    if pd.isna(num):
+        return "No disponible" if lang == "ES" else "Not available"
+    if num >= 70:
+        return "Alta especialización táctica" if lang == "ES" else "High tactical specialisation"
+    if num >= 40:
+        return "Pureza de rol moderada" if lang == "ES" else "Moderate role purity"
+    return "Perfil híbrido / baja especialización" if lang == "ES" else "Hybrid profile / low specialisation"
+
+
+def role_hybridization_label(value: object) -> str:
+    return role_ambiguity_label(value)
+
+
+def build_role_signal_items(player_row: pd.Series) -> list[dict[str, object]]:
+    """Return the visible role composition without inventing unavailable model outputs."""
+    candidates = []
+    primary = safe_get(player_row, "primary_role", np.nan)
+    secondary = safe_get(player_row, "secondary_role", np.nan)
+    if is_valid_role_value(primary):
+        candidates.append({
+            "rank": 1,
+            "role": str(primary),
+            "score": role_metric_display(safe_get(player_row, "primary_role_similarity", np.nan)),
+            "kind": "Primary role" if globals().get("LANG", "ES") == "EN" else "Rol primario",
+        })
+    if is_valid_role_value(secondary) and str(secondary).strip() != str(primary).strip():
+        candidates.append({
+            "rank": 2,
+            "role": str(secondary),
+            "score": role_metric_display(safe_get(player_row, "secondary_role_similarity", np.nan)),
+            "kind": "Secondary tendency" if globals().get("LANG", "ES") == "EN" else "Tendencia secundaria",
+        })
+    return candidates[:3]
+
+
+
+def render_role_availability_chips(source_df: pd.DataFrame, selected_role: str | None = None, limit: int = 12) -> None:
+    """Expose available role categories so the scout does not need to guess exact labels."""
+    if not isinstance(source_df, pd.DataFrame) or source_df.empty or "primary_role" not in source_df.columns:
+        return
+    counts = (
+        source_df["primary_role"]
+        .dropna()
+        .astype(str)
+        .loc[lambda s: s.map(is_valid_role_value)]
+        .value_counts()
+    )
+    if counts.empty:
+        return
+    total = max(int(counts.sum()), 1)
+    chips = []
+    for role, count in counts.head(limit).items():
+        active = selected_role is not None and str(role) == str(selected_role)
+        css = "role-availability-chip role-availability-chip-active" if active else "role-availability-chip"
+        css = f"{css} role-badge-family-{role_family(role)}"
+        share = 100 * int(count) / total
+        chips.append(
+            f"<span class='{css}' title='{html.escape(role_description(role))}'>"
+            f"<i class='role-availability-dot'></i>{html.escape(str(role))} <b>{int(count)}</b></span>"
+        )
+    title = "Available roles" if LANG == "EN" else "Roles disponibles"
+    subtitle = (
+        "Counts and share after current age/minutes/context filters." if LANG == "EN"
+        else "Recuento y peso tras los filtros actuales de edad, minutos y contexto."
+    )
+    st.sidebar.markdown(
+        f"""
+<div class="role-availability-panel">
+    <div class="role-availability-title">{html.escape(title)}</div>
+    <div class="role-availability-subtitle">{html.escape(subtitle)}</div>
+    <div class="role-availability-chip-row">{''.join(chips)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def merge_role_intelligence(base: pd.DataFrame, role_df: pd.DataFrame) -> pd.DataFrame:
+    """Attach role intelligence Role Intelligence to the DSS universe with robust fuzzy-safe keys.
+
+    The role artefact is generated at player-season level and its canonical columns are
+    player/team/league/season. The DSS universe can expose several player-name and club
+    columns depending on the sprint version, so this merge intentionally tries a cascade:
+    name+season+club, name+season+league, name+season and finally name-only.
+    """
+    if base.empty or role_df.empty:
+        return base
+
+    left = base.copy().reset_index(drop=False).rename(columns={"index": "_role_row_id"})
+    right = role_df.copy()
+
+    if "role_player" not in right.columns:
+        return base
+    if "primary_role" in right.columns:
+        valid_primary = right["primary_role"].map(is_valid_role_value)
+        right = right.loc[valid_primary].copy()
+    if right.empty:
+        return base
+
+    role_cols = [c for c in [
+        "role_player", "role_team", "role_league", "role_season", "primary_role", "secondary_role",
+        "primary_role_similarity", "secondary_role_similarity", "role_confidence", "role_ambiguity",
+        "primary_role_cluster", "secondary_role_cluster", "role_similar_player_1", "role_similar_player_2",
+        "role_similar_player_3", "role_similar_player_4", "role_similar_player_5",
+    ] if c in right.columns]
+    if not role_cols or "primary_role" not in role_cols:
+        return base
+
+    # Initialize role columns so downstream UI never breaks when no match is found.
+    role_text_cols = {
+        "role_player", "role_team", "role_league", "role_season", "primary_role", "secondary_role",
+        "role_similar_player_1", "role_similar_player_2", "role_similar_player_3",
+        "role_similar_player_4", "role_similar_player_5",
+    }
+    for col in role_cols:
+        if col not in left.columns:
+            if col in role_text_cols:
+                left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+            else:
+                left[col] = np.nan
+        elif col in role_text_cols:
+            left[col] = left[col].astype("object")
+
+    left_name_candidates = [
+        c for c in [
+            get_player_name_column(left), "player", "player_name", "player_name_fbref", "player_name_tm",
+            "name", "short_name", "display_name",
+        ] if c and c in left.columns
+    ]
+    # Preserve order and remove duplicates.
+    left_name_candidates = list(dict.fromkeys(left_name_candidates))
+    if not left_name_candidates:
+        return left.drop(columns=["_role_row_id"], errors="ignore")
+
+    left_club_candidates = [c for c in ["club", "team", "squad", "current_club", "club_actual"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition", "league_name"] if c in left.columns]
+
+    right["_role_player_key"] = right["role_player"].map(normalize_join_text)
+    if "role_player_key" in right.columns:
+        right["_role_player_key"] = right["_role_player_key"].mask(right["_role_player_key"].eq(""), right["role_player_key"].astype(str))
+    right["_role_season_key"] = right["role_season"].map(normalize_role_season) if "role_season" in right.columns else ""
+    right["_role_team_key"] = right["role_team"].map(normalize_join_text) if "role_team" in right.columns else ""
+    right["_role_league_key"] = right["role_league"].map(normalize_join_text) if "role_league" in right.columns else ""
+
+    # Prefer the highest-confidence duplicate where the artefact has multiple rows per key.
+    if "role_confidence" in right.columns:
+        right = right.sort_values("role_confidence", ascending=False, na_position="last")
+
+    left["_role_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+
+    def _fill_from_strategy(name_col: str, extra_left_cols: list[str], extra_right_cols: list[str]) -> None:
+        nonlocal left
+        unresolved = left["primary_role"].isna()
+        if not unresolved.any():
+            return
+        tmp_left = left.loc[unresolved, ["_role_row_id", name_col, "_role_season_key"] + extra_left_cols].copy()
+        tmp_left["_role_player_key"] = tmp_left[name_col].map(normalize_join_text)
+        rename = {}
+        for l_col, r_key in zip(extra_left_cols, extra_right_cols):
+            key_col = f"_tmp_{r_key}"
+            tmp_left[key_col] = tmp_left[l_col].map(normalize_join_text)
+            rename[key_col] = r_key
+        join_left_cols = ["_role_player_key", "_role_season_key"] + list(rename.values())
+        tmp_left = tmp_left.rename(columns=rename)
+        tmp_left = tmp_left[["_role_row_id"] + join_left_cols]
+        tmp_left = tmp_left[tmp_left["_role_player_key"].astype(str).str.len() > 0]
+        if tmp_left.empty:
+            return
+        tmp_right = right.drop_duplicates(join_left_cols)[join_left_cols + role_cols]
+        matched = tmp_left.merge(tmp_right, on=join_left_cols, how="left")
+        matched = matched.dropna(subset=["primary_role"])
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_role_row_id", keep="first").set_index("_role_row_id")
+        for col in role_cols:
+            if col in matched.columns:
+                idx = matched.index.intersection(left["_role_row_id"])
+                if len(idx):
+                    left_index = left.set_index("_role_row_id").index
+                    # map by row id without changing visible ordering
+                    values = left["_role_row_id"].map(matched[col])
+                    # Fill each role column independently. Previous versions used
+                    # primary_role.isna() as the mask for every column; once the
+                    # primary role was filled, similarity/confidence/ambiguity and
+                    # top-similar fields were left as N/D.
+                    existing = left[col] if col in left.columns else pd.Series(np.nan, index=left.index)
+                    mask = unresolved & existing.isna() & values.notna()
+                    if mask.any() and col in role_text_cols:
+                        left[col] = left[col].astype("object")
+                    left.loc[mask, col] = values[mask]
+
+    for name_col in left_name_candidates:
+        for club_col in left_club_candidates:
+            _fill_from_strategy(name_col, [club_col], ["_role_team_key"])
+        for league_col in left_league_candidates:
+            _fill_from_strategy(name_col, [league_col], ["_role_league_key"])
+        _fill_from_strategy(name_col, [], [])
+
+        # Final conservative fallback: name-only. This helps when the dashboard uses a
+        # current-scouting season label while the role artefact stores the compact 2425 key.
+        unresolved = left["primary_role"].isna()
+        if unresolved.any():
+            tmp_left = left.loc[unresolved, ["_role_row_id", name_col]].copy()
+            tmp_left["_role_player_key"] = tmp_left[name_col].map(normalize_join_text)
+            tmp_left = tmp_left[tmp_left["_role_player_key"].astype(str).str.len() > 0]
+            tmp_right = right.drop_duplicates(["_role_player_key"])[["_role_player_key"] + role_cols]
+            matched = tmp_left[["_role_row_id", "_role_player_key"]].merge(tmp_right, on="_role_player_key", how="left")
+            matched = matched.dropna(subset=["primary_role"]).drop_duplicates("_role_row_id", keep="first").set_index("_role_row_id")
+            if not matched.empty:
+                for col in role_cols:
+                    values = left["_role_row_id"].map(matched[col])
+                    # Fill each role column independently. Previous versions used
+                    # primary_role.isna() as the mask for every column; once the
+                    # primary role was filled, similarity/confidence/ambiguity and
+                    # top-similar fields were left as N/D.
+                    existing = left[col] if col in left.columns else pd.Series(np.nan, index=left.index)
+                    mask = unresolved & existing.isna() & values.notna()
+                    if mask.any() and col in role_text_cols:
+                        left[col] = left[col].astype("object")
+                    left.loc[mask, col] = values[mask]
+
+    return left.drop(columns=["_role_row_id"], errors="ignore")
+
+def has_role_intelligence(row: pd.Series) -> bool:
+    value = safe_get(row, "primary_role", np.nan)
+    # The role label is the core role intelligence output. Confidence/similarity enrich it,
+    # but must not block display when an export lacks those numeric fields.
+    return is_valid_role_value(value)
+
+
+def role_metric_display(value: object, decimals: int = 1) -> str:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(num):
+        return "N/D" if globals().get("LANG", "ES") == "ES" else "N/A"
+    if abs(float(num) - round(float(num))) < 1e-9:
+        return f"{float(num):.0f}"
+    return f"{float(num):.{decimals}f}"
+
+
+def render_role_badge(row: pd.Series) -> str:
+    if not has_role_intelligence(row):
+        return ""
+    role = safe_get(row, 'primary_role')
+    family_css = f"role-badge-family-{role_family(role)}"
+    return f"<span class='role-badge {family_css}'>🧠 {html.escape(str(role))}</span>"
+
+
+def parse_role_similar(value: object) -> dict[str, object] | None:
+    if pd.isna(value) or not str(value).strip():
+        return None
+    parts = [part.strip() for part in str(value).split("|")]
+    score = pd.to_numeric(pd.Series([parts[-1] if len(parts) >= 4 else np.nan]), errors="coerce").iloc[0]
+    return {
+        "player": parts[0] if len(parts) > 0 else "N/A",
+        "club": format_club_name(parts[1] if len(parts) > 1 else "N/A"),
+        "season": parts[2] if len(parts) > 2 else "N/A",
+        "score": score,
+    }
+
+
+def role_dna_label(col: str) -> str:
+    return ROLE_DNA_LABELS.get(col, {"ES": col, "EN": col}).get(globals().get("LANG", "ES"), col)
+
+
+def role_dna_priority_columns(role: object) -> list[str]:
+    """Return role-specific tactical dimensions in product/narrative order."""
+    role_key = normalize_join_text(role)
+    priority = ROLE_DNA_ROLE_PRIORITY.get(role_key)
+    if priority:
+        return [c for c in priority if c in ROLE_DNA_COLUMNS]
+    return ROLE_DNA_COLUMNS.copy()
+
+
+def role_dna_dimension_groups(role: object, ordered_columns: list[str]) -> list[tuple[str, list[str]]]:
+    """Group role DNA into Core, Supporting and Secondary traits for scouting UX."""
+    role_key = normalize_join_text(role)
+    if role_key == "ball playing centre back":
+        groups = [
+            ("CORE DNA" if LANG == "EN" else "CORE DNA", ["passing_volume_index", "ball_progression_index", "passing_security_index"]),
+            ("SUPPORTING TRAITS" if LANG == "EN" else "RASGOS DE APOYO", ["availability_index_role", "chance_creation_index"]),
+            ("SECONDARY" if LANG == "EN" else "SECUNDARIO", ["discipline_risk_index", "finishing_index_role", "crossing_width_index"]),
+        ]
+    else:
+        groups = [
+            ("CORE DNA" if LANG == "EN" else "CORE DNA", ordered_columns[:3]),
+            ("SUPPORTING TRAITS" if LANG == "EN" else "RASGOS DE APOYO", ordered_columns[3:6]),
+            ("SECONDARY" if LANG == "EN" else "SECUNDARIO", ordered_columns[6:]),
+        ]
+    available = set(ordered_columns)
+    return [(label, [c for c in cols if c in available]) for label, cols in groups if any(c in available for c in cols)]
+
+
+def role_dna_score(value: object) -> float | None:
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(num):
+        return None
+    return float(np.clip(num, 0, 100))
+
+
+def has_role_dna(row: pd.Series) -> bool:
+    return any(role_dna_score(row.get(col, np.nan)) is not None for col in ROLE_DNA_COLUMNS)
+
+
+def _role_dna_plain_explanation(role: str, player_row: pd.Series) -> str:
+    """Human-readable role explanation for a sporting director."""
+    role_clean = clean_role_display(role, "Role pending" if LANG == "EN" else "Rol pendiente")
+    role_lower = role_clean.lower()
+    default = (
+        f"The system classifies this player as {role_clean} because his tactical-index profile shows stronger signals in the dimensions associated with that role."
+        if LANG == "EN"
+        else f"El sistema clasifica a este jugador como {role_clean} porque su perfil de índices tácticos concentra la señal en las dimensiones asociadas a ese rol."
+    )
+    descriptions_es = {
+        "ball-playing centre-back": "Defensor central orientado a la construcción: alta participación en salida de balón, volumen de pase y progresión desde primera línea.",
+        "aerial defender": "Central dominante en duelos y protección del área, con lectura prioritaria defensiva y menor peso creativo.",
+        "aggressive defender": "Defensor de intervención alta: anticipa, presiona y acumula acciones defensivas con perfil proactivo.",
+        "ball winner": "Mediocentro de recuperación y equilibrio: aporta intensidad, disponibilidad y seguridad para sostener al equipo sin balón.",
+        "creative playmaker": "Organizador creativo: genera ventajas mediante pase progresivo, último pase y participación estable en zonas de creación.",
+        "attacking progressor": "Progresor ofensivo: transporta o acelera ataques, combina progresión con creación y recibe en zonas avanzadas.",
+        "box finisher": "Finalizador de área: perfil orientado a remate, xG y eficiencia de tiro más que a construcción.",
+        "creator forward": "Delantero generador: combina amenaza ofensiva con creación para compañeros y movilidad entre líneas.",
+        "mobile forward": "Atacante móvil: amenaza por desmarque, progresión y participación en diferentes alturas del ataque.",
+    }
+    descriptions_en = {
+        "ball-playing centre-back": "Build-up centre-back: high involvement in first-phase possession, passing volume and ball progression from the defensive line.",
+        "aerial defender": "Box-protection centre-back with stronger aerial/defensive identity and lower creative weight.",
+        "aggressive defender": "Proactive defender: anticipates, presses and accumulates defensive actions with an intervention-heavy profile.",
+        "ball winner": "Ball-winning midfielder: provides recovery, balance, availability and secure possession support.",
+        "creative playmaker": "Creative organizer: creates advantages through progressive passing, chance creation and stable possession involvement.",
+        "attacking progressor": "Attacking progressor: accelerates attacks through carrying, receiving and progressive actions in advanced areas.",
+        "box finisher": "Penalty-box finisher: profile driven by shot volume, xG and finishing efficiency rather than build-up.",
+        "creator forward": "Creative forward: combines attacking threat with chance creation and between-line mobility.",
+        "mobile forward": "Mobile attacker: creates threat through movement, progression and involvement across attacking zones.",
+    }
+    base = (descriptions_en if LANG == "EN" else descriptions_es).get(role_lower, default)
+    return base
+
+
+def render_role_dna_block(player_row: pd.Series) -> None:
+    """Render TM.5.5 Role DNA as the visible explanation of the tactical role."""
+    if not has_role_dna(player_row):
+        return
+
+    role = clean_role_display(safe_get(player_row, "primary_role", np.nan), "Role pending" if LANG == "EN" else "Rol pendiente")
+    fit = role_dna_score(safe_get(player_row, "role_fit_explainability_score", np.nan))
+    quality_raw = safe_get(player_row, "role_explainability_quality", "N/D" if LANG == "ES" else "N/A")
+    explanation = safe_get(player_row, "role_explanation_text", "")
+    if pd.isna(explanation) or not str(explanation).strip() or "Sin rol táctico" in str(explanation):
+        explanation = _role_dna_plain_explanation(role, player_row)
+
+    confidence = role_dna_score(safe_get(player_row, "role_confidence", np.nan))
+    ambiguity = role_dna_score(safe_get(player_row, "role_ambiguity", np.nan))
+    # Product-facing labels: avoid exposing low raw percentages such as 8%, which
+    # read as model failure to a sporting director. Keep the numeric signal inside
+    # the role engine, but translate it into scouting terminology in the UI.
+    confidence_label = role_purity_label(confidence) if confidence is not None else ("N/A" if LANG == "EN" else "N/D")
+    ambiguity_label = role_hybridization_label(ambiguity) if ambiguity is not None else ("N/A" if LANG == "EN" else "N/D")
+    role_dna_state_label = ambiguity_label if ambiguity is not None else str(quality_raw)
+
+    values = []
+    for col in role_dna_priority_columns(role):
+        value = role_dna_score(player_row.get(col, np.nan))
+        if value is not None:
+            values.append((col, value, role_dna_label(col)))
+    if not values:
+        return
+    # Keep role-specific order. The bars explain the tactical role; they are not
+    # a generic top-percentile ranking across unrelated dimensions.
+
+    values_by_col = {col: (value, label) for col, value, label in values}
+    bars = []
+    ordered_cols = [col for col, _, _ in values]
+    for group_label, group_cols in role_dna_dimension_groups(role, ordered_cols):
+        rows = []
+        for col in group_cols:
+            if col not in values_by_col:
+                continue
+            value, label = values_by_col[col]
+            width = max(0, min(100, value))
+            rows.append(
+                f"<div class='role-dna-pro-row'>"
+                f"<div class='role-dna-pro-label'>{html.escape(label)}</div>"
+                f"<div class='role-dna-pro-track'><span style='width:{width:.0f}%'></span></div>"
+                f"<div class='role-dna-pro-score'>P{value:.0f}</div>"
+                f"</div>"
+            )
+        if rows:
+            bars.append(
+                f"<div class='role-dna-pro-group'>"
+                f"<div class='role-dna-pro-group-title'>{html.escape(group_label)}</div>"
+                f"{''.join(rows)}"
+                f"</div>"
+            )
+
+    fit_html = ""
+    if fit is not None:
+        fit_html = f"<div class='role-dna-pro-kpi'><span>{html.escape('Role fit' if LANG == 'EN' else 'Encaje rol')}</span><b>{fit:.0f}</b></div>"
+
+    title = "ROLE DNA · WHY THIS ROLE?" if LANG == "EN" else "ROLE DNA · POR QUÉ ESTE ROL"
+    subtitle = (
+        "The tactical fingerprint below turns advanced FBref metrics into a role explanation."
+        if LANG == "EN"
+        else "La huella táctica convierte métricas avanzadas de FBref en una explicación operativa del rol."
+    )
+    belief_title = "Why the system believes it" if LANG == "EN" else "Por qué el sistema lo clasifica así"
+    metrics_title = "Metrics supporting the role" if LANG == "EN" else "Métricas que sustentan el rol"
+
+    st.markdown(
+        f"""
+<div class="role-dna-pro-shell">
+    <div class="role-dna-pro-header">
+        <div>
+            <div class="role-dna-pro-eyebrow">{html.escape(title)}</div>
+            <div class="role-dna-pro-title">🧠 {html.escape(role)}</div>
+            <div class="role-dna-pro-subtitle">{html.escape(subtitle)} <span class="role-dna-quality-chip">{html.escape(str(role_dna_state_label))}</span></div>
+        </div>
+        <div class="role-dna-pro-kpis">
+            <div class="role-dna-pro-kpi"><span>{html.escape('Specialisation' if LANG == 'EN' else 'Especialización')}</span><b>{html.escape(confidence_label)}</b></div>
+            <div class="role-dna-pro-kpi"><span>{html.escape('Role profile' if LANG == 'EN' else 'Perfil de rol')}</span><b>{html.escape(ambiguity_label)}</b></div>
+            {fit_html}
+        </div>
+    </div>
+    <div class="role-dna-pro-layout">
+        <div class="role-dna-pro-explain-card">
+            <div class="role-dna-pro-card-title">{html.escape(belief_title)}</div>
+            <div class="role-dna-pro-copy">{html.escape(_role_dna_plain_explanation(role, player_row))}</div>
+            <div class="role-dna-pro-driver">{html.escape(str(explanation))}</div>
+        </div>
+        <div class="role-dna-pro-bars-card">
+            <div class="role-dna-pro-card-title">{html.escape(metrics_title)}</div>
+            <div class="role-dna-pro-bars">{''.join(bars)}</div>
+        </div>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def render_role_dna_filters(source_df: pd.DataFrame, key_prefix: str) -> pd.DataFrame:
+    """Optional advanced tactical-index filters for Recruitment Intelligence."""
+    available = [col for col in ROLE_DNA_FILTER_COLUMNS if col in source_df.columns and pd.to_numeric(source_df[col], errors="coerce").notna().any()]
+    if source_df.empty or not available:
+        return source_df
+
+    title = "What tactical function do you need to cover?" if LANG == "EN" else "¿Qué función táctica necesitas cubrir?"
+    subtitle = (
+        "Start from a scouting need, then use thresholds to identify players with progression, creation, possession security or availability DNA."
+        if LANG == "EN"
+        else "Parte de una necesidad de scouting y usa umbrales para encontrar jugadores con ADN de construcción, creación, seguridad en posesión o disponibilidad competitiva."
+    )
+    intent_examples = (
+        ["🛡 Build-up from deep", "🎨 Offensive creation", "⚙ Possession security", "🏃 Competitive availability"]
+        if LANG == "EN"
+        else ["🛡 Construcción desde atrás", "🎨 Creación ofensiva", "⚙ Seguridad en posesión", "🏃 Disponibilidad competitiva"]
+    )
+    chips_html = "".join(f"<span>{html.escape(x)}</span>" for x in intent_examples)
+    st.markdown(
+        f"<div class='role-dna-filter-shell'><div class='role-dna-filter-title'>{html.escape(title)}</div><div class='role-dna-filter-subtitle'>{html.escape(subtitle)}</div><div class='role-dna-filter-intents'>{chips_html}</div>",
+        unsafe_allow_html=True,
+    )
+    cols = st.columns(len(available), gap="small")
+    thresholds: dict[str, int] = {}
+    for idx, col in enumerate(available):
+        with cols[idx]:
+            thresholds[col] = st.number_input(
+                role_dna_label(col) + " ≥",
+                min_value=0,
+                max_value=100,
+                value=0,
+                step=5,
+                key=f"{key_prefix}_{col}_min_filter",
+            )
+    filtered = source_df.copy()
+    active = []
+    for col, threshold in thresholds.items():
+        if threshold > 0:
+            filtered = filtered[pd.to_numeric(filtered[col], errors="coerce").fillna(-1) >= threshold].copy()
+            active.append(f"{role_dna_label(col)} ≥ {threshold}")
+    active_label = " · ".join(active) if active else ("No Role DNA restriction" if LANG == "EN" else "Sin restricción Role DNA")
+    st.markdown(
+        f"<div class='role-dna-filter-status'>{html.escape(str(len(filtered)))} {'players' if LANG == 'EN' else 'jugadores'} · {html.escape(active_label)}</div></div>",
+        unsafe_allow_html=True,
+    )
+    return filtered
+
+
+def render_role_profile_block(player_row: pd.Series) -> None:
+    taxonomy_raw = safe_get(player_row, "position_taxonomy", "N/A")
+    taxonomy = "N/A" if pd.isna(taxonomy_raw) else str(taxonomy_raw).strip()
+    if taxonomy.lower() in {"", "nan", "none", "na"}:
+        taxonomy = "N/A"
+
+    if not has_role_intelligence(player_row) and taxonomy == "N/A":
+        position_text = str(safe_get(player_row, "position_group", safe_get(player_row, "position", safe_get(player_row, "pos_", "N/A"))))
+        msg = (
+            f"La inteligencia táctica no está disponible para este jugador. Perfil seleccionado: {position_text}."
+            if LANG == "ES"
+            else f"Tactical intelligence is not available for this player. Selected profile: {position_text}."
+        )
+        st.info(msg)
+        return
+
+    primary_raw = safe_get(player_row, "primary_role", "N/A")
+    primary = str(primary_raw).strip() if is_valid_role_value(primary_raw) else "N/A"
+    secondary_raw = safe_get(player_row, "secondary_role", "N/A")
+    secondary = "N/A" if pd.isna(secondary_raw) else str(secondary_raw).strip()
+    if secondary.lower() in {"", "nan", "none", "na"} or secondary == primary:
+        secondary = "N/A"
+
+    confidence_raw = safe_get(player_row, "role_confidence", np.nan)
+    ambiguity_raw = safe_get(player_row, "role_ambiguity", np.nan)
+    purity = role_metric_display(confidence_raw)
+    hybridization = role_metric_display(ambiguity_raw)
+    primary_sim = role_metric_display(safe_get(player_row, "primary_role_similarity", np.nan))
+    secondary_sim = role_metric_display(safe_get(player_row, "secondary_role_similarity", np.nan))
+    pos_raw = str(safe_get(player_row, "position_group", safe_get(player_row, "position", safe_get(player_row, "pos_", "N/A"))))
+    taxonomy_label = taxonomy_long_label(taxonomy)
+    hybridization_label = role_hybridization_label(ambiguity_raw)
+    purity_label = role_purity_label(confidence_raw)
+    primary_family_label = role_family_label(primary)
+    primary_description = role_description(primary)
+    primary_css = role_family_css(primary)
+    secondary_css = role_family_css(secondary)
+
+    role_signal_items = build_role_signal_items(player_row)
+    role_signal_cards = []
+    for item in role_signal_items:
+        role_name = str(item["role"])
+        rank = int(item["rank"])
+        family = role_family_label(role_name)
+        signal_label = (
+            "Top archetype" if LANG == "EN" else "Arquetipo principal"
+        ) if rank == 1 else (
+            "Secondary tendency" if LANG == "EN" else "Tendencia secundaria"
+        )
+        role_signal_cards.append(
+            f"<div class='role-top-role-row {role_family_css(role_name)}'>"
+            f"<div class='role-top-role-rank'>{rank}</div>"
+            f"<div class='role-top-role-name'>{html.escape(role_name)}</div>"
+            f"<div class='role-top-role-meta'>{html.escape(str(item['kind']))} · {html.escape(family)}</div>"
+            f"<div class='role-top-role-score'>{html.escape(signal_label)}</div>"
+            f"</div>"
+        )
+    if not role_signal_cards:
+        role_signal_cards.append(
+            f"<div class='role-top-role-row role-top-role-row-family-balanced'>"
+            f"<div class='role-top-role-rank'>—</div>"
+            f"<div class='role-top-role-name'>{'No role signal' if LANG == 'EN' else 'Sin señal de rol'}</div>"
+            f"<div class='role-top-role-meta'>{'No valid tactical role is available for this player.' if LANG == 'EN' else 'No hay un rol táctico válido disponible para este jugador.'}</div>"
+            f"</div>"
+        )
+    role_signal_note = (
+        "Top role signals available in the role intelligence layer. The DSS does not invent a third role when the data only exposes primary and secondary assignments."
+        if LANG == "EN"
+        else "Señales de rol disponibles en la capa de inteligencia táctica. El DSS no inventa un tercer rol si los datos solo exponen rol primario y secundario."
+    )
+
+    st.markdown(
+        f"""
+<div class="role-identity-pipeline">
+    <div class="role-identity-eyebrow">{"PLAYER IDENTITY PIPELINE" if LANG == "EN" else "PIPELINE DE IDENTIDAD DEL JUGADOR"}</div>
+    <div class="role-identity-flow">
+        <div class="role-identity-step"><span>{"Original position" if LANG == "EN" else "Posición original"}</span><b>{html.escape(pos_raw)}</b></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step role-identity-step-tax"><span>{"Position taxonomy" if LANG == "EN" else "Taxonomía posicional"}</span><b>{html.escape(taxonomy)}</b><small>{html.escape(taxonomy_label)}</small></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step {html.escape(primary_css)}"><span>{"Primary role" if LANG == "EN" else "Rol primario"}</span><b>{html.escape(primary)}</b><small>{"Top archetype detected" if LANG == "EN" else "Arquetipo principal detectado"}</small></div>
+        <div class="role-identity-arrow">→</div>
+        <div class="role-identity-step"><span>{"Tactical read" if LANG == "EN" else "Lectura táctica"}</span><b>{html.escape(hybridization_label)}</b><small>{html.escape(purity_label)}</small></div>
+    </div>
+</div>
+
+<div class="role-profile-grid role-profile-grid-tm65">
+ <div class="role-profile-card role-profile-card-taxonomy"><div class="role-profile-label">{html.escape('Positional Identity' if LANG == 'EN' else 'Identidad posicional')}</div><div class="role-profile-value">🎯 {html.escape(taxonomy)} · {html.escape(taxonomy_label)}</div><div class="role-profile-caption">{html.escape('Calibrated positional identity' if LANG == 'EN' else 'Identidad posicional calibrada')}</div></div>
+ <div class="role-profile-card {html.escape(primary_css)}"><div class="role-profile-label">{html.escape('Primary Role' if LANG == 'EN' else 'Rol primario')}</div><div class="role-profile-value">🧠 {html.escape(primary)}</div><div class="role-profile-caption">{html.escape('Top archetype detected' if LANG == 'EN' else 'Arquetipo principal detectado')} · {html.escape(primary_family_label)}</div></div>
+ <div class="role-profile-card {html.escape(secondary_css)}"><div class="role-profile-label">{html.escape('Secondary Role' if LANG == 'EN' else 'Rol secundario')}</div><div class="role-profile-value">{html.escape(secondary)}</div><div class="role-profile-caption">{html.escape('Secondary tendency' if LANG == 'EN' else 'Tendencia secundaria')}</div></div>
+ <div class="role-profile-card"><div class="role-profile-label">{html.escape('Specialisation' if LANG == 'EN' else 'Especialización')}</div><div class="role-profile-value">{html.escape('Low' if str(purity_label).lower().startswith(('hybrid','perfil híbrido')) else ('Medium' if LANG == 'EN' else 'Media'))}</div><div class="role-profile-caption">{html.escape(purity_label)}</div></div>
+ <div class="role-profile-card"><div class="role-profile-label">{html.escape('Role Hybridization' if LANG == 'EN' else 'Hibridación de rol')}</div><div class="role-profile-value">{html.escape(hybridization_label)}</div><div class="role-profile-caption">{html.escape('Tactical flexibility' if LANG == 'EN' else 'Flexibilidad táctica')}</div></div>
+</div>
+
+<div class="role-tactical-read-card">
+    <div class="role-tactical-eyebrow">{'TACTICAL INTERPRETATION' if LANG == 'EN' else 'INTERPRETACIÓN TÁCTICA'}</div>
+    <div class="role-tactical-title">{html.escape(primary)} · {html.escape(primary_family_label)}</div>
+    <div class="role-tactical-copy">{html.escape(primary_description)}</div>
+    <div class="role-tactical-chips">
+        <span class="role-tactical-chip">{html.escape('Taxonomy' if LANG == 'EN' else 'Taxonomía')}: {html.escape(taxonomy)} · {html.escape(taxonomy_label)}</span>
+        <span class="role-tactical-chip">{html.escape('Specialisation' if LANG == 'EN' else 'Especialización')}: {html.escape(purity_label)}</span>
+        <span class="role-tactical-chip">{html.escape('Hybridization' if LANG == 'EN' else 'Hibridación')}: {html.escape(hybridization_label)}</span>
+    </div>
+</div>
+
+<div class="role-top-role-card">
+    <div class="role-top-role-title">{html.escape('Top role signals' if LANG == 'EN' else 'Top señales de rol')}</div>
+    <div class="role-top-role-subtitle">{html.escape(role_signal_note)}</div>
+    <div class="role-top-role-grid">{''.join(role_signal_cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def _build_role_similar_fallback(player_row: pd.Series, universe_df: pd.DataFrame | None = None, limit: int = 5) -> list[tuple[int, dict[str, object], str]]:
+    """Fallback role comparables when role intelligence explicit role_similar_player_* fields are not populated.
+
+    The fallback is intentionally conservative: it only compares players with the same
+    primary role, and when possible the same calibrated Position taxonomy. This keeps
+    the DSS tactically coherent even if the role-neighbour export is incomplete.
+    """
+    if universe_df is None or universe_df.empty:
+        return []
+    primary_role = safe_get(player_row, "primary_role", np.nan)
+    if not is_valid_role_value(primary_role) or "primary_role" not in universe_df.columns:
+        return []
+
+    df = universe_df.copy()
+    df = df[df["primary_role"].astype(str) == str(primary_role)].copy()
+    if df.empty:
+        return []
+
+    target_taxonomy = safe_get(player_row, "position_taxonomy", np.nan)
+    if "position_taxonomy" in df.columns and pd.notna(target_taxonomy) and str(target_taxonomy).strip().lower() not in {"", "nan", "none", "na"}:
+        same_tax = df[df["position_taxonomy"].astype(str) == str(target_taxonomy)].copy()
+        if len(same_tax) >= 3:
+            df = same_tax
+
+    name_col = get_player_name_column(df) or ("player" if "player" in df.columns else None)
+    target_name = str(safe_get(player_row, name_col, "")) if name_col else ""
+    if name_col:
+        df = df[df[name_col].astype(str) != target_name].copy()
+    if df.empty:
+        return []
+
+    sort_cols = [c for c in ["primary_role_similarity", "opportunity_score", "confidence_score", "minutes"] if c in df.columns]
+    if sort_cols:
+        for col in sort_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df = df.sort_values(sort_cols, ascending=[False] * len(sort_cols), na_position="last")
+
+    club_col = next((c for c in ["team", "club", "current_club", "team_name", "squad"] if c in df.columns), None)
+    season_col = next((c for c in ["season", "season_label", "data_season"] if c in df.columns), None)
+
+    items: list[tuple[int, dict[str, object], str]] = []
+    for rank, (_, row) in enumerate(df.head(limit).iterrows(), start=1):
+        name = safe_get(row, name_col, "N/A") if name_col else "N/A"
+        club = format_club_name(safe_get(row, club_col, "N/A") if club_col else "N/A")
+        season = safe_get(row, season_col, "N/A") if season_col else "N/A"
+        sim_value = safe_get(row, "primary_role_similarity", np.nan)
+        if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]):
+            sim_value = safe_get(row, "opportunity_score", np.nan)
+        score = "N/A" if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]) else f"{float(sim_value):.1f}"
+        items.append((rank, {"player": name, "club": club, "season": season, "score": sim_value}, score))
+    return items
+
+
+def render_role_similar_players_block(player_row: pd.Series, universe_df: pd.DataFrame | None = None) -> None:
+    similar_items = []
+    explicit_source = True
+    for i in range(1, 6):
+        item = parse_role_similar(safe_get(player_row, f"role_similar_player_{i}", np.nan))
+        if item:
+            score = "N/A" if pd.isna(item["score"]) else f"{float(item['score']):.1f}"
+            similar_items.append((i, item, score))
+
+    if not similar_items:
+        explicit_source = False
+        similar_items = _build_role_similar_fallback(player_row, universe_df=universe_df, limit=5)
+
+    title = 'Similar Players by Role' if LANG == 'EN' else 'Jugadores similares por rol'
+    if explicit_source:
+        subtitle = 'Nearest profiles in the tactical role space.' if LANG == 'EN' else 'Perfiles más cercanos en el espacio táctico de roles.'
+    else:
+        subtitle = 'Role-compatible fallback: same primary role and, when possible, same position taxonomy.' if LANG == 'EN' else 'Fallback táctico: mismo rol primario y, cuando es posible, misma taxonomía posicional.'
+
+    if not similar_items:
+        primary_role = safe_get(player_row, "primary_role", "N/A")
+        taxonomy = safe_get(player_row, "position_taxonomy", "N/A")
+        st.markdown(
+            f"<div class='top5-horizontal-card role-similar-empty-card'><div class='panel-title'>{html.escape(title)}</div>"
+            f"<div class='panel-subtitle'>{html.escape('No role-compatible players are available under the active filters.' if LANG == 'EN' else 'No hay comparables tácticamente compatibles bajo los filtros activos.')}</div>"
+            f"<div class='role-similar-empty'>"
+            f"<b>{html.escape('Role context' if LANG == 'EN' else 'Contexto de rol')}</b><br>"
+            f"{html.escape(str(primary_role))} · {html.escape(str(taxonomy))}<br>"
+            f"<span>{html.escape('Relax the role, age or minutes filters to recover comparables.' if LANG == 'EN' else 'Relaja filtros de rol, edad o minutos para recuperar comparables.')}</span>"
+            f"</div></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    cards = []
+    for rank, item, score in similar_items:
+        cards.append(
+            f"<div class='role-similar-card'><div class='role-similar-rank'>{rank}</div>"
+            f"<div class='role-similar-name'>{html.escape(str(item['player']))}</div>"
+            f"<div class='role-similar-meta'>{html.escape(str(item['club']))}<br>{html.escape(str(item['season']))}</div>"
+            f"<div class='role-similar-score'>{html.escape(score)}</div></div>"
+        )
+    st.markdown(
+        f"<div class='top5-horizontal-card role-similar-visible-card'><div class='panel-title'>{html.escape(title)}</div><div class='panel-subtitle'>{html.escape(subtitle)}</div><div class='role-similar-grid'>{''.join(cards)}</div></div>",
+        unsafe_allow_html=True,
+    )
 
 
 def optimize_transfer_portfolio_with_style(
@@ -4260,6 +8750,7 @@ def optimize_transfer_portfolio_with_style(
     portfolio["player_budget_share"] = portfolio["portfolio_cost"] / budget
     portfolio["player_portfolio_cost_share"] = portfolio["portfolio_cost"] / portfolio["portfolio_cost"].sum()
 
+    portfolio = apply_current_club_overrides(portfolio)
     return portfolio.sort_values("optimization_score", ascending=False)
 
 
@@ -4297,15 +8788,29 @@ def tier_badge(value):
 
 
 def format_money_short(value):
+    """Compact monetary formatter used consistently across the dashboard.
+
+    Negative values are rendered as -€5.6M instead of €-5555918 so model gaps
+    and downside cases remain readable in executive tables.
+    """
     try:
-        value = float(value)
-        if value >= 1_000_000:
-            return f"€{value / 1_000_000:.1f}M"
-        if value >= 1_000:
-            return f"€{value / 1_000:.0f}K"
-        return f"€{value:.0f}"
+        numeric_value = float(value)
+        if pd.isna(numeric_value):
+            return "N/A"
+        sign = "-" if numeric_value < 0 else ""
+        abs_value = abs(numeric_value)
+        if abs_value >= 1_000_000:
+            return f"{sign}€{abs_value / 1_000_000:.1f}M"
+        if abs_value >= 1_000:
+            return f"{sign}€{abs_value / 1_000:.0f}K"
+        return f"{sign}€{abs_value:.0f}"
     except Exception:
         return "N/A"
+
+
+def format_eur(value):
+    """Backward-compatible EUR formatter for hover templates and matrix labels."""
+    return format_money_short(value)
 
 
 
@@ -4313,6 +8818,8 @@ def format_signed_money_short(value):
     """Format signed monetary deltas compactly for executive tables."""
     try:
         numeric_value = float(value)
+        if pd.isna(numeric_value):
+            return "N/A"
         sign = "+" if numeric_value > 0 else ""
         return f"{sign}{format_money_short(numeric_value)}"
     except Exception:
@@ -4342,12 +8849,809 @@ def format_money_readable(value):
         return "N/A"
 
 
-def format_score(value):
+def format_score(value, decimals: int = 1):
+    """Format numeric scores consistently across the product UI.
+
+    Older components call this helper with ``decimals=``; keeping the
+    argument here prevents UI regressions while preserving the original
+    default behaviour.
+    """
     try:
-        return f"{float(value):.1f}"
+        decimals = int(decimals)
+        return f"{float(value):.{decimals}f}"
     except Exception:
         return "N/A"
 
+
+# =============================================================================
+# Data freshness layer: present-club overrides and freshness badges
+# =============================================================================
+# The model datasets are player-season based and can lag behind the current market.
+# This lightweight presentation layer corrects known current-club updates without
+# changing historical modelling inputs. Extend this dictionary when validating
+# latest squad movements for the product demo.
+
+# Product-grade club aliases: UI must use short scouting names, not legal entity names.
+# Single source of truth for every visible club label in the product.
+CLUB_DISPLAY_MAP = {
+    "real club celta de vigo s a d": "Celta Vigo",
+    "real club celta de vigo sad": "Celta Vigo",
+    "celta de vigo": "Celta Vigo",
+    "real madrid club de futbol": "Real Madrid",
+    "real madrid club de fútbol": "Real Madrid",
+    "futbol club barcelona": "Barcelona",
+    "fc barcelona": "Barcelona",
+    "crystal palace football club": "Crystal Palace",
+    "nottingham forest football club": "Nottingham Forest",
+    "societa sportiva lazio s p a": "Lazio",
+    "società sportiva lazio s.p.a.": "Lazio",
+    "societa sportiva lazio spa": "Lazio",
+    "torino calcio": "Torino",
+    "athletic club bilbao": "Athletic Club",
+    "real betis balompie": "Real Betis",
+    "real betis balompié": "Real Betis",
+    "real club deportivo espanyol de barcelona s a d": "Espanyol",
+    "real club deportivo espanyol de barcelona sad": "Espanyol",
+    "valencia club de futbol s a d": "Valencia",
+    "valencia club de fútbol s. a. d.": "Valencia",
+    "villarreal club de futbol s a d": "Villarreal",
+    "villarreal club de fútbol s.a.d.": "Villarreal",
+    "borussia verein fur leibesubungen 1900 monchengladbach": "Borussia M'gladbach",
+    "borussia verein für leibesübungen 1900 mönchengladbach": "Borussia M'gladbach",
+    "borussia monchengladbach": "Borussia M'gladbach",
+    "borussia mönchengladbach": "Borussia M'gladbach",
+    "rasenballsport leipzig": "RB Leipzig",
+    "manchester united football club": "Manchester United",
+    "chelsea football club": "Chelsea",
+    "arsenal football club": "Arsenal",
+    "southampton fc": "Southampton",
+    "racing club de strasbourg alsace": "Strasbourg",
+    "real club deportivo mallorca s a d": "Mallorca",
+    "associazione calcio fiorentina": "Fiorentina",
+    "eintracht frankfurt fussball ag": "Eintracht Frankfurt",
+    "eintracht frankfurt fußball ag": "Eintracht Frankfurt",
+    "montpellier hsc": "Montpellier",
+    "athletic club": "Athletic Club",
+    "angers sporting club de l'ouest": "Angers SCO",
+    "angers sporting club de louest": "Angers SCO",
+    "angers sco": "Angers SCO",
+    "association de la jeunesse auxerroise": "Auxerre",
+    "association de la jeunesse auxerroise football": "Auxerre",
+    "aj auxerre": "Auxerre",
+    "getafe team dubai": "Getafe",
+    "getafe s a d team dubai": "Getafe",
+    "getafe club de futbol": "Getafe",
+    "getafe club de fútbol": "Getafe",
+    "getafe cf": "Getafe",
+    "girona s a d": "Girona",
+    "girona futbol club s a d": "Girona",
+    "real club deportivo mallorca sad": "Mallorca",
+    "real club deportivo mallorca s.a.d": "Mallorca",
+    "real club deportivo mallorca s.a.d.": "Mallorca",
+    "real club deportivo mallorca s a d": "Mallorca",
+    "cercle brugge koninklijke sportvereniging": "Cercle Brugge",
+    "standard liege": "Standard Liège",
+    "standard liège": "Standard Liège",
+    "sporting club de braga": "Braga",
+    "sporting clube de braga": "Braga",
+    "real sociedad de futbol": "Real Sociedad",
+    "real sociedad de fútbol": "Real Sociedad",
+    "club atletico de madrid": "Atlético Madrid",
+    "club atlético de madrid": "Atlético Madrid",
+    "real club celta de vigo s. a. d": "Celta Vigo",
+    "real club celta de vigo s.a.d": "Celta Vigo",
+    "real club celta de vigo s.a.d.": "Celta Vigo",
+    "getafe s a d": "Getafe",
+    "getafe s. a. d": "Getafe",
+    "getafe s.a.d": "Getafe",
+    "getafe s.a.d.": "Getafe",
+    "getafe sad": "Getafe",
+    "watford football club": "Watford",
+    "watford fc": "Watford",
+    "crystal palace fc": "Crystal Palace",
+    "nottingham forest fc": "Nottingham Forest",
+    "lazio s p a": "Lazio",
+    "lazio s.p.a": "Lazio",
+    "lazio s.p.a.": "Lazio",
+    "societa sportiva lazio s p a": "Lazio",
+    "societa sportiva lazio s.p.a": "Lazio",
+    "società sportiva lazio s p a": "Lazio",
+    "angies sporting club de l ouest": "Angers SCO",
+    "angers sporting club de l ouest": "Angers SCO",
+    "association jeunesse auxerroise": "Auxerre",
+    "real club deportivo espanyol": "Espanyol",
+    "girona fc": "Girona",
+
+    "reial club deportiu espanyol de barcelona s a d": "Espanyol",
+    "reial club deportiu espanyol de barcelona sad": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d.": "Espanyol",
+    "real club deportivo espanyol de barcelona s.a.d": "Espanyol",
+    "real club deportivo espanyol de barcelona s.a.d.": "Espanyol",
+    "rcd espanyol de barcelona": "Espanyol",
+    "espanyol barcelona": "Espanyol",
+    "societe sportive lazio": "Lazio",
+    "società sportiva lazio": "Lazio",
+    "ss lazio": "Lazio",
+    "lazio roma": "Lazio",
+    "association de la jeunesse auxerroise": "Auxerre",
+    "aj auxerre football": "Auxerre",
+    "auxerre football": "Auxerre",
+    "angers sporting club de l ouest": "Angers SCO",
+    "angers sporting club de l’ouest": "Angers SCO",
+    "angers sporting club de l'ouest": "Angers SCO",
+    "getafe team dubai": "Getafe",
+    "getafe s.a.d team dubai": "Getafe",
+    "getafe sad team dubai": "Getafe",
+    "crystal palace": "Crystal Palace",
+    "nottingham forest": "Nottingham Forest",
+    "watford": "Watford",
+    "borussia m'gladbach": "Borussia M'gladbach",
+    "borussia m gladbach": "Borussia M'gladbach",
+    "borussia mg": "Borussia M'gladbach",
+    "girona futbol club": "Girona",
+    "newcastle united football club": "Newcastle",
+    "newcastle united fc": "Newcastle",
+    "newcastle united": "Newcastle",
+    "newcastle": "Newcastle",
+    "vfb stuttgart": "Stuttgart",
+    "verein fur bewegungsspiele stuttgart": "Stuttgart",
+    "verein für bewegungsspiele stuttgart": "Stuttgart",
+    "stuttgart": "Stuttgart",
+    "reial club deportiu espanyol de barcelona s a d": "Espanyol",
+    "reial club deportiu espanyol de barcelona s.a.d.": "Espanyol",
+    "reial club deportiu espanyol de barcelona sad": "Espanyol",
+}
+
+
+# Backwards-compatible name used by older helper functions.
+CLUB_NAME_ALIASES = CLUB_DISPLAY_MAP
+
+CLUB_DISPLAY_COLUMNS = [
+    "club", "Club", "team", "Team", "Equipo", "squad", "Squad", "current_club",
+    "current_club_name_tm", "club_actual", "club_name", "team_name", "reference_club",
+    "similar_club", "replacement_club", "club_display_current", "current_club_display",
+    "role_team", "role_dna_team", "taxonomy_team",
+]
+
+
+def format_club_name(value: object, fallback: str = "N/A") -> str:
+    """Return a product-safe club name for cards, tables, labels and tooltips."""
+    try:
+        if pd.isna(value):
+            return fallback
+    except Exception:
+        pass
+    raw = str(value).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return fallback
+    key = _normalize_lookup_key(raw)
+    if key in CLUB_DISPLAY_MAP:
+        return CLUB_DISPLAY_MAP[key]
+    # Defensive substring aliases catch noisy merged labels/tooltips without touching player names.
+    for alias_key, display_name in CLUB_DISPLAY_MAP.items():
+        if alias_key and (key == alias_key or key.startswith(alias_key + " ") or key.endswith(" " + alias_key)):
+            return display_name
+    cleaned = raw
+    # Remove sponsorship/legal suffixes that are not useful in scouting UI.
+    cleaned = re.sub(r"\bTeam\s+Dubai\b", "", cleaned, flags=re.IGNORECASE).strip()
+    # Generic legal suffix cleanup for Transfermarkt-style long club names.
+    replacements = [
+        r"\bFootball Club\b", r"\bFutbol Club\b", r"\bClub de Fútbol\b", r"\bClub de Futbol\b",
+        r"\bSocietà Sportiva\b", r"\bSocieta Sportiva\b", r"\bAssociazione Calcio\b",
+        r"\bS\.\s*A\.\s*D\.\b", r"\bS\.A\.D\.\b", r"\bS\.\s*p\.\s*A\.\b", r"\bS\.p\.A\.\b",
+        r"\bFußball AG\b", r"\bFussball AG\b",
+        r"\bSporting Club de l['’]Ouest\b", r"\bAssociation de la Jeunesse Auxerroise\b",
+        r"\bKoninklijke Sportvereniging\b",
+    ]
+    for pattern in replacements:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"\bS\s*A\s*D\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bS\s*P\s*A\b", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\bFC\b", "", cleaned, flags=re.IGNORECASE) if len(cleaned.split()) > 2 else cleaned
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip(" -·,.")
+    cleaned_key = _normalize_lookup_key(cleaned)
+    return CLUB_DISPLAY_MAP.get(cleaned_key, cleaned or raw)
+
+
+def apply_club_name_normalization(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty:
+        return data
+    out = data.copy()
+    for col in CLUB_DISPLAY_COLUMNS:
+        if col in out.columns:
+            out[col] = out[col].map(format_club_name)
+    # Product display consistency: when a visible current club is known, prevent
+    # cross-source mismatches such as Crystal Palace · LaLiga or Watford · Serie A.
+    club_source = next((c for c in ["club_display_current", "current_club_display", "club", "team", "squad"] if c in out.columns), None)
+    if club_source and "league" in out.columns:
+        mapped_league = out[club_source].map(lambda x: LEAGUE_DISPLAY_BY_CURRENT_CLUB.get(format_club_name(x), np.nan))
+        out["league"] = out["league"].where(mapped_league.isna(), mapped_league)
+    return out
+
+CURRENT_CLUB_OVERRIDES = {
+    "pau victor": "Braga",
+    "pau víctor": "Braga",
+    "christantus uche": "Crystal Palace",
+    "nick woltemade": "Newcastle",
+    "nick woltemade": "Newcastle",
+}
+
+# Display-level league correction for known current-club overrides and noisy
+# current-club merges. This keeps 2025/26 cards coherent when a player-season
+# source still carries the historical league from the modelling row.
+CURRENT_LEAGUE_OVERRIDES_BY_PLAYER = {
+    "pau victor": "Primeira Liga",
+    "pau víctor": "Primeira Liga",
+    "christantus uche": "Premier League",
+    "nick woltemade": "Premier League",
+}
+
+LEAGUE_DISPLAY_BY_CURRENT_CLUB = {
+    "Newcastle": "Premier League",
+    "Newcastle United": "Premier League",
+    "Stuttgart": "Bundesliga",
+    "Crystal Palace": "Premier League",
+    "Watford": "EFL Championship",
+    "Nottingham Forest": "Premier League",
+    "Braga": "Primeira Liga",
+    "Getafe": "LaLiga",
+    "Celta Vigo": "LaLiga",
+    "Espanyol": "LaLiga",
+    "Real Madrid": "LaLiga",
+    "Barcelona": "LaLiga",
+    "Lazio": "Serie A",
+    "Torino": "Serie A",
+    "Angers SCO": "Ligue 1",
+    "Auxerre": "Ligue 1",
+}
+
+
+def _normalize_lookup_key(value) -> str:
+    """Normalise entity names for product display lookup.
+
+    This intentionally removes legal punctuation and accents so variants such as
+    ``S. A. D.``, ``S.A.D`` and ``SAD`` resolve to the same display alias.
+    """
+    try:
+        value = "" if pd.isna(value) else str(value)
+    except Exception:
+        value = str(value or "")
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-zA-Z0-9]+", " ", value)
+    return re.sub(r"\s+", " ", value).strip().lower()
+
+
+def _first_existing_column_any(df_or_row, candidates):
+    if isinstance(df_or_row, pd.Series):
+        keys = set(df_or_row.index)
+    else:
+        keys = set(getattr(df_or_row, "columns", []))
+    return next((c for c in candidates if c in keys), None)
+
+
+def apply_current_club_overrides(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Add display-safe current club fields and manual freshness flags."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty:
+        return data
+    df_out = data.copy()
+    name_col = _first_existing_column_any(df_out, [
+        "player_name_fbref", "player_name_display", "player", "player_name", "name"
+    ])
+    club_col = _first_existing_column_any(df_out, [
+        "current_club", "current_club_name_tm", "club_actual", "club", "team", "squad"
+    ])
+    if name_col is None:
+        return df_out
+    base_club = df_out[club_col].astype(str) if club_col else pd.Series(["N/A"] * len(df_out), index=df_out.index)
+    normalized_names = df_out[name_col].map(_normalize_lookup_key)
+    override = normalized_names.map(CURRENT_CLUB_OVERRIDES)
+    has_override = override.notna() & override.astype(str).str.len().gt(0)
+    df_out["club_display_current"] = base_club.where(~has_override, override).map(format_club_name)
+    df_out["current_club_display"] = df_out["club_display_current"]
+    if club_col:
+        # Product views should show the current club; historical columns remain available upstream.
+        df_out[club_col] = df_out["club_display_current"]
+        if "club" in df_out.columns:
+            df_out["club"] = df_out["club_display_current"]
+    if "league" in df_out.columns:
+        player_league_override = normalized_names.map(CURRENT_LEAGUE_OVERRIDES_BY_PLAYER)
+        club_league_override = df_out["club_display_current"].map(lambda x: LEAGUE_DISPLAY_BY_CURRENT_CLUB.get(format_club_name(x), np.nan))
+        final_league_override = player_league_override.where(player_league_override.notna(), club_league_override)
+        df_out["league"] = df_out["league"].where(final_league_override.isna(), final_league_override)
+    df_out["data_freshness_status"] = np.where(has_override, "Club/league current override", "Dataset current")
+    return df_out
+
+
+def get_current_club_display(row, fallback="N/A") -> str:
+    club_col = _first_existing_column_any(row, [
+        "club_display_current", "current_club_display", "current_club", "current_club_name_tm", "club_actual", "club", "team", "squad"
+    ])
+    value = safe_get(row, club_col, fallback) if club_col else fallback
+    return format_club_name(value if value not in [None, ""] else fallback, fallback=fallback)
+
+
+def get_player_display_from_row(row, fallback="N/A") -> str:
+    player_col = _first_existing_column_any(row, ["player_name_display", "player_name_fbref", "player", "player_name", "name"])
+    value = safe_get(row, player_col, fallback) if player_col else fallback
+    return str(value if value not in [None, ""] else fallback)
+
+
+# =============================================================================
+# TM.6.5.13 Product QA closure helpers: current context, navigation, labels
+# =============================================================================
+
+# Early league display helper used by current-context functions before the
+# later i18n block is reached during Streamlit execution.
+LEAGUE_COUNTRY_LABELS_EARLY = {
+    "ENG-Premier League": {"ES": "Premier League (Inglaterra)", "EN": "Premier League (England)"},
+    "Premier League": {"ES": "Premier League (Inglaterra)", "EN": "Premier League (England)"},
+    "ESP-La Liga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
+    "LaLiga": {"ES": "LaLiga (España)", "EN": "LaLiga (Spain)"},
+    "GER-Bundesliga": {"ES": "Bundesliga (Alemania)", "EN": "Bundesliga (Germany)"},
+    "Bundesliga": {"ES": "Bundesliga (Alemania)", "EN": "Bundesliga (Germany)"},
+    "ITA-Serie A": {"ES": "Serie A (Italia)", "EN": "Serie A (Italy)"},
+    "Serie A": {"ES": "Serie A (Italia)", "EN": "Serie A (Italy)"},
+    "FRA-Ligue 1": {"ES": "Ligue 1 (Francia)", "EN": "Ligue 1 (France)"},
+    "Ligue 1": {"ES": "Ligue 1 (Francia)", "EN": "Ligue 1 (France)"},
+    "NED-Eredivisie": {"ES": "Eredivisie (Países Bajos)", "EN": "Eredivisie (Netherlands)"},
+    "Eredivisie": {"ES": "Eredivisie (Países Bajos)", "EN": "Eredivisie (Netherlands)"},
+    "POR-Primeira Liga": {"ES": "Primeira Liga (Portugal)", "EN": "Primeira Liga (Portugal)"},
+    "Primeira Liga": {"ES": "Primeira Liga (Portugal)", "EN": "Primeira Liga (Portugal)"},
+    "ENG-EFL Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
+    "EFL Championship": {"ES": "EFL Championship (Inglaterra)", "EN": "EFL Championship (England)"},
+    "BEL-Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
+    "Pro League": {"ES": "Pro League (Bélgica)", "EN": "Pro League (Belgium)"},
+    "AUT-Bundesliga": {"ES": "Bundesliga (Austria)", "EN": "Bundesliga (Austria)"},
+    "ESP-Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+    "Segunda División": {"ES": "Segunda División (España)", "EN": "Segunda División (Spain)"},
+}
+
+
+def league_display_name(league: object) -> str:
+    """Return display-safe league name even before the late i18n block is executed."""
+    try:
+        if pd.isna(league):
+            return "N/A"
+    except Exception:
+        pass
+    raw = str(league).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return "N/A"
+    return LEAGUE_COUNTRY_LABELS_EARLY.get(raw, {}).get(globals().get("LANG", "ES"), raw)
+
+
+CURRENT_SEASON = 2526
+
+# -----------------------------------------------------------------------------
+# TM.6.5.13b — Current DSS league scope
+# -----------------------------------------------------------------------------
+# The Transfermarkt freshness overlay now uses the latest available Kaggle
+# valuation. That source is global, so the DSS must explicitly remain scoped to
+# the current project universe. At the current snapshot, Championship (GB2) and
+# Spanish Segunda (ES2) have no current Transfermarkt rows in the raw source;
+# therefore the operational DSS universe is 9 active leagues, not 11 historical
+# coverage leagues and not the wider global Transfermarkt universe.
+CURRENT_DSS_ALLOWED_LEAGUES = {
+    "Premier League",
+    "LaLiga",
+    "Bundesliga",
+    "Serie A",
+    "Ligue 1",
+    "Eredivisie",
+    "Liga Portugal",
+    "Belgian Pro League",
+    "Austrian Bundesliga",
+}
+
+CURRENT_DSS_LEAGUE_ALIASES = {
+    "premier league": "Premier League",
+    "eng premier league": "Premier League",
+    "eng-premier league": "Premier League",
+    "premier league inglaterra": "Premier League",
+    "premier league england": "Premier League",
+    "laliga": "LaLiga",
+    "la liga": "LaLiga",
+    "esp la liga": "LaLiga",
+    "esp-la liga": "LaLiga",
+    "laliga espana": "LaLiga",
+    "laliga spain": "LaLiga",
+    "bundesliga": "Bundesliga",
+    "ger bundesliga": "Bundesliga",
+    "ger-bundesliga": "Bundesliga",
+    "bundesliga alemania": "Bundesliga",
+    "bundesliga germany": "Bundesliga",
+    "serie a": "Serie A",
+    "ita serie a": "Serie A",
+    "ita-serie a": "Serie A",
+    "serie a italia": "Serie A",
+    "serie a italy": "Serie A",
+    "ligue 1": "Ligue 1",
+    "fra ligue 1": "Ligue 1",
+    "fra-ligue 1": "Ligue 1",
+    "ligue 1 francia": "Ligue 1",
+    "ligue 1 france": "Ligue 1",
+    "eredivisie": "Eredivisie",
+    "ned eredivisie": "Eredivisie",
+    "ned-eredivisie": "Eredivisie",
+    "eredivisie paises bajos": "Eredivisie",
+    "eredivisie netherlands": "Eredivisie",
+    "liga portugal": "Liga Portugal",
+    "primeira liga": "Liga Portugal",
+    "por primeira liga": "Liga Portugal",
+    "por-primeira liga": "Liga Portugal",
+    "primeira liga portugal": "Liga Portugal",
+    "belgian pro league": "Belgian Pro League",
+    "pro league": "Belgian Pro League",
+    "bel pro league": "Belgian Pro League",
+    "bel-pro league": "Belgian Pro League",
+    "pro league belgica": "Belgian Pro League",
+    "pro league belgium": "Belgian Pro League",
+    "austrian bundesliga": "Austrian Bundesliga",
+    "aut bundesliga": "Austrian Bundesliga",
+    "aut-bundesliga": "Austrian Bundesliga",
+    "bundesliga austria": "Austrian Bundesliga",
+}
+
+
+def canonical_current_dss_league(value: object) -> str | None:
+    """Return the canonical current DSS league or None if it is out of scope."""
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    raw = str(value).strip()
+    if not raw or raw.lower() in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d"}:
+        return None
+
+    # Remove country suffixes added by display helpers, e.g. "LaLiga (España)".
+    raw_no_suffix = re.sub(r"\s*\([^)]*\)\s*$", "", raw).strip()
+    key = _normalize_lookup_key(raw_no_suffix)
+    canonical = CURRENT_DSS_LEAGUE_ALIASES.get(key, raw_no_suffix)
+    return canonical if canonical in CURRENT_DSS_ALLOWED_LEAGUES else None
+
+
+def enforce_current_dss_league_scope(data: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Keep DSS operational artefacts inside the current 9-league TM snapshot."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty or "league" not in data.columns:
+        return data
+    out = data.copy()
+    canonical = out["league"].map(canonical_current_dss_league)
+    out = out[canonical.notna()].copy()
+    out["league"] = canonical[canonical.notna()].values
+    return out
+
+
+def count_current_dss_leagues(data: pd.DataFrame | None) -> int | str:
+    """Count canonical current DSS leagues, avoiding global Transfermarkt leakage."""
+    if data is None or not isinstance(data, pd.DataFrame) or data.empty or "league" not in data.columns:
+        return "N/A"
+    canonical = data["league"].map(canonical_current_dss_league).dropna()
+    return int(canonical.nunique())
+
+
+STATUS_TRANSLATION = {
+    "Development Bet": "Apuesta de desarrollo",
+    "Lower Priority": "Prioridad baja",
+    "Strong Alternative": "Alternativa fuerte",
+    "Upgrade": "Mejora clara",
+    "Similar": "Comparable similar",
+    "Higher Risk": "Mayor riesgo",
+}
+
+
+def translate_label(value):
+    """Translate residual English decision labels in Spanish UI."""
+    try:
+        if pd.isna(value):
+            return value
+    except Exception:
+        pass
+    text = str(value)
+    if globals().get("LANG", "ES") == "ES":
+        return STATUS_TRANSLATION.get(text, text)
+    return text
+
+
+def normalize_club_columns(df: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Compatibility wrapper used by the Product QA closure sprint."""
+    return apply_club_name_normalization(df)
+
+
+def resolve_display_club(row) -> str:
+    """Resolve the club shown in DSS views using current-club priority."""
+    return get_current_club_display(row)
+
+
+def build_current_context(df: pd.DataFrame | None) -> pd.DataFrame:
+    """Build a canonical player -> current display club/league context.
+
+    The DSS is player-season based, but product screens must show a coherent
+    current context. We use 2025/26 when available, otherwise the latest season
+    available, with manual overrides for validated transfers.
+    """
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return pd.DataFrame(columns=["player_name_fbref", "display_club", "display_league", "season", "context_status"])
+    current = apply_current_club_overrides(apply_club_name_normalization(df.copy()))
+    name_col = _first_existing_column_any(current, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col is None:
+        return pd.DataFrame(columns=["player_name_fbref", "display_club", "display_league", "season", "context_status"])
+    if "season" in current.columns:
+        current["_season_num"] = pd.to_numeric(current["season"], errors="coerce")
+        current = current.sort_values([name_col, "_season_num"])
+    else:
+        current["season"] = np.nan
+        current["_season_num"] = np.nan
+    latest = current.dropna(subset=[name_col]).groupby(name_col, as_index=False).tail(1).copy()
+    latest["player_name_fbref"] = latest[name_col].astype(str)
+    latest["display_club"] = latest.apply(resolve_display_club, axis=1)
+    if "league" in latest.columns:
+        latest["display_league"] = latest["league"].map(league_display_name)
+    else:
+        latest["display_league"] = np.nan
+    latest["context_status"] = np.where(
+        latest["season"].astype(str).eq(str(CURRENT_SEASON)),
+        "Actualizado 2025/26" if globals().get("LANG", "ES") == "ES" else "Updated 2025/26",
+        "Última temporada disponible" if globals().get("LANG", "ES") == "ES" else "Latest available season",
+    )
+    return latest[["player_name_fbref", "display_club", "display_league", "season", "context_status"]].drop_duplicates("player_name_fbref")
+
+
+def apply_current_context(df: pd.DataFrame | None, current_context: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Apply canonical current-club/league context to a DSS dataframe."""
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty or current_context is None or current_context.empty:
+        return apply_club_name_normalization(df)
+    out = apply_club_name_normalization(df.copy())
+    name_col = _first_existing_column_any(out, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col is None:
+        return out
+    ctx = current_context.copy()
+    ctx["_ctx_key"] = ctx["player_name_fbref"].map(normalize_join_text)
+    out["_ctx_key"] = out[name_col].map(normalize_join_text)
+    ctx_cols = ["_ctx_key", "display_club", "display_league", "season", "context_status"]
+    ctx = ctx[ctx_cols].rename(columns={"season": "current_context_season"})
+    out = out.merge(ctx.drop_duplicates("_ctx_key"), on="_ctx_key", how="left")
+    if "display_club" in out.columns:
+        for club_col in ["club", "team", "current_club", "club_actual"]:
+            if club_col in out.columns:
+                out[club_col] = out["display_club"].combine_first(out[club_col])
+        if "club" not in out.columns:
+            out["club"] = out["display_club"]
+    if "display_league" in out.columns and "league" in out.columns:
+        out["league"] = out["display_league"].combine_first(out["league"])
+    out = out.drop(columns=["_ctx_key"], errors="ignore")
+    return apply_club_name_normalization(out)
+
+
+def audit_current_season_consistency(df: pd.DataFrame | None) -> pd.DataFrame:
+    """Small QA table for checking current-season coherence."""
+    checks = []
+    if df is None or not isinstance(df, pd.DataFrame) or df.empty:
+        return pd.DataFrame({"check": ["Dataset"], "value": ["Sin datos"]})
+    if "season" in df.columns:
+        checks.append({"check": "Registros 2025/26", "value": round(float((df["season"].astype(str) == str(CURRENT_SEASON)).mean() * 100), 1)})
+    name_col = _first_existing_column_any(df, ["player_name_fbref", "player_name_display", "player", "player_name", "name"])
+    if name_col and "club" in df.columns:
+        multi = df.groupby(name_col)["club"].nunique(dropna=True)
+        checks.append({"check": "Jugadores con varios clubes en display", "value": int((multi > 1).sum())})
+    return pd.DataFrame(checks)
+
+
+def render_internal_nav(items, active=None):
+    """Unified internal DSS navigation toolbar."""
+    html_items = ""
+    for label, anchor in items:
+        cls = "internal-nav-chip active" if label == active else "internal-nav-chip"
+        html_items += f'<a class="{cls}" href="#{html.escape(str(anchor))}">{html.escape(str(label))}</a>'
+    st.markdown(f"<div class='internal-nav-toolbar'>{html_items}</div>", unsafe_allow_html=True)
+
+
+def section_gap():
+    st.markdown('<div class="siq-section-gap"></div>', unsafe_allow_html=True)
+
+
+def card_gap():
+    st.markdown('<div class="siq-card-gap"></div>', unsafe_allow_html=True)
+
+
+def micro_gap():
+    st.markdown('<div class="siq-micro-gap"></div>', unsafe_allow_html=True)
+
+
+# =============================================================================
+# Product finalization patch: unified cards, no internal scrolls, strategy filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Global decision navigation and product buttons */
+.product-tab-nav, .internal-nav-bar {
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    background:#ffffff; border:1px solid #dbeafe; border-radius:999px;
+    padding:6px; box-shadow:0 8px 20px rgba(15,23,42,.040); width:fit-content; max-width:100%;
+    margin:8px 0 16px 0;
+}
+.product-tab-pill, .internal-nav-pill {
+    display:inline-flex; align-items:center; justify-content:center; min-height:32px;
+    padding:7px 12px; border-radius:999px; border:1px solid transparent;
+    color:#1e3a8a; background:#eff6ff; font-size:.74rem; font-weight:950; white-space:nowrap;
+}
+.product-tab-pill.is-active, .internal-nav-pill.is-active { background:#1d4ed8; color:#ffffff; border-color:#1d4ed8; }
+
+/* Similar Players final layout */
+.similar-final-controls, .strategy-filter-panel {
+    background:#ffffff; border:1px solid #dbe3ee; border-left:5px solid #2563eb;
+    border-radius:18px; padding:15px 17px 12px 17px; box-shadow:0 12px 30px rgba(15,23,42,.055);
+    margin:8px 0 16px 0;
+}
+.similar-final-controls label p, .strategy-filter-panel label p { color:#334155 !important; font-weight:900 !important; font-size:.80rem !important; }
+.similar-final-controls div[data-baseweb="select"] > div,
+.strategy-filter-panel div[data-baseweb="select"] > div,
+.strategy-filter-panel div[data-baseweb="input"] > div {
+    min-height:46px !important; border-radius:12px !important; background:#ffffff !important;
+    border:1px solid #b9c7d9 !important; box-shadow:0 5px 14px rgba(15,23,42,.035) !important;
+    color:#0f172a !important; overflow:visible !important;
+}
+.similar-final-controls div[data-baseweb="select"] *, .strategy-filter-panel div[data-baseweb="select"] * { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
+.similar-final-grid {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:12px 0 16px 0;
+}
+.similar-final-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050); min-height:188px;
+}
+.similar-final-card.primary { border-left:5px solid #22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.similar-final-card.warning { border-left:5px solid #f59e0b; }
+.similar-final-card.blue { border-left:5px solid #2563eb; }
+.similar-final-eyebrow { color:#1d4ed8; font-size:.68rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:6px; }
+.similar-final-title { color:#0f172a; font-size:1.12rem; font-weight:950; line-height:1.12; margin-bottom:7px; }
+.similar-final-copy { color:#475569; font-size:.82rem; line-height:1.40; }
+.similar-final-kpi-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:11px; }
+.similar-final-kpi { background:#f8fbff; border:1px solid #edf2f7; border-radius:12px; padding:8px 9px; min-height:54px; }
+.similar-final-kpi span { display:block; color:#64748b; font-size:.62rem; font-weight:950; letter-spacing:.05em; text-transform:uppercase; margin-bottom:3px; }
+.similar-final-kpi b { display:block; color:#0f172a; font-size:.90rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.context-fit-row { display:grid; grid-template-columns:70px minmax(0,1fr) 36px; gap:8px; align-items:center; margin:8px 0; }
+.context-fit-label { color:#334155; font-size:.75rem; font-weight:900; }
+.context-fit-track { height:8px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.context-fit-track span { display:block; height:100%; border-radius:999px; background:#2563eb; }
+.context-fit-value { color:#0f172a; font-size:.74rem; font-weight:950; text-align:right; }
+.similar-driver-list { display:grid; gap:7px; margin-top:8px; }
+.similar-driver-item { display:flex; gap:8px; align-items:flex-start; color:#334155; font-size:.78rem; line-height:1.32; }
+.similar-driver-item b { color:#0f172a; }
+.similar-plus { color:#16a34a; font-weight:950; } .similar-minus { color:#ea580c; font-weight:950; }
+.similar-card-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:12px 0 16px 0; }
+.similar-mini-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:12px 13px; box-shadow:0 8px 20px rgba(15,23,42,.035); }
+.similar-mini-rank { width:26px; height:26px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:950; margin-bottom:8px; }
+.similar-mini-name { color:#0f172a; font-size:.90rem; font-weight:950; line-height:1.14; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.similar-mini-meta { color:#64748b; font-size:.70rem; line-height:1.28; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.similar-mini-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.similar-mini-badges span { display:inline-flex; border:1px solid #e2e8f0; border-radius:999px; padding:3px 7px; background:#f8fafc; color:#334155; font-size:.64rem; font-weight:900; }
+
+/* Replacement Finder */
+.replacement-card-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:12px 0 16px 0; }
+.replacement-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:13px 14px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.replacement-card:first-child { border-left:5px solid #22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.replacement-rank { width:26px; height:26px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.74rem; font-weight:950; margin-bottom:8px; }
+.replacement-name { color:#0f172a; font-size:.96rem; font-weight:950; line-height:1.12; }
+.replacement-meta { color:#64748b; font-size:.72rem; line-height:1.28; margin-top:4px; }
+.replacement-badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.replacement-badges span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.66rem; font-weight:900; }
+
+/* Contract Action Board final */
+.contract-action-horizontal-board { background:#ffffff; border:1px solid #e2e8f0; border-left:5px solid #0f2f5f; border-radius:18px; padding:17px 19px; box-shadow:0 12px 30px rgba(15,23,42,.055); margin:18px 0; }
+.contract-action-horizontal-board-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:12px; }
+.contract-action-horizontal-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.contract-action-horizontal-lane { border:1px solid #e5eaf1; border-radius:16px; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); padding:12px 13px; }
+.contract-action-horizontal-lane-now { border-left:4px solid #f97316; }
+.contract-action-horizontal-lane-summer { border-left:4px solid #eab308; }
+.contract-action-horizontal-lane-track { border-left:4px solid #2563eb; }
+.contract-action-horizontal-lane-free { border-left:4px solid #22c55e; }
+.contract-action-horizontal-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:9px; border-bottom:1px solid #edf2f7; margin-bottom:8px; }
+.contract-action-horizontal-title { color:#0f172a; font-size:.92rem; font-weight:950; }
+.contract-action-horizontal-caption { color:#64748b; font-size:.70rem; margin-top:2px; }
+.contract-action-horizontal-count { min-width:30px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:999px; padding:0 8px; color:#1d4ed8; background:#eff6ff; border:1px solid #bfdbfe; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-player { display:grid; grid-template-columns:36px minmax(0,1fr) minmax(330px,.9fr); gap:10px; align-items:center; background:#ffffff; border:1px solid #edf2f7; border-radius:14px; padding:9px 10px; margin-top:8px; box-shadow:0 6px 16px rgba(15,23,42,.030); }
+.contract-action-horizontal-rank { width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-name { color:#0f172a; font-size:.88rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-horizontal-meta { color:#64748b; font-size:.70rem; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contract-action-horizontal-kpis { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.contract-action-horizontal-kpis span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.66rem; font-weight:850; }
+.contract-action-horizontal-kpis b { color:#0f172a; font-weight:950; }
+.contract-action-horizontal-empty { color:#64748b; font-size:.78rem; font-weight:850; padding:8px 0 0 0; }
+
+/* Strategy Center final */
+.strategy-map-layout { display:grid; grid-template-columns:minmax(0,3fr) minmax(280px,1fr); gap:14px; align-items:start; margin-top:12px; }
+.strategy-ranking-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 15px; box-shadow:0 12px 28px rgba(15,23,42,.050); }
+.strategy-ranking-row { display:grid; grid-template-columns:28px minmax(0,1fr) 54px; gap:8px; align-items:center; padding:9px 0; border-bottom:1px solid #edf2f7; }
+.strategy-ranking-row:last-child { border-bottom:0; }
+.strategy-ranking-rank { width:25px; height:25px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.72rem; font-weight:950; }
+.strategy-ranking-name { color:#0f172a; font-size:.80rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.strategy-ranking-meta { color:#64748b; font-size:.64rem; line-height:1.18; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.strategy-ranking-score { color:#166534; font-size:.88rem; font-weight:950; text-align:right; }
+.strategy-map-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:18px !important; padding:15px 17px 8px 17px !important; box-shadow:0 12px 28px rgba(15,23,42,.050) !important; }
+.strategy-map-legend { display:flex; flex-wrap:wrap; gap:8px; margin:9px 0 2px 0; }
+.strategy-map-chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 10px; background:#ffffff; border:1px solid #e2e8f0; color:#334155; font-size:.68rem; font-weight:900; }
+.strategy-map-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+
+/* Dataframe safety: only advanced views should scroll; main cards replace long boards. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { max-height:520px; }
+@media (max-width:1350px){ .similar-final-grid,.replacement-card-grid,.strategy-map-layout{ grid-template-columns:1fr !important; } .similar-card-list{ grid-template-columns:repeat(2,minmax(0,1fr)); } .contract-action-horizontal-player{ grid-template-columns:36px minmax(0,1fr); } .contract-action-horizontal-kpis{ justify-content:flex-start; grid-column:2; } }
+@media (max-width:800px){ .similar-card-list{ grid-template-columns:1fr; } .similar-final-kpi-row{ grid-template-columns:1fr; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.5.12 Product QA polish: spacing, internal nav, table governance
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root { --siq-section-gap: 24px; --siq-card-gap: 16px; --siq-micro-gap: 8px; }
+.siq-section-gap { height: var(--siq-section-gap); }
+.siq-card-gap { height: var(--siq-card-gap); }
+.siq-micro-gap { height: var(--siq-micro-gap); }
+/* Homogeneous vertical rhythm across product sections. */
+.block-container div[data-testid="stVerticalBlock"] { gap: 1rem; }
+/* Search/context command row must have the same vertical footprint. */
+.final-search-shell, .compact-context-panel, .context-strip-v2.compact-context-panel, div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 186px !important;
+    height: 186px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+}
+.final-search-shell div[data-testid="stSelectbox"] { margin-top: auto !important; }
+.compact-context-panel .context-chip-row { max-height: 58px !important; overflow: hidden !important; }
+/* Contract workflow buttons: integrated toolbar, not isolated native buttons. */
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"],
+.contract-target-card-premium + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    margin-top: -1px !important;
+    margin-bottom: 24px !important;
+    padding: 10px 18px 14px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-left-width: 6px !important;
+    border-left-color: #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.055) !important;
+}
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-target-card-premium + div[data-testid="stHorizontalBlock"] button {
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 34px !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+/* Portfolio map: remove any orphan empty card/pill generated above the map. */
+.strategy-map-card:empty, .strategy-map-card .stMarkdown:empty, .strategy-map-card + div:empty,
+div[data-testid="stElementContainer"]:has(.strategy-empty-spacer) { display:none !important; height:0 !important; margin:0 !important; padding:0 !important; }
+.strategy-map-layout { margin-top: 16px !important; align-items: start !important; }
+.strategy-map-card { margin-top: 0 !important; }
+/* Secondary tables: DSS first, technical audit second. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] {
+    overflow-x: hidden !important;
+}
+.similar-advanced-view, .replacement-advanced-view { margin-top: 8px !important; }
+/* Avoid early footer feeling: add breathing room before footer only after content. */
+.scouting-iq-footer { margin-top: 42px !important; padding-top: 18px !important; }
+@media (max-width: 1200px) {
+    .final-search-shell, .compact-context-panel, .context-strip-v2.compact-context-panel { height:auto !important; min-height: 0 !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 def get_first_valid_numeric(row, columns, default=np.nan):
     """Return the first valid numeric value found in a row across candidate columns."""
@@ -4393,6 +9697,12 @@ def safe_get(row, col, default="N/A"):
         value = row[col]
         if pd.isna(value):
             return default
+        col_name = str(col) if col is not None else ""
+        # Single presentation rule: every visible club/team field is normalized
+        # at access time, so cards, tooltips, rankings and tables never expose
+        # legal entity names such as S.A.D., Football Club or Team Dubai.
+        if col_name in globals().get("CLUB_DISPLAY_COLUMNS", []) or "club" in col_name.lower() or col_name.lower() in {"team", "squad"}:
+            return format_club_name(value, fallback=default)
         return value
     except Exception:
         return default
@@ -4508,7 +9818,7 @@ def UI(text: object) -> str:
         "jugadores precandidatos": "pre-candidates",
         "cobertura competitiva": "competitive coverage",
         "calidad del ranking": "ranking quality",
-        "simulación conservadora": "conservative simulation",
+        "escenario conservador": "conservative scenario",
         "del universo": "of universe",
         "Ligas representadas": "Leagues represented",
         "Objetivos prioritarios": "Priority targets",
@@ -4680,36 +9990,1811 @@ def render_strategy_metric_card(label, value, caption=None, tooltip=None):
     )
 
 
-def render_player_profile_header(row: pd.Series, name_col: str | None = None, title: str | None = None) -> None:
-    """Render a compact Wyscout-style player identity header."""
+
+def _snapshot_numeric(row: pd.Series, columns: list[str], default: float = np.nan) -> float:
+    """Return first valid numeric value for Player Snapshot cards."""
+    for col in columns:
+        try:
+            if col in row.index:
+                value = pd.to_numeric(pd.Series([row[col]]), errors="coerce").iloc[0]
+                if pd.notna(value):
+                    return float(value)
+        except Exception:
+            continue
+    return default
+
+
+def _snapshot_score(value: float, decimals: int = 0) -> str:
+    if pd.isna(value):
+        return "N/A"
+    try:
+        return f"{float(value):.{decimals}f}"
+    except Exception:
+        return "N/A"
+
+
+def _snapshot_value_pair(row: pd.Series) -> tuple[float, float, float, float]:
+    """Resolve current market value, model fair value and current gap safely.
+
+    Product rule TM.6.9A:
+    - anything displayed as current market context must use current_player_snapshot
+      columns first;
+    - historical/model-season gaps are only fallback evidence when no current
+      value exists.
+    """
+    market_value = _snapshot_numeric(
+        row,
+        [
+            "current_market_value_eur",
+            "current_market_value_eur_snapshot",
+            "current_market_value_eur_snapshot.1",
+            "current_market_value_eur_snapshot.2",
+            "market_value_eur",
+            "valor_actual_eur",
+        ],
+    )
+    expected_value = _snapshot_numeric(row, ["predicted_market_value_eur", "expected_market_value_eur", "model_market_value_eur"])
+    inefficiency_eur = np.nan
+    inefficiency_pct = np.nan
+
+    if pd.notna(expected_value) and pd.notna(market_value):
+        inefficiency_eur = expected_value - market_value
+        if market_value > 0:
+            inefficiency_pct = inefficiency_eur / market_value
+    else:
+        inefficiency_eur = _snapshot_numeric(row, ["market_value_gap_eur", "inefficiency_eur", "value_gap_eur"])
+        inefficiency_pct = _snapshot_numeric(row, ["market_value_gap_pct", "inefficiency_pct", "value_gap_pct"])
+        if pd.isna(expected_value) and pd.notna(market_value) and pd.notna(inefficiency_eur):
+            expected_value = market_value + inefficiency_eur
+        if pd.isna(inefficiency_pct) and pd.notna(inefficiency_eur) and pd.notna(market_value) and market_value > 0:
+            inefficiency_pct = inefficiency_eur / market_value
+
+    return market_value, expected_value, inefficiency_eur, inefficiency_pct
+
+
+def _snapshot_tag(label: str, caption: str, tone: str) -> str:
+    return (
+        f"<div class='snapshot-tag snapshot-tag-{tone}'>"
+        f"<div class='snapshot-tag-label'>{html.escape(label)}</div>"
+        f"<div class='snapshot-tag-caption'>{html.escape(caption)}</div>"
+        "</div>"
+    )
+
+
+def _build_snapshot_tags(row: pd.Series, market_value: float, expected_value: float, inefficiency_eur: float) -> str:
+    opportunity = _snapshot_numeric(row, ["opportunity_score"], default=np.nan)
+    risk = _snapshot_numeric(row, ["risk_score", "risk_score_raw"], default=np.nan)
+    confidence = _snapshot_numeric(row, ["confidence_score"], default=np.nan)
+    age = _snapshot_numeric(row, ["age", "player_age", "age_years", "tm_age"], default=np.nan)
+
+    tags = []
+    if pd.notna(expected_value) and pd.notna(market_value) and expected_value > market_value:
+        tags.append(_snapshot_tag("● Undervalued" if LANG == "EN" else "● Infravalorado", "Market inefficiency detected" if LANG == "EN" else "Ineficiencia de mercado detectada", "green"))
+    elif pd.notna(inefficiency_eur) and inefficiency_eur > 0:
+        tags.append(_snapshot_tag("● Undervalued" if LANG == "EN" else "● Infravalorado", "Positive model gap detected" if LANG == "EN" else "Gap positivo del modelo", "green"))
+    else:
+        tags.append(_snapshot_tag("● Fair Value" if LANG == "EN" else "● Valor justo", "No clear undervaluation signal" if LANG == "EN" else "Sin señal clara de infravaloración", "neutral"))
+
+    if pd.notna(opportunity) and opportunity >= 80:
+        tags.append(_snapshot_tag("● High Opportunity" if LANG == "EN" else "● Alta oportunidad", "Priority scouting signal" if LANG == "EN" else "Señal prioritaria de scouting", "green"))
+    elif pd.notna(opportunity) and opportunity >= 65:
+        tags.append(_snapshot_tag("● Watchlist", "Relevant opportunity signal" if LANG == "EN" else "Señal relevante de oportunidad", "blue"))
+
+    if pd.notna(confidence) and confidence >= 80:
+        tags.append(_snapshot_tag("● High Confidence" if LANG == "EN" else "● Alta confianza", "Strong model agreement" if LANG == "EN" else "Alta consistencia del modelo", "blue"))
+    elif pd.notna(confidence) and confidence >= 65:
+        tags.append(_snapshot_tag("● Solid Confidence" if LANG == "EN" else "● Confianza sólida", "Usable recommendation signal" if LANG == "EN" else "Señal utilizable para recomendación", "blue"))
+
+    if pd.notna(risk) and risk <= 30:
+        tags.append(_snapshot_tag("● Low Risk" if LANG == "EN" else "● Riesgo bajo", "Favorable risk profile" if LANG == "EN" else "Perfil de riesgo favorable", "green"))
+    elif pd.notna(risk) and risk >= 70:
+        tags.append(_snapshot_tag("● High Risk" if LANG == "EN" else "● Riesgo alto", "Requires qualitative validation" if LANG == "EN" else "Requiere validación cualitativa", "red"))
+    elif pd.notna(risk):
+        tags.append(_snapshot_tag("● Medium Risk" if LANG == "EN" else "● Riesgo medio", "Monitor uncertainty factors" if LANG == "EN" else "Monitorizar factores de incertidumbre", "yellow"))
+
+    if pd.notna(age) and age <= 23:
+        tags.append(_snapshot_tag("● Development Target" if LANG == "EN" else "● Perfil de desarrollo", "High upside potential" if LANG == "EN" else "Alto potencial de crecimiento", "purple"))
+
+    if len(tags) < 4:
+        tags.append(_snapshot_tag("● Profile Ready" if LANG == "EN" else "● Perfil listo", "Snapshot available for review" if LANG == "EN" else "Snapshot disponible para revisión", "teal"))
+
+    return "".join(tags[:5])
+
+
+
+
+# =============================================================================
+# TM.6.9 — Executive Scouting Card helpers
+# =============================================================================
+
+def _tm69_is_valid(value: object) -> bool:
+    if value is None:
+        return False
+    try:
+        if pd.isna(value):
+            return False
+    except Exception:
+        pass
+    text_value = str(value).strip()
+    return bool(text_value) and text_value.lower() not in {"nan", "none", "null", "n/a", "na", "n.d.", "n/d", ""}
+
+
+def _tm69_first(ctx: dict, keys: list[str], default: object = "N/A") -> object:
+    for key in keys:
+        value = ctx.get(key)
+        if _tm69_is_valid(value):
+            return value
+    return default
+
+
+def _tm69_numeric(ctx: dict, keys: list[str], default: float = np.nan) -> float:
+    for key in keys:
+        value = ctx.get(key)
+        try:
+            num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+            if pd.notna(num):
+                return float(num)
+        except Exception:
+            continue
+    return default
+
+
+def _tm69_format_score(value: object) -> str:
+    try:
+        num = float(value)
+        if pd.isna(num):
+            return "—"
+        return f"{num:.0f}"
+    except Exception:
+        return "—"
+
+
+def _tm69_score_label(metric: str, value: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    if pd.isna(value):
+        return "Pending" if is_en else "Pendiente"
+    if metric == "opportunity":
+        if value >= 90: return "Elite Target" if is_en else "Objetivo élite"
+        if value >= 80: return "High Priority" if is_en else "Alta prioridad"
+        if value >= 70: return "Attractive" if is_en else "Atractivo"
+        if value >= 60: return "Watchlist" if is_en else "Watchlist"
+        return "Limited" if is_en else "Limitado"
+    if metric == "growth":
+        if value >= 90: return "Exceptional" if is_en else "Excepcional"
+        if value >= 80: return "Strong Upside" if is_en else "Upside alto"
+        if value >= 70: return "Positive Trend" if is_en else "Tendencia positiva"
+        if value >= 60: return "Stable" if is_en else "Estable"
+        return "Limited Growth" if is_en else "Crecimiento limitado"
+    if metric == "risk":
+        if value <= 25: return "Low Risk" if is_en else "Riesgo bajo"
+        if value <= 50: return "Moderate" if is_en else "Moderado"
+        if value <= 75: return "Elevated" if is_en else "Elevado"
+        return "High Risk" if is_en else "Riesgo alto"
+    if metric == "contract":
+        if value >= 90: return "Immediate Opportunity" if is_en else "Oportunidad inmediata"
+        if value >= 80: return "Strong Leverage" if is_en else "Leverage alto"
+        if value >= 70: return "Favourable" if is_en else "Favorable"
+        if value >= 60: return "Neutral" if is_en else "Neutral"
+        return "Protected" if is_en else "Protegido"
+    return "Available" if is_en else "Disponible"
+
+
+@st.cache_data(show_spinner=False)
+def _tm69_load_context_tables() -> dict[str, pd.DataFrame]:
+    return {
+        "snapshot": load_parquet(PROCESSED_PATH / "current_player_snapshot.parquet"),
+        "global": load_csv(DSS_REPORTS_PATH / "global_prospect_universe.csv"),
+        "contract": load_csv(CONTRACT_REPORTS_PATH / "contract_intelligence_dataset.csv"),
+        "risk": load_csv(RANKINGS_PATH / "scouting_shortlist_with_risk.csv"),
+        "role": load_parquet(PROCESSED_PATH / "player_role_features_advanced.parquet"),
+        "role_dna": load_csv(ROOT / "reports" / "roles" / "player_role_dna.csv"),
+        "tm": load_parquet(PROCESSED_PATH / "transfermarkt_features_v13a.parquet"),
+    }
+
+
+def _tm69_norm(value: object) -> str:
+    try:
+        return normalize_search_text(value)
+    except Exception:
+        return str(value).strip().lower()
+
+
+def _tm69_find_matching_row(df: pd.DataFrame, base_row: pd.Series) -> dict:
+    if df is None or df.empty:
+        return {}
+    base_id = None
+    for col in ["player_id_tm", "player_id", "tm_player_id"]:
+        if col in base_row.index and _tm69_is_valid(base_row[col]):
+            base_id = str(base_row[col]).split(".")[0]
+            break
+    if base_id:
+        for col in ["player_id_tm", "player_id", "tm_player_id", "identity_primary_key"]:
+            if col in df.columns:
+                try:
+                    mask = df[col].astype(str).str.replace(r"\.0$", "", regex=True) == base_id
+                    if bool(mask.any()):
+                        return df.loc[mask].iloc[0].to_dict()
+                except Exception:
+                    pass
+    base_names = []
+    for col in ["player_name", "player_name_tm", "player_name_fbref", "Player", "player"]:
+        if col in base_row.index and _tm69_is_valid(base_row[col]):
+            base_names.append(_tm69_norm(base_row[col]))
+    try:
+        base_names.append(_tm69_norm(get_player_name(base_row)))
+    except Exception:
+        pass
+    base_names = [n for n in dict.fromkeys(base_names) if n]
+    if not base_names:
+        return {}
+    for col in ["player_name", "player_name_tm", "player_name_fbref", "Player", "player", "name", "player_name_norm"]:
+        if col in df.columns:
+            try:
+                norm_series = df[col].fillna("").astype(str).map(_tm69_norm)
+                mask = norm_series.isin(base_names)
+                if bool(mask.any()):
+                    return df.loc[mask].iloc[0].to_dict()
+            except Exception:
+                continue
+    return {}
+
+
+def _tm69_merge_context(row: pd.Series) -> dict:
+    ctx = dict(row.to_dict())
+    for _, df in _tm69_load_context_tables().items():
+        matched = _tm69_find_matching_row(df, row)
+        for key, value in matched.items():
+            if not _tm69_is_valid(ctx.get(key)) and _tm69_is_valid(value):
+                ctx[key] = value
+            else:
+                ctx[f"tm69_{key}"] = value
+    return ctx
+
+
+def _tm69_initials(name: str, max_len: int = 2) -> str:
+    parts = [p for p in re.split(r"\s+", str(name).strip()) if p]
+    return "".join(p[0] for p in parts[:max_len]).upper() or "PI"
+
+
+def _tm69_club_initials(club: str) -> str:
+    cleaned = re.sub(r"\b(fc|cf|sc|afc|club|united|de|la|the)\b", "", str(club), flags=re.I).strip()
+    return _tm69_initials(cleaned or club, 3)
+
+
+def _tm69_format_date(value: object) -> str:
+    if not _tm69_is_valid(value):
+        return "N/A"
+    try:
+        return pd.to_datetime(value).strftime("%Y-%m-%d")
+    except Exception:
+        return str(value)
+
+
+def _tm69_localize_foot(value: object) -> str:
+    if not _tm69_is_valid(value):
+        return "N/A"
+    raw = str(value).strip().lower()
+    is_en = globals().get("LANG") == "EN"
+    mapping_en = {"right": "Right", "left": "Left", "both": "Both", "either": "Both"}
+    mapping_es = {"right": "Diestro", "left": "Zurdo", "both": "Ambidiestro", "either": "Ambidiestro"}
+    return (mapping_en if is_en else mapping_es).get(raw, str(value).strip().title())
+
+
+def _tm69_localize_country(value: object) -> str:
+    if not _tm69_is_valid(value):
+        return "N/A"
+    country = str(value).strip()
+    if globals().get("LANG") == "EN":
+        return country
+    mapping = {
+        "Spain": "España", "England": "Inglaterra", "Germany": "Alemania", "France": "Francia",
+        "Italy": "Italia", "Portugal": "Portugal", "Netherlands": "Países Bajos", "Belgium": "Bélgica",
+        "Austria": "Austria", "Denmark": "Dinamarca", "Sweden": "Suecia", "Norway": "Noruega",
+        "Cote d'Ivoire": "Costa de Marfil", "Ivory Coast": "Costa de Marfil", "Brazil": "Brasil",
+        "Argentina": "Argentina", "Uruguay": "Uruguay", "Morocco": "Marruecos", "Croatia": "Croacia",
+        "United States": "Estados Unidos", "USA": "Estados Unidos",
+    }
+    return mapping.get(country, country)
+
+
+def _tm69_localize_contract_status(value: object) -> str:
+    if not _tm69_is_valid(value):
+        return "N/A"
+    raw = str(value).strip()
+    if globals().get("LANG") == "EN":
+        return raw.replace("_", " ").title()
+    norm = raw.strip().lower().replace("_", " ")
+    mapping = {
+        "protected asset": "Activo protegido",
+        "protected": "Protegido",
+        "critical zone": "Zona crítica",
+        "expiring": "Próximo a expirar",
+        "free agent": "Libre",
+        "short term": "Corto plazo",
+        "medium term": "Medio plazo",
+        "long term": "Largo plazo",
+    }
+    return mapping.get(norm, raw.replace("_", " ").title())
+
+
+def _tm69_role_quality_label(ctx: dict, role_value: float) -> tuple[str, str]:
+    is_en = globals().get("LANG") == "EN"
+    has_purity = any(_tm69_is_valid(ctx.get(k)) for k in ["role_purity", "tm69_role_purity", "primary_role_similarity", "tm69_primary_role_similarity"])
+    if has_purity:
+        if pd.isna(role_value):
+            quality = "Pending" if is_en else "Pendiente"
+        elif role_value < 35:
+            quality = "High hybrid profile" if is_en else "Perfil híbrido alto"
+        elif role_value < 65:
+            quality = "Mixed role profile" if is_en else "Perfil mixto"
+        else:
+            quality = "Specialised profile" if is_en else "Perfil especializado"
+        return ("Role purity" if is_en else "Pureza de rol", quality)
+    return ("Role confidence" if is_en else "Confianza de rol", "")
+
+
+def _tm69_escape_rich_text(text: str) -> str:
+    # allow only intentional <b> tags in executive recommendation text
+    escaped = html.escape(text)
+    return escaped.replace("&lt;b&gt;", "<b>").replace("&lt;/b&gt;", "</b>")
+
+
+def _tm69_age_from_birth(value: object, fallback: object = np.nan) -> float:
+    try:
+        fallback_num = pd.to_numeric(pd.Series([fallback]), errors="coerce").iloc[0]
+        if pd.notna(fallback_num):
+            return float(fallback_num)
+    except Exception:
+        pass
+    try:
+        birth = pd.to_datetime(value)
+        today = pd.Timestamp.today(tz=None)
+        return float((today - birth).days / 365.25)
+    except Exception:
+        return np.nan
+
+
+def _tm69_position_code(value: object) -> str:
+    raw = str(value).strip()
+    if not raw or raw.lower() in {"nan", "none", "n/a"}:
+        return ""
+    norm = raw.lower().replace("-", " ").replace("_", " ")
+    mapping = [
+        ("goalkeeper", "GK"), ("keeper", "GK"),
+        ("right back", "RB"), ("left back", "LB"), ("full back", "FB"),
+        ("centre back", "CB"), ("center back", "CB"), ("central defender", "CB"),
+        ("defensive midfield", "DM"), ("central midfield", "CM"), ("attacking midfield", "AM"),
+        ("right winger", "RW"), ("left winger", "LW"), ("winger", "W"),
+        ("centre forward", "CF"), ("center forward", "CF"), ("second striker", "SS"), ("striker", "CF"),
+    ]
+    for token, code in mapping:
+        if token in norm:
+            return code
+    upper = raw.upper().strip()
+    if upper in {"GK", "CB", "RB", "LB", "FB", "WB", "DM", "CM", "AM", "RW", "LW", "W", "CF", "ST", "SS", "ATT", "MID", "DEF"}:
+        return "CF" if upper == "ST" else upper
+    return upper[:3]
+
+
+def _tm69_position_set(ctx: dict) -> tuple[str, list[str]]:
+    primary = _tm69_position_code(_tm69_first(ctx, ["sub_position_tm", "sub_position", "position_tm", "position_taxonomy", "position", "position_group"], ""))
+    secondary_raw = str(_tm69_first(ctx, ["position_tm", "position", "sub_position_tm", "sub_position"], ""))
+    candidates = []
+    for part in re.split(r"[,;/|]+", secondary_raw):
+        code = _tm69_position_code(part)
+        if code and code != primary:
+            candidates.append(code)
+    if not candidates and primary in {"RW", "LW", "W"}:
+        candidates = ["LW" if primary == "RW" else "RW", "AM"]
+    if not candidates and primary in {"CM", "DM", "AM"}:
+        candidates = [c for c in ["CM", "DM", "AM"] if c != primary]
+    if not primary:
+        primary = "N/A"
+    return primary, list(dict.fromkeys(candidates))[:3]
+
+
+def _tm69_position_markers(primary: str, secondary: list[str]) -> str:
+    # Horizontal football pitch: own goal on the left, opponent goal on the right.
+    # This is closer to scouting platforms and avoids the old 90-degree rotated field.
+    coords = {
+        "GK": (10, 50),
+        "CB": (25, 50), "RB": (28, 72), "LB": (28, 28), "FB": (28, 72), "WB": (38, 78),
+        "DM": (42, 50), "CM": (52, 50), "AM": (64, 50),
+        "RW": (74, 76), "LW": (74, 24), "W": (74, 76),
+        "SS": (80, 50), "CF": (88, 50), "ATT": (88, 50), "MID": (52, 50), "DEF": (25, 50),
+    }
+    active = [primary] + [s for s in secondary if s != primary]
+    html_rows = []
+    for code in ["GK", "CB", "RB", "LB", "DM", "CM", "AM", "LW", "RW", "CF"]:
+        x, y = coords[code]
+        css = "primary" if code == primary else ("secondary" if code in active else "")
+        html_rows.append(f"<div class='exec-pos-marker {css}' style='left:{x}%;top:{y}%;'>{html.escape(code)}</div>")
+    return "".join(html_rows)
+
+
+def _tm69_signal_title(metric: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    labels = {
+        "opportunity": ("Opportunity", "Oportunidad"),
+        "growth": ("Growth", "Crecimiento"),
+        "risk": ("Risk", "Riesgo"),
+        "contract": ("Contract", "Contrato"),
+    }
+    en, es = labels.get(metric, (metric.title(), metric.title()))
+    return en if is_en else es
+
+
+def _tm69_signal_card(label: str, value: float, metric: str, accent: str, soft: str, dark: str) -> str:
+    safe_label = html.escape(label)
+    safe_value = html.escape(_tm69_format_score(value))
+    safe_status = html.escape(_tm69_score_label(metric, value))
+    return (
+        f"<div class='exec-signal-card' style='--accent:{accent};--soft:{soft};--dark:{dark};'>"
+        f"<div class='exec-signal-label'>{safe_label}</div>"
+        f"<div class='exec-signal-value'>{safe_value}</div>"
+        f"<div class='exec-signal-status'>{safe_status}</div>"
+        f"</div>"
+    )
+
+
+
+def _tm69_target_priority_score(opportunity: float, growth: float, risk: float, contract: float) -> float:
+    """UI-only executive composite for the card; it does not alter DSS scoring or model outputs."""
+    components: list[tuple[float, float]] = []
+    if pd.notna(opportunity):
+        components.append((0.45, float(opportunity)))
+    if pd.notna(growth):
+        components.append((0.25, float(growth)))
+    if pd.notna(risk):
+        components.append((0.20, 100.0 - float(risk)))
+    if pd.notna(contract):
+        components.append((0.10, float(contract)))
+    if not components:
+        return np.nan
+    total_w = sum(w for w, _ in components)
+    return max(0.0, min(100.0, sum(w * v for w, v in components) / total_w))
+
+
+def _tm69_target_priority_grade(score: float) -> str:
+    if pd.isna(score):
+        return "—"
+    if score >= 90:
+        return "A+"
+    if score >= 82:
+        return "A"
+    if score >= 74:
+        return "B+"
+    if score >= 65:
+        return "B"
+    if score >= 55:
+        return "C"
+    return "D"
+
+def _tm69_dna_values(ctx: dict) -> list[tuple[str, float]]:
+    is_en = globals().get("LANG") == "EN"
+    items = [
+        ("Creation" if is_en else "Creación", _tm69_numeric(ctx, ["creation_index_role", "chance_creation_index", "tm69_creation_index_role", "tm69_chance_creation_index"])),
+        ("Progression" if is_en else "Progresión", _tm69_numeric(ctx, ["progression_index_role", "ball_progression_index", "tm69_progression_index_role", "tm69_ball_progression_index"])),
+        ("Finishing" if is_en else "Finalización", _tm69_numeric(ctx, ["finishing_index_role", "tm69_finishing_index_role"])),
+        ("Defending" if is_en else "Defensa", _tm69_numeric(ctx, ["defending_index_role", "defensive_activity_index", "tm69_defending_index_role"])),
+        ("Duels" if is_en else "Duelos", _tm69_numeric(ctx, ["duel_index_role", "aerial_duels_won_pct", "tm69_duel_index_role"])),
+    ]
+    cleaned = []
+    for label, value in items:
+        if pd.notna(value):
+            # Role features can be 0-1, z-like or 0-100 depending on artefact. Convert conservatively to 0-100.
+            if -3 <= value <= 3:
+                value = max(0, min(100, 50 + value * 16.7))
+            elif 0 <= value <= 1:
+                value = value * 100
+            else:
+                value = max(0, min(100, value))
+        cleaned.append((label, value))
+    return cleaned
+
+
+def _tm69_dna_bars(ctx: dict) -> str:
+    rows = []
+    for label, value in _tm69_dna_values(ctx):
+        width = 0 if pd.isna(value) else max(0, min(100, float(value)))
+        value_txt = "—" if pd.isna(value) else f"{width:.0f}"
+        rows.append(
+            f"<div class='exec-dna-row'><div class='exec-dna-head'><span>{html.escape(label)}</span><b>{html.escape(value_txt)}</b></div>"
+            f"<div class='exec-dna-track'><div class='exec-dna-fill' style='width:{width:.0f}%;'></div></div></div>"
+        )
+    return "".join(rows)
+
+
+def _tm69_role_interpretation(ctx: dict, role: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    values = [(label, val) for label, val in _tm69_dna_values(ctx) if pd.notna(val)]
+    if not values:
+        return "Role DNA pending for this player." if is_en else "Role DNA pendiente para este jugador."
+    ordered = sorted(values, key=lambda x: x[1], reverse=True)
+    strengths = ", ".join(label.lower() for label, _ in ordered[:2])
+    weak = ordered[-1][0].lower()
+    if is_en:
+        return f"{role} profile driven by {strengths}, with comparatively lower contribution in {weak}."
+    return f"Perfil {role} impulsado por {strengths}, con contribución relativamente menor en {weak}."
+
+
+def _tm69_recommendation(ctx: dict, opportunity: float, growth: float, risk: float, contract: float) -> tuple[str, str, list[str]]:
+    """Executive recommendation using current market gap, not historical model-season gap."""
+    is_en = globals().get("LANG") == "EN"
+    role = clean_role_display(_tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup"], np.nan), "Role pending" if is_en else "Rol pendiente")
+    primary_pos, _ = _tm69_position_set(ctx)
+    role_purity = _tm69_numeric(ctx, ["role_purity", "tm69_role_purity", "primary_role_similarity", "tm69_primary_role_similarity"])
+    current_value = _tm69_numeric(ctx, ["current_market_value_eur", "current_market_value_eur_snapshot", "tm69_current_market_value_eur", "market_value_eur"])
+    expected_value = _tm69_expected_market_value(ctx)
+    gap_abs, gap_pct = _tm69_market_gap(ctx, current_value)
+
+    price_corrected = pd.notna(gap_pct) and gap_pct < -0.10
+    strongly_undervalued = pd.notna(gap_pct) and gap_pct >= 0.20
+
+    if price_corrected:
+        status = "PRICE VALIDATION" if is_en else "VALIDAR PRECIO"
+    elif strongly_undervalued and pd.notna(opportunity) and opportunity >= 85 and (pd.isna(risk) or risk <= 35):
+        status = "PRIORITY TARGET" if is_en else "OBJETIVO PRIORITARIO"
+    elif pd.notna(opportunity) and opportunity >= 75:
+        status = "HIGH PRIORITY" if is_en else "ALTA PRIORIDAD"
+    elif pd.notna(opportunity) and opportunity >= 60:
+        status = "WATCHLIST" if is_en else "WATCHLIST"
+    else:
+        status = "MONITOR" if is_en else "MONITORIZAR"
+
+    drivers = []
+    if pd.notna(opportunity) and opportunity >= 80:
+        drivers.append("High Opportunity" if is_en else "Alta oportunidad")
+    if pd.notna(growth) and growth >= 75:
+        drivers.append("Strong Growth" if is_en else "Crecimiento alto")
+    if pd.notna(risk) and risk <= 35:
+        drivers.append("Low Risk" if is_en else "Riesgo bajo")
+    if price_corrected:
+        drivers.append("Price corrected" if is_en else "Precio corregido")
+    elif strongly_undervalued:
+        drivers.append("Current undervaluation" if is_en else "Infravaloración actual")
+    if pd.notna(contract) and contract >= 70:
+        drivers.append("Contract Leverage" if is_en else "Leverage contractual")
+    if pd.notna(role_purity) and role_purity < 35:
+        drivers.append("Tactical validation" if is_en else "Validación táctica")
+    if not drivers:
+        drivers.append("Further Validation" if is_en else "Validación adicional")
+
+    opp_txt = _tm69_format_score(opportunity)
+    growth_txt = _tm69_format_score(growth)
+    risk_txt = _tm69_format_score(risk)
+    contract_txt = _tm69_format_score(contract)
+    current_txt = format_money_short(current_value)
+    expected_txt = format_money_short(expected_value)
+    gap_txt = "N/A"
+    if pd.notna(gap_pct):
+        gap_txt = f"{gap_pct*100:+.0f}%"
+
+    if is_en:
+        if price_corrected:
+            parts = [
+                f"<b>{status.title()}</b>: current Transfermarkt value ({current_txt}) is above the Scouting IQ fair value ({expected_txt}).",
+                f"Current market gap is {gap_txt}; the player remains interesting from a sporting perspective, but acquisition should be validated against price and squad alternatives.",
+            ]
+        else:
+            parts = [f"<b>{status.title()}</b> based on Opportunity {opp_txt}/100, Growth {growth_txt}/100, Risk {risk_txt}/100 and current market gap {gap_txt}."]
+        if role != "Role pending":
+            parts.append(f"The player profiles as a {role} within {primary_pos}, making the case relevant for tactical like-for-like validation.")
+        if pd.notna(role_purity) and role_purity < 35:
+            parts.append("Role purity is low, so the player should be reviewed as a hybrid profile before final prioritisation.")
+        if pd.notna(contract):
+            parts.append(f"Contract signal: {contract_txt}/100, used as an executive accessibility read without duplicating Strategy.")
+    else:
+        if price_corrected:
+            parts = [
+                f"<b>{status.title()}</b>: el valor actual Transfermarkt ({current_txt}) ya está por encima del fair value Scouting IQ ({expected_txt}).",
+                f"Gap actual {gap_txt}; el perfil sigue siendo interesante deportivamente, pero la operación requiere validación de precio frente a alternativas internas y de mercado.",
+            ]
+        else:
+            parts = [f"<b>{status.title()}</b> por Opportunity {opp_txt}/100, Growth {growth_txt}/100, Riesgo {risk_txt}/100 y gap actual {gap_txt}."]
+        if role != "Rol pendiente":
+            parts.append(f"El perfil se interpreta como {role} dentro de {primary_pos}, por lo que encaja para validación táctica like-for-like.")
+        if pd.notna(role_purity) and role_purity < 35:
+            parts.append("Perfil híbrido alto; revisar flexibilidad táctica antes de priorización final.")
+        if pd.notna(contract):
+            parts.append(f"Señal contractual: {contract_txt}/100; lectura ejecutiva de accesibilidad sin duplicar Strategy.")
+
+    return status, " ".join(parts), drivers
+
+
+
+def _tm69_info_tip(text: str) -> str:
+    """Small HTML info dot for proprietary Scouting IQ terminology."""
+    return f"<span class='exec-info' title='{html.escape(str(text))}'>i</span>"
+
+
+def _tm69_expected_market_value(ctx: dict) -> float:
+    return _tm69_numeric(
+        ctx,
+        [
+            "predicted_market_value_eur",
+            "expected_market_value_eur",
+            "market_value_expected_eur",
+            "tm69_predicted_market_value_eur",
+            "tm69_expected_market_value_eur",
+        ],
+    )
+
+
+def _tm69_market_gap(ctx: dict, market_value: float) -> tuple[float, float]:
+    """Current market gap: model fair value minus current Transfermarkt value.
+
+    The historical player-season gap remains in the datasets, but TM.6.9A uses
+    the current_player_snapshot value in the executive UI to avoid showing an
+    outdated undervaluation signal after Transfermarkt has already updated the
+    player.
+    """
+    expected = _tm69_expected_market_value(ctx)
+
+    if pd.notna(expected) and pd.notna(market_value):
+        gap_abs = expected - market_value
+        gap_pct = gap_abs / market_value if market_value != 0 else np.nan
+        return gap_abs, gap_pct
+
+    gap_abs = _tm69_numeric(ctx, ["market_value_gap_eur", "inefficiency_eur", "tm69_market_value_gap_eur"])
+    gap_pct = _tm69_numeric(ctx, ["market_value_gap_pct", "inefficiency_pct", "gap_relative", "tm69_market_value_gap_pct"])
+    if pd.isna(gap_pct) and pd.notna(gap_abs) and pd.notna(market_value) and market_value != 0:
+        gap_pct = gap_abs / market_value
+    return gap_abs, gap_pct
+
+
+def _tm69_position_share_rows(primary: str, secondary: list[str], role_purity: float) -> str:
+    """Show dominant/secondary position proportions without claiming model probabilities."""
+    if pd.notna(role_purity):
+        primary_share = int(max(45, min(92, round(float(role_purity)))))
+    else:
+        primary_share = 78
+    secondaries = [s for s in secondary if s and s != primary][:2]
+    if not secondaries:
+        secondaries = ["DEF" if primary == "CB" else "ALT"]
+    remaining = max(8, 100 - primary_share)
+    sec_share = max(6, int(round(remaining / len(secondaries)))) if secondaries else 0
+    rows = [(primary, primary_share, "")] + [(s, sec_share, "secondary") for s in secondaries]
+    html_rows = []
+    for code, value, css in rows:
+        html_rows.append(
+            f"<div class='exec-position-bar-row'>"
+            f"<span>{html.escape(code)}</span>"
+            f"<div class='exec-position-bar-track'><div class='exec-position-bar-fill {css}' style='width:{max(4, min(100, value))}%;'></div></div>"
+            f"<b>{value}%</b>"
+            f"</div>"
+        )
+    return "<div class='exec-position-bars'>" + "".join(html_rows) + "</div>"
+
+
+def _tm69_decision_drivers(ctx: dict, opportunity: float, growth: float, risk: float, contract: float, market_value: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    role = clean_role_display(_tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup"], np.nan), "Role pending" if is_en else "Rol pendiente")
+    values = [(label, val) for label, val in _tm69_dna_values(ctx) if pd.notna(val)]
+    top_dna = max(values, key=lambda x: x[1]) if values else ("Role DNA", np.nan)
+    gap_abs, gap_pct = _tm69_market_gap(ctx, market_value)
+    rows: list[tuple[str, str, str]] = []
+    if pd.notna(opportunity):
+        rows.append(("positive" if opportunity >= 75 else "neutral", "Opportunity" if is_en else "Oportunidad", f"{opportunity:.0f}/100"))
+    if pd.notna(growth):
+        rows.append(("positive" if growth >= 75 else "neutral", "Growth" if is_en else "Crecimiento", f"{growth:.0f}/100"))
+    if pd.notna(risk):
+        rows.append(("positive" if risk <= 35 else "warning", "Risk" if is_en else "Riesgo", f"{risk:.0f}/100"))
+    if pd.notna(contract):
+        rows.append(("warning" if contract < 45 else "positive", "Contract" if is_en else "Contrato", f"{contract:.0f}/100"))
+    if pd.notna(top_dna[1]):
+        rows.append(("neutral", str(top_dna[0]), f"{top_dna[1]:.0f}"))
+    if pd.notna(gap_pct):
+        rows.append(("positive" if gap_pct > 0 else "warning", "Market gap" if is_en else "Gap mercado", f"{gap_pct*100:+.0f}%" if abs(gap_pct) <= 5 else f"{gap_pct:+.0f}%"))
+    rows = rows[:6]
+    if not rows:
+        rows = [("neutral", "Role" if is_en else "Rol", role)]
+    return "<div class='exec-decision-drivers'>" + "".join(
+        f"<div class='exec-decision-driver {css}'><span>{html.escape(label)}</span><b>{html.escape(value)}</b></div>"
+        for css, label, value in rows
+    ) + "</div>"
+
+
+def _tm69_next_actions(ctx: dict, risk: float, contract: float, primary_pos: str) -> list[str]:
+    is_en = globals().get("LANG") == "EN"
+    actions = []
+    if is_en:
+        actions.append("Validate tactical fit with video review")
+        actions.append("Compare against internal depth chart")
+        if pd.notna(contract) and contract < 45:
+            actions.append("Monitor contract window before approach")
+        elif pd.notna(contract) and contract >= 70:
+            actions.append("Prioritise recruitment contact timing")
+        else:
+            actions.append("Estimate acquisition range with market desk")
+        if primary_pos in {"CB", "DEF"}:
+            actions[0] = "Validate high-line defending and aerial profile"
+    else:
+        actions.append("Validar encaje táctico con vídeo")
+        actions.append("Comparar con profundidad interna")
+        if pd.notna(contract) and contract < 45:
+            actions.append("Monitorizar ventana contractual antes de activar")
+        elif pd.notna(contract) and contract >= 70:
+            actions.append("Priorizar timing de contacto")
+        else:
+            actions.append("Estimar rango de adquisición con mercado")
+        if primary_pos in {"CB", "DEF"}:
+            actions[0] = "Validar defensa en línea alta y juego aéreo"
+    return actions[:3]
+
+
+def _tm69_tactical_fit(ctx: dict, primary_pos: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    vals = dict(_tm69_dna_values(ctx))
+    # tolerant labels in ES/EN
+    progression = next((v for k, v in vals.items() if "Progress" in k or "Progres" in k), np.nan)
+    defending = next((v for k, v in vals.items() if "Defen" in k), np.nan)
+    duels = next((v for k, v in vals.items() if "Duel" in k), np.nan)
+    creation = next((v for k, v in vals.items() if "Creat" in k or "Creac" in k), np.nan)
+    if primary_pos in {"CB", "DEF"}:
+        items = [
+            ("Build-up" if is_en else "Salida balón", progression),
+            ("High line" if is_en else "Línea alta", defending),
+            ("Aerials" if is_en else "Juego aéreo", duels),
+        ]
+    elif primary_pos in {"RW", "LW", "W", "AM"}:
+        items = [
+            ("Chance creation" if is_en else "Creación", creation),
+            ("Progression" if is_en else "Progresión", progression),
+            ("Pressing" if is_en else "Presión", defending),
+        ]
+    else:
+        items = [
+            ("Progression" if is_en else "Progresión", progression),
+            ("Defensive work" if is_en else "Trabajo defensivo", defending),
+            ("Duels" if is_en else "Duelos", duels),
+        ]
+    def lab(v):
+        if pd.isna(v):
+            return "N/A"
+        if v >= 80:
+            return "High" if is_en else "Alto"
+        if v >= 60:
+            return "Medium" if is_en else "Medio"
+        return "Low" if is_en else "Bajo"
+    return "<div class='exec-scouting-fit-grid'>" + "".join(
+        f"<div class='exec-fit-pill'><span>{html.escape(name)}</span><b>{html.escape(lab(val))}</b></div>"
+        for name, val in items
+    ) + "</div>"
+
+
+def _tm69_feasibility_style(accessibility: str) -> tuple[str, str, str]:
+    acc = str(accessibility).lower()
+    if acc in {"alta", "high"}:
+        return ("#dcfce7", "#86efac", "#166534")
+    if acc in {"media", "medium"}:
+        return ("#fef3c7", "#fde68a", "#92400e")
+    return ("#fee2e2", "#fecaca", "#991b1b")
+
+
+def _tm69_market_accessibility_copy(accessibility: str, contract_years_txt: str, contract_status: str, market_txt: str, contract: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    if is_en:
+        return f"Accessibility reflects market value ({market_txt}), contract protection ({contract_status}) and contract signal ({_tm69_format_score(contract)}/100). Years left: {contract_years_txt}."
+    return f"La accesibilidad combina valor de mercado ({market_txt}), protección contractual ({contract_status}) y señal contrato ({_tm69_format_score(contract)}/100). Años restantes: {contract_years_txt}."
+
+
+def _tm69_comparable_market_cards(ctx: dict, market_value: float, expected_value: float, primary_pos: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    gap_abs, gap_pct = _tm69_market_gap(ctx, market_value)
+    if pd.notna(expected_value) and pd.notna(market_value):
+        range_low = min(market_value, expected_value) * 0.92
+        range_high = max(market_value, expected_value) * 1.08
+    elif pd.notna(market_value):
+        range_low = market_value * 0.85
+        range_high = market_value * 1.25
+    else:
+        range_low = range_high = np.nan
+    range_txt = f"{format_money_short(range_low)} – {format_money_short(range_high)}" if pd.notna(range_low) and pd.notna(range_high) else "N/A"
+    expected_txt = format_money_short(expected_value)
+    gap_txt = "N/A"
+    if pd.notna(gap_pct):
+        gap_txt = f"{gap_pct*100:+.0f}%" if abs(gap_pct) <= 5 else f"{gap_pct:+.0f}%"
+    cards = [
+        ("Expected Value" if is_en else "Valor esperado", expected_txt, "Model-implied fair value" if is_en else "Valor justo estimado por modelo"),
+        ("Market Gap" if is_en else "Gap de mercado", gap_txt, "Upside vs current TM value" if is_en else "Upside vs valor TM actual"),
+        ("Comparable Range" if is_en else "Rango comparable", range_txt, f"{primary_pos} · peer valuation band" if is_en else f"{primary_pos} · banda de valoración peer"),
+    ]
+    return "<div class='exec-comparable-grid'>" + "".join(
+        f"<div class='exec-comparable-card'><span>{html.escape(a)}</span><b>{html.escape(b)}</b><small>{html.escape(c)}</small></div>"
+        for a, b, c in cards
+    ) + "</div>"
+
+
+def _tm69_transfer_estimate(market_value: float, expected_value: float, contract: float, contract_years: float) -> tuple[str, str, str]:
+    """Director-sporting transfer estimate: indicative negotiation band, not a model output."""
+    is_en = globals().get("LANG") == "EN"
+    base = np.nan
+    if pd.notna(market_value):
+        base = float(market_value)
+    elif pd.notna(expected_value):
+        base = float(expected_value)
+    if pd.isna(base):
+        return "N/A", ("Unknown" if is_en else "Desconocido"), "N/A"
+
+    # More protected contracts usually require a premium over current value.
+    premium = 0.12
+    if pd.notna(contract_years):
+        if contract_years >= 4:
+            premium += 0.18
+        elif contract_years >= 2.5:
+            premium += 0.10
+        elif contract_years <= 1.0:
+            premium -= 0.08
+    if pd.notna(contract):
+        if contract >= 75:
+            premium -= 0.10
+        elif contract < 40:
+            premium += 0.08
+
+    low = max(0, base * (1 + premium - 0.10))
+    high = max(low, base * (1 + premium + 0.18))
+    band = f"{format_money_short(low)} – {format_money_short(high)}"
+
+    overpay_risk = "Low" if is_en else "Bajo"
+    if pd.notna(expected_value) and pd.notna(market_value):
+        if market_value > expected_value * 1.25:
+            overpay_risk = "High" if is_en else "Alto"
+        elif market_value > expected_value * 1.05:
+            overpay_risk = "Medium" if is_en else "Medio"
+    elif pd.notna(contract_years) and contract_years >= 3:
+        overpay_risk = "Medium" if is_en else "Medio"
+    window = "Summer window" if is_en else "Ventana verano"
+    if pd.notna(contract_years):
+        if contract_years <= 1.5:
+            window = "Next window" if is_en else "Próxima ventana"
+        elif contract_years >= 3:
+            window = "Monitor before renewal" if is_en else "Monitorizar antes de renovación"
+    return band, overpay_risk, window
+
+
+def _tm69_tactical_fit_score(ctx: dict, primary_pos: str, role: str, risk: float, confidence: float) -> float:
+    dna = [v for _, v in _tm69_dna_values(ctx) if pd.notna(v)]
+    if dna:
+        base = float(np.nanmean(dna))
+    else:
+        base = 65.0
+    if pd.notna(confidence):
+        base = 0.72 * base + 0.28 * float(confidence)
+    if pd.notna(risk):
+        base -= max(0, float(risk) - 35) * 0.12
+    # Small boost if Role Engine produced a specific role rather than a pending/default one.
+    if role and "pend" not in str(role).lower():
+        base += 4
+    return max(0.0, min(100.0, base))
+
+
+def _tm69_score_to_label(score: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    if pd.isna(score):
+        return "N/A"
+    if score >= 85:
+        return "Excellent" if is_en else "Excelente"
+    if score >= 70:
+        return "Strong" if is_en else "Alto"
+    if score >= 55:
+        return "Moderate" if is_en else "Medio"
+    return "Low" if is_en else "Bajo"
+
+
+
+def _tm69_decision_card_html(ctx: dict, player_name: str, club: str, league: str, status: str, priority: float, tactical_fit: float, accessibility: str, risk: float, gap_txt: str, market_value: float, expected_value: float, transfer_band: str, window_txt: str, role: str) -> str:
+    """Compact acquisition decision hero for a sporting director.
+
+    The hero is intentionally grouped by decision domain instead of exposing a
+    flat wall of KPI cards: Economy, Fit/Risk and Deal. This reduces whitespace,
+    eliminates repeated labels and makes the first screen answer whether the
+    player should be activated, monitored or avoided on price.
+    """
+    is_en = globals().get("LANG") == "EN"
+    score_txt = "—" if pd.isna(priority) else f"{priority:.0f}"
+    fit_txt = "—" if pd.isna(tactical_fit) else f"{tactical_fit:.0f}/100"
+    risk_label = _tm69_score_label("risk", risk)
+    title = "Acquisition Decision" if is_en else "Decisión de adquisición"
+    score_label = "Target Grade" if is_en else "Target Grade"
+    fit_label = "Tactical Fit" if is_en else "Encaje táctico"
+    transfer_label = "Transfer Estimate" if is_en else "Estimación operación"
+    window_label = "Window" if is_en else "Ventana"
+    tm_label = "Transfermarkt" if is_en else "Transfermarkt"
+    fair_label = "Scouting IQ" if is_en else "Scouting IQ"
+    tm_txt = format_money_short(market_value)
+    fair_txt = format_money_short(expected_value)
+
+    price_corrected = False
+    try:
+        gap_num = float(str(gap_txt).replace("%", "").replace("+", "")) / 100
+        price_corrected = gap_num < -0.10
+    except Exception:
+        pass
+
+    if price_corrected:
+        status_copy = "Validate price" if is_en else "Validar precio"
+        thesis = (
+            f"Sporting fit remains strong, but the market has already priced much of the upside: {tm_txt} Transfermarkt vs {fair_txt} Scouting IQ fair value ({gap_txt})."
+            if is_en else
+            f"El encaje deportivo sigue siendo fuerte, pero el mercado ya ha absorbido gran parte del upside: {tm_txt} Transfermarkt vs {fair_txt} fair value Scouting IQ ({gap_txt})."
+        )
+    else:
+        status_copy = status
+        thesis = (
+            f"High-priority acquisition case for {role}. The decision combines fit {fit_txt}, risk profile and current market gap {gap_txt}."
+            if is_en else
+            f"Caso de adquisición prioritario para {role}. La decisión combina encaje {fit_txt}, perfil de riesgo y gap actual {gap_txt}."
+        )
+
+    gap_class = "negative" if str(gap_txt).startswith("-") else ("positive" if str(gap_txt).startswith("+") else "neutral")
+    return f"""
+    <div class="exec-decision-hero exec-decision-hero-v2">
+        <div class="exec-decision-left">
+            <div class="exec-decision-eyebrow">{html.escape(title)}</div>
+            <div class="exec-decision-name">{html.escape(player_name)}</div>
+            <div class="exec-decision-meta">{html.escape(club)} · {html.escape(str(league))} · {html.escape(role)}</div>
+            <div class="exec-decision-status">{html.escape(status_copy)}</div>
+            <div class="exec-decision-thesis">{html.escape(thesis)}</div>
+        </div>
+        <div class="exec-decision-scorebox exec-decision-scorebox-v2">
+            <span>{html.escape(score_label)}</span><b>{html.escape(score_txt)}</b><small>{html.escape(_tm69_target_priority_grade(priority))}</small>
+        </div>
+        <div class="exec-decision-groups">
+            <div class="exec-decision-group exec-group-economy">
+                <div class="exec-decision-group-title">{html.escape('Economy' if is_en else 'Economía')}</div>
+                <div class="exec-decision-group-grid">
+                    <div><span>{html.escape(tm_label)}</span><b>{html.escape(tm_txt)}</b><small>{html.escape('current value' if is_en else 'valor actual')}</small></div>
+                    <div><span>{html.escape(fair_label)}</span><b>{html.escape(fair_txt)}</b><small>{html.escape('fair value' if is_en else 'fair value')}</small></div>
+                    <div class="gap-{gap_class}"><span>{html.escape('Gap' if is_en else 'Gap')}</span><b>{html.escape(gap_txt)}</b><small>{html.escape('IQ vs TM' if is_en else 'IQ vs TM')}</small></div>
+                </div>
+            </div>
+            <div class="exec-decision-group exec-group-fit">
+                <div class="exec-decision-group-title">{html.escape('Fit & Risk' if is_en else 'Fit y riesgo')}</div>
+                <div class="exec-decision-group-grid">
+                    <div><span>{html.escape(fit_label)}</span><b>{html.escape(fit_txt)}</b><small>{html.escape(_tm69_score_to_label(tactical_fit))}</small></div>
+                    <div><span>{html.escape('Risk' if is_en else 'Riesgo')}</span><b>{html.escape(risk_label)}</b><small>{html.escape(_tm69_format_score(risk))}/100</small></div>
+                    <div><span>{html.escape('Accessibility' if is_en else 'Accesibilidad')}</span><b>{html.escape(accessibility)}</b><small>{html.escape('market + contract' if is_en else 'mercado + contrato')}</small></div>
+                </div>
+            </div>
+            <div class="exec-decision-group exec-group-deal">
+                <div class="exec-decision-group-title">{html.escape('Deal' if is_en else 'Operación')}</div>
+                <div class="exec-decision-group-grid exec-decision-group-grid-2">
+                    <div><span>{html.escape(transfer_label)}</span><b>{html.escape(transfer_band)}</b><small>{html.escape('indicative fee band' if is_en else 'banda fee indicativa')}</small></div>
+                    <div><span>{html.escape(window_label)}</span><b>{html.escape(window_txt)}</b><small>{html.escape('recommended timing' if is_en else 'timing recomendado')}</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+def _tm69_market_ranking_html(ctx: dict, primary_pos: str, opportunity: float, growth: float, contract: float, market_value: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    opp_rank = _tm69_numeric(ctx, ["opportunity_rank", "tm69_opportunity_rank"])
+    growth_rank = _tm69_numeric(ctx, ["growth_rank", "tm69_growth_rank"])
+    confidence_rank = _tm69_numeric(ctx, ["confidence_rank", "tm69_confidence_rank"])
+    def rank_txt(v, score=None):
+        if pd.notna(v):
+            return f"#{int(v)}"
+        if pd.notna(score):
+            return f"P{int(round(float(score)))}"
+        return "N/A"
+    value_band = "Premium" if is_en else "Premium"
+    if pd.notna(market_value):
+        if market_value < 10_000_000:
+            value_band = "Accessible" if is_en else "Accesible"
+        elif market_value < 30_000_000:
+            value_band = "Mid-market" if is_en else "Mercado medio"
+    cards = [
+        ("Opportunity Rank" if is_en else "Ranking Opportunity", rank_txt(opp_rank, opportunity), "Shortlist / universe" if is_en else "Shortlist / universo"),
+        ("Growth Rank" if is_en else "Ranking Growth", rank_txt(growth_rank, growth), "Future asset signal" if is_en else "Señal future asset"),
+        ("Confidence Rank" if is_en else "Ranking confianza", rank_txt(confidence_rank), "Analytical reliability" if is_en else "Fiabilidad analítica"),
+        ("Value Band" if is_en else "Banda de valor", value_band, f"{primary_pos} market context" if is_en else f"Contexto mercado {primary_pos}"),
+    ]
+    return "<div class='exec-market-ranking-grid'>" + "".join(
+        f"<div class='exec-market-ranking-card'><span>{html.escape(a)}</span><b>{html.escape(str(b))}</b><small>{html.escape(c)}</small></div>" for a,b,c in cards
+    ) + "</div>"
+
+
+def _tm69_market_benchmark_html(ctx: dict, player_name: str, market_value: float, expected_value: float, primary_pos: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    # Use role-comparable names when already present in the role engine; otherwise expose the analytical benchmark as a market band.
+    comps = []
+    for i in range(1, 6):
+        n = _tm69_first(ctx, [f"similar_player_{i}", f"comparable_player_{i}", f"role_similar_player_{i}"], np.nan)
+        v = _tm69_numeric(ctx, [f"similar_value_{i}", f"comparable_market_value_{i}"])
+        sim = _tm69_numeric(ctx, [f"similarity_{i}", f"role_similarity_{i}"])
+        if _tm69_is_valid(n):
+            comps.append((str(n), v, sim))
+    if not comps:
+        base = market_value if pd.notna(market_value) else expected_value
+        if pd.isna(base):
+            base = 10_000_000
+        comps = [
+            ("Peer valuation band · upper" if is_en else "Banda peer · alta", base * 1.35, np.nan),
+            ("Peer valuation band · median" if is_en else "Banda peer · media", base * 1.18, np.nan),
+            ("Peer valuation band · lower" if is_en else "Banda peer · baja", base * 0.95, np.nan),
+        ]
+    valid_values = [v for _,v,_ in comps if pd.notna(v)]
+    avg_comp = np.nanmean(valid_values) if valid_values else np.nan
+    discount = np.nan
+    if pd.notna(avg_comp) and pd.notna(market_value) and avg_comp:
+        discount = (avg_comp - market_value) / avg_comp
+    avg_txt = format_money_short(avg_comp)
+    discount_txt = "N/A" if pd.isna(discount) else f"{discount*100:+.0f}%"
+    rows = "".join(
+        f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape('Peer band' if (pd.isna(s) and is_en) else ('Banda peer' if pd.isna(s) else f'{s:.0f} sim'))}</span><strong>{html.escape(format_money_short(v))}</strong></div>"
+        for n,v,s in comps[:3]
+    )
+    return f"""
+    <div class="exec-benchmark-market">
+        <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Market Benchmark' if is_en else 'Benchmark de mercado')}</div><div class="exec-panel-subtitle">{html.escape('Economic comparison against similar market profiles.' if is_en else 'Comparativa económica contra perfiles de mercado similares.')}</div></div></div>
+        <div class="exec-benchmark-summary">
+            <div><span>{html.escape('Peer avg. value' if is_en else 'Valor medio peers')}</span><b>{html.escape(avg_txt)}</b></div>
+            <div><span>{html.escape('Implied discount' if is_en else 'Descuento implícito')}</span><b>{html.escape(discount_txt)}</b></div>
+            <div><span>{html.escape('Player value' if is_en else 'Valor jugador')}</span><b>{html.escape(format_money_short(market_value))}</b></div>
+        </div>
+        <div class="exec-benchmark-list">{rows}</div>
+    </div>
+    """
+
+
+def _tm69_career_trajectory_html(ctx: dict, market_value: float, expected_value: float, growth_1y: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    current = market_value if pd.notna(market_value) else expected_value
+    if pd.isna(current):
+        current = 0
+    prev = _tm69_numeric(ctx, ["market_value_prev_eur", "tm69_market_value_prev_eur"])
+    if pd.isna(prev) and current:
+        rate = 0.0 if pd.isna(growth_1y) else float(growth_1y)
+        if abs(rate) <= 3:
+            prev = current / max(0.25, 1 + rate)
+        else:
+            prev = current / max(0.25, 1 + rate / 100)
+    projection = expected_value if pd.notna(expected_value) else (current * 1.18 if current else np.nan)
+    bridge_steps = [
+        ("Historical" if is_en else "Histórico", prev),
+        ("Current TM" if is_en else "TM actual", current),
+        ("Scouting IQ" if is_en else "Scouting IQ", projection),
+    ]
+    bridge = "".join(
+        f"<div class='exec-trajectory-bridge-step'><span>{html.escape(label)}</span><b>{html.escape(format_money_short(value))}</b></div>"
+        for label, value in bridge_steps
+    )
+    arrows = "<i>→</i>".join(["" for _ in bridge_steps])
+    return f"<div class='exec-trajectory-card exec-trajectory-bridge-card'><div class='exec-panel-title'>{html.escape('Market Trajectory' if is_en else 'Trayectoria de mercado')}</div><div class='exec-panel-subtitle'>{html.escape('Historical TM value → current Transfermarkt → Scouting IQ fair value.' if is_en else 'Valor TM histórico → Transfermarkt actual → fair value Scouting IQ.')}</div><div class='exec-trajectory-bridge'>{bridge}</div></div>"
+
+
+def _tm69_recruitment_recommendation_html(status: str, opportunity: float, growth: float, risk: float, gap_txt: str, transfer_band: str, tactical_fit: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    conf = _tm69_target_priority_score(opportunity, growth, risk, tactical_fit)
+    conf_txt = "—" if pd.isna(conf) else f"{conf:.0f}%"
+    status_l = str(status).lower()
+    action = "Sign / shortlist now" if is_en else "Fichar / shortlist inmediata"
+    if "price" in status_l or "precio" in status_l:
+        action = "Validate price / monitor" if is_en else "Validar precio / monitorizar"
+    elif pd.notna(risk) and risk > 50:
+        action = "Monitor after risk review" if is_en else "Monitorizar tras revisión de riesgo"
+    elif pd.notna(opportunity) and opportunity < 70:
+        action = "Monitor" if is_en else "Monitorizar"
+    return f"""
+    <div class="exec-recruitment-engine">
+        <div class="exec-recruitment-eyebrow">{html.escape('Recruitment Recommendation Engine' if is_en else 'Motor de recomendación de fichaje')}</div>
+        <div class="exec-recruitment-title">{html.escape(action)}</div>
+        <div class="exec-recruitment-copy">{html.escape(('System recommendation based on opportunity, growth, risk, market gap and tactical fit.' if is_en else 'Recomendación del sistema basada en oportunidad, crecimiento, riesgo, gap de mercado y encaje táctico.'))}</div>
+        <div class="exec-recruitment-grid">
+            <div><span>{html.escape('Recommendation confidence' if is_en else 'Confianza recomendación')}</span><b>{html.escape(conf_txt)}</b></div>
+            <div><span>{html.escape('Market gap' if is_en else 'Gap mercado')}</span><b>{html.escape(gap_txt)}</b></div>
+            <div><span>{html.escape('Transfer band' if is_en else 'Banda operación')}</span><b>{html.escape(transfer_band)}</b></div>
+        </div>
+    </div>
+    """
+
+
+def _tm69_why_now_html(status: str, opportunity: float, growth: float, risk: float, contract: float, gap_txt: str, transfer_band: str, tactical_fit: float, window_txt: str) -> str:
+    """Compact Director of Football layer: why now + indicative deal probability."""
+    is_en = globals().get("LANG") == "EN"
+    deal = 50.0
+    if pd.notna(contract):
+        deal += (float(contract) - 50.0) * 0.22
+    if pd.notna(risk):
+        deal += (50.0 - float(risk)) * 0.16
+    if pd.notna(tactical_fit):
+        deal += (float(tactical_fit) - 65.0) * 0.18
+    if pd.notna(growth):
+        deal += (float(growth) - 70.0) * 0.08
+    try:
+        gap_num = float(str(gap_txt).replace("%", "").replace("+", ""))
+        if gap_num < -10:
+            deal -= min(22.0, abs(gap_num) * 0.35)
+        elif gap_num > 10:
+            deal += min(14.0, gap_num * 0.20)
+    except Exception:
+        pass
+    deal = max(5.0, min(95.0, deal))
+    deal_txt = f"{deal:.0f}%"
+    why_title = "Why now" if is_en else "Por qué ahora"
+    deal_title = "Deal probability" if is_en else "Probabilidad de operación"
+    status_l = str(status).lower()
+    if "precio" in status_l or "price" in status_l:
+        bullets = [
+            "Sporting upside remains attractive, but price has corrected." if is_en else "El upside deportivo sigue siendo atractivo, pero el precio ya ha corregido.",
+            f"{('Indicative fee band' if is_en else 'Banda indicativa')}: {transfer_band}.",
+            f"{('Recommended window' if is_en else 'Ventana recomendada')}: {window_txt}.",
+        ]
+    else:
+        bullets = [
+            "High opportunity signal with controlled sporting risk." if is_en else "Señal de oportunidad alta con riesgo deportivo controlado.",
+            "Growth profile supports future asset thesis." if is_en else "El perfil de crecimiento sostiene la tesis de future asset.",
+            f"{('Recommended window' if is_en else 'Ventana recomendada')}: {window_txt}.",
+        ]
+    bullet_html = "".join(f"<li>{html.escape(b)}</li>" for b in bullets)
+    return f"""
+    <div class="exec-why-now-card">
+        <div class="exec-why-main">
+            <div class="exec-recruitment-eyebrow">{html.escape(why_title)}</div>
+            <ul>{bullet_html}</ul>
+        </div>
+        <div class="exec-deal-probability">
+            <span>{html.escape(deal_title)}</span><b>{html.escape(deal_txt)}</b><small>{html.escape('Indicative, not a model output' if is_en else 'Indicativa, no output del modelo')}</small>
+        </div>
+    </div>
+    """
+
+
+def _tm69_acquisition_readiness_html(tactical_fit: float, contract: float, risk: float, gap_pct: float, accessibility: str) -> str:
+    """Executive readiness layer: one compact score for activation timing."""
+    is_en = globals().get("LANG") == "EN"
+    finance = np.nan
+    if pd.notna(gap_pct):
+        finance = max(0.0, min(100.0, 55.0 + float(gap_pct) * 100.0))
+    timing = np.nan
+    if pd.notna(contract):
+        timing = max(0.0, min(100.0, float(contract)))
+    sporting = tactical_fit
+    risk_ok = np.nan if pd.isna(risk) else max(0.0, min(100.0, 100.0 - float(risk)))
+    comps = [v for v in [sporting, finance, timing, risk_ok] if pd.notna(v)]
+    readiness = np.nanmean(comps) if comps else np.nan
+    score_txt = "—" if pd.isna(readiness) else f"{readiness:.0f}/100"
+    label = "Acquisition Readiness" if is_en else "Acquisition Readiness"
+    caption = "Activation readiness across sport, price, contract and risk." if is_en else "Preparación de activación combinando encaje, precio, contrato y riesgo."
+    rows = [
+        ("Sport" if is_en else "Deportivo", sporting),
+        ("Price" if is_en else "Precio", finance),
+        ("Contract" if is_en else "Contrato", timing),
+        ("Risk control" if is_en else "Control riesgo", risk_ok),
+    ]
+    bars = "".join(
+        f"<div class='exec-readiness-row'><span>{html.escape(name)}</span><div><i style='width:{0 if pd.isna(val) else max(4,min(100,float(val))):.0f}%;'></i></div><b>{html.escape('—' if pd.isna(val) else f'{float(val):.0f}')}</b></div>"
+        for name, val in rows
+    )
+    badge = "green" if pd.notna(readiness) and readiness >= 70 else ("yellow" if pd.notna(readiness) and readiness >= 50 else "red")
+    return f"""
+    <div class="exec-readiness-card exec-readiness-{badge}">
+        <div class="exec-readiness-head"><div><span>{html.escape(label)}</span><small>{html.escape(caption)}</small></div><b>{html.escape(score_txt)}</b></div>
+        {bars}
+    </div>
+    """
+
+
+def _tm69_watchlist_status_html(status: str, gap_pct: float, risk: float, contract: float) -> str:
+    """Mock workflow state to make the card feel like a scouting platform without altering data."""
+    is_en = globals().get("LANG") == "EN"
+    status_l = str(status).lower()
+    if "price" in status_l or "precio" in status_l or (pd.notna(gap_pct) and gap_pct < -0.10):
+        stage = "Monitor" if is_en else "Monitorizar"
+        copy = "Keep on watchlist; activate only if fee expectations move." if is_en else "Mantener en seguimiento; activar sólo si se ajusta la expectativa de fee."
+        css = "monitor"
+    elif pd.notna(risk) and risk <= 35 and pd.notna(contract) and contract >= 55:
+        stage = "Priority target" if is_en else "Target prioritario"
+        copy = "Ready for shortlist validation and club-specific fit review." if is_en else "Listo para validación de shortlist y encaje específico por club."
+        css = "priority"
+    else:
+        stage = "Shortlist" if is_en else "Shortlist"
+        copy = "Relevant profile; requires additional validation before activation." if is_en else "Perfil relevante; requiere validación adicional antes de activar."
+        css = "shortlist"
+    return f"""
+    <div class="exec-watchlist-card exec-watchlist-{css}">
+        <div class="exec-recruitment-eyebrow">{html.escape('Watchlist status' if is_en else 'Estado watchlist')}</div>
+        <div class="exec-watchlist-stage">{html.escape(stage)}</div>
+        <div class="exec-watchlist-copy">{html.escape(copy)}</div>
+    </div>
+    """
+
+
+
+def _tm69_opportunity_context_html(ctx: dict, player_name: str, primary_pos: str, opportunity: float, growth: float) -> str:
+    """Compact ranking context around the player using the active Scouting Universe when available."""
+    is_en = globals().get("LANG") == "EN"
+    opp_rank = _tm69_numeric(ctx, ["opportunity_rank", "tm69_opportunity_rank"])
+    growth_rank = _tm69_numeric(ctx, ["growth_rank", "tm69_growth_rank"])
+    title = "Opportunity ranking context" if is_en else "Contexto ranking opportunity"
+    universe = "Shortlist / active universe" if is_en else "Shortlist / universo activo"
+    rows = []
+    ranking_df = globals().get("scouting_df")
+    name_cols = ["player_name_tm", "player_name_fbref", "player_name"]
+    if isinstance(ranking_df, pd.DataFrame) and not ranking_df.empty and "opportunity_score" in ranking_df.columns:
+        tmp = ranking_df.copy()
+        pos_col = "position_group" if "position_group" in tmp.columns else ("position" if "position" in tmp.columns else None)
+        if pos_col:
+            tmp = tmp[tmp[pos_col].astype(str).str.upper().str.contains(str(primary_pos).upper().split()[0], na=False) | (tmp[pos_col].astype(str).str.upper() == str(primary_pos).upper())]
+            if tmp.empty:
+                tmp = ranking_df.copy()
+        tmp["_opp"] = pd.to_numeric(tmp["opportunity_score"], errors="coerce")
+        tmp = tmp.dropna(subset=["_opp"]).sort_values("_opp", ascending=False).head(5)
+        for idx, (_, r) in enumerate(tmp.iterrows(), start=1):
+            n = next((str(r.get(c)) for c in name_cols if c in tmp.columns and pd.notna(r.get(c))), f"#{idx}")
+            n = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", n).strip()
+            active = " active" if normalize_search_text(n) == normalize_search_text(player_name) else ""
+            rows.append(f"<div class='exec-rank-context-row{active}'><span>#{idx}</span><b>{html.escape(n)}</b><strong>{float(r['_opp']):.0f}</strong></div>")
+    if not rows:
+        rtxt = "—" if pd.isna(opp_rank) else f"#{int(opp_rank)}"
+        stxt = "—" if pd.isna(opportunity) else f"{float(opportunity):.0f}/100"
+        rows = [f"<div class='exec-rank-context-row active'><span>{html.escape(rtxt)}</span><b>{html.escape(player_name)}</b><strong>{html.escape(stxt)}</strong></div>"]
+    growth_txt = "—" if pd.isna(growth_rank) else "#" + str(int(growth_rank))
+    return f"""
+    <div class="exec-rank-context-card">
+        <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape(title)}</div><div class="exec-panel-subtitle">{html.escape(universe)} · {html.escape(primary_pos)} · Growth {html.escape(growth_txt)}</div></div></div>
+        <div class="exec-rank-context-list">{''.join(rows)}</div>
+    </div>
+    """
+
+def _tm69_pitch_overlay_html(primary: str, secondary: list[str], role_purity: float) -> str:
+    """Small on-pitch role distribution overlay."""
+    if pd.notna(role_purity):
+        primary_share = int(max(45, min(92, round(float(role_purity)))))
+    else:
+        primary_share = 78
+    secondaries = [s for s in secondary if s and s != primary][:2]
+    if not secondaries:
+        secondaries = ["DEF" if primary == "CB" else "ALT"]
+    remaining = max(8, 100 - primary_share)
+    sec_share = max(6, int(round(remaining / len(secondaries))))
+    chips = [f"<div><b>{html.escape(primary)}</b><span>{primary_share}%</span></div>"]
+    chips += [f"<div class='secondary'><b>{html.escape(s)}</b><span>{sec_share}%</span></div>" for s in secondaries]
+    return "<div class='exec-pitch-overlay'>" + "".join(chips) + "</div>"
+
+
+def _tm69_performance_bars_html(radar_df: pd.DataFrame) -> str:
+    """Hudl-like percentile bars as a more readable alternative to radar charts."""
+    if radar_df is None or radar_df.empty:
+        return ""
+    rows = []
+    for _, row in radar_df.sort_values("percentile", ascending=False).iterrows():
+        pct = float(row.get("percentile", 0) or 0)
+        label = metric_display_name(row.get("label", "Metric"))
+        rating = str(row.get("rating", ""))
+        value = row.get("value", np.nan)
+        value_txt = "N/A" if pd.isna(value) else (f"{float(value):,.0f}" if abs(float(value)) >= 100 else f"{float(value):.2f}")
+        tone = "elite" if pct >= 85 else ("high" if pct >= 65 else ("avg" if pct >= 40 else "low"))
+        rows.append(
+            f"<div class='perf-bar-row perf-bar-{tone}'><div class='perf-bar-meta'><b>{html.escape(label)}</b><span>{html.escape(rating)} · {html.escape(value_txt)}</span></div><div class='perf-bar-track'><i style='width:{max(4,min(100,pct)):.0f}%;'></i></div><strong>P{pct:.0f}</strong></div>"
+        )
+    return "<div class='perf-bars-card'><div class='perf-bars-title'>" + html.escape("Percentile profile" if globals().get("LANG") == "EN" else "Perfil por percentiles") + "</div>" + "".join(rows) + "</div>"
+
+def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = None) -> None:
+    """Render the TM.6.9 Executive Scouting Card above the legacy Player Intelligence blocks."""
     if row is None or len(row) == 0:
         return
+    is_en = globals().get("LANG") == "EN"
+    ctx = _tm69_merge_context(row)
+
+    raw_name = _tm69_first(ctx, [name_col or "", "player_name_tm", "player_name", "player_name_fbref", "Player"], "Player")
+    player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
+    club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "tm69_current_club_name_tm", "club_actual", "club"], "N/A"))
+    league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
+    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship"], "N/A"))
+    foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
+    height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
+    height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
+    age = _tm69_age_from_birth(_tm69_first(ctx, ["date_of_birth", "tm69_date_of_birth"], np.nan), _tm69_first(ctx, ["current_age", "current_age_snapshot", "tm69_current_age", "age"], np.nan))
+    age_txt = "N/A" if pd.isna(age) else f"{age:.1f} " + ("years" if is_en else "años")
+    birth_txt = _tm69_format_date(_tm69_first(ctx, ["date_of_birth", "tm69_date_of_birth"], np.nan))
+
+    primary_pos, secondary_pos = _tm69_position_set(ctx)
+    role = clean_role_display(_tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup"], np.nan), "Role pending" if is_en else "Rol pendiente")
+    role_conf = _tm69_numeric(ctx, ["role_purity", "tm69_role_purity", "primary_role_similarity", "tm69_primary_role_similarity", "role_confidence", "confidence_score", "tm69_confidence_score"])
+    role_conf_txt = "—" if pd.isna(role_conf) else f"{role_conf:.0f}%"
+    role_conf_label, role_conf_quality = _tm69_role_quality_label(ctx, role_conf)
+
+    opportunity = _tm69_numeric(ctx, ["opportunity_score", "tm69_opportunity_score"])
+    growth = _tm69_numeric(ctx, ["growth_score", "tm69_growth_score"])
+    risk = _tm69_numeric(ctx, ["risk_score", "tm69_risk_score"])
+    contract = _tm69_numeric(ctx, ["contract_opportunity_score", "recruitment_contract_score", "tm69_contract_opportunity_score"])
+    confidence = _tm69_numeric(ctx, ["confidence_score", "tm69_confidence_score"])
+
+    market_value = _tm69_numeric(ctx, ["current_market_value_eur", "current_market_value_eur_snapshot", "current_market_value_eur_snapshot.1", "current_market_value_eur_snapshot.2", "tm69_current_market_value_eur", "tm69_current_market_value_eur_snapshot", "market_value_eur", "tm69_market_value_eur"])
+    expected_value = _tm69_expected_market_value(ctx)
+    market_txt = format_money_short(market_value)
+    expected_txt = format_money_short(expected_value)
+    gap_abs, gap_pct = _tm69_market_gap(ctx, market_value)
+    gap_txt = "N/A"
+    if pd.notna(gap_pct):
+        gap_txt = f"{gap_pct*100:+.0f}%" if abs(gap_pct) <= 5 else f"{gap_pct:+.0f}%"
+    elif pd.notna(gap_abs):
+        gap_txt = format_signed_money_short(gap_abs)
+
+    growth_1y = _tm69_numeric(ctx, ["market_value_growth_1y", "market_value_growth_prev", "tm69_market_value_growth_1y"])
+    if pd.notna(growth_1y) and abs(growth_1y) <= 3:
+        growth_1y_txt = f"{growth_1y * 100:+.0f}%"
+    elif pd.notna(growth_1y):
+        growth_1y_txt = f"{growth_1y:+.0f}%"
+    else:
+        growth_1y_txt = "N/A"
+    last_update = _tm69_format_date(_tm69_first(ctx, ["current_valuation_date", "tm69_current_valuation_date"], np.nan))
+    contract_status = _tm69_localize_contract_status(_tm69_first(ctx, ["contract_status", "tm69_contract_status"], "N/A"))
+    contract_years = _tm69_numeric(ctx, ["contract_years_remaining", "tm69_contract_years_remaining"])
+    contract_years_txt = "N/A" if pd.isna(contract_years) else f"{contract_years:.1f}"
+    if pd.notna(contract) and contract >= 75:
+        accessibility = "High" if is_en else "Alta"
+    elif pd.notna(contract) and contract >= 55:
+        accessibility = "Medium" if is_en else "Media"
+    elif pd.notna(market_value) and market_value <= 15_000_000:
+        accessibility = "Medium" if is_en else "Media"
+    else:
+        accessibility = "Low" if is_en else "Baja"
+    feas_bg, feas_border, feas_color = _tm69_feasibility_style(accessibility)
+
+    status, reco_text, drivers = _tm69_recommendation(ctx, opportunity, growth, risk, contract)
+    assessment = (
+        f"{_tm69_score_label('opportunity', opportunity)} · {_tm69_score_label('growth', growth)} · {_tm69_score_label('risk', risk)} · {_tm69_score_label('contract', contract)}"
+    )
+    target_priority = _tm69_target_priority_score(opportunity, growth, risk, contract)
+    # TM.6.9A: if the current market has already corrected above Scouting IQ fair value,
+    # reduce the visual target grade. Opportunity/Growth remain visible, but the
+    # executive acquisition decision must not imply a current hidden-gem discount.
+    if pd.notna(gap_pct) and pd.notna(target_priority):
+        if gap_pct < -0.30:
+            target_priority = max(0.0, target_priority - 24.0)
+        elif gap_pct < -0.10:
+            target_priority = max(0.0, target_priority - 14.0)
+        elif gap_pct > 0.20:
+            target_priority = min(100.0, target_priority + 4.0)
+    target_priority_txt = "—" if pd.isna(target_priority) else f"{target_priority:.0f}"
+    target_priority_grade = _tm69_target_priority_grade(target_priority)
+    secondary_html = "".join([f"<span class='exec-position-pill'>{html.escape(p)}</span>" for p in secondary_pos]) or f"<span class='exec-role-pill'>{html.escape('No secondary position' if is_en else 'Sin posición secundaria')}</span>"
+    drivers_html = "".join([f"<span class='exec-driver-chip'>✓ {html.escape(d)}</span>" for d in drivers])
+    decision_drivers_html = _tm69_decision_drivers(ctx, opportunity, growth, risk, contract, market_value)
+    next_actions_html = "".join([f"<div class='exec-next-action'>→ {html.escape(a)}</div>" for a in _tm69_next_actions(ctx, risk, contract, primary_pos)])
+    position_share_html = _tm69_position_share_rows(primary_pos, secondary_pos, role_conf)
+    fit_html = _tm69_tactical_fit(ctx, primary_pos)
+    market_cards_html = _tm69_comparable_market_cards(ctx, market_value, expected_value, primary_pos)
+    feasibility_copy = _tm69_market_accessibility_copy(accessibility, contract_years_txt, contract_status, market_txt, contract)
+    transfer_band, overpay_risk, window_txt = _tm69_transfer_estimate(market_value, expected_value, contract, contract_years)
+    tactical_fit_score = _tm69_tactical_fit_score(ctx, primary_pos, role, risk, confidence)
+    decision_hero_html = _tm69_decision_card_html(ctx, player_name, club, league, status, target_priority, tactical_fit_score, accessibility, risk, gap_txt, market_value, expected_value, transfer_band, window_txt, role)
+    market_ranking_html = _tm69_market_ranking_html(ctx, primary_pos, opportunity, growth, contract, market_value)
+    benchmark_market_html = _tm69_market_benchmark_html(ctx, player_name, market_value, expected_value, primary_pos)
+    trajectory_html = _tm69_career_trajectory_html(ctx, market_value, expected_value, growth_1y)
+    recruitment_engine_html = _tm69_recruitment_recommendation_html(status, opportunity, growth, risk, gap_txt, transfer_band, tactical_fit_score)
+    why_now_html = _tm69_why_now_html(status, opportunity, growth, risk, contract, gap_txt, transfer_band, tactical_fit_score, window_txt)
+    if (str(status).lower().find("precio") >= 0) or (str(status).lower().find("price") >= 0):
+        action_text = (
+            f"Recommended action: keep in watchlist, define maximum fee and compare U23 {primary_pos} alternatives."
+            if is_en else
+            f"Acción recomendada: mantener en watchlist, validar fee máximo y comparar alternativas {primary_pos} U23."
+        )
+    else:
+        action_text = (
+            f"Recommended action: validate tactical fit, monitor fee band and prepare recruitment shortlist."
+            if is_en else
+            f"Acción recomendada: validar encaje táctico, monitorizar banda de fee y preparar shortlist de captación."
+        )
+    readiness_html = _tm69_acquisition_readiness_html(tactical_fit_score, contract, risk, gap_pct, accessibility)
+    watchlist_html = _tm69_watchlist_status_html(status, gap_pct, risk, contract)
+    opportunity_context_html = _tm69_opportunity_context_html(ctx, player_name, primary_pos, opportunity, growth)
+    pitch_overlay_html = _tm69_pitch_overlay_html(primary_pos, secondary_pos, role_conf)
+
+    # Product glossary: keep proprietary Scouting IQ terms understandable without adding text blocks.
+    tip_priority = _tm69_info_tip("Composite UI score from Opportunity, Growth, inverse Risk and Contract signal. Does not alter the DSS model." if is_en else "Score visual compuesto a partir de Opportunity, Growth, Riesgo invertido y señal contractual. No modifica el modelo DSS.")
+    tip_role = _tm69_info_tip("Role DNA summarises the player's style profile from the Role Engine." if is_en else "El ADN de rol resume el perfil estilístico del jugador a partir del Role Engine.")
+    tip_purity = _tm69_info_tip("Role purity indicates how consistently the player maps to the same role profile. Low values suggest hybrid usage." if is_en else "La pureza de rol indica la consistencia del jugador dentro del mismo perfil. Valores bajos sugieren uso híbrido.")
+    tip_contract = _tm69_info_tip("Contract Signal summarises contractual leverage. Detailed contract analysis remains in Strategy." if is_en else "Contract Signal resume el leverage contractual. El detalle vive en Strategy.")
+    tip_gap = _tm69_info_tip("Gap compares current Transfermarkt value with the model-implied expected value." if is_en else "El gap compara el valor Transfermarkt actual con el valor esperado estimado por el modelo.")
+
+    tm69_exec_card_html = f"""
+<div class="exec-card-shell">
+    {decision_hero_html}
+    <div class="exec-card-top">
+        <div class="exec-identity-panel">
+            <div class="exec-identity-grid">
+                <div>
+                    <div class="exec-player-avatar">{html.escape(_tm69_initials(player_name))}</div>
+                    
+                </div>
+                <div>
+                    <div class="exec-kicker">{'EXECUTIVE SCOUTING CARD' if is_en else 'FICHA EJECUTIVA DE SCOUTING'}</div>
+                    <div class="exec-player-title">{html.escape(player_name)}</div>
+                    <div class="exec-player-clubline">
+                        <span>{html.escape(club)}</span>
+                        <span class="exec-league-pill">{html.escape(str(league))}</span>
+                        <span class="exec-position-pill">{html.escape(primary_pos)}</span>
+                        <span class="exec-role-pill">{html.escape(role)}</span>
+                    </div>
+                    <div class="exec-meta-grid">
+                        <div class="exec-meta-item"><span>{html.escape('Nationality' if is_en else 'Nacionalidad')}</span><b>{html.escape(country)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Age' if is_en else 'Edad')}</span><b>{html.escape(age_txt)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Height' if is_en else 'Altura')}</span><b>{html.escape(height_txt)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Foot' if is_en else 'Pie')}</span><b>{html.escape(foot)}</b></div>
+                    </div>
+                    <div class="exec-flex-line">
+                        <span class="exec-role-pill">{html.escape('Born' if is_en else 'Nacimiento')}: {html.escape(birth_txt)}</span>
+                        <span class="exec-role-pill">{html.escape('Specialisation' if is_en else 'Especialización')} {tip_purity}: {html.escape(role_conf_quality)}</span>
+                        <span class="exec-role-pill">{html.escape('Role Engine profile' if is_en else 'Perfil Role Engine')}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="exec-signals-panel">
+            <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Executive Signals' if is_en else 'Señales ejecutivas')}</div><div class="exec-panel-subtitle">{html.escape('Decision-first summary of opportunity, upside, risk and contractual leverage.' if is_en else 'Resumen orientado a decisión: oportunidad, upside, riesgo y leverage contractual.')}</div></div>{tip_contract}</div>
+            <div class="exec-signals-grid">
+                {_tm69_signal_card(_tm69_signal_title('opportunity'), opportunity, 'opportunity', '#2563eb', '#eff6ff', '#1e3a8a')}
+                {_tm69_signal_card(_tm69_signal_title('growth'), growth, 'growth', '#0891b2', '#ecfeff', '#155e75')}
+                {_tm69_signal_card(_tm69_signal_title('risk'), risk, 'risk', '#f59e0b', '#fff7ed', '#92400e')}
+                {_tm69_signal_card(_tm69_signal_title('contract'), contract, 'contract', '#ea580c', '#fff7ed', '#9a3412')}
+                {_tm69_signal_card('Tactical Fit' if is_en else 'Encaje', tactical_fit_score, 'growth', '#16a34a', '#f0fdf4', '#166534')}
+            </div>
+            <div class="exec-assessment-strip"><b>{html.escape('Executive Assessment' if is_en else 'Lectura ejecutiva')}:</b> {html.escape(assessment)}</div>
+            {decision_drivers_html}
+        </div>
+    </div>
+    <div class="exec-mid-grid">
+        <div class="exec-role-panel">
+            <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Role DNA' if is_en else 'ADN de rol')}</div><div class="exec-panel-subtitle">{html.escape('Style profile interpreted by the Role Engine.' if is_en else 'Perfil de estilo interpretado por el Role Engine.')}</div></div>{tip_role}</div>
+            {_tm69_dna_bars(ctx)}
+            <div class="exec-role-interpretation"><b>{html.escape(role)}</b><br>{html.escape(_tm69_role_interpretation(ctx, role))}</div>
+            {fit_html}
+        </div>
+        <div class="exec-recommendation-panel">
+            <div class="exec-target-score"><span>{html.escape('Target Priority' if is_en else 'Prioridad target')} {tip_priority}</span><b>{html.escape(target_priority_txt)}</b><small>{html.escape(target_priority_grade)}</small></div>
+            <div class="exec-reco-content">
+                <div class="exec-reco-status">{html.escape(status)}</div>
+                <div class="exec-panel-title">{html.escape('Executive Recommendation' if is_en else 'Recomendación ejecutiva')}</div>
+                <div class="exec-reco-text">{_tm69_escape_rich_text(reco_text)}</div>
+                <div class="exec-chip-row">{drivers_html}</div>
+                <div class="exec-next-actions">{next_actions_html}</div>
+                {why_now_html}
+                <div class="exec-final-action-line">{html.escape(action_text)}</div>
+            </div>
+        </div>
+    </div>
+    <div class="exec-visible-pitch-panel">
+        <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Positional Identity' if is_en else 'Identidad posicional')}</div><div class="exec-panel-subtitle">{html.escape('Compact on-pitch view of dominant and flexible positions.' if is_en else 'Vista compacta en campo de posición dominante y flexibilidad táctica.')}</div></div></div>
+        <div class="exec-visible-pitch-grid">
+            <div class="exec-pitch exec-pitch-compact">{_tm69_position_markers(primary_pos, secondary_pos)}{pitch_overlay_html}</div>
+            <div class="exec-visible-pitch-side">
+                <div class="exec-flex-line"><span class="exec-position-pill"><strong>{html.escape('Dominant' if is_en else 'Dominante')}:</strong>&nbsp;{html.escape(primary_pos)}</span>{secondary_html}</div>
+                {position_share_html}
+            </div>
+        </div>
+    </div>
+    <div class="exec-decision-support-grid">
+        {readiness_html}
+        {watchlist_html}
+        {opportunity_context_html}
+    </div>
+    <details class="exec-context-details">
+        <summary>{html.escape('Acquisition evidence: tactics, market and feasibility' if is_en else 'Evidencia de adquisición: táctica, mercado y accesibilidad')}<span class="exec-compact-note">{html.escape('Open for detail' if is_en else 'Abrir detalle')}</span></summary>
+        <div class="exec-context-body">
+            <div class="exec-role-panel">
+                <div class="exec-panel-title">{html.escape('Positional Identity' if is_en else 'Identidad posicional')}</div>
+                <div class="exec-panel-subtitle">{html.escape('Natural horizontal pitch. Dominant position is highlighted; secondary positions indicate tactical flexibility.' if is_en else 'Campo horizontal natural. La posición dominante queda destacada; las secundarias indican flexibilidad táctica.')}</div>
+                <div class="exec-pitch">{_tm69_position_markers(primary_pos, secondary_pos)}{pitch_overlay_html}</div>
+                <div class="exec-pitch-legend">
+                    <span><i class="exec-pitch-dot exec-pitch-dot-primary"></i>{html.escape('Dominant position' if is_en else 'Posición dominante')}</span>
+                    <span><i class="exec-pitch-dot exec-pitch-dot-secondary"></i>{html.escape('Secondary / flexibility' if is_en else 'Secundarias / flexibilidad')}</span>
+                </div>
+                <div class="exec-flex-line"><span class="exec-position-pill"><strong>{html.escape('Dominant' if is_en else 'Dominante')}:</strong>&nbsp;{html.escape(primary_pos)}</span>{secondary_html}</div>
+                {position_share_html}
+            </div>
+            <div class="exec-context-right-stack">
+                <div class="exec-market-panel">
+                    <div class="exec-section-header-row"><div class="exec-panel-title">{html.escape('Market Context' if is_en else 'Contexto de mercado')}</div>{tip_gap}</div>
+                    <div class="exec-market-grid">
+                        <div class="exec-meta-item"><span>{html.escape('Current TM Value' if is_en else 'Valor actual TM')}</span><b>{html.escape(market_txt)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Expected Value' if is_en else 'Valor esperado')}</span><b>{html.escape(expected_txt)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Market Gap' if is_en else 'Gap mercado')}</span><b>{html.escape(gap_txt)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Last Update' if is_en else 'Última valoración')}</span><b>{html.escape(last_update)}</b></div>
+                    </div>
+                    {market_cards_html}
+                    {market_ranking_html}
+                </div>
+                {benchmark_market_html}
+                {trajectory_html}
+                <div class="exec-market-panel">
+                    <div class="exec-panel-title">{html.escape('Transfer Feasibility' if is_en else 'Fichabilidad / accesibilidad')}</div>
+                    <div class="exec-transfer-feasibility">
+                        <div class="exec-feasibility-badge" style="--feas-bg:{feas_bg};--feas-border:{feas_border};--feas-color:{feas_color};"><span>{html.escape('Feasibility' if is_en else 'Accesibilidad')}</span><b>{html.escape(accessibility)}</b></div>
+                        <div>
+                            <div class="exec-market-grid">
+                                <div class="exec-meta-item"><span>{html.escape('Contract Status' if is_en else 'Estado contrato')}</span><b>{html.escape(contract_status)}</b></div>
+                                <div class="exec-meta-item"><span>{html.escape('Years Left' if is_en else 'Años restantes')}</span><b>{html.escape(contract_years_txt)}</b></div>
+                                <div class="exec-meta-item"><span>{html.escape('Contract Signal' if is_en else 'Señal contrato')}</span><b>{html.escape(_tm69_format_score(contract))}</b></div>
+                                <div class="exec-meta-item"><span>{html.escape('1Y Growth' if is_en else 'Crec. 1 año')}</span><b>{html.escape(growth_1y_txt)}</b></div>
+                            </div>
+                            <div class="exec-feasibility-copy">{html.escape(feasibility_copy)}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </details>
+</div>
+"""
+    tm69_exec_card_html = "".join(line.strip() for line in tm69_exec_card_html.splitlines())
+    st.markdown(tm69_exec_card_html, unsafe_allow_html=True)
+
+
+def render_player_profile_header(row: pd.Series, name_col: str | None = None, title: str | None = None) -> None:
+    """Render the TM.4.1 Player Snapshot layer above radar/benchmarking.
+
+    Product intent: answer in the first five seconds who the player is, where he
+    plays, what he is worth, whether he is an opportunity and how risky the case is.
+    """
+    if row is None or len(row) == 0:
+        return
+
     resolved_name_col = name_col or "player_name_fbref"
     player_name = str(safe_get(row, resolved_name_col, get_player_name(row)))
-    position = str(safe_get(row, "position_group", "N/A"))
-    club = str(safe_get(row, "club", "N/A"))
-    league = league_display_name(safe_get(row, "league", "N/A"))
-    age = format_score(safe_get(row, "age", np.nan))
-    value = format_money_short(safe_get(row, "market_value_eur", np.nan))
-    risk = format_score(safe_get(row, "risk_score", np.nan))
-    header_title_map = {
-        "Selected player": {"ES": "Jugador seleccionado", "EN": "Selected player"},
-        "Reference player": {"ES": "Jugador referencia", "EN": "Reference player"},
-        "Player profile": {"ES": "Perfil del jugador", "EN": "Player profile"},
+    # UX polish: some merged datasets may contain names without whitespace after export
+    # (e.g. "JaviRodríguez"). Restore a readable display label without
+    # changing the underlying data or keys used by the app.
+    player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", player_name).strip()
+    position = str(safe_get(row, "position", safe_get(row, "position_group", "N/A")))
+    # TM.4.1 product polish: expose a role-aware badge even before role intelligence clustering.
+    # This keeps the UX closer to professional scouting tools: the user sees an
+    # interpreted football profile, not only a coarse position group.
+    position_role_map = {
+        "GK": "Goalkeeper",
+        "DEF": "Central Defender",
+        "CB": "Centre Back",
+        "FB": "Full Back",
+        "WB": "Wing Back",
+        "MID": "Central Midfielder",
+        "CM": "Central Midfielder",
+        "DM": "Defensive Midfielder",
+        "AM": "Attacking Midfielder",
+        "ATT": "Forward",
+        "FWD": "Forward",
+        "FW": "Forward",
+        "W": "Winger",
     }
+    position_key = str(position).upper().strip()
+    position_badge = f"{position} · {position_role_map.get(position_key, 'Football role')}" if position and position != "N/A" else position
+    club = str(safe_get(row, "display_club", safe_get(row, "current_club", safe_get(row, "club_actual", safe_get(row, "club", "N/A")))))
+    league = league_display_name(safe_get(row, "display_league", safe_get(row, "current_league", safe_get(row, "league", "N/A"))))
+    age_value = _snapshot_numeric(row, ["current_age", "current_age_snapshot", "age", "player_age", "age_years", "tm_age"], default=np.nan)
+    age_display = "N/A" if pd.isna(age_value) else f"{age_value:.1f}"
+    age_suffix = "years" if globals().get("LANG") == "EN" else "años"
+
+    market_value, expected_value, inefficiency_eur, inefficiency_pct = _snapshot_value_pair(row)
+    opportunity = _snapshot_numeric(row, ["opportunity_score"], default=np.nan)
+    risk = _snapshot_numeric(row, ["risk_score", "risk_score_raw"], default=np.nan)
+    confidence = _snapshot_numeric(row, ["confidence_score"], default=np.nan)
+
+    market_display = format_money_short(market_value)
+    expected_display = format_money_short(expected_value)
+    inefficiency_display = format_signed_money_short(inefficiency_eur)
+    inefficiency_pct_display = "N/A" if pd.isna(inefficiency_pct) else f"{inefficiency_pct * 100:+.0f}%"
+    gap_tone = "neutral"
+    if pd.notna(inefficiency_eur):
+        if inefficiency_eur > 0:
+            gap_tone = "positive"
+        elif inefficiency_eur < 0:
+            gap_tone = "negative"
+    tags_html = _build_snapshot_tags(row, market_value, expected_value, inefficiency_eur)
+    role_badge_html = render_role_badge(row)
+
     if title:
-        title_label = header_title_map.get(str(title), {}).get(LANG, UI(title))
-        title_html = f"<div class='metric-label'>{html.escape(title_label)}</div>"
+        section_title = "Player Snapshot" if globals().get("LANG") == "EN" else "Player Snapshot"
+        section_subtitle = (
+            "Identity, market context and executive decision signals."
+            if globals().get("LANG") == "EN"
+            else "Identidad, contexto de mercado y señales ejecutivas de decisión."
+        )
     else:
-        title_html = ""
+        section_title = "Player Snapshot"
+        section_subtitle = "Identity + Market Context"
+
+    initials = "".join([part[:1] for part in player_name.split()[:2]]).upper() or "PI"
+
+    if globals().get("LANG") == "EN":
+        lbl_identity = "{html.escape(lbl_identity)}"
+        lbl_archetype = "Role profile available" if has_role_intelligence(row) else "Role pending"
+        lbl_age = "Age"
+        lbl_position = "Position"
+        lbl_context = "Context"
+        lbl_market = "{html.escape(lbl_market)}"
+        lbl_market_value = "Market Value"
+        lbl_expected_value = "Scouting IQ Value"
+        lbl_ineff = "Scouting IQ valuation gap"
+        lbl_scores = "{html.escape(lbl_scores)}"
+        lbl_opportunity = "Opportunity"
+        lbl_risk = "Risk"
+        lbl_confidence = "Confidence"
+        lbl_high_opp = "High Opportunity"
+        lbl_opp_signal = "Opportunity Signal"
+        lbl_low_risk = "Low Risk"
+        lbl_risk_profile = "Risk Profile"
+        lbl_high_conf = "High Confidence"
+        lbl_model_conf = "Model Confidence"
+        lbl_status = "4. STATUS & KEY INSIGHTS"
+    else:
+        lbl_identity = "1. IDENTIDAD"
+        lbl_archetype = "Rol táctico disponible" if has_role_intelligence(row) else "Perfil táctico pendiente"
+        lbl_age = "Edad"
+        lbl_position = "Posición"
+        lbl_context = "Contexto"
+        lbl_market = "2. INTELIGENCIA DE MERCADO"
+        lbl_market_value = "Valor de mercado"
+        lbl_expected_value = "Valor Scouting IQ"
+        lbl_ineff = "Gap de valoración Scouting IQ"
+        lbl_scores = "3. SCORES EJECUTIVOS"
+        lbl_opportunity = "Opportunity"
+        lbl_risk = "Risk"
+        lbl_confidence = "Confidence"
+        lbl_high_opp = "Alta oportunidad"
+        lbl_opp_signal = "Señal de oportunidad"
+        lbl_low_risk = "Riesgo bajo"
+        lbl_risk_profile = "Perfil de riesgo"
+        lbl_high_conf = "Alta confianza"
+        lbl_model_conf = "Confianza del modelo"
+        lbl_status = "4. ESTADO & SEÑALES CLAVE"
+
     st.markdown(
         f"""
-        <div class="radar-info-box" style="padding:10px 14px;">
-            {title_html}
-            <b>{html.escape(player_name)}</b>
-            <span style="color:#64748b;"> · {html.escape(position)} · {html.escape(club)} · {html.escape(league)} · {age} {"years" if globals().get("LANG") == "EN" else "años"} · {html.escape(value)} · Risk {risk}</span>
+<div class="player-snapshot-shell">
+    <div class="player-snapshot-heading">
+        <div>
+            <div class="player-snapshot-kicker">PLAYER INTELLIGENCE</div>
+            <div class="player-snapshot-title">1. {html.escape(section_title)}</div>
+            <div class="player-snapshot-subtitle">{html.escape(section_subtitle)}</div>
         </div>
-        """,
+    </div>
+    <div class="player-snapshot-grid">
+        <div class="snapshot-card snapshot-card-identity">
+            <div class="snapshot-avatar">{html.escape(initials)}</div>
+            <div class="snapshot-identity-main">
+                <div class="snapshot-section-label">{html.escape(lbl_identity)}</div>
+                <div class="snapshot-player-name">{html.escape(player_name)}{role_badge_html}</div>
+                <div class="snapshot-position-row">
+                    <span class="snapshot-position-pill">{html.escape(position_badge)}</span>
+                    <span class="snapshot-role-placeholder">{html.escape(lbl_archetype)}</span>
+                </div>
+                <div class="snapshot-club-line">{html.escape(club)}</div>
+                <div class="snapshot-league-line">{html.escape(league)}</div>
+                <div class="snapshot-meta-grid">
+                    <div><span>{html.escape(lbl_age)}</span><b>{html.escape(age_display)} {html.escape(age_suffix)}</b></div>
+                    <div><span>{html.escape(lbl_position)}</span><b>{html.escape(position_badge)}</b></div>
+                    <div><span>{html.escape(lbl_context)}</span><b>{html.escape(league)}</b></div>
+                </div>
+            </div>
+        </div>
+        <div class="snapshot-card snapshot-card-market">
+            <div class="snapshot-section-label">{html.escape(lbl_market)}</div>
+            <div class="snapshot-market-values">
+                <div>
+                    <span>{html.escape(lbl_market_value)}</span>
+                    <b>{html.escape(market_display)}</b>
+                </div>
+                <div>
+                    <span>{html.escape(lbl_expected_value)}</span>
+                    <b>{html.escape(expected_display)}</b>
+                </div>
+            </div>
+            <div class="snapshot-inefficiency-box snapshot-gap-{gap_tone}">
+                <b>{html.escape(inefficiency_display)}</b>
+                <b>{html.escape(inefficiency_pct_display)}</b>
+                <span>{html.escape(lbl_ineff)}</span>
+            </div>
+        </div>
+        <div class="snapshot-card snapshot-card-scores">
+            <div class="snapshot-section-label">{html.escape(lbl_scores)}</div>
+            <div class="snapshot-score-grid">
+                <div class="snapshot-score-item snapshot-score-green">
+                    <span>{html.escape(lbl_opportunity)}</span>
+                    <b>{html.escape(_snapshot_score(opportunity))}</b>
+                    <em>{lbl_high_opp if pd.notna(opportunity) and opportunity >= 80 else lbl_opp_signal}</em>
+                </div>
+                <div class="snapshot-score-item snapshot-score-orange">
+                    <span>{html.escape(lbl_risk)}</span>
+                    <b>{html.escape(_snapshot_score(risk))}</b>
+                    <em>{lbl_low_risk if pd.notna(risk) and risk <= 30 else lbl_risk_profile}</em>
+                </div>
+                <div class="snapshot-score-item snapshot-score-blue">
+                    <span>{html.escape(lbl_confidence)}</span>
+                    <b>{html.escape(_snapshot_score(confidence))}</b>
+                    <em>{lbl_high_conf if pd.notna(confidence) and confidence >= 80 else lbl_model_conf}</em>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="snapshot-tags-row">
+        <div class="snapshot-tags-title">{html.escape(lbl_status)}</div>
+        <div class="snapshot-tags-grid">{tags_html}</div>
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+def render_player_dossier_summary(row: pd.Series) -> None:
+    """Executive scouting dossier: summary, recruitment rationale and risk signals."""
+    if row is None or len(row) == 0:
+        return
+    is_en = globals().get("LANG") == "EN"
+    player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(get_player_name(row))).strip()
+    role = clean_role_display(safe_get(row, "primary_role", np.nan), "Role pending" if is_en else "Perfil táctico pendiente")
+    taxonomy = str(safe_get(row, "position_taxonomy", safe_get(row, "position_group", "N/A")))
+    league = league_display_name(safe_get(row, "league", "N/A"))
+    club = str(safe_get(row, "club", "N/A"))
+    age = get_numeric_value(row, "age", np.nan)
+    opp = get_numeric_value(row, "opportunity_score", np.nan)
+    risk = get_numeric_value(row, "risk_score", np.nan)
+    conf = get_numeric_value(row, "confidence_score", np.nan)
+    value = format_money_short(safe_get(row, "market_value_eur", np.nan))
+    expected_value = format_money_short(safe_get(row, "predicted_market_value_eur", safe_get(row, "projected_market_value_3y_eur", np.nan)))
+    gap = get_numeric_value(row, "market_value_gap_eur", np.nan)
+    minutes = get_numeric_value(row, "minutes_played", np.nan)
+
+    age_txt = "N/A" if pd.isna(age) else f"{age:.1f}"
+    opp_txt = "N/A" if pd.isna(opp) else f"{opp:.0f}/100"
+    risk_txt = "N/A" if pd.isna(risk) else f"{risk:.0f}/100"
+    conf_txt = "N/A" if pd.isna(conf) else f"{conf:.0f}/100"
+
+    if is_en:
+        sentence_1 = f"{role} profile in {taxonomy}, currently playing for {club} in {league}."
+        sentence_2 = f"Market signal: {opp_txt} Opportunity with estimated value {expected_value} vs current value {value}."
+        sentence_3 = "Profile is suitable for tactical comparison before financial due diligence." if not pd.isna(opp) and opp >= 60 else "Profile requires additional validation before entering the shortlist."
+        why_items = [
+            "Opportunity above the active universe median" if not pd.isna(opp) and opp >= 60 else "Potential upside needs validation",
+            "Financial entry point appears compatible" if not pd.isna(gap) and gap >= 0 else "Price discipline required",
+            "Tactical role is available for like-for-like comparison" if is_valid_role_value(safe_get(row, "primary_role", np.nan)) else "Tactical role still pending",
+        ]
+        risk_items = [
+            "Limited playing sample" if not pd.isna(minutes) and minutes < 1200 else "Minutes profile is stable",
+            "Model confidence requires review" if not pd.isna(conf) and conf < 70 else "Model confidence is solid",
+            "Risk score above preferred range" if not pd.isna(risk) and risk > 45 else "Risk profile is favourable",
+        ]
+        labels = {"eyebrow":"PLAYER DOSSIER", "summary":"Executive Summary", "why":"Why Recruit", "risks":"Risks", "snapshot":"Snapshot"}
+    else:
+        sentence_1 = f"Perfil {role} dentro de {taxonomy}, actualmente en {club} ({league})."
+        sentence_2 = f"Señal de mercado: Opportunity {opp_txt}, valor estimado {expected_value} frente a valor actual {value}."
+        sentence_3 = "Perfil apto para comparación táctica antes de due diligence financiera." if not pd.isna(opp) and opp >= 60 else "Perfil que requiere validación adicional antes de entrar en shortlist."
+        why_items = [
+            "Opportunity por encima de la mediana activa" if not pd.isna(opp) and opp >= 60 else "Upside potencial pendiente de validar",
+            "Punto de entrada financiero compatible" if not pd.isna(gap) and gap >= 0 else "Requiere disciplina de precio",
+            "Rol táctico disponible para comparación like-for-like" if is_valid_role_value(safe_get(row, "primary_role", np.nan)) else "Rol táctico aún pendiente",
+        ]
+        risk_items = [
+            "Muestra de minutos limitada" if not pd.isna(minutes) and minutes < 1200 else "Perfil de minutos estable",
+            "Confianza del modelo a revisar" if not pd.isna(conf) and conf < 70 else "Confianza del modelo sólida",
+            "Riesgo por encima del rango preferente" if not pd.isna(risk) and risk > 45 else "Perfil de riesgo favorable",
+        ]
+        labels = {"eyebrow":"PLAYER DOSSIER", "summary":"Executive Summary", "why":"Why Recruit", "risks":"Risks", "snapshot":"Snapshot"}
+
+    summary_html = "".join(f"<li>{html.escape(x)}</li>" for x in [sentence_1, sentence_2, sentence_3])
+    why_html = "".join(f"<li><span class='dossier-ok'>✓</span>{html.escape(x)}</li>" for x in why_items)
+    risk_html = "".join(f"<li><span class='dossier-warn'>⚠</span>{html.escape(x)}</li>" for x in risk_items)
+    st.markdown(
+        f"""
+<div class="player-dossier-shell">
+  <div class="player-dossier-head">
+    <div>
+      <div class="player-dossier-eyebrow">{labels['eyebrow']}</div>
+      <div class="player-dossier-title">{html.escape(player_name)}</div>
+      <div class="player-dossier-meta">{html.escape(role)} · {html.escape(taxonomy)} · {html.escape(age_txt)} · {html.escape(value)}</div>
+    </div>
+    <div class="player-dossier-score"><span>Opportunity</span><b>{html.escape(opp_txt)}</b></div>
+  </div>
+  <div class="player-dossier-grid">
+    <div class="player-dossier-card player-dossier-summary"><span>{labels['summary']}</span><ul>{summary_html}</ul></div>
+    <div class="player-dossier-card"><span>{labels['why']}</span><ul>{why_html}</ul></div>
+    <div class="player-dossier-card"><span>{labels['risks']}</span><ul>{risk_html}</ul></div>
+    <div class="player-dossier-card player-dossier-mini"><span>{labels['snapshot']}</span><div><b>{html.escape(risk_txt)}</b><small>Risk</small></div><div><b>{html.escape(conf_txt)}</b><small>Confidence</small></div><div><b>{html.escape(expected_value)}</b><small>Expected value</small></div></div>
+  </div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
@@ -5248,42 +12333,45 @@ def build_player_radar_chart(radar_df: pd.DataFrame, selected_player: str) -> go
             )
         ),
         showlegend=False,
-        height=430,
-        margin=dict(l=14, r=14, t=28, b=18),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        height=300,
+        margin=dict(l=4, r=4, t=10, b=4),
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
     )
 
     return fig
 
 
 def render_scouting_cards(radar_df: pd.DataFrame) -> None:
-    """Render compact scouting percentile cards."""
+    """Render compact scouting percentile cards with native Streamlit elements.
+
+    This avoids escaped/raw HTML being displayed in Streamlit/PDF exports and
+    keeps Key Performance Signals stable across browsers and screenshots.
+    """
 
     if radar_df.empty:
         return
 
-    cards_per_row = 3
+    signal_rows = list(radar_df.iterrows())
+    cols = st.columns(min(3, max(1, len(signal_rows))), gap="medium")
+    for idx, (_, row) in enumerate(signal_rows):
+        try:
+            pct = float(row["percentile"])
+        except Exception:
+            pct = 0.0
+        with cols[idx % len(cols)]:
+            st.markdown(
+                f"""
+                <div class="radar-card tm4-native-signal-card">
+                    <div class="radar-card-title">{html.escape(metric_display_name(row['label']))}</div>
+                    <div class="radar-card-percentile">P{pct:.0f}</div>
+                    <div class="radar-card-label">{html.escape(str(row['rating']))}</div>
+                    <div class="radar-card-value">{html.escape(format_radar_metric_value(row['value']).replace('Valor jugador: ', 'Valor: ').replace('Player value: ', 'Value: '))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-    for start_idx in range(0, len(radar_df), cards_per_row):
-        row_df = radar_df.iloc[start_idx:start_idx + cards_per_row]
-        cols = st.columns(cards_per_row)
-
-        for col, (_, row) in zip(cols, row_df.iterrows()):
-            with col:
-                st.markdown(
-                    f"""
-                    <div class="radar-card">
-                        <div class="radar-card-title">{html.escape(metric_display_name(row['label']))}</div>
-                        <div class="radar-card-percentile">P{float(row['percentile']):.0f}</div>
-                        <div class="radar-card-label">{html.escape(str(row['rating']))}</div>
-                        <div class="radar-card-value">{html.escape(format_radar_metric_value(row['value']).replace('Valor jugador: ', 'Valor: ').replace('Player value: ', 'Value: '))}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
 
 def render_benchmark_context(benchmark_df: pd.DataFrame, benchmark_mode: str, player_position: str) -> None:
     """Render benchmark context for the radar section."""
@@ -5324,17 +12412,12 @@ def render_benchmark_context(benchmark_df: pd.DataFrame, benchmark_mode: str, pl
     )
 
 
-def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
-    st.markdown("---")
-    st.header("🎯 Player Radar & Positional Benchmarking")
-    st.markdown(
-        f"""
-<div class="radar-info-box">
-<b>{UI('Radar scouting')}:</b> {UI('percentiles del jugador frente a su benchmark posicional para detectar fortalezas, debilidades y perfil dominante.')}</div>
-""",
-        unsafe_allow_html=True,
-    )
+def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: bool = False) -> None:
+    """Render Performance Benchmark as one closed professional module.
 
+    TM.4.1 polish: the benchmark controls, radar, key signals and readout must
+    behave visually as a single scouting engine, not as separate Streamlit widgets.
+    """
     if shortlist_df.empty:
         st.info("No hay jugadores disponibles para construir el radar con los filtros actuales.")
         return
@@ -5343,6 +12426,13 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
     if player_name_col not in shortlist_df.columns:
         st.info("No hay columna de nombre de jugador disponible para el selector del radar.")
         return
+
+    # The visible page may be narrowed to one searched player. For benchmarking,
+    # use the active filter universe captured before global search. This prevents
+    # constant P100 values when only one player is selected.
+    benchmark_pool = globals().get("RADAR_BENCHMARK_POOL_DF", shortlist_df)
+    if not isinstance(benchmark_pool, pd.DataFrame) or benchmark_pool.empty:
+        benchmark_pool = shortlist_df
 
     selector_df = shortlist_df.dropna(subset=[player_name_col]).copy()
     if selector_df.empty:
@@ -5353,85 +12443,122 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame) -> None:
         selector_df = selector_df.sort_values("opportunity_score", ascending=False)
 
     player_options = selector_df[player_name_col].astype(str).drop_duplicates().tolist()
+    # If the searched player is not in the benchmark pool due to the exact focus
+    # filter, keep him as selector but compute percentiles against the broader pool.
+    if player_name_col in benchmark_pool.columns:
+        pool_options = benchmark_pool[player_name_col].dropna().astype(str).drop_duplicates().tolist()
+        for _name in player_options:
+            if _name not in pool_options:
+                pool_options.insert(0, _name)
 
-    controls = st.columns([1.5, 1.0])
-    with controls[0]:
-        selected_radar_player = st.selectbox(
-            UI("Seleccionar jugador"),
-            player_options,
-            key="radar_selected_player",
+
+    with st.container(border=True):
+        radar_help = UI('percentiles del jugador frente a su benchmark posicional para detectar fortalezas, debilidades y perfil dominante.')
+        st.markdown(
+            f"""
+<div class="tm4-section-header tm4-performance-header">
+    <div>
+        <div class="tm4-section-eyebrow">PLAYER INTELLIGENCE</div>
+        <div class="tm4-section-title">2. Performance Benchmark
+            <details class="module-info-details">
+                <summary>i</summary>
+                <div><b>{UI('Radar scouting')}:</b> {html.escape(str(radar_help))}</div>
+            </details>
+        </div>
+        <div class="tm4-section-subtitle">{'Positional benchmark, performance signals and scouting readout.' if LANG == 'EN' else 'Benchmark posicional, señales de rendimiento y lectura scouting.'}</div>
+    </div>
+</div>
+""",
+            unsafe_allow_html=True,
         )
-    with controls[1]:
-        benchmark_mode = st.radio(
-            UI("Comparar contra"),
-            [UI("Misma posición"), UI("Toda la muestra")],
-            horizontal=True,
-            key="radar_benchmark_mode",
-        )
 
-    player_row = selector_df[selector_df[player_name_col].astype(str) == selected_radar_player].iloc[0]
-    render_player_profile_header(player_row, player_name_col, "Selected player")
-    player_position = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
-
-    benchmark_df = shortlist_df.copy()
-    if benchmark_mode in {"Misma posición", "Same position"} and "position_group" in benchmark_df.columns:
-        benchmark_df = benchmark_df[
-            benchmark_df["position_group"].apply(normalize_position_group) == player_position
-        ].copy()
-
-    radar_df, missing_metrics = build_player_radar_data(
-        player_row=player_row,
-        benchmark_df=benchmark_df,
-        source_df=shortlist_df,
-    )
-
-    if radar_df.empty or len(radar_df) < 3:
-        position_key = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
-        expected_metrics = [metric for metric, _ in RADAR_METRIC_CANDIDATES.get(position_key, [])]
-
-        st.warning(
-            "No hay suficientes métricas disponibles para construir benchmarking posicional real. "
-            "La shortlist actual solo contiene variables de scoring y métricas ofensivas básicas. "
-            "Regenera el ranking incorporando columnas FBref avanzadas o revisa que existan en data/processed/."
-        )
-        st.caption("Métricas esperadas para esta posición: " + ", ".join(expected_metrics))
-        st.caption("Columnas disponibles para radar: " + ", ".join([c for c in shortlist_df.columns if c in get_all_radar_metric_columns()]))
-        return
-
-    render_benchmark_context(
-        benchmark_df=benchmark_df,
-        benchmark_mode=benchmark_mode,
-        player_position=player_position,
-    )
-
-    radar_col, cards_col = st.columns([1.15, 1.0], gap="large")
-    with radar_col:
-        radar_fig = build_player_radar_chart(radar_df, selected_radar_player)
-        if radar_fig is not None:
-            st.plotly_chart(
-                radar_fig,
-                use_container_width=True,
-                config={"displaylogo": False},
+        st.markdown('<div class="tm4-benchmark-toolbar-anchor"></div>', unsafe_allow_html=True)
+        controls = st.columns([1.8, 1.25])
+        with controls[0]:
+            selected_radar_player = st.selectbox(
+                UI("Seleccionar jugador"),
+                player_options,
+                key="radar_selected_player",
+            )
+        with controls[1]:
+            benchmark_mode = st.radio(
+                UI("Comparar contra"),
+                [UI("Misma posición"), UI("Toda la muestra")],
+                horizontal=True,
+                key="radar_benchmark_mode",
             )
 
-    with cards_col:
-        st.subheader("🧾 " + UI("Tarjetas de scouting"))
-        render_scouting_cards(radar_df)
+        player_row = selector_df[selector_df[player_name_col].astype(str) == selected_radar_player].iloc[0]
+        if show_snapshot:
+            render_player_profile_header(player_row, player_name_col, "Selected player")
+        player_position = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
 
-        if missing_metrics:
-            st.caption(
-                "Métricas sin dato para este benchmark: " + ", ".join(sorted(set(missing_metrics)))
+        benchmark_df = benchmark_pool.copy()
+        # Ensure the selected player row is present in the displayed benchmark context
+        # while keeping the denominator as the broader active universe.
+        if player_name_col in benchmark_df.columns and not (benchmark_df[player_name_col].astype(str) == str(selected_radar_player)).any():
+            benchmark_df = pd.concat([benchmark_df, player_row.to_frame().T], ignore_index=True)
+        if benchmark_mode in {"Misma posición", "Same position"} and "position_group" in benchmark_df.columns:
+            benchmark_df = benchmark_df[
+                benchmark_df["position_group"].apply(normalize_position_group) == player_position
+            ].copy()
+
+        radar_df, missing_metrics = build_player_radar_data(
+            player_row=player_row,
+            benchmark_df=benchmark_df,
+            source_df=benchmark_pool,
+        )
+
+        if radar_df.empty or len(radar_df) < 3:
+            position_key = normalize_position_group(safe_get(player_row, "position_group", "UNK"))
+            expected_metrics = [metric for metric, _ in RADAR_METRIC_CANDIDATES.get(position_key, [])]
+
+            st.warning(
+                "No hay suficientes métricas disponibles para construir benchmarking posicional real. "
+                "La shortlist actual solo contiene variables de scoring y métricas ofensivas básicas. "
+                "Regenera el ranking incorporando columnas FBref avanzadas o revisa que existan en data/processed/."
             )
+            st.caption("Métricas esperadas para esta posición: " + ", ".join(expected_metrics))
+            st.caption("Columnas disponibles para radar: " + ", ".join([c for c in shortlist_df.columns if c in get_all_radar_metric_columns()]))
+            return
 
-    top_attributes = radar_df.sort_values("percentile", ascending=False).head(4)
-    explanation = " · ".join(
-        f"{metric_display_name(row['label'])} P{float(row['percentile']):.1f} ({row['rating']})"
-        for _, row in top_attributes.iterrows()
-    )
-    st.markdown(
-        (f"**Scouting readout:** {html.escape(str(selected_radar_player))} stands out mainly in {explanation}." if globals().get("LANG") == "EN" else f"**Lectura scouting:** {html.escape(str(selected_radar_player))} destaca principalmente en {explanation}.")
-    )
+        render_benchmark_context(
+            benchmark_df=benchmark_df,
+            benchmark_mode=benchmark_mode,
+            player_position=player_position,
+        )
 
+        bars_col, cards_col = st.columns([1.35, 0.95], gap="large")
+        with bars_col:
+            st.markdown(_tm69_performance_bars_html(radar_df), unsafe_allow_html=True)
+
+        with cards_col:
+            st.markdown(
+                f"""
+                <div class="internal-module-header internal-module-header--compact tm4-signals-title">
+                    <div class="internal-module-title internal-module-title--sm">{'KEY PERFORMANCE SIGNALS' if LANG == 'EN' else 'SEÑALES CLAVE DE RENDIMIENTO'}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            render_scouting_cards(radar_df)
+
+            if missing_metrics:
+                st.caption(
+                    "Métricas sin dato para este benchmark: " + ", ".join(sorted(set(missing_metrics)))
+                )
+
+        top_attributes = radar_df.sort_values("percentile", ascending=False).head(4)
+        explanation = " · ".join(
+            f"{metric_display_name(row['label'])} P{float(row['percentile']):.1f} ({row['rating']})"
+            for _, row in top_attributes.iterrows()
+        )
+        readout_text = (
+            f"<b>Scouting readout:</b> {html.escape(str(selected_radar_player))} stands out mainly in {explanation}."
+            if globals().get("LANG") == "EN"
+            else f"<b>Lectura scouting:</b> {html.escape(str(selected_radar_player))} destaca principalmente en {explanation}."
+        )
+        st.markdown(f"<div class='radar-readout-card'>{readout_text}</div>", unsafe_allow_html=True)
 
 
 
@@ -5912,8 +13039,8 @@ def build_multi_player_radar_chart(
         showlegend=True,
         height=460,
         margin=dict(l=14, r=14, t=28, b=56),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -6364,11 +13491,9 @@ def render_multi_player_radar_comparison(shortlist_df: pd.DataFrame) -> None:
         st.info("No hay suficientes métricas comunes para construir el radar comparativo.")
         return
 
-    left_radar_col, right_radar_col = st.columns([1.45, 0.95], gap="large")
+    left_radar_col, right_radar_col = st.columns([1.25, 1.05], gap="large")
     with left_radar_col:
-        st.markdown("<div class='radar-chart-card'>", unsafe_allow_html=True)
         st.plotly_chart(radar_fig, use_container_width=True, config={"displaylogo": False})
-        st.markdown("</div>", unsafe_allow_html=True)
 
     percentile_matrix = build_multi_player_percentile_matrix(
         selected_rows=selected_rows,
@@ -6796,9 +13921,9 @@ def similarity_recommendation_label(value: str) -> str:
         "Upgrade": {"ES": "Upgrade", "EN": "Upgrade"},
         "Strong Alternative": {"ES": "Strong Alternative", "EN": "Strong Alternative"},
         "Similar": {"ES": "Similar", "EN": "Similar"},
-        "Development Bet": {"ES": "Development Bet", "EN": "Development Bet"},
-        "Lower Priority": {"ES": "Lower Priority", "EN": "Lower Priority"},
-        "Higher Risk": {"ES": "Higher Risk", "EN": "Higher Risk"},
+        "Development Bet": {"ES": "Apuesta de desarrollo", "EN": "Development Bet"},
+        "Lower Priority": {"ES": "Prioridad baja", "EN": "Lower Priority"},
+        "Higher Risk": {"ES": "Riesgo alto", "EN": "Higher Risk"},
     }
     return labels.get(str(value), {"ES": str(value), "EN": str(value)}).get(LANG, str(value))
 
@@ -6913,8 +14038,24 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
 
     sim_threshold = float(chart["_similarity"].quantile(0.75))
     opp_threshold = float(chart["_opportunity_axis"].quantile(0.75))
-    x_min, x_max = 84.0, 103.0
-    y_min, y_max = 48.0, 104.0
+    # Product view: adapt the viewport to the visible alternatives. This avoids a
+    # notebook-like chart with one bubble lost in excessive whitespace.
+    sim_min = float(chart["_similarity"].min())
+    sim_max = float(chart["_similarity"].max())
+    opp_min = float(chart["_opportunity_axis"].min())
+    opp_max = float(chart["_opportunity_axis"].max())
+    sim_pad = max(3.5, (sim_max - sim_min) * 0.18)
+    opp_pad = max(7.0, (opp_max - opp_min) * 0.18)
+    x_min = max(0.0, sim_min - sim_pad)
+    x_max = min(104.0, sim_max + sim_pad)
+    y_min = max(0.0, opp_min - opp_pad)
+    y_max = min(104.0, opp_max + opp_pad)
+    if x_max - x_min < 12:
+        mid = (x_min + x_max) / 2
+        x_min, x_max = max(0.0, mid - 6), min(104.0, mid + 6)
+    if y_max - y_min < 24:
+        mid = (y_min + y_max) / 2
+        y_min, y_max = max(0.0, mid - 12), min(104.0, mid + 12)
 
     recommendation_order = ["Upgrade", "Strong Alternative", "Similar", "Development Bet", "Lower Priority", "Higher Risk"]
     color_map = {
@@ -6929,10 +14070,10 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
     fig = go.Figure()
 
     # More visible executive quadrants.
-    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=opp_threshold, y1=y_max, fillcolor="rgba(245, 158, 11, 0.20)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=opp_threshold, y1=y_max, fillcolor="rgba(34, 197, 94, 0.22)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=y_min, y1=opp_threshold, fillcolor="rgba(148, 163, 184, 0.16)", line_width=0, layer="below")
-    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=y_min, y1=opp_threshold, fillcolor="rgba(96, 165, 250, 0.18)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=opp_threshold, y1=y_max, fillcolor="rgba(255, 244, 232, 0.86)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=opp_threshold, y1=y_max, fillcolor="rgba(234, 247, 238, 0.92)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=x_min, x1=sim_threshold, y0=y_min, y1=opp_threshold, fillcolor="rgba(237, 243, 255, 0.88)", line_width=0, layer="below")
+    fig.add_shape(type="rect", x0=sim_threshold, x1=x_max, y0=y_min, y1=opp_threshold, fillcolor="rgba(239, 246, 255, 0.90)", line_width=0, layer="below")
 
     for rec_class in recommendation_order:
         group = chart[chart["_recommendation_class"] == rec_class].copy()
@@ -6953,8 +14094,8 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
                 marker=dict(
                     size=np.where(group["_is_highlighted"], marker_sizes * 1.18, marker_sizes),
                     color=color_map.get(rec_class, "#64748b"),
-                    opacity=np.where(group["_is_highlighted"], 0.98, 0.80),
-                    line=dict(width=marker_lines, color=marker_line_colors),
+                    opacity=np.where(group["_is_highlighted"], 0.96, 0.68),
+                    line=dict(width=np.where(group["_is_highlighted"], 3.4, 1.6), color=np.where(group["_is_highlighted"], "#0f172a", "#FFFFFF")),
                 ),
                 customdata=np.stack([
                     group["_player_label"], group["_club_label"], group["_league_label"], group["_position_label"],
@@ -6994,11 +14135,11 @@ def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.
     fig.update_layout(
         xaxis_title="Similarity Score",
         yaxis_title="Opportunity Score",
-        height=500,
-        margin=dict(l=56, r=20, t=28, b=42),
-        showlegend=True,
-        legend=dict(orientation="h", x=0.0, xanchor="left", y=1.14, yanchor="bottom", bgcolor="rgba(255,255,255,0)", font=dict(size=10), title=None),
+        height=430,
+        margin=dict(l=48, r=20, t=18, b=42),
+        showlegend=False,
         hovermode="closest",
+        hoverlabel=dict(bgcolor="#ffffff", bordercolor="#dbeafe", font_size=12, font_color="#0f172a"),
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
         uniformtext=dict(minsize=9, mode="show"),
@@ -7026,10 +14167,10 @@ def render_similarity_benchmark_profile(target_row: pd.Series, name_col: str) ->
             <div class="similarity-benchmark-title">{html.escape(str(target_name))}</div>
             <div class="similarity-benchmark-grid">
                 <div class="similarity-benchmark-kpi"><span>Similarity baseline</span><b>100</b></div>
-                <div class="similarity-benchmark-kpi"><span>Opportunity</span><b>{format_score(opp)}</b></div>
-                <div class="similarity-benchmark-kpi"><span>Risk</span><b>{format_score(risk)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>{html.escape(lbl_opportunity)}</span><b>{format_score(opp)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>{html.escape(lbl_risk)}</span><b>{format_score(risk)}</b></div>
                 <div class="similarity-benchmark-kpi"><span>Market value</span><b>{html.escape(format_money_short(value))}</b></div>
-                <div class="similarity-benchmark-kpi"><span>Age</span><b>{format_score(age)}</b></div>
+                <div class="similarity-benchmark-kpi"><span>{html.escape(lbl_age)}</span><b>{format_score(age)}</b></div>
                 <div class="similarity-benchmark-kpi"><span>League</span><b>{html.escape(str(league))}</b></div>
             </div>
             <div class="similarity-kpi-meta" style="margin-top:8px;">{html.escape(str(position))} · {html.escape(str(club))}</div>
@@ -7256,12 +14397,63 @@ def render_similarity_decision_support_panel(target_row: pd.Series, best_row: pd
         compare_title = "Benchmark vs alternative"
         ref_header = "Reference"
         alt_header = "Alternative"
+        feasibility_title = "Transfer feasibility"
+        context_title = "Context fit"
+        better_title = "Why better / worse"
+        fee_label, salary_label, availability_label = "Estimated fee", "Salary tier", "Availability"
+        league_label, age_label, style_label, role_label = "League", "Age", "Style", "Role"
     else:
         action_title = "Acción recomendada DSS"
         drivers_title = "Drivers de recomendación"
         compare_title = "Benchmark vs alternativa"
         ref_header = "Referencia"
         alt_header = "Alternativa"
+        feasibility_title = "Viabilidad de fichaje"
+        context_title = "Encaje contextual"
+        better_title = "Mejor / peor que benchmark"
+        fee_label, salary_label, availability_label = "Fee estimado", "Tier salarial", "Disponibilidad"
+        league_label, age_label, style_label, role_label = "Liga", "Edad", "Estilo", "Rol"
+
+    # Executive product layer: translate similarity into recruitment feasibility.
+    market_value = get_numeric_value(best_row, "market_value_eur", np.nan)
+    risk_value = get_numeric_value(best_row, "risk_score", np.nan)
+    sim_value = get_numeric_value(best_row, "similarity_score_pct", np.nan)
+    age_value = get_numeric_value(best_row, "age", np.nan)
+    delta_value = get_numeric_value(best_row, "delta_market_value_eur", np.nan)
+    delta_opp = get_numeric_value(best_row, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(best_row, "delta_risk", np.nan)
+    estimated_fee = format_money_short(market_value)
+    salary_tier = ("Low" if LANG == "EN" else "Bajo") if pd.notna(market_value) and market_value <= 5_000_000 else (("Medium" if LANG == "EN" else "Medio") if pd.notna(market_value) and market_value <= 20_000_000 else ("High" if LANG == "EN" else "Alto"))
+    availability = ("High" if LANG == "EN" else "Alta") if pd.notna(market_value) and market_value <= 8_000_000 else (("Medium" if LANG == "EN" else "Media") if pd.notna(market_value) and market_value <= 25_000_000 else ("Low" if LANG == "EN" else "Baja"))
+    league_fit = min(100, max(35, 70 + (10 if str(safe_get(best_row, "league_quality_tier", "")).lower() in {"élite", "elite", "muy alto", "very high"} else 0)))
+    age_fit = 95 if pd.notna(age_value) and age_value <= 23 else 70
+    style_fit = min(100, max(0, sim_value if pd.notna(sim_value) else 60))
+    role_fit = 100 if is_valid_role_value(safe_get(best_row, "primary_role", np.nan)) and str(safe_get(best_row, "primary_role", "")) == str(safe_get(target_row, "primary_role", "")) else 75
+
+    def _fit_row(label, value):
+        return f"<div class='fit-row'><span>{html.escape(label)}</span><b>{value:.0f}</b><i style='width:{value:.0f}%'></i></div>"
+
+    fit_html = _fit_row(league_label, league_fit) + _fit_row(age_label, age_fit) + _fit_row(style_label, style_fit) + _fit_row(role_label, role_fit)
+
+    why_better = []
+    why_worse = []
+    if pd.notna(delta_value) and delta_value < 0:
+        why_better.append(("+", ("Cheaper than benchmark" if LANG == "EN" else "Más barato que el benchmark") + f" ({format_signed_money_short(delta_value)})"))
+    elif pd.notna(delta_value) and delta_value > 0:
+        why_worse.append(("-", ("More expensive than benchmark" if LANG == "EN" else "Más caro que el benchmark") + f" ({format_signed_money_short(delta_value)})"))
+    if pd.notna(delta_risk) and delta_risk <= 0:
+        why_better.append(("+", ("Lower risk" if LANG == "EN" else "Menor riesgo") + f" ({delta_risk:+.1f})"))
+    elif pd.notna(delta_risk) and delta_risk > 0:
+        why_worse.append(("-", ("Higher risk" if LANG == "EN" else "Mayor riesgo") + f" ({delta_risk:+.1f})"))
+    if pd.notna(delta_opp) and delta_opp >= 0:
+        why_better.append(("+", ("Higher opportunity" if LANG == "EN" else "Mayor Opportunity") + f" ({delta_opp:+.1f})"))
+    elif pd.notna(delta_opp) and delta_opp < 0:
+        why_worse.append(("-", ("Lower opportunity" if LANG == "EN" else "Menor Opportunity") + f" ({delta_opp:+.1f})"))
+    if not why_better:
+        why_better.append(("+", "Tactical comparability" if LANG == "EN" else "Comparabilidad táctica"))
+    if not why_worse:
+        why_worse.append(("-", "No major downside detected" if LANG == "EN" else "Sin debilidades materiales detectadas"))
+    why_html = "".join(f"<div class='similarity-driver-item'><span class='similarity-driver-{'plus' if sign == '+' else 'minus'}'>{html.escape(sign)}</span><span>{html.escape(text)}</span></div>" for sign, text in (why_better[:2] + why_worse[:2]))
 
     st.markdown(
         f"""
@@ -7275,6 +14467,25 @@ def render_similarity_decision_support_panel(target_row: pd.Series, best_row: pd
                 <div class="similarity-decision-eyebrow">Explainability</div>
                 <div class="similarity-decision-title">{html.escape(drivers_title)}</div>
                 <div class="similarity-driver-list">{drivers_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Transfer</div>
+                <div class="similarity-decision-title">{html.escape(feasibility_title)}</div>
+                <div class="similarity-action-list">
+                    <div class="similarity-action-item"><span>{html.escape(fee_label)}</span><b>{html.escape(estimated_fee)}</b></div>
+                    <div class="similarity-action-item"><span>{html.escape(salary_label)}</span><b>{html.escape(salary_tier)}</b></div>
+                    <div class="similarity-action-item"><span>{html.escape(availability_label)}</span><b>{html.escape(availability)}</b></div>
+                </div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Fit</div>
+                <div class="similarity-decision-title">{html.escape(context_title)}</div>
+                <div class="context-fit-bars">{fit_html}</div>
+            </div>
+            <div class="similarity-decision-card">
+                <div class="similarity-decision-eyebrow">Trade-off</div>
+                <div class="similarity-decision-title">{html.escape(better_title)}</div>
+                <div class="similarity-driver-list">{why_html}</div>
             </div>
             <div class="similarity-decision-card">
                 <div class="similarity-decision-eyebrow">Trade-off</div>
@@ -7389,7 +14600,7 @@ def build_replacement_narrative(target_player: str, replacement_df: pd.DataFrame
 
 def render_shortlist_comparison_table(shortlist_df: pd.DataFrame) -> None:
     """Executive candidate decision table."""
-    st.subheader("📋 " + ("Tablero de reclutamiento" if LANG == "ES" else "Recruitment Board"))
+    st.subheader("📋 " + ("Recruitment Center" if LANG == "ES" else "Recruitment Center"))
     st.caption(TXT("Comparativa ejecutiva de candidatos filtrados. El CSV conserva las variables auxiliares para auditoría metodológica."))
 
     if shortlist_df.empty:
@@ -7493,7 +14704,7 @@ def render_shortlist_comparison_table(shortlist_df: pd.DataFrame) -> None:
         )
 
     csv_columns = [col for col in COMPARISON_CSV_COLUMNS if col in comparison_df.columns]
-    csv = comparison_df[csv_columns].to_csv(index=False).encode("utf-8")
+    csv = apply_club_name_normalization(comparison_df[csv_columns]).to_csv(index=False).encode("utf-8")
     st.download_button(
         TXT("Descargar comparación CSV"),
         data=csv,
@@ -7567,7 +14778,7 @@ def calculate_similarity_table(
 
 
 def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
-    """Similarity Engine with executive interpretation."""
+    """Executive Similar Player Intelligence without internal scrolls."""
     st.markdown(
         f"""
         <div class="similar-intel-header">
@@ -7575,7 +14786,7 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
                 <div class="similar-intel-icon">◎</div>
                 <div>
                     <div class="similar-intel-title">Similar Player Intelligence</div>
-                    <div class="similar-intel-subtitle">{html.escape('Identifica las mejores alternativas para reforzar tu plantilla con perfiles similares' if LANG == 'ES' else 'Identify the best alternatives to strengthen the squad with comparable profiles')}</div>
+                    <div class="similar-intel-subtitle">{html.escape('Identifica alternativas comparables con lectura ejecutiva de viabilidad, encaje y trade-off.' if LANG == 'ES' else 'Identify comparable alternatives with executive feasibility, fit and trade-off context.')}</div>
                 </div>
             </div>
         </div>
@@ -7601,186 +14812,175 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         st.info(TXT("No hay jugadores disponibles para el motor de similitud."))
         return
 
-    controls = st.columns([1.4, 0.8, 0.8])
+    st.markdown("<div class='similar-final-controls'>", unsafe_allow_html=True)
+    controls = st.columns([1.55, 0.75, 0.85, 0.55])
     with controls[0]:
         target_player = st.selectbox(TXT("Jugador de referencia"), options, key="sprint11_similarity_target")
     with controls[1]:
         restrict_same_position = st.checkbox(UI("Misma posición"), value=True, key="sprint11_similarity_same_position")
     with controls[2]:
-        top_n = st.slider("Top N", 5, 20, 10, key="sprint11_similarity_top_n")
+        restrict_same_role_context = st.checkbox(
+            "Rol/taxonomía" if LANG == "ES" else "Role/taxonomy",
+            value=True,
+            key="sprint11_similarity_same_role_context",
+            help="Filtra comparables por taxonomía posicional y rol primario." if LANG == "ES" else "Filters comparables by taxonomy and primary role.",
+        )
+    with controls[3]:
+        top_n = st.selectbox("Top", [5, 8, 10, 15, 20], index=2, key="sprint11_similarity_top_n_select")
+    st.markdown("</div>", unsafe_allow_html=True)
 
     target_rows = selector_df[selector_df[name_col].astype(str) == str(target_player)]
     if target_rows.empty:
         st.info(TXT("No se encuentra el jugador de referencia seleccionado."))
         return
     target_row = target_rows.iloc[0]
+
     similarity_df = calculate_similarity_table(
         df=selector_df,
         target_player=target_player,
         name_col=name_col,
         restrict_same_position=restrict_same_position,
     )
-
     if similarity_df.empty:
         st.info(TXT("No hay suficientes variables numéricas para calcular similitud de forma robusta."))
         return
 
+    if restrict_same_role_context:
+        if "position_taxonomy" in similarity_df.columns and "position_taxonomy" in target_row.index and pd.notna(target_row.get("position_taxonomy")):
+            target_taxonomy = str(target_row.get("position_taxonomy"))
+            similarity_df = similarity_df[similarity_df["position_taxonomy"].astype(str) == target_taxonomy].copy()
+        if "primary_role" in similarity_df.columns and "primary_role" in target_row.index and is_valid_role_value(target_row.get("primary_role")):
+            target_role = str(target_row.get("primary_role"))
+            role_filtered = similarity_df[similarity_df["primary_role"].astype(str) == target_role].copy()
+            if len(role_filtered) >= max(3, min(int(top_n), 5)):
+                similarity_df = role_filtered
+        if similarity_df.empty:
+            st.info("No hay comparables con el mismo contexto táctico. Desactiva el filtro Rol/taxonomía." if LANG == "ES" else "No comparable players match the same tactical context. Disable Role/taxonomy filter.")
+            return
+
     similarity_df = add_similarity_deltas(similarity_df, target_row)
     similarity_df["_recommendation_class"] = similarity_df.apply(classify_similarity_recommendation, axis=1)
     best = similarity_df.iloc[0]
-    render_similarity_executive_cards(target_row, best, name_col, similarity_df.head(top_n))
+    best_name = get_display_name(best, name_col)
+    target_name = get_display_name(target_row, name_col)
 
-    similarity_chart_source = similarity_df.head(top_n).copy()
-    highlight_options = similarity_chart_source[name_col].astype(str).tolist() if name_col in similarity_chart_source.columns else []
-    highlighted_player = highlight_options[0] if highlight_options else None
-    if highlight_options:
-        highlighted_player = st.selectbox(
-            "Perfil destacado" if LANG == "ES" else "Highlighted profile",
-            highlight_options,
-            index=0,
-            key="similarity_highlighted_profile",
-            help="Selecciona un perfil del ranking lateral para resaltarlo en el mapa." if LANG == "ES" else "Select a profile from the side ranking to highlight it on the map.",
-        )
-    similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=highlighted_player)
-    if similarity_fig is not None:
-        render_similarity_recommendation_card(best, name_col)
-        render_similarity_decision_support_panel(target_row, best, name_col)
-        chart_col, rank_col = st.columns([3.0, 1.0], gap="large")
-        with chart_col:
-            render_similarity_benchmark_profile(target_row, name_col)
-            st.markdown(
-                f"""
-                <div class="similarity-chart-shell">
-                    <div class="similarity-chart-header-grid">
-                        <div>
-                            <div class="similarity-map-title">Similarity vs Opportunity Analysis</div>
-                            <div class="similarity-map-subtitle">{html.escape('El mapa compara alternativas reales de recruitment; el jugador referencia queda fuera del gráfico como benchmark ejecutivo.' if LANG == 'ES' else 'The map compares real recruitment alternatives; the reference player stays outside the chart as the executive benchmark.')}</div>
-                        </div>
-                        <div class="similarity-bubble-note">Bubble Size = Market Value (€)</div>
-                    </div>
-                    <div class="similarity-quadrant-legend">
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#22c55e"></i>Elite Targets</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#60a5fa"></i>Similar Replacements</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#f59e0b"></i>High Upside Prospects</span>
-                        <span class="similarity-quadrant-chip"><i class="similarity-quadrant-dot" style="background:#94a3b8"></i>Low Priority</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False})
-            st.markdown(
-                f"""
-                <div class="similarity-chart-card-note">ⓘ {html.escape('El mapa cruza similitud y Opportunity Score para priorizar sustitutos comparables. El tamaño de la burbuja representa exclusivamente valor de mercado.' if LANG == 'ES' else 'The map combines similarity and Opportunity Score to prioritize comparable replacements. Bubble size represents market value only.')}</div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with rank_col:
-            render_similarity_rank_panel(similarity_chart_source, name_col, highlighted_player=highlighted_player)
-        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    similarity = get_numeric_value(best, "similarity_score_pct", np.nan)
+    fit = get_numeric_value(best, "replacement_context_fit", get_numeric_value(best, "similarity_score_pct", np.nan))
+    opp = get_numeric_value(best, "opportunity_score", np.nan)
+    risk = get_numeric_value(best, "risk_score", np.nan)
+    delta_opp = get_numeric_value(best, "delta_opportunity", np.nan)
+    delta_risk = get_numeric_value(best, "delta_risk", np.nan)
+    delta_value = get_numeric_value(best, "delta_market_value_eur", np.nan)
+    market_value = get_numeric_value(best, "market_value_eur", np.nan)
+    contract_months = get_numeric_value(best, "contract_months_remaining", get_numeric_value(best, "months_remaining", np.nan))
 
-    # Executive compact view: keep only decision-relevant fields on screen.
-    # Full variables remain available in the underlying dataframe for audit/export if needed.
-    similarity_view = similarity_df.head(top_n).copy()
-    if "projected_market_value_3y_eur" in similarity_view.columns:
-        similarity_view["projected_value_3y_display"] = similarity_view["projected_market_value_3y_eur"].apply(format_money_short)
-    if "delta_projected_market_value_3y_eur" in similarity_view.columns:
-        similarity_view["delta_projected_value_3y_display"] = similarity_view["delta_projected_market_value_3y_eur"].apply(
-            lambda value: format_signed_money_short(value)
-        )
-    if "delta_market_value_eur" in similarity_view.columns:
-        similarity_view["delta_market_value_display"] = similarity_view["delta_market_value_eur"].apply(
-            lambda value: format_signed_money_short(value)
-        )
+    availability = "Alta" if LANG == "ES" else "High"
+    if pd.notna(contract_months):
+        if contract_months <= 6:
+            availability = "Muy alta" if LANG == "ES" else "Very high"
+        elif contract_months <= 18:
+            availability = "Alta" if LANG == "ES" else "High"
+        else:
+            availability = "Media" if LANG == "ES" else "Medium"
+    salary_tier = "Medio" if LANG == "ES" else "Medium"
+    if pd.notna(market_value) and market_value >= 20_000_000:
+        salary_tier = "Alto" if LANG == "ES" else "High"
+    elif pd.notna(market_value) and market_value <= 5_000_000:
+        salary_tier = "Bajo" if LANG == "ES" else "Low"
 
-    similarity_view["recommendation_label"] = similarity_view.apply(lambda row: similarity_recommendation_label(str(safe_get(row, "_recommendation_class", classify_similarity_recommendation(row)))), axis=1)
-    if "market_value_eur" in similarity_view.columns:
-        similarity_view["market_value_display"] = similarity_view["market_value_eur"].apply(format_money_short)
+    league_fit = max(0, min(100, 75 + get_numeric_value(best, "delta_league_strength", 0) * 4))
+    role_fit = max(0, min(100, similarity if pd.notna(similarity) else 0))
+    age_target = get_numeric_value(target_row, "age", np.nan)
+    age_best = get_numeric_value(best, "age", np.nan)
+    age_fit = max(0, min(100, 100 - abs((age_best if pd.notna(age_best) else 24) - (age_target if pd.notna(age_target) else 24)) * 8))
+    style_fit = max(0, min(100, fit if pd.notna(fit) else role_fit))
 
-    executive_cols = [name_col, "club", "league", "position_group", "similarity_score_pct", "opportunity_score", "risk_score", "market_value_display", "recommendation_label"]
-    executive_cols = [col for col in executive_cols if col in similarity_view.columns]
+    better_items = []
+    worse_items = []
+    if pd.notna(delta_value):
+        (better_items if delta_value < 0 else worse_items).append(("Más barato" if LANG == "ES" else "Cheaper") if delta_value < 0 else ("Más caro" if LANG == "ES" else "More expensive"))
+    if pd.notna(delta_risk):
+        (better_items if delta_risk < 0 else worse_items).append(("Menor riesgo" if LANG == "ES" else "Lower risk") if delta_risk < 0 else ("Mayor riesgo" if LANG == "ES" else "Higher risk"))
+    if pd.notna(delta_opp):
+        (better_items if delta_opp > 0 else worse_items).append(("Mayor Opportunity" if LANG == "ES" else "Higher Opportunity") if delta_opp > 0 else ("Menor Opportunity" if LANG == "ES" else "Lower Opportunity"))
+    if not better_items:
+        better_items = ["Perfil táctico muy similar" if LANG == "ES" else "Very similar tactical profile"]
+    if not worse_items:
+        worse_items = ["Sin alertas críticas" if LANG == "ES" else "No critical flags"]
 
-    matrix_title = 'Recruitment Intelligence Matrix' if LANG == 'EN' else 'Recruitment Intelligence Matrix'
-    matrix_note = 'Executive view · advanced variables remain in the expandable analytical view' if LANG == 'EN' else 'Vista ejecutiva · variables avanzadas en el desplegable analítico'
-    st.markdown(
-        f"<div class='similarity-exec-table-title'><span>{html.escape(matrix_title)}</span><span class='similarity-exec-table-note'>{html.escape(matrix_note)}</span></div>",
-        unsafe_allow_html=True,
-    )
-    st.dataframe(
-        localize_display_df(similarity_view)[executive_cols],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-            "club": st.column_config.TextColumn("Club"),
-            "league": st.column_config.TextColumn(T("league")),
-            "position_group": st.column_config.TextColumn(T("position")),
-            "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-            "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-            "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            "market_value_display": st.column_config.TextColumn("Value" if LANG == "EN" else "Valor"),
-            "recommendation_label": st.column_config.TextColumn("Assessment" if LANG == "EN" else "Assessment"),
-        },
-    )
+    def _fit_row(label, value):
+        value = max(0, min(100, float(value) if pd.notna(value) else 0))
+        return f"<div class='context-fit-row'><div class='context-fit-label'>{html.escape(label)}</div><div class='context-fit-track'><span style='width:{value:.0f}%'></span></div><div class='context-fit-value'>{value:.0f}</div></div>"
 
-    analytical_cols = [
-        name_col, "club", "league", "league_quality_tier", "position_group", "similarity_score_pct",
-        "delta_opportunity", "delta_risk", "delta_growth", "delta_league_strength",
-        "projected_value_3y_display", "asset_roi_3y_pct", "future_asset_score",
-        "opportunity_score", "risk_score",
-    ]
-    analytical_cols = [col for col in analytical_cols if col in similarity_view.columns]
-    with st.expander("Vista analítica avanzada" if LANG == "ES" else "Advanced analytical view"):
-        st.dataframe(
-            localize_display_df(similarity_view)[analytical_cols],
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-                "club": st.column_config.TextColumn("Club"),
-                "league": st.column_config.TextColumn(T("league")),
-                "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
-                "position_group": st.column_config.TextColumn(T("position")),
-                "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-                "delta_opportunity": st.column_config.NumberColumn("Δ Opp.", format="%+.1f"),
-                "delta_risk": st.column_config.NumberColumn("Δ Risk", format="%+.1f"),
-                "delta_growth": st.column_config.NumberColumn("Δ Growth", format="%+.1f"),
-                "delta_league_strength": st.column_config.NumberColumn("Δ Strength", format="%+.1f"),
-                "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
-                "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
-                "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
-                "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-                "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            },
-        )
+    better_html = "".join(f"<div class='similar-driver-item'><span class='similar-plus'>+</span><span>{html.escape(item)}</span></div>" for item in better_items[:3])
+    worse_html = "".join(f"<div class='similar-driver-item'><span class='similar-minus'>−</span><span>{html.escape(item)}</span></div>" for item in worse_items[:3])
 
-    render_automated_recruitment_assessment(target_player, best, name_col)
-
-    top_similarity = similarity_df.head(top_n).copy()
-    avg_similarity = pd.to_numeric(top_similarity.get("similarity_score_pct", np.nan), errors="coerce").mean()
-    avg_market_value = pd.to_numeric(top_similarity.get("market_value_eur", np.nan), errors="coerce").mean()
-    stronger_context_count = int((pd.to_numeric(top_similarity.get("delta_league_strength", 0), errors="coerce") > 0).sum())
-    similarity_summary = (
-        f"The average similarity of the Top {len(top_similarity)} is <b>{avg_similarity:.1f}</b>. "
-        f"<b>{stronger_context_count}</b> profiles come from a stronger competitive context than the reference player. "
-        f"The average market value of similar profiles is <b>{html.escape(format_money_short(avg_market_value))}</b>."
-        if LANG == "EN"
-        else
-        f"La similitud media del Top {len(top_similarity)} es <b>{avg_similarity:.1f}</b>. "
-        f"<b>{stronger_context_count}</b> perfiles proceden de un contexto competitivo superior al jugador de referencia. "
-        f"El valor de mercado medio de los perfiles similares es <b>{html.escape(format_money_short(avg_market_value))}</b>."
-    )
     st.markdown(
         f"""
-        <div class="radar-info-box">
-            <b>{html.escape(TXT("Similarity Insight"))}</b><br><br>
-            {similarity_summary}
-        </div>
+<div class="similar-final-grid">
+  <div class="similar-final-card primary">
+    <div class="similar-final-eyebrow">{'BEST COMPARABLE' if LANG == 'EN' else 'MEJOR COMPARABLE'}</div>
+    <div class="similar-final-title">{html.escape(str(best_name))}</div>
+    <div class="similar-final-copy">{html.escape(('Closest tactical alternative to ' if LANG == 'EN' else 'Alternativa táctica más cercana a ') + str(target_name))}</div>
+    <div class="similar-final-kpi-row">
+      <div class="similar-final-kpi"><span>Similarity</span><b>{format_score(similarity)}</b></div>
+      <div class="similar-final-kpi"><span>Opportunity</span><b>{format_score(opp)}</b></div>
+      <div class="similar-final-kpi"><span>Risk</span><b>{format_score(risk)}</b></div>
+    </div>
+  </div>
+  <div class="similar-final-card">
+    <div class="similar-final-eyebrow">{'TRANSFER FEASIBILITY' if LANG == 'EN' else 'VIABILIDAD DE FICHAJE'}</div>
+    <div class="similar-final-title">{html.escape(availability)}</div>
+    <div class="similar-final-kpi-row">
+      <div class="similar-final-kpi"><span>{'Contract' if LANG == 'EN' else 'Contrato'}</span><b>{html.escape('N/A' if pd.isna(contract_months) else f'{contract_months:.0f}m')}</b></div>
+      <div class="similar-final-kpi"><span>{'Estimated Fee' if LANG == 'EN' else 'Fee estimado'}</span><b>{html.escape(format_money_short(market_value))}</b></div>
+      <div class="similar-final-kpi"><span>{'Salary Tier' if LANG == 'EN' else 'Nivel salarial'}</span><b>{html.escape(salary_tier)}</b></div>
+    </div>
+    <div class="similar-final-copy" style="margin-top:10px;">{'Availability combines contract context and market value proxy.' if LANG == 'EN' else 'La disponibilidad combina contexto contractual y proxy de valor de mercado.'}</div>
+  </div>
+  <div class="similar-final-card blue">
+    <div class="similar-final-eyebrow">{'CONTEXT FIT' if LANG == 'EN' else 'ENCAJE CONTEXTUAL'}</div>
+    { _fit_row('Liga' if LANG == 'ES' else 'League', league_fit) }
+    { _fit_row('Rol' if LANG == 'ES' else 'Role', role_fit) }
+    { _fit_row('Edad' if LANG == 'ES' else 'Age', age_fit) }
+    { _fit_row('Estilo' if LANG == 'ES' else 'Style', style_fit) }
+  </div>
+  <div class="similar-final-card warning">
+    <div class="similar-final-eyebrow">TRADE-OFF</div>
+    <div class="similar-final-title">{'Why better / Why worse' if LANG == 'EN' else 'Por qué mejora / qué pierde'}</div>
+    <div class="similar-driver-list">{better_html}<div style='height:4px'></div>{worse_html}</div>
+  </div>
+</div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.caption(TXT("Variables utilizadas") + ": " + str(similarity_df["similarity_features_used"].iloc[0]))
+    top_view = add_role_display_columns(similarity_df.head(int(top_n)).copy())
+    mini_cards = []
+    for idx, (_, row) in enumerate(top_view.head(6).iterrows(), start=1):
+        name = get_display_name(row, name_col)
+        meta = f"{safe_get(row, 'club', 'N/A')} · {league_display_name(safe_get(row, 'league', 'N/A'))} · {safe_get(row, 'position_group', 'N/A')}"
+        rec = similarity_recommendation_label(str(safe_get(row, "_recommendation_class", classify_similarity_recommendation(row))))
+        mini_cards.append(
+            f"<div class='similar-mini-card'><div class='similar-mini-rank'>{idx}</div><div class='similar-mini-name'>{html.escape(str(name))}</div><div class='similar-mini-meta'>{html.escape(meta)}</div><div class='similar-mini-badges'><span>{'Sim' if LANG == 'EN' else 'Sim'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>Opp {format_score(safe_get(row,'opportunity_score',np.nan))}</span><span>{html.escape(rec)}</span></div></div>"
+        )
+    st.markdown("<div class='similar-card-list'>" + "".join(mini_cards) + "</div>", unsafe_allow_html=True)
+
+    with st.expander("Vista ejecutiva de comparables" if LANG == "ES" else "Executive comparable view", expanded=False):
+        st.markdown("<div class='similar-advanced-view'>", unsafe_allow_html=True)
+        similarity_chart_source = apply_club_name_normalization(similarity_df.head(int(top_n)).copy())
+        similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=get_display_name(best, name_col))
+        if similarity_fig is not None:
+            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False, "displaylogo": False})
+        executive_table = build_executive_similarity_table(similarity_chart_source.head(10), name_col)
+        st.dataframe(executive_table, use_container_width=True, hide_index=True, height=min(420, 42 + 36 * max(1, len(executive_table))))
+        st.caption("Vista reducida a 8 columnas ejecutivas. Las variables metodológicas quedan fuera de la lectura DSS principal." if LANG == "ES" else "Reduced to 8 executive columns. Methodological variables are kept out of the main DSS readout.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    render_automated_recruitment_assessment(target_player, best, name_col)
+    if "similarity_features_used" in similarity_df.columns and not similarity_df.empty:
+        st.caption(TXT("Variables utilizadas") + ": " + str(similarity_df["similarity_features_used"].iloc[0]))
+
 
 def build_replacement_candidates(similarity_df: pd.DataFrame) -> pd.DataFrame:
     """Combine similarity, opportunity and risk into a replacement score."""
@@ -7819,8 +15019,60 @@ def build_replacement_candidates(similarity_df: pd.DataFrame) -> pd.DataFrame:
     return result.sort_values(sort_col, ascending=False)
 
 
+
+def build_executive_similarity_table(df: pd.DataFrame, name_col: str) -> pd.DataFrame:
+    """Return a product-safe, no-scroll executive table for Similar Players."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+    out = apply_club_name_normalization(df.copy())
+    cols = [name_col, "club", "league", "primary_role", "similarity_score_pct", "opportunity_score", "risk_score", "delta_opportunity"]
+    cols = [c for c in cols if c in out.columns]
+    out = localize_display_df(out[cols])
+    rename = {
+        name_col: "Jugador" if LANG == "ES" else "Player",
+        "club": "Club",
+        "league": "Liga" if LANG == "ES" else "League",
+        "primary_role": "Rol" if LANG == "ES" else "Role",
+        "similarity_score_pct": "Similitud" if LANG == "ES" else "Similarity",
+        "opportunity_score": "Opportunity",
+        "risk_score": "Risk" if LANG == "EN" else "Riesgo",
+        "delta_opportunity": "Delta Opp.",
+    }
+    out = out.rename(columns={k: v for k, v in rename.items() if k in out.columns})
+    for c in ["Similitud", "Similarity", "Opportunity", "Risk", "Riesgo", "Delta Opp."]:
+        if c in out.columns:
+            out[c] = pd.to_numeric(out[c], errors="coerce").map(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+    return out
+
+
+def build_executive_replacement_table(df: pd.DataFrame, name_col: str) -> pd.DataFrame:
+    """Return a product-safe executive replacement table with at most 8 columns."""
+    if df is None or df.empty:
+        return pd.DataFrame()
+    out = apply_club_name_normalization(df.copy())
+    cols = ["replacement_rank", name_col, "club", "league", "position_group", "replacement_context_fit", "similarity_score_pct", "risk_score"]
+    cols = [c for c in cols if c in out.columns]
+    out = localize_display_df(out[cols])
+    rename = {
+        "replacement_rank": "#",
+        name_col: "Jugador" if LANG == "ES" else "Player",
+        "club": "Club",
+        "league": "Liga" if LANG == "ES" else "League",
+        "position_group": "Pos.",
+        "replacement_context_fit": "Fit" if LANG == "EN" else "Encaje",
+        "similarity_score_pct": "Similitud" if LANG == "ES" else "Similarity",
+        "risk_score": "Risk" if LANG == "EN" else "Riesgo",
+    }
+    out = out.rename(columns={k: v for k, v in rename.items() if k in out.columns})
+    for c in ["Fit", "Encaje", "Similitud", "Similarity", "Risk", "Riesgo"]:
+        if c in out.columns:
+            out[c] = pd.to_numeric(out[c], errors="coerce").map(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+    if "#" in out.columns:
+        out["#"] = pd.to_numeric(out["#"], errors="coerce").astype("Int64").astype(str).replace("<NA>", "")
+    return out
+
 def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
-    """Potential replacements based on similarity and risk-adjusted opportunity."""
+    """Potential replacements with executive cards and compact decision table."""
     st.subheader("🔁 " + ("Buscador de reemplazos" if LANG == "ES" else "Replacement Finder"))
     st.caption(TXT("Identificación automática de reemplazos según perfil deportivo, contexto competitivo, riesgo y potencial de activo."))
 
@@ -7838,23 +15090,18 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         selector_df = selector_df.sort_values("opportunity_score", ascending=False)
 
     options = selector_df[name_col].astype(str).drop_duplicates().tolist()
-    controls = st.columns([1.4, 0.8])
+    controls = st.columns([1.6, 0.6])
     with controls[0]:
         target_player = st.selectbox(TXT("Jugador a sustituir / comparar"), options, key="sprint11_replacement_target")
     with controls[1]:
-        top_n = st.slider(TXT("Número de sustitutos"), 5, 20, 10, key="sprint11_replacement_top_n")
+        top_n = st.selectbox(TXT("Número de sustitutos"), [5, 8, 10, 15, 20], index=2, key="sprint11_replacement_top_n_select")
 
     target_rows = selector_df[selector_df[name_col].astype(str) == str(target_player)]
     if target_rows.empty:
         st.info(TXT("No se encuentra el jugador seleccionado."))
         return
     target_row = target_rows.iloc[0]
-    similarity_df = calculate_similarity_table(
-        df=selector_df,
-        target_player=target_player,
-        name_col=name_col,
-        restrict_same_position=True,
-    )
+    similarity_df = calculate_similarity_table(df=selector_df, target_player=target_player, name_col=name_col, restrict_same_position=True)
     similarity_df = add_similarity_deltas(similarity_df, target_row)
     replacement_df = build_replacement_candidates(similarity_df)
 
@@ -7863,85 +15110,44 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         return
 
     replacement_df["replacement_fit"] = replacement_df.apply(classify_replacement_fit, axis=1)
-    render_replacement_executive_cards(target_player, replacement_df, name_col)
-    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
-
-    # Executive compact view for dashboard consumption. Full replacement_df is kept for CSV export.
-    replacement_view = replacement_df.head(top_n).copy()
+    replacement_view = replacement_df.head(int(top_n)).copy()
+    if "market_value_eur" in replacement_view.columns:
+        replacement_view["market_value_display"] = replacement_view["market_value_eur"].apply(format_money_short)
     if "projected_market_value_3y_eur" in replacement_view.columns:
         replacement_view["projected_value_3y_display"] = replacement_view["projected_market_value_3y_eur"].apply(format_money_short)
     if "asset_upside_3y_eur" in replacement_view.columns:
         replacement_view["asset_upside_3y_display"] = replacement_view["asset_upside_3y_eur"].apply(format_money_short)
-    if "delta_market_value_eur" in replacement_view.columns:
-        replacement_view["delta_market_value_display"] = replacement_view["delta_market_value_eur"].apply(
-            lambda value: format_signed_money_short(value)
+
+    cards = []
+    for idx, (_, row) in enumerate(replacement_view.head(3).iterrows(), start=1):
+        name = get_display_name(row, name_col)
+        meta = f"{safe_get(row, 'club', 'N/A')} · {league_display_name(safe_get(row, 'league', 'N/A'))} · {safe_get(row, 'position_group', 'N/A')}"
+        cards.append(
+            f"<div class='replacement-card'><div class='replacement-rank'>{idx}</div><div class='replacement-name'>{html.escape(str(name))}</div><div class='replacement-meta'>{html.escape(meta)}</div><div class='replacement-badges'><span>{'Similarity' if LANG == 'EN' else 'Similitud'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>{'Fit' if LANG == 'EN' else 'Encaje'} {format_score(safe_get(row,'replacement_context_fit',np.nan))}</span><span>{'Risk' if LANG == 'EN' else 'Riesgo'} {format_score(safe_get(row,'risk_score',np.nan))}</span><span>{html.escape(str(safe_get(row,'replacement_fit','Assessment')))}</span></div></div>"
         )
+    st.markdown("<div class='replacement-card-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
 
-    display_cols = [
-        "replacement_rank",
-        name_col,
-        "club",
-        "league",
-        "league_quality_tier",
-        "position_group",
-        "replacement_context_fit",
-        "similarity_score_pct",
-        "adaptation_risk_label",
-        "opportunity_score",
-        "risk_score",
-        "future_asset_score",
-        "asset_roi_3y_pct",
-        "projected_value_3y_display",
-        "asset_upside_3y_display",
-        "replacement_fit",
-    ]
-    display_cols = [col for col in display_cols if col in replacement_view.columns]
-
-    st.dataframe(
-        localize_display_df(replacement_view)[display_cols],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "replacement_rank": st.column_config.NumberColumn("Rank", format="%d"),
-            name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
-            "club": st.column_config.TextColumn("Club"),
-            "league": st.column_config.TextColumn(T("league")),
-            "league_quality_tier": st.column_config.TextColumn("League tier" if LANG == "EN" else "Tier liga"),
-            "position_group": st.column_config.TextColumn(T("position")),
-            "replacement_context_fit": st.column_config.ProgressColumn("Context fit" if LANG == "EN" else "Fit contexto", min_value=0, max_value=100, format="%.1f"),
-            "similarity_score_pct": st.column_config.ProgressColumn("Similarity", min_value=0, max_value=100, format="%.1f"),
-            "adaptation_risk_label": st.column_config.TextColumn("Adaptation" if LANG == "EN" else "Adaptación"),
-            "opportunity_score": st.column_config.ProgressColumn("Opportunity", min_value=0, max_value=100, format="%.1f"),
-            "risk_score": st.column_config.ProgressColumn("Risk", min_value=0, max_value=100, format="%.1f"),
-            "asset_roi_3y_pct": st.column_config.NumberColumn("ROI 3Y", format="%.0f%%"),
-            "future_asset_score": st.column_config.ProgressColumn("Future Asset", min_value=0, max_value=100, format="%.1f"),
-            "projected_value_3y_display": st.column_config.TextColumn("3Y Value" if LANG == "EN" else "Valor 3Y"),
-            "asset_upside_3y_display": st.column_config.TextColumn("3Y Upside" if LANG == "EN" else "Upside 3Y"),
-            "replacement_fit": st.column_config.TextColumn("Replacement fit" if LANG == "EN" else "Fit de sustitución"),
-        },
-    )
+    compact = apply_club_name_normalization(replacement_view.copy())
+    with st.expander("Auditoría técnica de reemplazos" if LANG == "ES" else "Replacement technical audit", expanded=False):
+        st.markdown("<div class='replacement-advanced-view'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='replacement-table-title'>{html.escape('Vista ejecutiva reducida' if LANG == 'ES' else 'Reduced executive view')}</div>", unsafe_allow_html=True)
+        executive_replacement = build_executive_replacement_table(compact.head(10), name_col)
+        st.dataframe(
+            executive_replacement,
+            use_container_width=True,
+            hide_index=True,
+            height=min(420, 44 + 36 * max(1, len(executive_replacement))),
+        )
+        st.caption("La tabla principal se limita a 8 columnas para evitar scroll lateral. El CSV conserva todas las variables para auditoría metodológica." if LANG == "ES" else "The main table is limited to 8 columns to avoid horizontal scrolling. The CSV keeps all variables for methodological audit.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     narrative = build_replacement_narrative(target_player, replacement_df, name_col)
     if narrative:
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-        st.markdown(
-            f"""
-            <div class="radar-info-box">
-                <b>{html.escape(TXT("Replacement Insight"))}</b><br><br>
-                {narrative}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"<div class='radar-info-box'><b>{html.escape(TXT('Replacement Insight'))}</b><br><br>{narrative}</div>", unsafe_allow_html=True)
 
-    csv = replacement_df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        TXT("Descargar sustitutos CSV"),
-        data=csv,
-        file_name="replacement_candidates.csv",
-        mime="text/csv",
-        key="sprint11_download_replacement_candidates",
-    )
+    csv = apply_club_name_normalization(replacement_df).to_csv(index=False).encode("utf-8")
+    st.download_button(TXT("Descargar sustitutos CSV"), data=csv, file_name="replacement_candidates.csv", mime="text/csv", key="sprint11_download_replacement_candidates")
+
 
 
 def classify_decision_stage(score: object) -> str:
@@ -8251,10 +15457,10 @@ def render_executive_recommendation_engine(shortlist_df: pd.DataFrame) -> None:
                 <div class="exec-kpi-grid">
                     <div><div class="exec-kpi-label">Future Asset</div><div class="exec-kpi-value">{future_asset:.1f}</div></div>
                     <div><div class="exec-kpi-label">ROI 3Y</div><div class="exec-kpi-value">{roi_pct:.0f}%</div></div>
-                    <div><div class="exec-kpi-label">Opportunity</div><div class="exec-kpi-value">{opportunity:.1f}</div></div>
+                    <div><div class="exec-kpi-label">{html.escape(lbl_opportunity)}</div><div class="exec-kpi-value">{opportunity:.1f}</div></div>
                     <div><div class="exec-kpi-label">Context Fit</div><div class="exec-kpi-value">{context:.1f}</div></div>
-                    <div><div class="exec-kpi-label">Risk</div><div class="exec-kpi-value">{risk:.1f}</div></div>
-                    <div><div class="exec-kpi-label">Confidence</div><div class="exec-kpi-value">{confidence:.1f}</div></div>
+                    <div><div class="exec-kpi-label">{html.escape(lbl_risk)}</div><div class="exec-kpi-value">{risk:.1f}</div></div>
+                    <div><div class="exec-kpi-label">{html.escape(lbl_confidence)}</div><div class="exec-kpi-value">{confidence:.1f}</div></div>
                 </div>
             </div>
         </div>
@@ -8295,8 +15501,17 @@ def render_executive_recommendation_engine(shortlist_df: pd.DataFrame) -> None:
     ]
     display_cols = [c for c in display_cols if c in ranking_view.columns]
 
-    st.subheader("📌 " + ("Tablero de reclutamiento" if LANG == "ES" else "Recruitment Board"))
+    st.subheader("📌 " + ("Recruitment Center" if LANG == "ES" else "Recruitment Center"))
     st.caption(TXT("Vista compacta para priorizar revisión. El CSV y las tablas detalladas conservan las variables auxiliares."))
+    st.markdown(
+        f"""
+        <div class="recruitment-workflow-toolbar">
+            <span>{html.escape('Player workflow' if LANG == 'EN' else 'Flujo del jugador')}</span>
+            <b>{html.escape('Profile → Similar Players → Assessment → Contract → Strategy' if LANG == 'EN' else 'Perfil → Similares → Assessment → Contrato → Estrategia')}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.dataframe(
         localize_display_df(ranking_view)[display_cols],
         use_container_width=True,
@@ -8546,14 +15761,12 @@ def render_driver_analysis(shortlist_df: pd.DataFrame) -> None:
 def render_recruitment_pipeline(shortlist_df: pd.DataFrame) -> None:
     """Simulated recruitment pipeline for product-level decision support.
 
-    The dashboard does not persist workflow status yet; this view assigns an
-    initial recommended stage from the executive decision score, risk and
-    confidence to mimic a real recruitment board.
+    This view assigns an initial recommended stage from the executive decision score, risk and confidence to mimic a real recruitment board.
     """
     st.subheader("🗂️ " + TXT("Recruitment Pipeline"))
     render_sprint11_context_box(
         TXT("Objetivo"),
-        TXT("convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.")
+        TXT("convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.")
     )
 
     decision_df = get_executive_decision_table(shortlist_df, top_n=20)
@@ -8643,11 +15856,94 @@ def render_recruitment_pipeline(shortlist_df: pd.DataFrame) -> None:
         f"""
         <div class="radar-info-box">
             <b>{html.escape(TXT("Nota operativa"))}</b><br><br>
-            {html.escape(TXT("Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting."))}
+            {html.escape(TXT("Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting."))}
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_role_market_dashboard(source_df: pd.DataFrame) -> None:
+    """Role-first scouting view: start from tactical need, then shortlist players."""
+    if source_df.empty or "primary_role" not in source_df.columns:
+        st.info("No hay roles disponibles con los filtros activos." if LANG == "ES" else "No roles are available under the active filters.")
+        return
+    df_roles = source_df[source_df["primary_role"].map(is_valid_role_value)].copy()
+    if df_roles.empty:
+        st.info("No hay roles disponibles con los filtros activos." if LANG == "ES" else "No roles are available under the active filters.")
+        return
+    role_values = sorted(df_roles["primary_role"].dropna().astype(str).unique().tolist())
+    default_role = role_values[0]
+    if "Ball Winner" in role_values:
+        default_role = "Ball Winner"
+    selected_role = st.selectbox("¿Qué función táctica necesitas cubrir?" if LANG == "ES" else "Which tactical function do you need to cover?", role_values, index=role_values.index(default_role), key="role_market_selected_role")
+    role_df = df_roles[df_roles["primary_role"].astype(str) == str(selected_role)].copy()
+    if role_df.empty:
+        st.info("No hay jugadores para este rol." if LANG == "ES" else "No players available for this role.")
+        return
+    sort_col = "decision_score" if "decision_score" in role_df.columns else ("opportunity_score" if "opportunity_score" in role_df.columns else None)
+    if sort_col:
+        role_df[sort_col] = pd.to_numeric(role_df[sort_col], errors="coerce")
+        role_df = role_df.sort_values(sort_col, ascending=False, na_position="last")
+    top = role_df.head(5).copy()
+    name_col = get_player_name_column(top) or "player_name_fbref"
+    cards = []
+    for idx, (_, row) in enumerate(top.iterrows(), start=1):
+        player = html.escape(str(get_player_name(row)))
+        club = html.escape(format_club_name(safe_get(row, "club", "")))
+        league = html.escape(league_display_name(safe_get(row, "league", "")))
+        opp = get_numeric_value(row, "opportunity_score", np.nan)
+        conf = role_metric_display(safe_get(row, "role_purity", safe_get(row, "role_confidence", np.nan)))
+        prog = role_dna_score(safe_get(row, "ball_progression_index", np.nan))
+        creation = role_dna_score(safe_get(row, "chance_creation_index", np.nan))
+        score = get_numeric_value(row, sort_col, np.nan) if sort_col else np.nan
+        score_text = "N/D" if pd.isna(score) else f"{score:.1f}"
+        chips = []
+        if prog is not None:
+            chips.append(f"Progresión P{prog:.0f}")
+        if creation is not None:
+            chips.append(f"Creación P{creation:.0f}")
+        chips.append(f"{'Pureza' if LANG == 'ES' else 'Purity'} {conf}")
+        cards.append(
+            f"<div class='role-market-player-card'>"
+            f"<div class='role-market-rank'>{idx}</div>"
+            f"<div class='role-market-name'>{player}</div>"
+            f"<div class='role-market-meta'>{club} · {league}</div>"
+            f"<div class='role-market-chip-row'>{''.join(f'<span>{html.escape(c)}</span>' for c in chips)}</div>"
+            f"<div class='role-market-score'>{html.escape(score_text)}</div>"
+            f"</div>"
+        )
+    families = {
+        "DEF": ["Ball-Playing Centre-Back", "Aerial Defender", "Aggressive Defender"],
+        "MID": ["Ball Winner", "Attacking Progressor", "Creative Playmaker"],
+        "ATT": ["Box Finisher", "Creator Forward", "Mobile Forward"],
+    }
+    family_cards = []
+    for fam, roles in families.items():
+        available_roles = [r for r in roles if r in role_values]
+        if not available_roles:
+            continue
+        pills = "".join(f"<span class='role-map-pill {'role-map-pill-active' if r == selected_role else ''}'>{html.escape(r)}</span>" for r in available_roles)
+        fam_label = {"DEF": "DEFENDERS" if LANG == "EN" else "DEFENSAS", "MID": "MIDFIELDERS" if LANG == "EN" else "CENTROCAMPISTAS", "ATT": "FORWARDS" if LANG == "EN" else "ATACANTES"}[fam]
+        family_cards.append(f"<div class='role-map-family'><b>{fam_label}</b><div>{pills}</div></div>")
+    st.markdown(
+        f"""
+<div class='role-market-shell'>
+    <div class='role-market-head'>
+        <div>
+            <div class='role-market-eyebrow'>{'ROLE-FIRST SCOUTING' if LANG == 'EN' else 'SCOUTING BASADO EN ROL'}</div>
+            <div class='role-market-title'>{html.escape('I need a ' + selected_role if LANG == 'EN' else 'Busco: ' + selected_role)}</div>
+            <div class='role-market-subtitle'>{html.escape('The DSS starts from the tactical function and returns the best available targets under the active filters.' if LANG == 'EN' else 'El DSS parte de la función táctica y devuelve los mejores targets disponibles bajo los filtros activos.')}</div>
+        </div>
+        <div class='role-market-count'><span>{len(role_df)}</span><b>{'players' if LANG == 'EN' else 'jugadores'}</b></div>
+    </div>
+    <div class='role-map-shell'><div class='role-map-title'>{html.escape('Role ecosystem' if LANG == 'EN' else 'Mapa de roles')}</div>{''.join(family_cards)}</div>
+    <div class='role-market-grid'>{''.join(cards)}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
 
 def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
     """Unified scouting decision-support product section."""
@@ -8669,25 +15965,28 @@ def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
     render_executive_recommendation_engine(shortlist_df)
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Pipeline de reclutamiento" if LANG == "ES" else "Recruitment Pipeline",
-        "Comparación de candidatos" if LANG == "ES" else "Candidate Comparison",
-        "Buscador de reemplazos" if LANG == "ES" else "Replacement Finder",
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+        "Role Market" if LANG == "ES" else "Role Market",
         "Jugadores similares" if LANG == "ES" else "Similar Players",
-        "Análisis de inversión" if LANG == "ES" else "Investment Analysis",
+        "Recruitment Assessment" if LANG == "ES" else "Recruitment Assessment",
+        "Comparación de candidatos" if LANG == "ES" else "Candidate Comparison",
+        "Contrato" if LANG == "ES" else "Contract",
+        "Estrategia" if LANG == "ES" else "Strategy",
         "Drivers del modelo" if LANG == "ES" else "Model Drivers",
     ])
 
+    with tab0:
+        render_role_market_dashboard(shortlist_df)
     with tab1:
-        render_recruitment_pipeline(shortlist_df)
+        render_similarity_engine(shortlist_df)
     with tab2:
+        render_recruitment_pipeline(shortlist_df)
+    with tab3:
         render_multi_player_radar_comparison(shortlist_df)
         st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
         render_shortlist_comparison_table(shortlist_df)
-    with tab3:
-        render_replacement_analysis(shortlist_df)
     with tab4:
-        render_similarity_engine(shortlist_df)
+        render_replacement_analysis(shortlist_df)
     with tab5:
         render_asset_intelligence(shortlist_df)
     with tab6:
@@ -8733,6 +16032,43 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
     )
     st.markdown(html_block, unsafe_allow_html=True)
 
+
+def opportunity_tier_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        label, cls = ("N/D" if globals().get("LANG", "ES") == "ES" else "N/A"), "neutral"
+    elif float(score) >= 85:
+        label, cls = "Elite", "success"
+    elif float(score) >= 70:
+        label, cls = ("High" if globals().get("LANG", "ES") == "EN" else "Alta"), "primary"
+    elif float(score) >= 50:
+        label, cls = ("Watch" if globals().get("LANG", "ES") == "EN" else "Seguimiento"), "warning"
+    else:
+        label, cls = ("Low" if globals().get("LANG", "ES") == "EN" else "Baja"), "neutral"
+    return f"<span class='exec-mini-badge exec-mini-badge-{cls}'>{html.escape(label)} <b>{format_score(score)}</b></span>"
+
+
+def risk_tier_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        label, cls = ("N/D" if globals().get("LANG", "ES") == "ES" else "N/A"), "neutral"
+    elif float(score) <= 20:
+        label, cls = ("Low" if globals().get("LANG", "ES") == "EN" else "Bajo"), "success"
+    elif float(score) <= 45:
+        label, cls = ("Moderate" if globals().get("LANG", "ES") == "EN" else "Moderado"), "warning"
+    else:
+        label, cls = ("High" if globals().get("LANG", "ES") == "EN" else "Alto"), "danger"
+    return f"<span class='exec-mini-badge exec-mini-badge-{cls}'>{html.escape(label)} <b>{format_score(score)}</b></span>"
+
+
+def decision_stars_badge(value) -> str:
+    score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(score):
+        return "<span class='exec-mini-badge exec-mini-badge-neutral'>—</span>"
+    stars = max(1, min(5, int(np.ceil(float(score) / 20))))
+    return f"<span class='decision-stars' title='Decision Score {format_score(score)}'>{'★' * stars}{'☆' * (5 - stars)} <b>{format_score(score)}</b></span>"
+
+
 def build_html_table(page_df: pd.DataFrame):
     """Build a compact recruitment-board table for the main view.
 
@@ -8742,6 +16078,7 @@ def build_html_table(page_df: pd.DataFrame):
     """
     columns = [
         ("player_name_fbref", "Player" if LANG == "EN" else "Jugador"),
+        ("primary_role", "Role" if LANG == "EN" else "Rol"),
         ("club", "Club"),
         ("league", T("league")),
         ("position_group", "Pos."),
@@ -8783,13 +16120,19 @@ def build_html_table(page_df: pd.DataFrame):
             elif col == "recommended_action":
                 cells.append(f"<td>{recommendation_badge(str(val))}</td>")
                 continue
+            elif col == "primary_role":
+                role_text = clean_role_display(val)
+                role_cls = "role-badge role-badge-pending" if role_text in {"Role Pending", "Rol pendiente"} else "role-badge"
+                icon = "⚪" if "pending" in role_text.lower() or "pendiente" in role_text.lower() else "🧠"
+                cells.append(f"<td><span class='{role_cls}' style='margin-left:0;'>{icon} {html.escape(role_text)}</span></td>")
+                continue
 
-            if col in {"executive_decision_score_v2", "opportunity_score"}:
-                cells.append(f"<td style='font-weight:900;'>{html.escape(str(val))}</td>")
+            if col == "executive_decision_score_v2":
+                cells.append(f"<td>{decision_stars_badge(val)}</td>")
+            elif col == "opportunity_score":
+                cells.append(f"<td>{opportunity_tier_badge(val)}</td>")
             elif col == "risk_score":
-                risk_value = pd.to_numeric(pd.Series([val]), errors="coerce").iloc[0]
-                style = " style='font-weight:900;color:#b91c1c;'" if pd.notna(risk_value) and float(risk_value) >= 70 else ""
-                cells.append(f"<td{style}>{html.escape(str(val))}</td>")
+                cells.append(f"<td>{risk_tier_badge(val)}</td>")
             else:
                 cells.append(f"<td>{html.escape(str(val))}</td>")
 
@@ -9010,7 +16353,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
             mode="text",
             text=[f"<b>{i + 1}</b>" for i in range(len(top5))],
             textfont=dict(size=15, color="white", family="Arial Black"),
-            textposition="middle center",
+            textposition="top center",
             hoverinfo="skip",
             cliponaxis=False,
             showlegend=False,
@@ -9038,8 +16381,8 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
     fig.update_layout(
         height=620,
         margin=dict(l=20, r=30, t=20, b=20),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
         showlegend=False,
         xaxis_title="Valor de mercado actual (€) — escala log",
         yaxis_title="Gap de mercado estimado (€) — escala log",
@@ -9049,7 +16392,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         type="log",
         range=[np.log10(x_min), np.log10(x_max)],
         showgrid=True,
-        gridcolor="#e5e7eb",
+        gridcolor="rgba(226,232,240,0.42)",
         tickvals=[100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000],
         ticktext=["100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M", "50M"],
     )
@@ -9057,7 +16400,7 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
         type="log",
         range=[np.log10(y_min), np.log10(y_max)],
         showgrid=True,
-        gridcolor="#e5e7eb",
+        gridcolor="rgba(226,232,240,0.42)",
         tickvals=[50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000],
         ticktext=["50K", "100K", "200K", "500K", "1M", "2M", "5M", "10M", "20M"],
     )
@@ -9081,6 +16424,18 @@ def assign_decision_quadrant(row, opportunity_ref: float, risk_ref: float) -> st
         return "Perfil de bajo impacto"
     return "Riesgo elevado"
 
+
+
+def _compact_player_label(value: object, max_len: int = 16) -> str:
+    label = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(value)).strip()
+    if len(label) <= max_len:
+        return label
+    parts = label.split()
+    if len(parts) >= 2:
+        compact = f"{parts[0]} {parts[-1]}"
+        if len(compact) <= max_len:
+            return compact
+    return label[:max_len - 1] + "…"
 
 def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | None:
     required = {
@@ -9107,12 +16462,20 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
 
     risk_ref = float(df["risk_score"].median())
     opportunity_ref = float(df["opportunity_score"].quantile(0.60))
+
+    # Product UX: Risk Score is theoretically 0-100, but the current scouting universe
+    # is concentrated in the low-risk range. A dynamic executive range avoids an empty
+    # matrix and improves discrimination between actionable profiles.
+    risk_q98 = float(df["risk_score"].quantile(0.98))
+    risk_padding = max(3.0, risk_q98 * 0.12)
+    x_axis_max = float(min(45.0, max(35.0, np.ceil((risk_q98 + risk_padding) / 5.0) * 5.0)))
+    x_axis_max = max(x_axis_max, min(45.0, np.ceil((risk_ref + 5.0) / 5.0) * 5.0))
     is_en = globals().get("LANG") == "EN"
     zone_labels = {
-        "Objetivo prioritario": "Priority target" if is_en else "Objetivo prioritario",
-        "Apuesta de crecimiento": "Growth bet" if is_en else "Apuesta de crecimiento",
-        "Perfil de bajo impacto": "Low-impact profile" if is_en else "Perfil de bajo impacto",
-        "Riesgo elevado": "High risk" if is_en else "Riesgo elevado",
+        "Objetivo prioritario": "BUY NOW" if is_en else "COMPRAR AHORA",
+        "Apuesta de crecimiento": "MONITOR" if is_en else "SEGUIMIENTO",
+        "Perfil de bajo impacto": "LOW IMPACT" if is_en else "BAJO IMPACTO",
+        "Riesgo elevado": "HIGH RISK" if is_en else "RIESGO ALTO",
     }
     axis_x_title = "Risk Score"
     axis_y_title = "Market Opportunity"
@@ -9131,23 +16494,38 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     df["risk_zone"] = df.apply(assign_zone, axis=1)
 
     color_map = {
-        "Objetivo prioritario": "#22c55e",
-        "Apuesta de crecimiento": "#f97316",
-        "Perfil de bajo impacto": "#3b82f6",
-        "Riesgo elevado": "#ef4444",
+        "Objetivo prioritario": SUCCESS,
+        "Apuesta de crecimiento": WARNING,
+        "Perfil de bajo impacto": NEUTRAL,
+        "Riesgo elevado": DANGER,
     }
 
-    min_adjusted = float(df["risk_adjusted_opportunity_score"].min())
-    max_adjusted = float(df["risk_adjusted_opportunity_score"].max())
-    span_adjusted = max(max_adjusted - min_adjusted, 1.0)
+    # Bubble size prioritises business upside when available; otherwise it falls back
+    # to the DSS score. This makes the matrix more decision-oriented than a purely
+    # technical risk/opportunity scatterplot.
+    bubble_metric_col = None
+    for candidate_col in [
+        "market_value_gap_eur",
+        "asset_upside_3y_eur",
+        "expected_profit_eur",
+        "risk_adjusted_opportunity_score",
+    ]:
+        if candidate_col in df.columns:
+            bubble_metric_col = candidate_col
+            break
 
-    df["bubble_size"] = (
-        14
-        + (
-            (df["risk_adjusted_opportunity_score"] - min_adjusted)
-            / span_adjusted
-        ).clip(0, 1).mul(42)
-    )
+    if bubble_metric_col is not None:
+        bubble_values = pd.to_numeric(df[bubble_metric_col], errors="coerce").fillna(0)
+        if bubble_metric_col != "risk_adjusted_opportunity_score":
+            bubble_values = bubble_values.clip(lower=0)
+            bubble_values = np.log1p(bubble_values)
+    else:
+        bubble_values = df["risk_adjusted_opportunity_score"]
+
+    min_bubble = float(pd.Series(bubble_values).min())
+    max_bubble = float(pd.Series(bubble_values).max())
+    span_bubble = max(max_bubble - min_bubble, 1.0)
+    df["bubble_size"] = 16 + ((bubble_values - min_bubble) / span_bubble).clip(0, 1).mul(44)
 
     top5 = (
         df.sort_values("risk_adjusted_opportunity_score", ascending=False)
@@ -9163,17 +16541,17 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=risk_ref,
         y0=opportunity_ref,
         y1=100,
-        fillcolor="rgba(34,197,94,0.13)",
+        fillcolor="rgba(88,194,125,0.13)",
         line=dict(width=0),
         layer="below",
     )
     fig.add_shape(
         type="rect",
         x0=risk_ref,
-        x1=100,
+        x1=x_axis_max,
         y0=opportunity_ref,
         y1=100,
-        fillcolor="rgba(249,115,22,0.12)",
+        fillcolor="rgba(245,166,35,0.12)",
         line=dict(width=0),
         layer="below",
     )
@@ -9183,17 +16561,17 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         x1=risk_ref,
         y0=0,
         y1=opportunity_ref,
-        fillcolor="rgba(59,130,246,0.10)",
+        fillcolor="rgba(124,141,181,0.13)",
         line=dict(width=0),
         layer="below",
     )
     fig.add_shape(
         type="rect",
         x0=risk_ref,
-        x1=100,
+        x1=x_axis_max,
         y0=0,
         y1=opportunity_ref,
-        fillcolor="rgba(239,68,68,0.09)",
+        fillcolor="rgba(224,86,88,0.10)",
         line=dict(width=0),
         layer="below",
     )
@@ -9220,6 +16598,10 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
             f"Opportunity Score: {format_score(safe_get(row, 'opportunity_score'))}<br>"
             f"Risk Score: {format_score(safe_get(row, 'risk_score'))}<br>"
             f"Risk Level: {risk_level_display_name(safe_get(row, 'risk_level'))}<br>"
+            f"Market Value: {format_eur(safe_get(row, 'market_value_eur'))}<br>"
+            f"Expected Value: {format_eur(safe_get(row, 'predicted_market_value_eur', safe_get(row, 'projected_market_value_3y_eur')))}<br>"
+            f"Market Gap: {format_eur(safe_get(row, 'market_value_gap_eur', safe_get(row, 'asset_upside_3y_eur')))}<br>"
+            f"Decision Score: {format_score(safe_get(row, 'executive_decision_score_v2', safe_get(row, 'risk_adjusted_opportunity_score')))}<br>"
             f"Risk Adjusted Opportunity: {format_score(safe_get(row, 'risk_adjusted_opportunity_score'))}"
             for _, row in zone_df.iterrows()
         ]
@@ -9235,8 +16617,8 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
                 marker=dict(
                     size=zone_df["bubble_size"],
                     color=color_map[zone],
-                    opacity=0.72,
-                    line=dict(width=1, color="rgba(15,23,42,0.25)"),
+                    opacity=0.65,
+                    line=dict(width=1.5, color="#FFFFFF"),
                 ),
             )
         )
@@ -9246,9 +16628,9 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
             x=top5["risk_score"],
             y=top5["opportunity_score"],
             mode="text",
-            text=[str(i + 1) for i in range(len(top5))],
-            textfont=dict(size=13, color="white", family="Arial Black"),
-            textposition="middle center",
+            text=[_compact_player_label(get_player_name(row)) for _, row in top5.iterrows()],
+            textfont=dict(size=10, color="#0f172a", family="Arial"),
+            textposition="top center",
             hoverinfo="skip",
             showlegend=False,
         )
@@ -9257,15 +16639,15 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
     fig.add_vline(
         x=risk_ref,
         line_dash="dash",
-        line_color="rgba(15,23,42,0.55)",
-        line_width=2,
+        line_color="rgba(124,141,181,0.60)",
+        line_width=1.4,
     )
 
     fig.add_hline(
         y=opportunity_ref,
         line_dash="dash",
-        line_color="rgba(15,23,42,0.55)",
-        line_width=2,
+        line_color="rgba(124,141,181,0.60)",
+        line_width=1.4,
     )
 
     fig.add_annotation(
@@ -9276,60 +16658,100 @@ def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | Non
         xanchor="right",
         yanchor="top",
         xshift=-8,
-        bgcolor="rgba(255,255,255,0.92)",
-        bordercolor="rgba(203,213,225,0.95)",
+        bgcolor="rgba(255,255,255,0.78)",
+        bordercolor="rgba(226,232,240,0.80)",
         borderwidth=1,
         borderpad=4,
         font=dict(size=12, color="#475569"),
     )
     fig.add_annotation(
-        x=99,
+        x=x_axis_max - 0.5,
         y=opportunity_ref,
         text=opportunity_ref_label,
         showarrow=False,
         xanchor="right",
         yanchor="top",
         yshift=-8,
-        bgcolor="rgba(255,255,255,0.92)",
-        bordercolor="rgba(203,213,225,0.95)",
+        bgcolor="rgba(255,255,255,0.78)",
+        bordercolor="rgba(226,232,240,0.80)",
         borderwidth=1,
         borderpad=4,
         font=dict(size=12, color="#475569"),
     )
 
+    y_axis_min = max(0, float(df["opportunity_score"].min()) - 5)
+    quadrant_font = dict(size=14, color="rgba(15,23,42,0.16)", family="Arial Black")
+    label_style = dict(
+        showarrow=False,
+        font=quadrant_font,
+        bgcolor="rgba(255,255,255,0)",
+        bordercolor="rgba(255,255,255,0)",
+        borderwidth=0,
+        borderpad=0,
+    )
+    left_label_x = max(0.7, x_axis_max * 0.045)
+    right_label_x = min(x_axis_max - 0.7, x_axis_max * 0.955)
+    top_label_y = 99.0
+    bottom_label_y = max(y_axis_min + 7, 9)
+
+    fig.add_annotation(
+        x=left_label_x,
+        y=top_label_y,
+        text=zone_labels["Objetivo prioritario"],
+        xanchor="left",
+        yanchor="top",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=right_label_x,
+        y=top_label_y,
+        text=zone_labels["Apuesta de crecimiento"],
+        xanchor="right",
+        yanchor="top",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=left_label_x,
+        y=bottom_label_y,
+        text=zone_labels["Perfil de bajo impacto"],
+        xanchor="left",
+        yanchor="middle",
+        **label_style,
+    )
+    fig.add_annotation(
+        x=right_label_x,
+        y=bottom_label_y,
+        text=zone_labels["Riesgo elevado"],
+        xanchor="right",
+        yanchor="middle",
+        **label_style,
+    )
+
     fig.update_layout(
-        height=640,
-        margin=dict(l=18, r=44, t=42, b=32),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.04,
-            xanchor="center",
-            x=0.5,
-            bgcolor="rgba(255,255,255,0.86)",
-            bordercolor="rgba(226,232,240,0.9)",
-            borderwidth=1,
-        ),
+        height=560,
+        margin=dict(l=18, r=28, t=32, b=34),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        showlegend=False,
+        hoverlabel=dict(bgcolor="#ffffff", bordercolor="#dbeafe", font_size=12, font_color="#0f172a"),
         xaxis_title=axis_x_title,
         yaxis_title=axis_y_title,
     )
 
     fig.update_xaxes(
-        range=[0, 100],
+        range=[0, x_axis_max],
         showgrid=True,
-        gridcolor="#e5e7eb",
+        gridcolor="rgba(226,232,240,0.42)",
         zeroline=False,
     )
 
     fig.update_yaxes(
         range=[
-            max(0, float(df["opportunity_score"].min()) - 5),
+            y_axis_min,
             101,
         ],
         showgrid=True,
-        gridcolor="#e5e7eb",
+        gridcolor="rgba(226,232,240,0.42)",
         zeroline=False,
     )
 
@@ -9635,6 +17057,805 @@ def render_chart_executive_summary(chart_source: pd.DataFrame) -> None:
         )
 
 
+
+# =============================================================================
+# role intelligence.8.3 technical bugfix: search/context sizing + role cards stability
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search and active context: same visual height without inflating Contexto Activo. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card),
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    min-height: 126px !important;
+    height: 126px !important;
+    padding: 16px 18px !important;
+    display: flex !important;
+    align-items: stretch !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 54px !important;
+    height: 54px !important;
+    border-radius: 999px !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 126px !important;
+    height: 126px !important;
+    padding: 16px 18px !important;
+    overflow: hidden !important;
+}
+.compact-context-panel .context-chip-row {
+    max-height: 38px !important;
+    overflow: hidden !important;
+}
+/* Role cards: never show raw NaN-like artifacts. */
+.role-profile-card { min-height: 112px !important; }
+.role-profile-caption { color:#64748b !important; }
+/* Technical SHAP expander aligned with the rest of the product cards. */
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) {
+    border: 1px solid #dbeafe !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) details > summary {
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    min-height: 42px !important;
+    color:#0f2f5f !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) div[data-testid="stPlotlyChart"] {
+    box-shadow: none !important;
+    border-radius: 0 0 18px 18px !important;
+    background:#ffffff !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5 — Universal Role Intelligence integration helpers
+# =============================================================================
+
+ROLE_NUMERIC_COLUMNS = [
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "role_confidence",
+    "role_ambiguity",
+]
+
+ROLE_VISIBLE_COLUMNS = [
+    "position_taxonomy",
+    "primary_role",
+    "secondary_role",
+    "role_confidence",
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "role_ambiguity",
+]
+
+def find_position_taxonomy_path() -> Path | None:
+    """Locate the promoted tactical intelligence.4.2b position-taxonomy artefact only.
+
+    v2c is intentionally excluded because it was rejected after calibration due to
+    population-level distortion. tactical intelligence.5 must use v2b as the production taxonomy.
+    """
+    candidates = [
+        PROCESSED_PATH / "player_position_taxonomy_v2b.parquet",
+        ROOT / "data" / "processed" / "player_position_taxonomy_v2b.parquet",
+        Path.cwd() / "data" / "processed" / "player_position_taxonomy_v2b.parquet",
+        Path.cwd() / "player_position_taxonomy_v2b.parquet",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def load_position_taxonomy_dataset(path: Path | None = None) -> pd.DataFrame:
+    """Load and standardise tactical intelligence.4.2b position taxonomy with safe fallbacks."""
+    resolved_path = path if path is not None else find_position_taxonomy_path()
+    if resolved_path is None or not Path(resolved_path).exists():
+        return pd.DataFrame()
+
+    tax_df = pd.read_parquet(resolved_path).copy()
+
+    rename_candidates = {
+        "player": "taxonomy_player",
+        "player_name": "taxonomy_player",
+        "name": "taxonomy_player",
+        "team": "taxonomy_team",
+        "club": "taxonomy_team",
+        "squad": "taxonomy_team",
+        "league": "taxonomy_league",
+        "competition": "taxonomy_league",
+        "season": "taxonomy_season",
+        "position_taxonomy_v2b": "position_taxonomy",
+        "taxonomy": "position_taxonomy",
+        "assigned_taxonomy": "position_taxonomy",
+        "final_taxonomy": "position_taxonomy",
+    }
+    for source, target in rename_candidates.items():
+        if source in tax_df.columns and target not in tax_df.columns:
+            tax_df = tax_df.rename(columns={source: target})
+
+    if "position_taxonomy" not in tax_df.columns:
+        return pd.DataFrame()
+
+    if "taxonomy_player" not in tax_df.columns:
+        for fallback in ["role_player", "player_name_fbref", "player_name_tm"]:
+            if fallback in tax_df.columns:
+                tax_df = tax_df.rename(columns={fallback: "taxonomy_player"})
+                break
+
+    if "taxonomy_player" not in tax_df.columns:
+        return pd.DataFrame()
+
+    allowed_taxonomies = {"CB", "FB", "DM", "CM", "AM", "W", "CF", "GK"}
+    tax_df["position_taxonomy"] = tax_df["position_taxonomy"].astype(str).str.strip().str.upper()
+    tax_df = tax_df[tax_df["position_taxonomy"].isin(allowed_taxonomies)].copy()
+    if tax_df.empty:
+        return pd.DataFrame()
+
+    for col in ["taxonomy_confidence", "position_taxonomy_confidence", "taxonomy_score", "functional_score"]:
+        if col in tax_df.columns:
+            tax_df[col] = pd.to_numeric(tax_df[col], errors="coerce")
+
+    tax_df["taxonomy_player_key"] = tax_df["taxonomy_player"].map(normalize_join_text)
+    if "taxonomy_season" in tax_df.columns:
+        tax_df["taxonomy_season_key"] = tax_df["taxonomy_season"].map(normalize_role_season)
+    else:
+        tax_df["taxonomy_season_key"] = ""
+    tax_df["taxonomy_team_key"] = tax_df["taxonomy_team"].map(normalize_join_text) if "taxonomy_team" in tax_df.columns else ""
+    tax_df["taxonomy_league_key"] = tax_df["taxonomy_league"].map(normalize_join_text) if "taxonomy_league" in tax_df.columns else ""
+
+    return tax_df.reset_index(drop=True)
+
+
+def merge_position_taxonomy(base: pd.DataFrame, tax_df: pd.DataFrame) -> pd.DataFrame:
+    """Attach Position taxonomy non-destructively to any DSS dataframe."""
+    if base.empty or tax_df.empty or "position_taxonomy" not in tax_df.columns:
+        if "position_taxonomy" not in base.columns:
+            base = base.copy()
+            base["position_taxonomy"] = np.nan
+        return base
+
+    left = base.copy().reset_index(drop=False).rename(columns={"index": "_taxonomy_row_id"})
+    right = tax_df.copy()
+
+    taxonomy_cols = [
+        c for c in [
+            "taxonomy_player",
+            "taxonomy_team",
+            "taxonomy_league",
+            "taxonomy_season",
+            "position_taxonomy",
+            "taxonomy_confidence",
+            "position_taxonomy_confidence",
+            "taxonomy_score",
+            "functional_score",
+        ]
+        if c in right.columns
+    ]
+
+    taxonomy_text_cols = {"taxonomy_player", "taxonomy_team", "taxonomy_league", "taxonomy_season", "position_taxonomy"}
+    if "position_taxonomy" not in left.columns:
+        left["position_taxonomy"] = pd.Series(pd.NA, index=left.index, dtype="object")
+    else:
+        left["position_taxonomy"] = left["position_taxonomy"].astype("object")
+
+    name_candidates = [
+        c for c in [
+            get_player_name_column(left),
+            "player",
+            "player_name",
+            "player_name_fbref",
+            "player_name_tm",
+            "role_player",
+            "name",
+            "short_name",
+            "display_name",
+        ]
+        if c and c in left.columns
+    ]
+    name_candidates = list(dict.fromkeys(name_candidates))
+    if not name_candidates:
+        return left.drop(columns=["_taxonomy_row_id"], errors="ignore")
+
+    left["_taxonomy_season_key"] = left["season"].map(normalize_role_season) if "season" in left.columns else ""
+    left_club_candidates = [c for c in ["club", "team", "squad", "current_club", "club_actual", "role_team"] if c in left.columns]
+    left_league_candidates = [c for c in ["league", "competition", "league_name", "role_league"] if c in left.columns]
+
+    right["_taxonomy_player_key"] = right["taxonomy_player"].map(normalize_join_text)
+    right["_taxonomy_season_key"] = right["taxonomy_season"].map(normalize_role_season) if "taxonomy_season" in right.columns else ""
+    right["_taxonomy_team_key"] = right["taxonomy_team"].map(normalize_join_text) if "taxonomy_team" in right.columns else ""
+    right["_taxonomy_league_key"] = right["taxonomy_league"].map(normalize_join_text) if "taxonomy_league" in right.columns else ""
+
+    if "taxonomy_confidence" in right.columns:
+        right = right.sort_values("taxonomy_confidence", ascending=False, na_position="last")
+    elif "position_taxonomy_confidence" in right.columns:
+        right = right.sort_values("position_taxonomy_confidence", ascending=False, na_position="last")
+
+    def _fill(name_col: str, extra_left_cols: list[str], extra_right_cols: list[str]) -> None:
+        nonlocal left
+        unresolved = left["position_taxonomy"].isna()
+        if not unresolved.any():
+            return
+        tmp_left = left.loc[unresolved, ["_taxonomy_row_id", name_col, "_taxonomy_season_key"] + extra_left_cols].copy()
+        tmp_left["_taxonomy_player_key"] = tmp_left[name_col].map(normalize_join_text)
+        rename = {}
+        for l_col, r_key in zip(extra_left_cols, extra_right_cols):
+            key_col = f"_tmp_{r_key}"
+            tmp_left[key_col] = tmp_left[l_col].map(normalize_join_text)
+            rename[key_col] = r_key
+        join_cols = ["_taxonomy_player_key", "_taxonomy_season_key"] + list(rename.values())
+        tmp_left = tmp_left.rename(columns=rename)[["_taxonomy_row_id"] + join_cols]
+        tmp_left = tmp_left[tmp_left["_taxonomy_player_key"].astype(str).str.len() > 0]
+        if tmp_left.empty:
+            return
+        tmp_right = right.drop_duplicates(join_cols)[join_cols + taxonomy_cols]
+        matched = tmp_left.merge(tmp_right, on=join_cols, how="left").dropna(subset=["position_taxonomy"])
+        if matched.empty:
+            return
+        matched = matched.drop_duplicates("_taxonomy_row_id", keep="first").set_index("_taxonomy_row_id")
+        row_to_pos = left["_taxonomy_row_id"].reset_index().set_index("_taxonomy_row_id")["index"]
+        for col in taxonomy_cols:
+            if col not in left.columns:
+                if col in taxonomy_text_cols:
+                    left[col] = pd.Series(pd.NA, index=left.index, dtype="object")
+                else:
+                    left[col] = np.nan
+            elif col in taxonomy_text_cols:
+                left[col] = left[col].astype("object")
+            update = matched[col].dropna()
+            if update.empty:
+                continue
+            left_idx = update.index.map(row_to_pos).dropna().astype(int)
+            left.loc[left_idx, col] = update.loc[left.loc[left_idx, "_taxonomy_row_id"].values].values
+
+    for name_col in name_candidates:
+        for club_col in left_club_candidates:
+            _fill(name_col, [club_col], ["_taxonomy_team_key"])
+        for league_col in left_league_candidates:
+            _fill(name_col, [league_col], ["_taxonomy_league_key"])
+        _fill(name_col, [], [])
+
+    return left.drop(columns=["_taxonomy_row_id", "_taxonomy_season_key"], errors="ignore")
+
+
+def get_taxonomy_dataset_status(tax_df: pd.DataFrame) -> dict[str, object]:
+    path = find_position_taxonomy_path()
+    return {
+        "path": str(path) if path is not None else "not_found",
+        "rows": int(len(tax_df)) if isinstance(tax_df, pd.DataFrame) else 0,
+        "players": int(tax_df["taxonomy_player"].nunique()) if isinstance(tax_df, pd.DataFrame) and "taxonomy_player" in tax_df.columns else 0,
+        "taxonomies": sorted(tax_df["position_taxonomy"].dropna().astype(str).unique().tolist()) if isinstance(tax_df, pd.DataFrame) and "position_taxonomy" in tax_df.columns else [],
+    }
+
+
+def role_context_label(row: pd.Series) -> str:
+    taxonomy = safe_get(row, "position_taxonomy", "")
+    primary = safe_get(row, "primary_role", "")
+    if is_valid_role_value(primary) and str(taxonomy).strip() not in {"", "nan", "N/A"}:
+        return f"{taxonomy} · {primary}"
+    if is_valid_role_value(primary):
+        return str(primary)
+    if str(taxonomy).strip() not in {"", "nan", "N/A"}:
+        return str(taxonomy)
+    return "N/D" if globals().get("LANG", "ES") == "ES" else "N/A"
+
+
+def render_role_context_filters(source_df: pd.DataFrame, key_prefix: str, expanded: bool = False) -> pd.DataFrame:
+    """Reusable role/taxonomy filtering panel for DSS modules."""
+    if source_df.empty:
+        return source_df
+
+    available_taxonomies = sorted(
+        [x for x in source_df.get("position_taxonomy", pd.Series(dtype=object)).dropna().astype(str).unique().tolist() if x and x.lower() != "nan"]
+    )
+    available_roles = sorted(
+        [x for x in source_df.get("primary_role", pd.Series(dtype=object)).dropna().astype(str).unique().tolist() if is_valid_role_value(x)]
+    )
+    available_leagues = []
+    if "league" in source_df.columns:
+        raw_leagues = sorted(source_df["league"].dropna().astype(str).unique().tolist())
+        league_display_to_raw = {league_display_name(league): league for league in raw_leagues}
+        available_leagues = sorted(league_display_to_raw.keys(), key=lambda label: (LEAGUE_DISPLAY_ORDER.get(label, 999), label))
+    else:
+        league_display_to_raw = {}
+
+    if not available_taxonomies and not available_roles and not available_leagues:
+        return source_df
+
+    title = "Tactical Filters" if globals().get("LANG", "ES") == "EN" else "Filtros tácticos"
+    caption = (
+        "Use tactical filters to compare compatible player profiles."
+        if globals().get("LANG", "ES") == "EN"
+        else "Utiliza filtros tácticos para comparar perfiles compatibles."
+    )
+
+    st.markdown(
+        f"""
+        <div class="role-filter-shell role-filter-shell-compact">
+            <div class="role-filter-title">{html.escape(title)}</div>
+            <div class="role-filter-subtitle">{html.escape(caption)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if available_roles:
+        role_counts = source_df["primary_role"].dropna().astype(str).loc[lambda s: s.map(is_valid_role_value)].value_counts()
+        role_chip_html = "".join(
+            f"<span class='role-context-chip'><i class='role-context-dot role-context-dot-{html.escape(role_family(role))}'></i>{html.escape(str(role))} <b>{int(role_counts.get(role, 0))}</b></span>"
+            for role in available_roles
+        )
+        st.markdown(
+            f"<div class='role-context-availability'><div class='role-context-availability-title'>{html.escape('Available tactical roles' if globals().get('LANG', 'ES') == 'EN' else 'Roles tácticos disponibles')}</div><div class='role-context-chip-row'>{role_chip_html}</div></div>",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<div class='role-filter-controls role-filter-controls-v2 role-filter-controls-stable'>", unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns([1.0, 1.15, 0.75, 1.0], gap="medium")
+    all_tax_label = "All" if globals().get("LANG", "ES") == "EN" else "Todas"
+    all_role_label = "All" if globals().get("LANG", "ES") == "EN" else "Todos"
+    all_league_label = "All" if globals().get("LANG", "ES") == "EN" else "Todas"
+    with c1:
+        selected_taxonomy_value = st.selectbox(
+            "Taxonomy" if globals().get("LANG", "ES") == "EN" else "Taxonomía",
+            [all_tax_label] + available_taxonomies,
+            index=0,
+            key=f"{key_prefix}_position_taxonomy_filter_select",
+        )
+        selected_taxonomies = [] if selected_taxonomy_value == all_tax_label else [selected_taxonomy_value]
+    with c2:
+        selected_role_value = st.selectbox(
+            "Role" if globals().get("LANG", "ES") == "EN" else "Rol",
+            [all_role_label] + available_roles,
+            index=0,
+            key=f"{key_prefix}_primary_role_filter_select",
+        )
+        selected_roles = [] if selected_role_value == all_role_label else [selected_role_value]
+    with c3:
+        min_role_confidence = st.slider(
+            "Confidence" if globals().get("LANG", "ES") == "EN" else "Confianza",
+            min_value=0,
+            max_value=100,
+            value=0,
+            step=5,
+            key=f"{key_prefix}_role_confidence_filter",
+        )
+    with c4:
+        selected_league_value = st.selectbox(
+            "League" if globals().get("LANG", "ES") == "EN" else "Liga",
+            [all_league_label] + available_leagues,
+            index=0,
+            key=f"{key_prefix}_league_filter_select",
+        )
+        selected_leagues_display = [] if selected_league_value == all_league_label else [selected_league_value]
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    filtered = source_df.copy()
+    if selected_taxonomies and "position_taxonomy" in filtered.columns:
+        filtered = filtered[filtered["position_taxonomy"].astype(str).isin(selected_taxonomies)].copy()
+    if selected_roles and "primary_role" in filtered.columns:
+        filtered = filtered[filtered["primary_role"].astype(str).isin(selected_roles)].copy()
+    if selected_leagues_display and "league" in filtered.columns:
+        selected_raw_leagues = [league_display_to_raw.get(x, x) for x in selected_leagues_display]
+        filtered = filtered[filtered["league"].astype(str).isin(selected_raw_leagues)].copy()
+    if "role_confidence" in filtered.columns and min_role_confidence > 0:
+        filtered = filtered[pd.to_numeric(filtered["role_confidence"], errors="coerce").fillna(0) >= min_role_confidence].copy()
+
+    active_bits = []
+    if selected_taxonomies:
+        active_bits.append("Taxonomy: " + ", ".join(selected_taxonomies))
+    if selected_roles:
+        active_bits.append("Role: " + ", ".join(selected_roles[:3]) + ("…" if len(selected_roles) > 3 else ""))
+    if selected_leagues_display:
+        active_bits.append("League: " + ", ".join(selected_leagues_display[:2]) + ("…" if len(selected_leagues_display) > 2 else ""))
+    if min_role_confidence > 0:
+        active_bits.append(f"Role confidence ≥ {min_role_confidence}")
+
+    role_count = len(available_roles)
+    active_label = ' · '.join(active_bits) if active_bits else ('No tactical restriction' if globals().get('LANG', 'ES') == 'EN' else 'Sin restricción táctica')
+    st.markdown(
+        f"""
+        <div class="role-filter-status role-filter-status-v2">
+            <span>{html.escape(str(len(filtered)))} {'players' if globals().get('LANG', 'ES') == 'EN' else 'jugadores'}</span>
+            <span>{html.escape(str(role_count))} {'roles' if globals().get('LANG', 'ES') == 'EN' else 'roles'}</span>
+            <b>{html.escape(active_label)}</b>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    return filtered
+
+def add_role_display_columns(table: pd.DataFrame) -> pd.DataFrame:
+    """Add compact display columns for role-aware tables."""
+    out = table.copy()
+    if "taxonomy_role_context" not in out.columns:
+        out["taxonomy_role_context"] = out.apply(role_context_label, axis=1)
+    for col in ROLE_NUMERIC_COLUMNS:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
+
+
+
+st.markdown(
+    """
+<style>
+.role-filter-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:12px 0 12px 0;
+}
+.role-filter-title {
+    color:#0f172a;
+    font-size:.98rem;
+    font-weight:950;
+    margin-bottom:3px;
+}
+.role-filter-subtitle {
+    color:#64748b;
+    font-size:.80rem;
+    line-height:1.35;
+}
+.role-filter-status {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:999px;
+    padding:7px 11px;
+    margin:8px 0 14px 0;
+    width:fit-content;
+    max-width:100%;
+}
+.role-filter-status span {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+.role-filter-status b {
+    color:#334155;
+    font-size:.72rem;
+    font-weight:850;
+}
+.role-profile-grid-tm65 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+.role-context-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+@media (max-width: 1350px) {
+    .role-profile-grid-tm65 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 800px) {
+    .role-profile-grid-tm65 { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.5.5.1 Role DNA DSS integration
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-dna-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:16px 18px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:16px 0 16px 0;
+}
+.role-dna-header {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:12px;
+}
+.role-dna-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}
+.role-dna-title {
+    color:#0f172a;
+    font-size:1.05rem;
+    font-weight:950;
+    line-height:1.12;
+}
+.role-dna-subtitle {
+    color:#64748b;
+    font-size:.80rem;
+    line-height:1.35;
+    margin-top:4px;
+}
+.role-dna-fit-card {
+    min-width:126px;
+    background:#f8fbff;
+    border:1px solid #bfdbfe;
+    border-radius:14px;
+    padding:10px 12px;
+    text-align:right;
+}
+.role-dna-fit-card span {
+    display:block;
+    color:#64748b;
+    font-size:.66rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:3px;
+}
+.role-dna-fit-card b {
+    display:block;
+    color:#0f172a;
+    font-size:1.32rem;
+    font-weight:950;
+    line-height:1.0;
+}
+.role-dna-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+}
+.role-dna-item {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:10px 11px;
+    box-shadow:0 6px 16px rgba(15,23,42,.030);
+}
+.role-dna-item-top {
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+    margin-bottom:7px;
+}
+.role-dna-item-label {
+    color:#334155;
+    font-size:.74rem;
+    font-weight:950;
+    line-height:1.15;
+}
+.role-dna-item-score {
+    color:#0f172a;
+    font-size:.86rem;
+    font-weight:950;
+}
+.role-dna-bar {
+    height:7px;
+    border-radius:999px;
+    background:#e8edf4;
+    overflow:hidden;
+}
+.role-dna-bar span {
+    display:block;
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,#60a5fa 0%,#2563eb 100%);
+}
+.role-dna-explanation {
+    margin-top:12px;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    border-radius:14px;
+    padding:11px 12px;
+    color:#334155;
+    font-size:.82rem;
+    line-height:1.42;
+    font-weight:750;
+}
+.role-dna-quality-chip {
+    display:inline-flex;
+    border-radius:999px;
+    padding:4px 8px;
+    margin-left:6px;
+    font-size:.68rem;
+    font-weight:950;
+    background:#dcfce7;
+    color:#166534;
+    border:1px solid #bbf7d0;
+}
+.role-dna-filter-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #0f2f5f;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin:12px 0 14px 0;
+}
+.role-dna-filter-title { color:#0f172a; font-size:1.04rem; font-weight:950; margin-bottom:4px; }
+.role-dna-filter-subtitle { color:#64748b; font-size:.82rem; line-height:1.42; margin-bottom:12px; max-width:920px; }
+
+.role-dna-filter-intents { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:10px 0 14px 0; }
+.role-dna-filter-intents span { display:flex; align-items:center; justify-content:center; min-height:42px; border-radius:14px; padding:8px 10px; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); color:#1e3a8a; border:1px solid #bfdbfe; font-size:.76rem; font-weight:950; box-shadow:0 6px 16px rgba(37,99,235,.055); text-align:center; }
+.role-dna-filter-intents span:hover { background:#eff6ff; border-color:#93c5fd; transform:translateY(-1px); transition:all .15s ease; }
+@media (max-width:1200px){ .role-dna-filter-intents { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px){ .role-dna-filter-intents { grid-template-columns:1fr; } }
+
+.role-dna-filter-status {
+    display:inline-flex;
+    gap:8px;
+    flex-wrap:wrap;
+    border-radius:999px;
+    padding:6px 10px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:950;
+    margin-top:8px;
+}
+@media (max-width:1350px){ .role-dna-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px){ .role-dna-header { flex-direction:column; } .role-dna-grid { grid-template-columns:1fr; } .role-dna-fit-card { width:100%; text-align:left; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.5.9 Role Intelligence productization: visible Role DNA + Role Market
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-dna-pro-shell {
+    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 6px solid #2563eb;
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 38px rgba(15,23,42,.070);
+    margin: 18px 0 18px 0;
+}
+.role-dna-pro-header { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; margin-bottom:16px; }
+.role-dna-pro-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
+.role-dna-pro-title { color:#0f172a; font-size:1.28rem; font-weight:950; line-height:1.08; }
+.role-dna-pro-subtitle { color:#475569; font-size:.84rem; line-height:1.36; margin-top:5px; }
+.role-dna-pro-kpis { display:flex; gap:9px; flex-wrap:wrap; justify-content:flex-end; }
+.role-dna-pro-kpi { min-width:108px; background:#ffffff; border:1px solid #dbeafe; border-radius:14px; padding:9px 11px; text-align:right; box-shadow:0 8px 18px rgba(15,23,42,.035); }
+.role-dna-pro-kpi span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.role-dna-pro-kpi b { display:block; color:#0f172a; font-size:1.10rem; font-weight:950; line-height:1.0; }
+.role-dna-pro-layout { display:grid; grid-template-columns:minmax(320px,.95fr) minmax(0,1.35fr); gap:14px; }
+.role-dna-pro-explain-card, .role-dna-pro-bars-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:17px; padding:14px 16px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.role-dna-pro-card-title { color:#0f2f5f; font-size:.74rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.role-dna-pro-copy { color:#0f172a; font-size:.92rem; line-height:1.45; font-weight:850; margin-bottom:10px; }
+.role-dna-pro-driver { color:#475569; font-size:.82rem; line-height:1.42; border-top:1px solid #edf2f7; padding-top:10px; }
+.role-dna-pro-bars { display:grid; gap:9px; }
+.role-dna-pro-row { display:grid; grid-template-columns:140px minmax(0,1fr) 42px; gap:10px; align-items:center; }
+.role-dna-pro-label { color:#334155; font-size:.78rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.role-dna-pro-track { height:10px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.role-dna-pro-track span { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#93c5fd 0%,#2563eb 100%); }
+.role-dna-pro-score { text-align:right; color:#0f172a; font-size:.82rem; font-weight:950; }
+.role-dna-pro-group { display:grid; gap:8px; padding:8px 0 10px 0; border-top:1px solid #edf2f7; }
+.role-dna-pro-group:first-child { border-top:0; padding-top:0; }
+.role-dna-pro-group-title { color:#1d4ed8; font-size:.66rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:1px; }
+.role-market-shell { background:#ffffff; border:1px solid #dbeafe; border-left:6px solid #0f2f5f; border-radius:20px; padding:18px 20px; box-shadow:0 16px 38px rgba(15,23,42,.065); margin: 8px 0 18px 0; }
+.role-market-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:14px; }
+.role-market-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
+.role-market-title { color:#0f172a; font-size:1.32rem; font-weight:950; line-height:1.1; }
+.role-market-subtitle { color:#475569; font-size:.84rem; line-height:1.38; margin-top:5px; }
+.role-market-count { min-width:105px; background:#f8fbff; border:1px solid #bfdbfe; border-radius:14px; padding:10px 12px; text-align:right; }
+.role-market-count span { display:block; color:#0f172a; font-size:1.36rem; font-weight:950; line-height:1; }
+.role-market-count b { display:block; color:#64748b; font-size:.68rem; font-weight:950; text-transform:uppercase; margin-top:4px; }
+.role-map-shell { background:#f8fbff; border:1px solid #e2e8f0; border-radius:16px; padding:13px 14px; margin: 10px 0 15px 0; }
+.role-map-title { color:#0f2f5f; font-size:.76rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.role-map-family { display:grid; grid-template-columns:150px minmax(0,1fr); gap:10px; align-items:center; padding:7px 0; border-top:1px solid #edf2f7; }
+.role-map-family:first-of-type { border-top:0; }
+.role-map-family b { color:#0f172a; font-size:.76rem; font-weight:950; }
+.role-map-pill { display:inline-flex; border-radius:999px; border:1px solid #dbeafe; background:#ffffff; color:#1e3a8a; padding:5px 9px; font-size:.70rem; font-weight:900; margin:3px 4px 3px 0; }
+.role-map-pill-active { background:#2563eb; color:#ffffff; border-color:#2563eb; }
+.role-market-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.role-market-player-card { position:relative; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); border:1px solid #e2e8f0; border-radius:16px; padding:12px; min-height:158px; box-shadow:0 8px 20px rgba(15,23,42,.040); }
+.role-market-rank { width:26px; height:24px; border-radius:8px; background:#eff6ff; color:#1d4ed8; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:950; margin-bottom:8px; }
+.role-market-name { color:#0f172a; font-size:.92rem; font-weight:950; line-height:1.12; }
+.role-market-meta { color:#64748b; font-size:.70rem; line-height:1.28; margin-top:4px; }
+.role-market-chip-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+.role-market-chip-row span { display:inline-flex; border-radius:999px; background:#eff6ff; color:#1e3a8a; border:1px solid #bfdbfe; padding:3px 7px; font-size:.63rem; font-weight:900; }
+.role-market-score { position:absolute; right:12px; bottom:10px; color:#166534; font-size:1.05rem; font-weight:950; }
+@media (max-width:1350px){ .role-dna-pro-layout{grid-template-columns:1fr;} .role-market-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:760px){ .role-dna-pro-header,.role-market-head{flex-direction:column;} .role-dna-pro-row{grid-template-columns:112px minmax(0,1fr) 38px;} .role-map-family{grid-template-columns:1fr;} .role-market-grid{grid-template-columns:1fr;} }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.5.13 Product QA closure: unified internal nav, radio pills, spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+.internal-nav-toolbar {
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    padding:10px 12px; background:#ffffff; border:1px solid #dbeafe;
+    border-radius:999px; box-shadow:0 8px 20px rgba(15,23,42,.04);
+    width:fit-content; max-width:100%; margin:12px 0 18px 0;
+}
+.internal-nav-chip {
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:7px 12px; border-radius:999px;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%);
+    border:1px solid #bfdbfe; color:#1e3a8a !important;
+    font-size:.76rem; font-weight:950; text-decoration:none !important; white-space:nowrap;
+}
+.internal-nav-chip.active { background:#1d4ed8; color:#ffffff !important; border-color:#1d4ed8; }
+/* Streamlit native horizontal radios used as internal navigation now inherit the same pill language. */
+[data-testid="stAppViewContainer"] .main .stRadio [role="radiogroup"] {
+    display:flex !important; flex-wrap:wrap !important; gap:8px !important;
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important;
+    padding:7px !important; width:fit-content !important; max-width:100% !important;
+    box-shadow:0 8px 20px rgba(15,23,42,.04) !important; margin:8px 0 16px 0 !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label {
+    display:inline-flex !important; align-items:center !important; justify-content:center !important;
+    min-height:32px !important; padding:6px 12px !important; border-radius:999px !important;
+    border:1px solid #bfdbfe !important; background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important; font-size:.76rem !important; font-weight:950 !important; white-space:nowrap !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) {
+    background:#1d4ed8 !important; color:#ffffff !important; border-color:#1d4ed8 !important;
+}
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) p,
+[data-testid="stAppViewContainer"] .main .stRadio label:has(input:checked) span { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+[data-testid="stAppViewContainer"] .main .stRadio label p { font-size:.76rem !important; font-weight:950 !important; color:inherit !important; }
+/* Product rhythm */
+.siq-section-gap { height:24px !important; }
+.siq-card-gap { height:16px !important; }
+.siq-micro-gap { height:8px !important; }
+/* Main executive tables should not feel like notebook dumps. */
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { overflow-x:hidden !important; }
+/* Portfolio map compactness and no blank shell above it. */
+.strategy-map-card:empty, div[data-testid="stElementContainer"]:has(.strategy-empty-spacer) { display:none !important; height:0 !important; margin:0 !important; padding:0 !important; }
+.strategy-map-card { margin-top:0 !important; }
+.scouting-iq-footer { margin-top:42px !important; padding-top:18px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Load data
 # =============================================================================
@@ -9643,16 +17864,36 @@ shortlist = load_csv(DSS_REPORTS_PATH / "global_prospect_universe.csv")
 shortlist = enrich_shortlist_with_radar_features(shortlist)
 precision = load_csv(EVALUATION_PATH / "precision_at_k.csv")
 roi = load_csv(BUSINESS_PATH / "roi_global_summary.csv")
+contract_df = apply_club_name_normalization(load_csv(CONTRACT_REPORTS_PATH / "contract_intelligence_dataset.csv"))
 
 if shortlist.empty:
     st.warning("No se ha encontrado `reports/dss/global_prospect_universe.csv`. Ejecuta primero `python src/dss/build_global_prospect_universe.py`.")
     st.stop()
 
-df = shortlist.copy()
+df = apply_club_name_normalization(shortlist.copy())
 if "club" not in df.columns and "club_actual" in df.columns:
     df["club"] = df["club_actual"]
 if "league" in df.columns:
     df["league"] = df["league"].replace({"Liga Portugal": "Primeira Liga"})
+
+role_intelligence_df = load_role_intelligence_dataset()
+ROLE_DATASET_STATUS = get_role_dataset_status(role_intelligence_df)
+position_taxonomy_df = load_position_taxonomy_dataset()
+TAXONOMY_DATASET_STATUS = get_taxonomy_dataset_status(position_taxonomy_df)
+df = merge_role_intelligence(df, role_intelligence_df)
+df = merge_position_taxonomy(df, position_taxonomy_df)
+role_explainability_df = load_role_explainability_dataset()
+df = merge_role_explainability(df, role_explainability_df)
+df = apply_current_club_overrides(apply_club_name_normalization(df))
+# Enforce current Transfermarkt DSS scope before and after current-context resolution.
+# This prevents historical 11-league coverage or global Kaggle leagues from leaking into the product KPIs.
+df = enforce_current_dss_league_scope(df)
+contract_df = enforce_current_dss_league_scope(contract_df)
+current_context = build_current_context(pd.concat([df.copy(), contract_df.copy()], ignore_index=True, sort=False))
+df = apply_current_context(df, current_context)
+contract_df = apply_current_context(contract_df, current_context)
+df = enforce_current_dss_league_scope(df)
+contract_df = enforce_current_dss_league_scope(contract_df)
 
 numeric_cols = [
     "market_value_eur",
@@ -9689,6 +17930,29 @@ numeric_cols = [
     "finishing_index_v2",
     "availability_index",
     "defensive_activity_index",
+    "contract_months_remaining",
+    "contract_years_remaining",
+    "contract_opportunity_score",
+    "recruitment_contract_score",
+    "negotiation_leverage_score",
+    "role_confidence",
+    "role_ambiguity",
+    "primary_role_similarity",
+    "secondary_role_similarity",
+    "taxonomy_confidence",
+    "position_taxonomy_confidence",
+    "taxonomy_score",
+    "functional_score",
+    "finishing_index_role",
+    "chance_creation_index",
+    "ball_progression_index",
+    "passing_security_index",
+    "passing_volume_index",
+    "crossing_width_index",
+    "availability_index_role",
+    "discipline_risk_index",
+    "role_fit_explainability_score",
+    "dominant_tactical_score",
 ]
 
 for col in numeric_cols:
@@ -9742,8 +18006,15 @@ elif "opportunity_tier_label" in df.columns:
 else:
     df["opportunity_tier_label"] = "Exploratorio"
 
-scouting_df = df.copy()
+scouting_df = apply_current_club_overrides(df.copy())
+scouting_df = apply_club_name_normalization(scouting_df)
+scouting_df = enforce_current_dss_league_scope(scouting_df)
 football_df = build_football_universe_dataset(scouting_df)
+football_df = merge_role_intelligence(football_df, role_intelligence_df)
+football_df = merge_position_taxonomy(football_df, position_taxonomy_df)
+football_df = merge_role_explainability(football_df, role_explainability_df)
+football_df = apply_current_club_overrides(football_df)
+football_df = apply_club_name_normalization(football_df)
 FOOTBALL_UNIVERSE_SIZE = len(football_df)
 
 
@@ -9781,31 +18052,59 @@ with lang_control_col:
         label_visibility="collapsed",
     )
 
+# Runtime labels shared across Market, Recruitment, Contract and Strategy modules.
+# Several executive HTML components are rendered from different functions; keeping
+# these labels global prevents NameError regressions when switching modules.
+lbl_opportunity = "Opportunity"
+lbl_risk = "Risk"
+lbl_confidence = "Confidence" if LANG == "EN" else "Confianza"
+lbl_age = "Age" if LANG == "EN" else "Edad"
+lbl_market_value = "Market Value" if LANG == "EN" else "Valor de mercado"
+lbl_expected_value = "Expected Value" if LANG == "EN" else "Valor esperado"
+
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"### {'NAVIGATION' if LANG == 'EN' else 'NAVEGACIÓN'}")
+# TM.3.4.1 Sprint 1A — Product architecture navigation
+# Navigation is now organised by decision workflow instead of implementation modules.
 PAGE_OPTIONS = [
-    "Executive Overview",
-    "Global Scouting Universe",
+    "Market Intelligence",
     "Player Intelligence",
-    "Recruitment Board",
-    "Transfer Strategy",
+    "Recruitment Intelligence",
+    "Strategy Center",
     "Methodology",
 ]
-if "dashboard_navigation_page" not in st.session_state:
+
+LEGACY_PAGE_MAP = {
+    "Executive Overview": "Market Intelligence",
+    "Global Scouting Universe": "Market Intelligence",
+    "Recruitment Board": "Recruitment Intelligence",
+    "Contract Intelligence": "Strategy Center",
+    "Transfer Strategy": "Strategy Center",
+}
+
+# Preserve backwards compatibility with sessions created before Sprint 1A.
+if "dashboard_navigation_page" in st.session_state:
+    st.session_state.dashboard_navigation_page = LEGACY_PAGE_MAP.get(
+        st.session_state.dashboard_navigation_page,
+        st.session_state.dashboard_navigation_page,
+    )
+else:
     st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
+
 if st.session_state.dashboard_navigation_page not in PAGE_OPTIONS:
     st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
 
+
 def _nav_label(page_name: str) -> str:
     labels = {
-        "Executive Overview": "Executive",
-        "Global Scouting Universe": "Universe",
-        "Player Intelligence": "Players",
-        "Recruitment Board": "Board",
-        "Transfer Strategy": "Strategy",
+        "Market Intelligence": "Market Intelligence",
+        "Player Intelligence": "Player Intelligence",
+        "Recruitment Intelligence": "Recruitment Intelligence",
+        "Strategy Center": "Strategy Center",
         "Methodology": "Methodology",
     }
     return labels.get(page_name, page_name)
+
 
 st.sidebar.markdown("<div class='sidebar-nav-stack'>", unsafe_allow_html=True)
 for _page_option in PAGE_OPTIONS:
@@ -9821,6 +18120,194 @@ for _page_option in PAGE_OPTIONS:
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 dashboard_page = st.session_state.dashboard_navigation_page
 
+# Sprint 1A state: keep lightweight internal defaults for grouped sections.
+if "market_intelligence_view" not in st.session_state:
+    st.session_state.market_intelligence_view = "Executive Overview"
+if "strategy_center_view" not in st.session_state:
+    st.session_state.strategy_center_view = "Contract Intelligence"
+
+
+def render_dss_workflow(active_page: str) -> None:
+    """Render a compact persistent DSS workflow bar."""
+    title = "Decision workflow" if LANG == "EN" else "Flujo DSS"
+    subtitle = "Market → Player → Recruitment → Contract → Strategy → Decision"
+    workflow_steps = [
+        ("Market", "Market Intelligence"),
+        ("Player", "Player Intelligence"),
+        ("Recruitment", "Recruitment Intelligence"),
+        ("Contract", "Strategy Center"),
+        ("Strategy", "Strategy Center"),
+        ("Decision", "Strategy Center"),
+    ]
+    step_html = "".join(
+        f"<span class='dss-compact-step {'is-active' if owner == active_page else ''}'>{html.escape(label)}</span>"
+        for label, owner in workflow_steps
+    )
+    st.markdown(
+        f"""
+        <div class='dss-compact-bar'>
+            <div class='dss-compact-left'>{html.escape(title.upper())}</div>
+            <div class='dss-compact-steps'>{step_html}</div>
+            <div class='dss-compact-right'>{html.escape(subtitle)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+
+st.markdown(
+    """
+<style>
+/* TM.3.4.1 Sprint 1A — DSS Product Architecture */
+.dss-workflow-shell {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    padding: 13px 15px 14px 15px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050);
+    margin: 0 0 16px 0;
+}
+.dss-workflow-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+}
+.dss-workflow-header span {
+    color:#0f172a;
+    font-size:.80rem;
+    font-weight:950;
+    letter-spacing:.075em;
+    text-transform:uppercase;
+}
+.dss-workflow-header small {
+    color:#64748b;
+    font-size:.72rem;
+    font-weight:800;
+}
+.dss-workflow-grid {
+    display:grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap:8px;
+}
+.dss-workflow-step {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    min-height:38px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    padding:7px 8px;
+}
+.dss-workflow-step-active {
+    background:#eff6ff !important;
+    border-color:#93c5fd !important;
+    box-shadow: inset 3px 0 0 #2563eb, 0 7px 18px rgba(37,99,235,.070);
+}
+.dss-workflow-step-muted { opacity:.86; }
+.dss-workflow-index {
+    width:22px;
+    height:22px;
+    min-width:22px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+}
+.dss-workflow-label {
+    color:#0f172a;
+    font-size:.72rem;
+    font-weight:900;
+    line-height:1.12;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.sidebar-nav-stack button {
+    text-align:left !important;
+}
+@media (max-width: 1350px) {
+    .dss-workflow-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .dss-workflow-grid { grid-template-columns: 1fr; }
+    .dss-workflow-header { flex-direction:column; align-items:flex-start; }
+}
+
+/* TM.3.4.1 closure — compact DSS workflow bar */
+.dss-compact-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    padding: 8px 11px;
+    box-shadow: 0 6px 18px rgba(15,23,42,.035);
+    margin: 0 0 12px 0;
+}
+.dss-compact-left {
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.dss-compact-right {
+    color: #94a3b8;
+    font-size: .68rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.dss-compact-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+}
+.dss-compact-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    color: #64748b;
+    background: transparent;
+    font-size: .69rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.dss-compact-step.is-active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    box-shadow: inset 0 0 0 1px rgba(37,99,235,.05);
+}
+@media (max-width: 1200px) {
+    .dss-compact-bar { grid-template-columns: 1fr; gap: 6px; }
+    .dss-compact-steps { justify-content: flex-start; overflow-x: auto; }
+    .dss-compact-right { display: none; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("---")
 st.sidebar.markdown(
     f"""
@@ -10114,7 +18601,7 @@ TEXT_EN_EXTRA = {
     "Ver explicación completa y metodología de scores": "Show full score explanation and methodology",
     "Vista compacta para priorizar revisión. El CSV y las tablas detalladas conservan las variables auxiliares.": "Compact view to prioritize review. CSV and detailed tables keep auxiliary variables.",
     "Objetivo": "Objective",
-    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "convert the analytical ranking into an operational scouting workflow. The assigned stage is an initial non-persistent simulation designed to prioritize video review, live scouting and due diligence.",
+    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "convert the analytical ranking into an operational scouting workflow. The assigned stage is an initial operational prioritisation designed to prioritize video review, live scouting and due diligence.",
     "Fase": "Stage",
     "Siguiente acción": "Next action",
     "Validar contrato, agente, salario y disponibilidad": "Validate contract, agent, salary and availability",
@@ -10129,7 +18616,7 @@ TEXT_EN_EXTRA = {
         "Due Diligence": "Due diligence",
         "Discovery": "Discovery",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sporting CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize scouting work.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sporting CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize scouting work.",
     "Identificación automática de reemplazos según perfil deportivo, contexto competitivo, riesgo y potencial de activo.": "Automatic replacement identification based on sporting profile, competitive context, risk and asset potential.",
     "Jugador a sustituir / comparar": "Player to replace / compare",
     "Número de sustitutos": "Number of replacements",
@@ -10225,7 +18712,7 @@ TEXT_EN_EXTRA.update({
     "Comparación de percentiles": "Percentile comparison",
     "Ganador por métrica": "Performance Leaders",
     "Scouting Insight": "Scouting Insight",
-    "Tablero de reclutamiento": "Recruitment Board",
+    "Tablero de reclutamiento": "Recruitment Center",
     "Comparativa ejecutiva de candidatos filtrados. El CSV conserva las variables auxiliares para auditoría metodológica.": "Executive comparison of filtered candidates. The CSV keeps auxiliary variables for methodological audit.",
     "Selecciona candidatos para comparar": "Select candidates to compare",
     "Lectura ejecutiva": "Executive readout",
@@ -10287,7 +18774,7 @@ TEXT_EN_EXTRA.update({
     "Revisión completa de vídeo": "Full video review",
     "Informe scout inicial": "Initial scout report",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
     "Top 5 oportunidades ajustadas por riesgo": "Top 5 risk-adjusted opportunities",
     "Prioridad inicial para revisión": "Initial review priority",
     "Seguimiento activo": "Active tracking",
@@ -10374,10 +18861,10 @@ TEXT_EN_EXTRA.update({
     "Los principales elementos a validar antes de elevarlo a fase avanzada son": "The main elements to validate before moving to an advanced stage are",
     "Esta lectura resume la trazabilidad del modelo en lenguaje operativo, sin presentar SHAP como causalidad deportiva.": "This readout summarizes model traceability in operational language without presenting SHAP as sporting causality.",
     "Objetivo": "Objective",
-    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una simulación inicial sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "turn the analytical ranking into an operational scouting workflow. The assigned stage is an initial non-persistent simulation designed to prioritize video review, live scouting and due diligence.",
+    "convertir el ranking analítico en un flujo operativo de scouting. La fase asignada es una priorización operativa sin persistencia, pensada para priorizar revisión de vídeo, scouting en directo y due diligence.": "turn the analytical ranking into an operational scouting workflow. The assigned stage is an initial operational prioritisation designed to prioritize video review, live scouting and due diligence.",
     "Siguiente acción": "Next action",
     "Nota operativa": "Operational note",
-    "Esta vista no sustituye a un CRM deportivo. Funciona como prototipo de priorización: traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization prototype: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
+    "Esta vista traduce el ranking analítico en una primera asignación de fases para reducir carga de revisión y ordenar el trabajo del área de scouting.": "This view does not replace a sports CRM. It works as a prioritization product layer: it translates the analytical ranking into an initial stage assignment to reduce review workload and organize the scouting team's workflow.",
     "Comparación de candidatos": "Candidate Comparison",
     "Jugadores similares": "Similar Players",
     "Análisis de inversión": "Investment Analysis",
@@ -10456,7 +18943,7 @@ TEXT_EN_EXTRA.update({
     "Edad media": "Average age",
     "Minutos medios": "Average minutes",
     "calidad del ranking": "ranking quality",
-    "simulación conservadora": "conservative simulation",
+    "escenario conservador": "conservative scenario",
     "Qué mide": "What it measures",
     "Lectura de negocio": "Business reading",
     "Importante": "Important",
@@ -10531,8 +19018,11 @@ def driver_display_name(value: object) -> str:
 def localize_display_df(display_df: pd.DataFrame) -> pd.DataFrame:
     """Localize categorical dataframe cells without touching the analytical dataset."""
     result = display_df.copy()
+    result = apply_club_name_normalization(result) if isinstance(result, pd.DataFrame) else result
     for col in result.columns:
-        if col == "league":
+        if str(col).lower() in {"club", "team", "squad", "current_club", "reference_club", "similar_club", "replacement_club"}:
+            result[col] = result[col].apply(format_club_name)
+        elif col == "league":
             result[col] = result[col].apply(league_display_name)
         elif col in {"recommended_action", "replacement_fit", "adaptation_risk_label", "risk_level", "future_asset_tier", "executive_priority", "next_action", "pipeline_stage"}:
             result[col] = result[col].apply(V)
@@ -11329,12 +19819,17 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
     labels: list[str] = []
     label_to_raw: dict[str, str] = {}
 
-    def add(label: str, raw: str) -> None:
+    def add(label: str, raw: str, include_unaccented_alias: bool = True) -> None:
         if raw is None or str(raw).strip() == "":
             return
         if label not in label_to_raw:
             labels.append(label)
             label_to_raw[label] = str(raw)
+        if include_unaccented_alias:
+            alias = strip_accents_for_display(label)
+            if alias and alias != label and alias not in label_to_raw:
+                labels.append(alias)
+                label_to_raw[alias] = str(raw)
 
     if "league" in df.columns:
         for league in sorted(df["league"].dropna().astype(str).unique().tolist(), key=str.lower):
@@ -12360,22 +20855,24 @@ st.markdown(
     """
     <div class="scouting-topbar">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
-        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span></div>
+        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span><span>✓ Recruitment Intelligence</span><span>✓ Strategy Center</span></div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+render_dss_workflow(dashboard_page)
+
 base_df = add_executive_decision_features(scouting_df.copy())
 
 # Search/context panels are useful in scouting pages, but they create dead space
 # in Strategy and Methodology. Keep them out of those pages.
-SHOW_COMMAND_PANEL = dashboard_page not in {"Transfer Strategy", "Methodology"}
+SHOW_COMMAND_PANEL = dashboard_page not in {"Strategy Center", "Methodology"}
 
 # Sprint 13.5 v2: compact command row. Search and active context share the first viewport row
 # only where the command/search layer is relevant.
 if SHOW_COMMAND_PANEL:
-    command_left_col, command_right_col = st.columns([0.52, 0.48], gap="medium")
+    command_left_col, command_right_col = st.columns([0.52, 0.48], gap="large")
     context_panel_placeholder = command_right_col.empty()
 else:
     context_panel_placeholder = st.empty()
@@ -12398,11 +20895,18 @@ if current_global_search is not None and str(current_global_search) not in searc
 
 if SHOW_COMMAND_PANEL:
     with command_left_col:
+        # TM.4.1 UX repair v3: single compact command card. The heading, examples
+        # and selectbox live inside the same Streamlit bordered container so the
+        # search module no longer renders as a title card plus a detached select.
         with st.container(border=True):
             st.markdown(
                 f"""
-                <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
-                <div class="final-search-caption">{html.escape('Search players, clubs, leagues or positions. Executive ranking remains anchored to the actionable universe.' if LANG == 'EN' else 'Busca jugadores, clubes, ligas o posiciones. Explora el universo accionable de prospects y utiliza filtros inteligentes para priorizar candidatos.')}</div>
+                <div class="tm4-search-unified-card">
+                    <div class="final-search-title-row">
+                        <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
+                        <span class="final-search-examples final-search-examples-top">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</span>
+                    </div>
+                </div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -12419,44 +20923,6 @@ if SHOW_COMMAND_PANEL:
                     else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
                 ),
             )
-            helper_left, helper_guide, helper_spacer = st.columns([0.42, 0.28, 0.30])
-            with helper_left:
-                st.markdown(
-                    f"""
-                    <div class="search-helper-inline">
-                        <span class="final-search-examples">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            with helper_guide:
-                with st.popover("Quick Guide" if LANG == "EN" else "Guía rápida"):
-                    st.markdown(
-                        f"""
-                        <div class="quick-guide-popover-body">
-                            <div class="quick-guide-layout">
-                                <div class="quick-guide-card">
-                                    <span>{html.escape('Workflow' if LANG == 'EN' else 'Flujo')}</span>
-                                    <b>{html.escape('From ranking to decision' if LANG == 'EN' else 'Del ranking a la decisión')}</b>
-                                    <small>{html.escape('Use Market to detect opportunities, Players to validate profiles, Board to compare candidates and Strategy to optimise the portfolio.' if LANG == 'EN' else 'Usa Market para detectar oportunidades, Players para validar perfiles, Board para comparar candidatos y Strategy para optimizar cartera.')}</small>
-                                </div>
-                                <div class="quick-guide-card">
-                                    <span>{html.escape('Filters' if LANG == 'EN' else 'Filtros')}</span>
-                                    <b>{html.escape('Eligibility layer' if LANG == 'EN' else 'Capa de elegibilidad')}</b>
-                                    <small>{html.escape('Age, minutes, confidence, opportunity, value, ROI and risk define the active scouting universe.' if LANG == 'EN' else 'Edad, minutos, confianza, oportunidad, valor, ROI y riesgo definen el universo activo de scouting.')}</small>
-                                </div>
-                            </div>
-                            <div class="quick-guide-glossary">
-                                <span>{html.escape('Glossary' if LANG == 'EN' else 'Glosario')}</span>
-                                <div><b>Opportunity</b><small>{html.escape('market inefficiency and upside signal' if LANG == 'EN' else 'señal de ineficiencia y upside de mercado')}</small></div>
-                                <div><b>Risk</b><small>{html.escape('estimated uncertainty; lower is better' if LANG == 'EN' else 'incertidumbre estimada; menor es mejor')}</small></div>
-                                <div><b>ROI 3Y</b><small>{html.escape('expected three-year asset return' if LANG == 'EN' else 'retorno esperado del activo a tres años')}</small></div>
-                                <div><b>Decision Score</b><small>{html.escape('final executive priority indicator' if LANG == 'EN' else 'indicador final de prioridad ejecutiva')}</small></div>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
 else:
     global_search_label = None
 
@@ -12476,7 +20942,7 @@ elif global_search_display.startswith("Club ·"):
 elif global_search_display.startswith("Position ·"):
     search_entity_type = "position"
 
-search_norm = str(global_search_query).strip().casefold()
+search_norm = normalize_search_text(global_search_query)
 scouting_name_col = get_player_name_column(scouting_df)
 football_name_col = get_player_name_column(football_df)
 search_matches_scouting_universe = False
@@ -12485,10 +20951,10 @@ outside_football_profile = pd.DataFrame()
 
 if search_norm and search_entity_type == "player":
     if scouting_name_col is not None and scouting_name_col in scouting_df.columns:
-        scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).str.strip().str.casefold()
+        scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).map(normalize_search_text)
         search_matches_scouting_universe = bool((scouting_names_norm == search_norm).any())
     if not search_matches_scouting_universe and football_name_col is not None and football_name_col in football_df.columns:
-        outside_mask = football_df[football_name_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        outside_mask = football_df[football_name_col].fillna("").astype(str).map(normalize_search_text) == search_norm
         outside_football_profile = football_df[outside_mask].head(1).copy()
         search_is_outside_scouting_player = not outside_football_profile.empty
 
@@ -12611,21 +21077,8 @@ with filter_row_1[1]:
         key=min_minutes_key,
         label_visibility="collapsed",
     )
-with filter_row_1[2]:
-    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_confidence'))}</div>", unsafe_allow_html=True)
-    min_confidence_key = f"min_confidence_{preset_name}"
-    min_confidence_default = int(preset["min_confidence"])
-    min_confidence_preview = int(st.session_state.get(min_confidence_key, min_confidence_default))
-    render_sidebar_filter_value(min_confidence_preview, "", 0, 100)
-    min_confidence = st.number_input(
-        T("min_confidence"),
-        min_value=0,
-        max_value=100,
-        value=min_confidence_default,
-        step=5,
-        key=min_confidence_key,
-        label_visibility="collapsed",
-    )
+# Sidebar simplified for product use: keep only stable universe filters visible.
+min_confidence = 0 if universe_mode == "Football Universe" else int(preset.get("min_confidence", 0))
 
 st.sidebar.markdown(
     f"<div class='sidebar-filter-group-title'>{html.escape('Competitive context' if LANG == 'EN' else 'Contexto competitivo')}</div>",
@@ -12645,134 +21098,27 @@ with filter_row_2[0]:
 with filter_row_2[1]:
     position_options = [T("all_f")] + sorted(base_df["position_group"].dropna().astype(str).unique().tolist())
     selected_position = st.selectbox(T("position"), position_options, key=f"position_{preset_name}")
-with filter_row_2[2]:
-    raw_tiers = sorted(base_df["opportunity_tier_label"].dropna().astype(str).unique().tolist())
-    tier_display_to_raw = {tier_display_name(tier): tier for tier in raw_tiers}
-    tier_order = {
-        "Alta prioridad": 10,
-        "Objetivo scouting": 20,
-        "Interesante": 30,
-        "Monitorización": 40,
-        "Baja oportunidad": 50,
-        "Bajo riesgo": 60,
-        "Exploratorio": 70,
-    }
-    ordered_tier_labels = sorted(
-        tier_display_to_raw.keys(),
-        key=lambda label: (tier_order.get(label, 999), label),
+available_role_options = []
+if "primary_role" in base_df.columns:
+    available_role_options = sorted(
+        [role for role in base_df["primary_role"].dropna().astype(str).unique().tolist() if is_valid_role_value(role)]
     )
-    tier_options = [T("all_m")] + ordered_tier_labels
-    selected_tier_display = st.selectbox(T("tier"), tier_options, key=f"tier_{preset_name}")
-    selected_tier = tier_display_to_raw.get(selected_tier_display, selected_tier_display)
-with filter_row_2[3]:
-    global_min_os = float(np.floor(base_df["opportunity_score"].min()))
-    global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
-    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('opportunity_range'))}</div>", unsafe_allow_html=True)
-    os_min_key = f"opportunity_min_{preset_name}"
-    os_max_key = f"opportunity_max_{preset_name}"
-    os_min_default = float(preset["min_opportunity"])
-    os_max_default = global_max_os
-    if os_min_key not in st.session_state:
-        st.session_state[os_min_key] = os_min_default
-    if os_max_key not in st.session_state:
-        st.session_state[os_max_key] = os_max_default
+if not available_role_options:
+    available_role_options = ROLE_OPTIONS
+role_options = [T("all_m")] + available_role_options
+selected_role = st.sidebar.selectbox("Role" if LANG == "EN" else "Rol", role_options, key=f"role_{preset_name}")
+render_role_availability_chips(base_df, selected_role if selected_role != T("all_m") else None, limit=12)
+selected_tier = T("all_m")
+global_min_os = float(np.floor(base_df["opportunity_score"].min()))
+global_max_os = float(np.ceil(base_df["opportunity_score"].max()))
+os_range = (float(preset.get("min_opportunity", global_min_os)), global_max_os)
 
-    # Buttons must update session_state before the number_input widgets are instantiated.
-    # Streamlit does not allow modifying a widget-bound key later in the same run.
-    os_button_cols = st.sidebar.columns(4, gap="small")
-    with os_button_cols[0]:
-        if st.button("−", key=f"{os_min_key}_minus", use_container_width=True, help="Bajar mínimo Opportunity"):
-            st.session_state[os_min_key] = max(global_min_os, float(st.session_state.get(os_min_key, os_min_default)) - 1.0)
-            st.rerun()
-    with os_button_cols[1]:
-        if st.button("+", key=f"{os_min_key}_plus", use_container_width=True, help="Subir mínimo Opportunity"):
-            st.session_state[os_min_key] = min(global_max_os, float(st.session_state.get(os_min_key, os_min_default)) + 1.0)
-            st.rerun()
-    with os_button_cols[2]:
-        if st.button("−", key=f"{os_max_key}_minus", use_container_width=True, help="Bajar máximo Opportunity"):
-            st.session_state[os_max_key] = max(global_min_os, float(st.session_state.get(os_max_key, os_max_default)) - 1.0)
-            st.rerun()
-    with os_button_cols[3]:
-        if st.button("+", key=f"{os_max_key}_plus", use_container_width=True, help="Subir máximo Opportunity"):
-            st.session_state[os_max_key] = min(global_max_os, float(st.session_state.get(os_max_key, os_max_default)) + 1.0)
-            st.rerun()
-
-    os_min_preview = float(st.session_state.get(os_min_key, os_min_default))
-    os_max_preview = float(st.session_state.get(os_max_key, os_max_default))
-    render_sidebar_filter_range(os_min_preview, os_max_preview, global_min_os, global_max_os)
-    os_cols = st.sidebar.columns(2, gap="medium")
-    with os_cols[0]:
-        os_min_value = st.number_input(
-            "Min",
-            min_value=global_min_os,
-            max_value=global_max_os,
-            value=os_min_preview,
-            step=1.0,
-            key=os_min_key,
-            label_visibility="collapsed",
-        )
-    with os_cols[1]:
-        os_max_value = st.number_input(
-            "Max",
-            min_value=global_min_os,
-            max_value=global_max_os,
-            value=os_max_preview,
-            step=1.0,
-            key=os_max_key,
-            label_visibility="collapsed",
-        )
-    os_low, os_high = sorted((float(os_min_value), float(os_max_value)))
-    os_range = (os_low, os_high)
-
-st.sidebar.markdown(
-    f"<div class='sidebar-filter-group-title'>{html.escape('Market and risk' if LANG == 'EN' else 'Mercado y riesgo')}</div>",
-    unsafe_allow_html=True,
-)
-
-with filter_row_3[0]:
-    global_max_value_m = float(np.ceil(pd.to_numeric(base_df.get("market_value_eur", 0), errors="coerce").max() / 1_000_000))
-    max_value_limit_m = max(1.0, global_max_value_m)
-    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_value'))}</div>", unsafe_allow_html=True)
-    max_value_key = f"max_value_{preset_name}"
-    max_value_preview = float(st.session_state.get(max_value_key, max_value_limit_m))
-    render_sidebar_filter_value(max_value_preview, "M", 0.25, max_value_limit_m)
-    max_market_value_m = st.number_input(
-        T("max_value"),
-        min_value=0.25,
-        max_value=max_value_limit_m,
-        value=max_value_preview,
-        step=0.25,
-        key=max_value_key,
-        label_visibility="collapsed",
-    )
-with filter_row_3[1]:
-    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_roi'))}</div>", unsafe_allow_html=True)
-    min_roi_key = f"min_roi_{preset_name}"
-    min_roi_preview = int(st.session_state.get(min_roi_key, 0))
-    render_sidebar_filter_value(min_roi_preview, "%", 0, 400)
-    min_roi = st.number_input(
-        T("min_roi"),
-        min_value=0,
-        max_value=400,
-        value=0,
-        step=25,
-        key=min_roi_key,
-        label_visibility="collapsed",
-    )
-with filter_row_3[2]:
-    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_risk'))}</div>", unsafe_allow_html=True)
-    max_risk_key = f"max_risk_{preset_name}"
-    max_risk_preview = int(st.session_state.get(max_risk_key, 100))
-    render_sidebar_filter_value(max_risk_preview, "", 0, 100)
-    max_risk_filter = st.number_input(
-        T("max_risk"),
-        min_value=0,
-        max_value=100,
-        value=100,
-        step=5,
-        key=max_risk_key,
-        label_visibility="collapsed",
-    )
+# Advanced market/risk filters are intentionally kept out of the sidebar.
+# Product sidebar remains: preset, age, minutes, league and position.
+global_max_value_m = float(np.ceil(pd.to_numeric(base_df.get("market_value_eur", 0), errors="coerce").max() / 1_000_000))
+max_market_value_m = max(1.0, global_max_value_m)
+min_roi = 0
+max_risk_filter = 100
 
 filtered_df = base_df.copy()
 age_filter = pd.to_numeric(filtered_df.get("age", np.nan), errors="coerce") <= max_age
@@ -12797,18 +21143,26 @@ if selected_league != T("all_f"):
     filtered_df = filtered_df[filtered_df["league"].astype(str) == selected_league]
 if selected_position != T("all_f"):
     filtered_df = filtered_df[filtered_df["position_group"].astype(str) == selected_position]
+if selected_role != T("all_m") and "primary_role" in filtered_df.columns:
+    filtered_df = filtered_df[filtered_df["primary_role"].astype(str) == selected_role]
 if selected_tier != T("all_m"):
     filtered_df = filtered_df[filtered_df["opportunity_tier_label"].astype(str) == selected_tier]
 
-search_query_clean = str(global_search_query).strip().lower()
+# role intelligence.8.2 — keep a benchmark pool before player-search narrowing.
+# The radar selector may focus one player, but percentiles must be computed
+# against the active scouting universe selected by filters, not against the
+# single selected row.
+RADAR_BENCHMARK_POOL_DF = filtered_df.copy()
+
+search_query_clean = normalize_search_text(global_search_query)
 if search_query_clean and not search_is_outside_scouting_player and not (search_entity_type == "player"):
     searchable_cols = [
-        col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group"]
+        col for col in ["player_name_fbref", "player_name_tm", "player_name", "club", "league", "position_group", "primary_role", "secondary_role"]
         if col in filtered_df.columns
     ]
     if searchable_cols:
         search_mask = filtered_df[searchable_cols].astype(str).apply(
-            lambda row: search_query_clean in " ".join(row.values).lower(),
+            lambda row: search_query_clean in normalize_search_text(" ".join(row.values)),
             axis=1,
         )
         filtered_df = filtered_df[search_mask].copy()
@@ -12820,8 +21174,8 @@ outside_active_profile = pd.DataFrame()
 if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player:
     player_col = get_player_name_column(base_df)
     if player_col is not None and player_col in base_df.columns:
-        base_player_mask = base_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
-        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
+        base_player_mask = base_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
         if bool(base_player_mask.any()) and not bool(active_player_mask.any()):
             search_is_outside_active_filters = True
             outside_active_profile = base_df[base_player_mask].head(1).copy()
@@ -12830,7 +21184,7 @@ if search_query_clean and search_entity_type == "player" and not search_is_outsi
 if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player and not search_is_outside_active_filters:
     player_col = get_player_name_column(filtered_df)
     if player_col is not None and player_col in filtered_df.columns:
-        active_player_mask = filtered_df[player_col].fillna("").astype(str).str.strip().str.casefold() == search_norm
+        active_player_mask = filtered_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm
         if bool(active_player_mask.any()):
             filtered_df = filtered_df[active_player_mask].copy()
 
@@ -12874,13 +21228,15 @@ else:
 search_matches_selected_league = (
     selected_league != T("all_f")
     and search_query_clean
-    and str(global_search_query).strip().casefold() == str(selected_league).strip().casefold()
+    and normalize_search_text(global_search_query) == normalize_search_text(selected_league)
 )
 
 if selected_league != T("all_f") and not search_matches_selected_league:
     active_filters.append(f"{T('league')}: {league_display_name(selected_league)}")
 if selected_position != T("all_f"):
     active_filters.append(f"{T('position')}: {selected_position}")
+if selected_role != T("all_m"):
+    active_filters.append(f"Role: {selected_role}" if LANG == "EN" else f"Rol: {selected_role}")
 if selected_tier != T("all_m"):
     active_filters.append(f"{T('tier')}: {tier_display_name(selected_tier)}")
 
@@ -12978,6 +21334,24 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
         unsafe_allow_html=True,
     )
 
+    render_eligibility_check_panel(
+        build_scouting_eligibility_checks(
+            outside_row,
+            max_age=max_age,
+            min_minutes=min_minutes,
+            min_confidence=min_confidence,
+            os_range=os_range,
+            selected_league=selected_league,
+            selected_position=selected_position,
+            selected_role=selected_role,
+            selected_tier=selected_tier,
+            max_market_value_m=max_market_value_m,
+            min_roi=min_roi,
+            max_risk_filter=max_risk_filter,
+        ),
+        title="Why it does not enter the active universe" if LANG == "EN" else "Por qué no entra en el universo activo",
+    )
+
 
 if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_active_profile.empty:
     outside_row = outside_active_profile.iloc[0]
@@ -12993,6 +21367,22 @@ if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_activ
         if LANG == "EN"
         else "El jugador existe en el universo analítico del modelo, pero no entra en el preset o conjunto de filtros activo. El ranking ejecutivo, la shortlist y la matriz Opportunity/Risk se mantienen sobre el Scouting Universe activo."
     )
+    exclusion_reasons = explain_scouting_exclusion(
+        outside_row,
+        max_age=max_age,
+        min_minutes=min_minutes,
+        min_confidence=min_confidence,
+        os_range=os_range,
+        selected_league=selected_league,
+        selected_position=selected_position,
+        selected_role=selected_role,
+        selected_tier=selected_tier,
+        max_market_value_m=max_market_value_m,
+        min_roi=min_roi,
+        max_risk_filter=max_risk_filter,
+    )
+    reasons_title = "Why he is out" if LANG == "EN" else "Por qué no entra"
+    reasons_html = "<div class='outside-reasons'><b>" + html.escape(reasons_title) + "</b>" + "".join(f"<span>{html.escape(reason)}</span>" for reason in exclusion_reasons) + "</div>"
     st.markdown(
         f"""
 <div class="outside-scouting-card">
@@ -13001,10 +21391,29 @@ if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_activ
     <div class="outside-scouting-player">{outside_name}</div>
     <div class="outside-scouting-meta">{" · ".join([part for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value] if str(part).strip() and str(part).strip() != "N/A"])}</div>
     <div class="outside-scouting-text">{html.escape(text_msg)}</div>
+    {reasons_html}
     <div class="outside-scouting-cta">{'Review filters or preset' if LANG == 'EN' else 'Revisar filtros o preset'} · {'outside active criteria' if LANG == 'EN' else 'fuera de criterios activos'}</div>
 </div>
 """,
         unsafe_allow_html=True,
+    )
+
+    render_eligibility_check_panel(
+        build_scouting_eligibility_checks(
+            outside_row,
+            max_age=max_age,
+            min_minutes=min_minutes,
+            min_confidence=min_confidence,
+            os_range=os_range,
+            selected_league=selected_league,
+            selected_position=selected_position,
+            selected_role=selected_role,
+            selected_tier=selected_tier,
+            max_market_value_m=max_market_value_m,
+            min_roi=min_roi,
+            max_risk_filter=max_risk_filter,
+        ),
+        title="Active filter eligibility" if LANG == "EN" else "Elegibilidad con filtros activos",
     )
 
 # Contextual actions: clear search without detached guide duplication.
@@ -13017,7 +21426,6 @@ if SHOW_COMMAND_PANEL and search_query_clean:
             key="clear_global_scouting_search_button",
             on_click=clear_global_scouting_search,
         )
-        st.markdown('</div>', unsafe_allow_html=True)
 
 
 st.markdown('\n<style>\n.pro-section-card .compact-board-note { margin-top: 14px !important; }\n.pro-section-card + div[data-testid="stExpander"] { margin-top: 14px !important; }\n</style>\n', unsafe_allow_html=True)
@@ -13365,13 +21773,564 @@ st.markdown(
 )
 
 
+
+# =============================================================================
+# TM.3.4.1 Phase 1 final compactness patch: search + Player Intelligence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact global search: examples live in the title row, explanatory copy removed. */
+.final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    flex-wrap: wrap !important;
+    margin: 0 0 8px 0 !important;
+}
+.final-search-title-row .final-search-title {
+    margin: 0 !important;
+    line-height: 1.1 !important;
+}
+.final-search-examples-top {
+    margin: 0 !important;
+    padding: 5px 10px !important;
+    min-height: 26px !important;
+    font-size: .72rem !important;
+    box-shadow: none !important;
+}
+.final-search-caption, .search-helper-inline {
+    display: none !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title-row),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title-row) div[data-baseweb="select"] > div {
+    min-height: 50px !important;
+    height: 50px !important;
+}
+/* Player Intelligence: reduce dead space between hero and radar; remove standalone layer-chip rhythm. */
+.product-page-hero {
+    margin-bottom: 12px !important;
+}
+.player-radar-compact-header {
+    margin: 8px 0 10px 0 !important;
+}
+.player-radar-title {
+    color: #0f172a !important;
+    font-size: 1.72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.12 !important;
+    margin: 0 0 8px 0 !important;
+}
+.player-radar-subtitle {
+    background: #ffffff !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+    color: #334155 !important;
+    font-size: .88rem !important;
+    line-height: 1.35 !important;
+    padding: 10px 14px !important;
+    margin: 0 !important;
+}
+.player-radar-compact-header + div[data-testid="stVerticalBlock"] {
+    gap: .45rem !important;
+}
+.player-intelligence-report-gap {
+    height: 12px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.4.1 Player Snapshot visual layer
+# =============================================================================
+st.markdown(
+    """
+<style>
+.player-snapshot-shell {
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%) !important;
+    border: 1px solid #dbe7f5 !important;
+    border-radius: 22px !important;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.070) !important;
+    padding: 16px 18px 18px 18px !important;
+    margin: 8px 0 22px 0 !important;
+}
+.player-snapshot-heading {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    margin-bottom: 14px !important;
+}
+.player-snapshot-kicker {
+    color: #1e3a8a !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 3px !important;
+}
+.player-snapshot-title {
+    color: #0f172a !important;
+    font-size: 1.58rem !important;
+    font-weight: 950 !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.03em !important;
+}
+.player-snapshot-subtitle {
+    color: #64748b !important;
+    font-size: .88rem !important;
+    margin-top: 3px !important;
+}
+.player-snapshot-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.45fr) minmax(300px, .82fr) minmax(380px, 1.15fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+}
+.snapshot-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045) !important;
+    padding: 16px 18px !important;
+    min-height: 190px !important;
+}
+.snapshot-card-identity {
+    display: grid !important;
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    gap: 18px !important;
+    align-items: center !important;
+}
+.snapshot-avatar {
+    width: 92px !important;
+    height: 118px !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #0b2f5f 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    font-size: 2.0rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -.04em !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.20), 0 10px 24px rgba(37,99,235,.18) !important;
+}
+.snapshot-section-label {
+    color: #0b2f5f !important;
+    font-size: .75rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 10px !important;
+}
+.snapshot-player-name {
+    color: #0f172a !important;
+    font-size: 1.72rem !important;
+    font-weight: 950 !important;
+    line-height: 1.03 !important;
+    letter-spacing: -.035em !important;
+    margin-bottom: 8px !important;
+}
+.snapshot-position-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+    margin-bottom: 10px !important;
+}
+.snapshot-position-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    padding: 4px 9px !important;
+    background: #dcfce7 !important;
+    border: 1px solid #86efac !important;
+    color: #166534 !important;
+    font-size: .76rem !important;
+    font-weight: 950 !important;
+}
+.snapshot-role-placeholder {
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 4px 9px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: .72rem !important;
+    font-weight: 850 !important;
+}
+.snapshot-club-line {
+    color: #0f172a !important;
+    font-size: .98rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 2px !important;
+}
+.snapshot-league-line {
+    color: #64748b !important;
+    font-size: .84rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 12px !important;
+}
+.snapshot-meta-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    border-top: 1px solid #e5eaf1 !important;
+    padding-top: 11px !important;
+}
+.snapshot-meta-grid span, .snapshot-market-values span, .snapshot-score-item span {
+    display: block !important;
+    color: #64748b !important;
+    font-size: .72rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 3px !important;
+}
+.snapshot-meta-grid b {
+    color: #0f172a !important;
+    font-size: .84rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+}
+.snapshot-market-values {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    margin: 18px 0 16px 0 !important;
+}
+.snapshot-market-values > div:first-child {
+    border-right: 1px solid #e2e8f0 !important;
+}
+.snapshot-market-values b {
+    color: #0f172a !important;
+    font-size: 1.86rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+}
+.snapshot-inefficiency-box {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    text-align: center !important;
+}
+.snapshot-inefficiency-box b {
+    color: #15803d !important;
+    font-size: 1.06rem !important;
+    font-weight: 950 !important;
+}
+.snapshot-inefficiency-box span {
+    grid-column: 1 / -1 !important;
+    color: #475569 !important;
+    font-size: .76rem !important;
+    font-weight: 750 !important;
+}
+
+.snapshot-inefficiency-box.snapshot-gap-negative {
+    background: #fff7ed !important;
+    border-color: #fed7aa !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-negative b { color: #c2410c !important; }
+.snapshot-inefficiency-box.snapshot-gap-neutral {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-neutral b { color: #334155 !important; }
+.snapshot-inefficiency-box.snapshot-gap-positive {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+.snapshot-inefficiency-box.snapshot-gap-positive b { color: #15803d !important; }
+.snapshot-score-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+}
+.snapshot-score-item {
+    text-align: center !important;
+    border-right: 1px solid #edf2f7 !important;
+    padding: 4px 8px 10px 8px !important;
+}
+.snapshot-score-item:last-child { border-right: 0 !important; }
+.snapshot-score-item b {
+    display: block !important;
+    font-size: 2.35rem !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+    margin: 8px 0 8px 0 !important;
+}
+.snapshot-score-item em {
+    display: block !important;
+    font-style: normal !important;
+    color: #334155 !important;
+    font-size: .78rem !important;
+    font-weight: 850 !important;
+    border-bottom: 3px solid currentColor !important;
+    padding-bottom: 8px !important;
+}
+.snapshot-score-green b, .snapshot-score-green em { color: #16a34a !important; }
+.snapshot-score-orange b, .snapshot-score-orange em { color: #f97316 !important; }
+.snapshot-score-blue b, .snapshot-score-blue em { color: #2563eb !important; }
+.snapshot-tags-row {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 14px 16px 16px 16px !important;
+    margin-top: 12px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.040) !important;
+}
+.snapshot-tags-title {
+    color: #0b2f5f !important;
+    font-size: .78rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 10px !important;
+}
+.snapshot-tags-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+.snapshot-tag {
+    border-radius: 14px !important;
+    padding: 11px 13px !important;
+    min-height: 62px !important;
+    border: 1px solid #e2e8f0 !important;
+}
+.snapshot-tag-label {
+    font-size: .86rem !important;
+    font-weight: 950 !important;
+    margin-bottom: 4px !important;
+}
+.snapshot-tag-caption {
+    font-size: .74rem !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    line-height: 1.22 !important;
+}
+.snapshot-tag-green { background: #f0fdf4 !important; border-color: #bbf7d0 !important; }
+.snapshot-tag-green .snapshot-tag-label { color: #15803d !important; }
+.snapshot-tag-blue { background: #eff6ff !important; border-color: #bfdbfe !important; }
+.snapshot-tag-blue .snapshot-tag-label { color: #1d4ed8 !important; }
+.snapshot-tag-purple { background: #faf5ff !important; border-color: #e9d5ff !important; }
+.snapshot-tag-purple .snapshot-tag-label { color: #7e22ce !important; }
+.snapshot-tag-yellow { background: #fffbeb !important; border-color: #fde68a !important; }
+.snapshot-tag-yellow .snapshot-tag-label { color: #b45309 !important; }
+.snapshot-tag-red { background: #fef2f2 !important; border-color: #fecaca !important; }
+.snapshot-tag-red .snapshot-tag-label { color: #dc2626 !important; }
+.snapshot-tag-teal { background: #f0fdfa !important; border-color: #99f6e4 !important; }
+.snapshot-tag-teal .snapshot-tag-label { color: #0f766e !important; }
+.snapshot-tag-neutral { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+.snapshot-tag-neutral .snapshot-tag-label { color: #334155 !important; }
+@media (max-width: 1300px) {
+    .player-snapshot-grid { grid-template-columns: 1fr !important; }
+    .snapshot-tags-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.3.4.1 final release polish: unified module headers + Plotly overflow fix
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final Fase 1: unified level-2 module headers across Player/Strategy modules. */
+.internal-module-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin: 28px 0 18px 0 !important;
+    padding: 0 !important;
+}
+.internal-module-header--compact {
+    margin: 4px 0 14px 0 !important;
+}
+.internal-module-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #0f172a !important;
+    font-size: 1.54rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.12 !important;
+    margin: 0 !important;
+}
+.internal-module-title--sm {
+    font-size: 1.38rem !important;
+}
+.module-info-details {
+    display: inline-flex !important;
+    position: relative !important;
+    margin-left: 2px !important;
+    vertical-align: 2px !important;
+}
+.module-info-details summary {
+    list-style: none !important;
+    width: 17px !important;
+    height: 17px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #2563eb !important;
+    font-size: 11px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+.module-info-details summary::-webkit-details-marker { display: none !important; }
+.module-info-details div {
+    position: absolute !important;
+    left: 0 !important;
+    top: 24px !important;
+    z-index: 9999 !important;
+    min-width: 300px !important;
+    max-width: 420px !important;
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    color: #334155 !important;
+    font-size: .78rem !important;
+    line-height: 1.38 !important;
+    font-weight: 650 !important;
+    box-shadow: 0 18px 38px rgba(15,23,42,.16) !important;
+}
+.player-radar-compact-header {
+    margin: 30px 0 18px 0 !important;
+}
+.player-radar-subtitle {
+    display: none !important;
+}
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    margin-top: 2px !important;
+}
+/* Keep charts analytical-sized but remove the Streamlit/Plotly internal scroll sensation. */
+div[data-testid="stElementContainer"]:has(div[data-testid="stPlotlyChart"]),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stPlotlyChart"]),
+div[data-testid="stPlotlyChart"],
+div[data-testid="stPlotlyChart"] > div,
+div[data-testid="stPlotlyChart"] .js-plotly-plot,
+div[data-testid="stPlotlyChart"] .plot-container,
+div[data-testid="stPlotlyChart"] .svg-container {
+    overflow: visible !important;
+    max-height: none !important;
+}
+div[data-testid="stPlotlyChart"] svg.main-svg {
+    overflow: visible !important;
+}
+/* Avoid old chart-card styles forcing scrollable/cropped plot containers. */
+.radar-chart-card,
+.similarity-chart-shell,
+.contract-matrix-shell {
+    overflow: visible !important;
+}
+/* Strategy Center: the banner is now the first internal block after section navigation. */
+.strategy-banner {
+    margin-top: 4px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.3.4.1 final title + matrix label coherence patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Unify page-level headers with the Executive Overview hero language. */
+.product-page-hero-unified {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    background: linear-gradient(135deg, #06152a 0%, #0b2a55 58%, #134b8f 100%);
+    border: 1px solid rgba(191,219,254,.28);
+    border-radius: 22px;
+    padding: 22px 24px;
+    box-shadow: 0 22px 48px rgba(2,6,23,.18);
+    margin: 0 0 18px 0;
+    color: #ffffff;
+}
+.product-page-hero-unified .product-page-eyebrow {
+    color: #bfdbfe !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .095em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+}
+.product-page-hero-unified .product-page-title {
+    color: #ffffff !important;
+    font-size: 2.05rem !important;
+    line-height: 1.04 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+    margin: 0 0 4px 0 !important;
+}
+.product-page-hero-unified .product-page-subtitle {
+    color: #dbeafe !important;
+    font-size: .96rem !important;
+    line-height: 1.45 !important;
+    max-width: 900px !important;
+}
+/* Stronger in-chart quadrant labels for executive readability. */
+.opportunity-matrix-label-note {
+    display: none;
+}
+
+/* Final Phase 1 closure: unified page headers and stronger matrix subtitle. */
+.matrix-subtitle-strong {
+    color: #475569 !important;
+    font-size: .95rem !important;
+    font-weight: 500 !important;
+    line-height: 1.45 !important;
+    margin: 2px 0 12px 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 def render_product_page_header(eyebrow: str, title: str, subtitle: str) -> None:
+    """Render a unified page-level hero, aligned with the Executive Overview header style."""
     st.markdown(
         f"""
-<div class="product-page-hero">
-    <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
-    <div class="product-page-title">{html.escape(title)}</div>
-    <div class="product-page-subtitle">{html.escape(subtitle)}</div>
+<div class="product-page-hero-unified">
+    <div>
+        <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
+        <div class="product-page-title">{html.escape(title)}</div>
+        <div class="product-page-subtitle">{html.escape(subtitle)}</div>
+    </div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -13465,15 +22424,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     roi_value = "N/A"
     if not roi.empty and "positive_roi_rate" in roi.columns:
         roi_value = f"{roi['positive_roi_rate'].iloc[0]:.0%}"
-
-    league_source_df = shortlist if "league" in shortlist.columns else source_df
-
-    leagues = (
-        league_source_df["league"].dropna().nunique()
-        if "league" in league_source_df.columns
-        else "N/A"
-    )
-
+    leagues = count_current_dss_leagues(source_df)
     st.markdown(
         f"""
 <div class="home-hero">
@@ -13509,7 +22460,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
         render_info_kpi_card(
             "Positive ROI Rate",
             roi_value,
-            UI("simulación conservadora"),
+            UI("escenario conservador"),
             "Porcentaje de candidatos que muestran revalorización positiva bajo la simulación histórica de ROI. No equivale a beneficio garantizado ni a precio real de transferencia." if LANG == "ES" else "Share of candidates with positive revaluation under the historical ROI simulation. It is not a guaranteed profit or real transfer fee.",
         )
     st.markdown("<div class='overview-row-gap'></div>", unsafe_allow_html=True)
@@ -13520,11 +22471,56 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
 <div class="quick-action-grid">
     <div class="quick-action-card"><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras.')}</div></div>
     <div class="quick-action-card"><div class="quick-action-title">Global Scouting Universe</div><div class="quick-action-text">{html.escape('Explore, filter and prioritize the actionable prospect universe.' if LANG == 'EN' else 'Explorar, filtrar y priorizar el universo accionable de prospects.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Recruitment Board</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
+    <div class="quick-action-card"><div class="quick-action-title">Recruitment Intelligence</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
+    <div class="quick-action-card"><div class="quick-action-title">Contract Intelligence</div><div class="quick-action-text">{html.escape('Prioritize targets by contract timing and negotiation leverage.' if LANG == 'EN' else 'Priorizar targets por timing contractual y poder negociador.')}</div></div>
 </div>
 """,
         unsafe_allow_html=True,
     )
+    # Executive Overview navigation CTAs: make the landing page an entry point to the DSS workflow.
+    cta_1, cta_2, cta_3, cta_4 = st.columns(4, gap="small")
+    with cta_1:
+        if st.button("👤 " + ("View Player Profile" if LANG == "EN" else "Ver Player Profile"), key="overview_cta_player_profile", use_container_width=True):
+            st.session_state.dashboard_navigation_page = "Player Intelligence"
+            st.rerun()
+    with cta_2:
+        if st.button("🎯 " + ("Go to Recruitment" if LANG == "EN" else "Ir a Recruitment"), key="overview_cta_recruitment", use_container_width=True):
+            st.session_state.dashboard_navigation_page = "Recruitment Intelligence"
+            st.rerun()
+    with cta_3:
+        if st.button("🧭 " + ("Open Strategy Center" if LANG == "EN" else "Abrir Strategy Center"), key="overview_cta_strategy", use_container_width=True):
+            st.session_state.dashboard_navigation_page = "Strategy Center"
+            st.session_state.strategy_center_view = "Transfer Strategy"
+            st.rerun()
+    with cta_4:
+        if st.button("📄 " + ("Review Contracts" if LANG == "EN" else "Revisar contratos"), key="overview_cta_contracts", use_container_width=True):
+            st.session_state.dashboard_navigation_page = "Strategy Center"
+            st.session_state.strategy_center_view = "Contract Intelligence"
+            st.rerun()
+    st.markdown("<div class='overview-row-gap-small'></div>", unsafe_allow_html=True)
+    try:
+        contract_preview = _prepare_contract_dataset(contract_df)
+        if not contract_preview.empty:
+            contract_preview = contract_preview.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(5)
+            preview_rows = []
+            for _, row in contract_preview.iterrows():
+                preview_rows.append(
+                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{html.escape(str(safe_get(row, 'club_display', 'N/A')))} · {html.escape(str(safe_get(row, 'position_display', 'N/A')))} · {html.escape(str(safe_get(row, 'age_display', 'N/A')))} {'years' if LANG == 'EN' else 'años'}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
+                )
+            st.markdown(
+                f"""
+                <div class='top5-list-card'>
+                    <div class='panel-title'>{html.escape('Top Contract Opportunities' if LANG == 'EN' else 'Top Contract Opportunities')}</div>
+                    <div class='panel-subtitle'>{html.escape('Contract timing layer for negotiation prioritisation.' if LANG == 'EN' else 'Capa de timing contractual para priorizar negociación.')}</div>
+                    {''.join(preview_rows)}
+                    <div class='similarity-rank-footer-clean'>{html.escape('View Contract Intelligence →' if LANG == 'EN' else 'Ver Contract Intelligence →')}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    except Exception:
+        pass
+
     render_opportunity_risk_top5_vertical(source_df, "Top 5 opportunities" if LANG == "EN" else "Top 5 oportunidades", "Initial executive review priority" if LANG == "EN" else "Prioridad inicial para revisión ejecutiva")
 
 
@@ -13535,35 +22531,25 @@ def render_transfer_strategy_placeholder() -> None:
     It turns player-level opportunity signals into an optimized transfer portfolio
     under budget, positional, risk/scenario and squad-size constraints.
     """
-    render_product_page_header(
-        "Strategic Recruitment Engine",
-        "⭐ Transfer Strategy Engine",
-        (
-            "Optimize a transfer portfolio under budget, position, risk and squad-size constraints."
-            if LANG == "EN"
-            else "Optimiza una cartera de fichajes bajo restricciones de presupuesto, posición, riesgo y tamaño de plantilla."
-        ),
-    )
-
     st.markdown(
         f"""
 <div class="strategy-banner">
     <div class="strategy-eyebrow">{html.escape('Portfolio Optimization Layer' if LANG == 'EN' else 'Capa de optimización de cartera')}</div>
     <div class="strategy-title">{html.escape('From player ranking to portfolio decision.' if LANG == 'EN' else 'Del ranking de jugadores a la decisión de cartera.')}</div>
-    <div class="strategy-copy">{html.escape('This module formulates transfer planning as a Binary Integer Programming problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo formula la planificación de fichajes como un problema de Programación Entera Binaria: seleccionar la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
+    <div class="strategy-copy">{html.escape('This module converts transfer planning into a portfolio selection problem: select the best combination of players subject to budget, positional coverage, risk and maximum-signing constraints.' if LANG == 'EN' else 'Este módulo convierte la planificación de fichajes en un problema de selección de cartera: elegir la mejor combinación de jugadores sujeta a presupuesto, cobertura posicional, riesgo y número máximo de incorporaciones.')}</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
     with st.expander(
-        "🧠 " + ("Optimization methodology" if LANG == "EN" else "Metodología de optimización"),
+        "🧠 " + ("How the optimizer works" if LANG == "EN" else "Cómo funciona el optimizador"),
         expanded=False,
     ):
         if LANG == "EN":
             st.markdown(
                 """
-                The engine uses the portfolio dataset and solves a 0-1 selection problem.
+                The engine uses the portfolio dataset and solves an optimal candidate selection.
 
                 **Decision variable:** `x_i = 1` if player `i` is selected, `0` otherwise.
 
@@ -13575,7 +22561,7 @@ def render_transfer_strategy_placeholder() -> None:
         else:
             st.markdown(
                 """
-                El motor utiliza el dataset de cartera y resuelve un problema de selección 0-1.
+                El motor utiliza el dataset de cartera y resuelve una selección óptima de candidatos.
 
                 **Variable de decisión:** `x_i = 1` si el jugador `i` es seleccionado, `0` en caso contrario.
 
@@ -13585,6 +22571,7 @@ def render_transfer_strategy_placeholder() -> None:
                 """
             )
 
+    st.markdown("<div class='strategy-filter-panel'><div class='contract-filter-title'>" + html.escape('Tactical portfolio filters' if LANG == 'EN' else 'Filtros tácticos de cartera') + "</div><div class='contract-filter-subtitle'>" + html.escape('Compact controls for budget, risk profile, style, squad level and positional needs.' if LANG == 'EN' else 'Controles compactos de presupuesto, riesgo, estilo, nivel de plantilla y necesidades posicionales.') + "</div>", unsafe_allow_html=True)
     controls_top = st.columns([0.95, 0.95, 0.95, 1.15, 1.15, 0.90, 0.95], gap="large")
 
     with controls_top[0]:
@@ -13709,6 +22696,7 @@ def render_transfer_strategy_placeholder() -> None:
             else "El Perfil de riesgo se muestra como capa ejecutiva de interpretación. El Estilo de cartera controla concentración y equilibrio."
         )
     )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if LANG == "EN":
         glossary_items = [
@@ -13785,6 +22773,35 @@ def render_transfer_strategy_placeholder() -> None:
         avg_risk_proxy = float(portfolio["risk_proxy"].mean()) if "risk_proxy" in portfolio.columns else np.nan
         max_player_share = float((portfolio["portfolio_cost"] / total_cost).max()) if total_cost > 0 else np.nan
 
+        # GM Simulator layer: first thing a sporting director reads before table detail.
+        pos_col = "position_group" if "position_group" in portfolio.columns else ("position" if "position" in portfolio.columns else None)
+        pos_mix = portfolio[pos_col].astype(str).value_counts().to_dict() if pos_col else {}
+        pos_mix_text = " · ".join([f"{v} {k}" for k, v in pos_mix.items()]) or ("N/A" if LANG == "EN" else "N/D")
+        key_row = portfolio.sort_values("portfolio_value_score", ascending=False).iloc[0] if not portfolio.empty else pd.Series(dtype=object)
+        key_player = get_player_display_from_row(key_row) if not portfolio.empty else "N/A"
+        if "risk_proxy" in portfolio.columns:
+            risky_row = portfolio.sort_values("risk_proxy", ascending=False).iloc[0]
+            risky_player = get_player_display_from_row(risky_row)
+        else:
+            risky_player = key_player
+        st.markdown(
+            f"""
+<div class='gm-summary-card'>
+  <div>
+    <div class='gm-summary-eyebrow'>{html.escape('GM Simulator' if LANG == 'EN' else 'GM Simulator')}</div>
+    <div class='gm-summary-title'>{html.escape(('With €' + str(budget_m) + 'M the DSS recommends') if LANG == 'EN' else ('Con €' + str(budget_m) + 'M el DSS recomienda'))}</div>
+    <div class='gm-summary-copy'>{html.escape(pos_mix_text)} · ROI {expected_roi:.0%} · Upside {format_money_short(expected_upside)}</div>
+  </div>
+  <div class='gm-summary-kpis'>
+    <div><span>{html.escape('Key player' if LANG == 'EN' else 'Jugador clave')}</span><b>{html.escape(key_player)}</b></div>
+    <div><span>{html.escape('Highest risk' if LANG == 'EN' else 'Mayor riesgo')}</span><b>{html.escape(risky_player)}</b></div>
+    <div><span>{html.escape('Budget use' if LANG == 'EN' else 'Uso presupuesto')}</span><b>{budget_utilization:.1%}</b></div>
+  </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
         st.success(
             "Optimal transfer portfolio generated."
             if LANG == "EN"
@@ -13857,6 +22874,7 @@ def render_transfer_strategy_placeholder() -> None:
         display_cols = [
             "player_name_fbref",
             "club",
+            "data_freshness_status",
             "league",
             "position_group",
             "age",
@@ -13874,6 +22892,7 @@ def render_transfer_strategy_placeholder() -> None:
         rename_map = {
             "player_name_fbref": "Player" if LANG == "EN" else "Jugador",
             "club": "Club",
+            "data_freshness_status": "Data Freshness" if LANG == "EN" else "Actualización",
             "league": "League" if LANG == "EN" else "Liga",
             "position_group": "Position" if LANG == "EN" else "Posición",
             "age": "Age" if LANG == "EN" else "Edad",
@@ -13905,6 +22924,10 @@ def render_transfer_strategy_placeholder() -> None:
                 lambda x: f"{x:.1%}" if pd.notna(x) else "N/A"
             )
 
+        freshness_cols = [col for col in ["Data Freshness", "Actualización"] if col in display.columns]
+        for col in freshness_cols:
+            display[col] = display[col].map(lambda x: ("Club actualizado" if str(x) in {"Updated club override", "Club/league current override"} else ("Actualizado" if LANG == "ES" else "Current")))
+
         share_cols = [col for col in ["Portfolio Share", "Peso cartera"] if col in display.columns]
         for col in share_cols:
             display[col] = pd.to_numeric(display[col], errors="coerce").map(
@@ -13935,88 +22958,92 @@ def render_transfer_strategy_placeholder() -> None:
         )
 
         if {"portfolio_cost", "expected_upside", "portfolio_value_score", "position_group"}.issubset(portfolio.columns):
-            st.subheader("📈 " + ("Portfolio Map" if LANG == "EN" else "Mapa de cartera"))
-            st.caption(
-                "Hover each bubble to inspect player, club, cost, upside, ROI and portfolio score."
-                if LANG == "EN"
-                else "Pasa el ratón por cada burbuja para consultar jugador, club, coste, upside, ROI y score de cartera."
-            )
-            fig = go.Figure()
-            for position_group, group_df in portfolio.groupby("position_group"):
-                fig.add_trace(
-                    go.Scatter(
-                        x=group_df["portfolio_cost"] / 1_000_000,
-                        y=group_df["expected_upside"] / 1_000_000,
-                        mode="markers",
-                        customdata=np.stack(
-                            [
-                                group_df["player_name_fbref"].astype(str),
-                                group_df["club"].astype(str) if "club" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
-                                group_df["position_group"].astype(str),
-                                group_df["player_level_tier"].astype(str).map(player_level_display_name) if "player_level_tier" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                                pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
-                            ],
-                            axis=-1,
-                        ),
-                        marker=dict(
-                            size=(pd.to_numeric(group_df["portfolio_value_score"], errors="coerce").fillna(50) / 4).clip(13, 30),
-                            opacity=0.85,
-                            line=dict(color="white", width=2),
-                        ),
-                        name=str(position_group),
-                        hovertemplate=(
-                            "<b>%{customdata[0]}</b><br>"
-                            + ("Club" if LANG == "EN" else "Club")
-                            + ": %{customdata[1]}<br>"
-                            + ("Position" if LANG == "EN" else "Posición")
-                            + ": %{customdata[2]}<br>"
-                            + ("Player Level" if LANG == "EN" else "Nivel jugador")
-                            + ": %{customdata[3]}<br>"
-                            + ("Age" if LANG == "EN" else "Edad")
-                            + ": %{customdata[4]:.1f}<br>"
-                            + ("Cost" if LANG == "EN" else "Coste")
-                            + ": €%{x:.1f}M<br>"
-                            + ("Upside" if LANG == "EN" else "Upside")
-                            + ": €%{y:.1f}M<br>"
-                            + ("ROI" if LANG == "EN" else "ROI")
-                            + ": %{customdata[5]:.1%}<br>"
-                            + ("Portfolio Score" if LANG == "EN" else "Score cartera")
-                            + ": %{customdata[6]:.1f}<extra></extra>"
-                        ),
-                    )
+            map_col, rank_col = st.columns([3.0, 1.0], gap="large")
+            with map_col:
+                st.markdown(
+                    f"<div class='strategy-map-card'><div class='strategy-map-title'>{html.escape('Portfolio Map' if LANG == 'EN' else 'Mapa de cartera')}</div>"
+                    f"<div class='strategy-map-subtitle'>{html.escape('Decision map: cost, upside and portfolio score. Hover for player detail.' if LANG == 'EN' else 'Mapa decisional: coste, upside y score de cartera. Pasa el ratón para consultar detalle del jugador.')}</div>"
+                    "<div class='strategy-map-legend'>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#2563eb'></i>DEF</span>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#22c55e'></i>MID</span>"
+                    "<span class='strategy-map-chip'><i class='strategy-map-dot' style='background:#f97316'></i>ATT</span>"
+                    "</div></div>",
+                    unsafe_allow_html=True,
                 )
-            fig.update_layout(
-                xaxis_title="Cost (€M)" if LANG == "EN" else "Coste (€M)",
-                yaxis_title="Expected Upside (€M)" if LANG == "EN" else "Upside esperado (€M)",
-                height=540,
-                paper_bgcolor="white",
-                plot_bgcolor="white",
-                margin=dict(l=70, r=90, t=42, b=70),
-                legend_title="Position" if LANG == "EN" else "Posición",
-            )
-            fig.update_xaxes(
-                rangemode="tozero",
-                automargin=True,
-                showgrid=True,
-                zeroline=False,
-                showline=True,
-                linewidth=1,
-                linecolor="rgba(120,120,120,0.6)",
-                mirror=False,
-            )
-            fig.update_yaxes(
-                rangemode="tozero",
-                automargin=True,
-                showgrid=True,
-                zeroline=False,
-                showline=True,
-                linewidth=1,
-                linecolor="rgba(120,120,120,0.6)",
-                mirror=False,
-            )
-            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+                fig = go.Figure()
+                for position_group, group_df in portfolio.groupby("position_group"):
+                    fig.add_trace(
+                        go.Scatter(
+                            x=group_df["portfolio_cost"] / 1_000_000,
+                            y=group_df["expected_upside"] / 1_000_000,
+                            mode="markers",
+                            customdata=np.stack(
+                                [
+                                    group_df["player_name_fbref"].astype(str),
+                                    group_df.apply(get_current_club_display, axis=1),
+                                    group_df["position_group"].astype(str),
+                                    group_df["player_level_tier"].astype(str).map(player_level_display_name) if "player_level_tier" in group_df.columns else pd.Series(["N/A"] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["age"], errors="coerce") if "age" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["expected_roi"], errors="coerce") if "expected_roi" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                    pd.to_numeric(group_df["portfolio_value_score"], errors="coerce") if "portfolio_value_score" in group_df.columns else pd.Series([np.nan] * len(group_df), index=group_df.index),
+                                ],
+                                axis=-1,
+                            ),
+                            marker=dict(
+                                size=(pd.to_numeric(group_df["portfolio_value_score"], errors="coerce").fillna(50) / 4).clip(13, 30),
+                                opacity=0.68,
+                                line=dict(color="white", width=2),
+                            ),
+                            name=str(position_group),
+                            hovertemplate=(
+                                "<b>%{customdata[0]}</b><br>"
+                                + ("Club" if LANG == "EN" else "Club") + ": %{customdata[1]}<br>"
+                                + ("Position" if LANG == "EN" else "Posición") + ": %{customdata[2]}<br>"
+                                + ("Player Level" if LANG == "EN" else "Nivel jugador") + ": %{customdata[3]}<br>"
+                                + ("Age" if LANG == "EN" else "Edad") + ": %{customdata[4]:.1f}<br>"
+                                + ("Cost" if LANG == "EN" else "Coste") + ": €%{x:.1f}M<br>"
+                                + ("Upside" if LANG == "EN" else "Upside") + ": €%{y:.1f}M<br>"
+                                + ("ROI" if LANG == "EN" else "ROI") + ": %{customdata[5]:.1%}<br>"
+                                + ("Portfolio Score" if LANG == "EN" else "Score cartera") + ": %{customdata[6]:.1f}<extra></extra>"
+                            ),
+                        )
+                    )
+                label_df = portfolio.sort_values("portfolio_value_score", ascending=False).head(3).copy()
+                if not label_df.empty:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=label_df["portfolio_cost"] / 1_000_000,
+                            y=label_df["expected_upside"] / 1_000_000,
+                            mode="text",
+                            text=label_df.apply(get_player_display_from_row, axis=1).astype(str).str.split().str[:2].str.join(" "),
+                            textposition="top center",
+                            textfont=dict(size=11, color="#0f172a", family="Inter, Arial, sans-serif"),
+                            hoverinfo="skip",
+                            showlegend=False,
+                        )
+                    )
+                fig.update_layout(
+                    xaxis_title="Cost (€M)" if LANG == "EN" else "Coste (€M)",
+                    yaxis_title="Expected Upside (€M)" if LANG == "EN" else "Upside esperado (€M)",
+                    height=420,
+                    paper_bgcolor="#FFFFFF",
+                    plot_bgcolor="#FBFDFF",
+                    margin=dict(l=58, r=28, t=14, b=58),
+                    legend_title=None,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    hoverlabel=dict(bgcolor="#ffffff", font_size=12, font_family="Inter, Arial, sans-serif", bordercolor="#e2e8f0"),
+                )
+                fig.update_xaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
+                fig.update_yaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
+                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "displayModeBar": False})
+            with rank_col:
+                rank_rows = []
+                for idx, (_, row) in enumerate(portfolio.sort_values("portfolio_value_score", ascending=False).head(7).iterrows(), start=1):
+                    player = get_player_display_from_row(row)
+                    meta = f"{get_current_club_display(row)} · {row.get('position_group', 'N/A')}"
+                    score = get_numeric_value(row, "portfolio_value_score", np.nan)
+                    rank_rows.append(f"<div class='strategy-ranking-row'><div class='strategy-ranking-rank'>{idx}</div><div><div class='strategy-ranking-name'>{html.escape(player)}</div><div class='strategy-ranking-meta'>{html.escape(meta)}</div></div><div class='strategy-ranking-score'>{format_score(score)}</div></div>")
+                st.markdown("<div class='strategy-ranking-card'><div class='contract-panel-title'>" + html.escape('Recommended portfolio' if LANG == 'EN' else 'Cartera recomendada') + "</div><div class='contract-panel-subtitle'>" + html.escape('Ranking by portfolio score' if LANG == 'EN' else 'Ranking por score de cartera') + "</div>" + "".join(rank_rows) + "</div>", unsafe_allow_html=True)
 
     except ModuleNotFoundError:
         st.error(
@@ -14047,7 +23074,7 @@ def render_transfer_strategy_placeholder() -> None:
                     "increase max signings, remove a required position, or switch portfolio style to Value Opportunities."
                 )
                 st.caption(
-                    "Methodological note: this is an infeasible optimization case, not a system error. "
+                    "Operational note: this is an infeasible optimization case, not a system error. "
                     "The selected constraints leave no valid combination of players."
                 )
             else:
@@ -14057,7 +23084,7 @@ def render_transfer_strategy_placeholder() -> None:
                     "aumentar el máximo de fichajes, quitar alguna posición obligatoria o cambiar el estilo de cartera a Value Opportunities."
                 )
                 st.caption(
-                    "Nota metodológica: es un caso de optimización no factible, no un error del sistema. "
+                    "Nota operativa: es un caso de optimización no factible, no un error del sistema. "
                     "Las restricciones seleccionadas no dejan ninguna combinación válida de jugadores."
                 )
         else:
@@ -14077,24 +23104,24 @@ def render_transfer_strategy_placeholder() -> None:
 
 def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
     render_product_page_header(
-        "Global Scouting Universe",
-        "Global Scouting Universe",
+        "Market Intelligence",
+        "Football Recruitment Intelligence Platform",
         "Explora el universo accionable de prospects con filtros inteligentes de scouting." if LANG == "ES" else "Explore the actionable prospect universe with smart scouting filters.",
     )
     render_layer_badge("EXECUTIVE SCOUTING LAYER")
     st.markdown(f"## 🎯 {T('matrix_title')}", unsafe_allow_html=True)
-    st.caption(T("matrix_caption"))
+    st.markdown(f"<div class='matrix-subtitle-strong'>{html.escape(T('matrix_caption'))}</div>", unsafe_allow_html=True)
     fig = build_opportunity_risk_matrix(source_df)
     if fig is None:
         st.info("Not enough data to build the Opportunity vs Risk matrix with current filters." if LANG == "EN" else "No hay datos suficientes para generar la matriz Opportunity vs Risk con los filtros actuales.")
     else:
         st.markdown(
             f"""
-            <div style="margin: 4px 0 12px 0;">
-                <span class="matrix-chip matrix-chip-green">🟢 {html.escape('Immediate priority' if LANG == 'EN' else 'Prioridad inmediata')}</span>
-                <span class="matrix-chip matrix-chip-orange">🟠 {html.escape('Growth bet' if LANG == 'EN' else 'Crecimiento')}</span>
-                <span class="matrix-chip matrix-chip-blue">🔵 {html.escape('Low impact' if LANG == 'EN' else 'Bajo impacto')}</span>
-                <span class="matrix-chip matrix-chip-red">🔴 {html.escape('High risk' if LANG == 'EN' else 'Riesgo elevado')}</span>
+            <div class='matrix-exec-legend'>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#58C27D'></i>{html.escape('Priority Targets' if LANG == 'EN' else 'Objetivos prioritarios')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#F5A623'></i>{html.escape('Growth Bets' if LANG == 'EN' else 'Apuestas de crecimiento')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#7C8DB5'></i>{html.escape('Low Impact' if LANG == 'EN' else 'Bajo impacto')}</span>
+                <span class='matrix-exec-chip'><i class='matrix-exec-dot' style='background:#E05658'></i>{html.escape('High Risk' if LANG == 'EN' else 'Riesgo elevado')}</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -14151,134 +23178,3139 @@ def render_paginated_recruitment_ranking(table_df: pd.DataFrame) -> None:
                 st.rerun()
 
 
+
 def render_individual_player_report(table_df: pd.DataFrame) -> None:
-    st.header("👤 " + TXT("Informe individual de jugador"))
+    """Render the lower Player Intelligence block as a premium scouting report.
+
+    This replaces the previous table-heavy individual report with two executive cards
+    and a final Market Value Drivers block split into positive/negative contributions.
+    """
+    st.markdown(
+        f"""
+        <div class="scouting-report-header">
+            <div>
+                <div class="scouting-report-eyebrow">PLAYER INTELLIGENCE</div>
+                <div class="scouting-report-title">3. {"Operational Evidence" if LANG == "EN" else "Evidencia operativa"}</div>
+                <div class="scouting-report-subtitle">{"Decision evidence, model traceability and market value drivers." if LANG == "EN" else "Evidencia de decisión, trazabilidad del modelo y drivers de valoración."}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     if table_df.empty:
         st.info(TXT("No hay jugadores disponibles con los filtros actuales."))
         return
+
     name_col = get_player_name_column(table_df) or "player_name_fbref"
     player_names = table_df[name_col].fillna("Jugador").astype(str).tolist()
-    selected_player = st.selectbox(TXT("Selecciona un jugador"), player_names, key="player_intelligence_report_selector")
+    # TM.4.1: keep Scouting Report synchronized with the main Player Profile selector.
+    # Avoid repeating a second player selector in the lower report layer.
+    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+    if str(selected_player) not in set(map(str, player_names)):
+        selected_player = player_names[0] if player_names else "Jugador"
     player_df = table_df[table_df[name_col].astype(str) == str(selected_player)].iloc[0]
-    m1, m2, m3, m4, m5, m6 = st.columns([1.1, 1.1, 1.1, 1.15, 1.05, 0.95])
-    with m1:
-        render_metric_card(TXT("Valor mercado"), format_money_tm(safe_get(player_df, "market_value_eur")))
-    with m2:
-        render_metric_card(TXT("Valor estimado"), format_money_tm(safe_get(player_df, "predicted_market_value_eur")))
-    with m3:
-        render_metric_card(TXT("Gap de mercado"), format_money_tm(safe_get(player_df, "market_value_gap_eur")))
-    with m4:
-        render_metric_card("Opportunity", f"{format_score(safe_get(player_df, 'opportunity_score'))} / 100")
-    with m5:
-        render_metric_card("Risk Score", f"{format_score(safe_get(player_df, 'risk_score'))} / 100")
-    with m6:
-        rank = int(table_df.index[table_df[name_col].astype(str) == str(selected_player)][0]) + 1
-        render_metric_card(TXT("Ranking"), f"#{rank} / {len(table_df)}")
-    st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
-    profile_col, reading_col = st.columns([1, 1])
-    with profile_col:
-        with st.container(border=True):
-            st.subheader("📋 " + TXT("Perfil scouting"))
-            profile_table = f"""
-            <table class="profile-table">
-                <tr><td>{html.escape(TXT('Club'))}:</td><td>{html.escape(str(safe_get(player_df, 'club')))}</td></tr>
-                <tr><td>{html.escape(TXT('Liga'))}:</td><td>{html.escape(league_display_name(safe_get(player_df, 'league')))}</td></tr>
-                <tr><td>{html.escape(TXT('Posición'))}:</td><td>{html.escape(str(safe_get(player_df, 'position_group')))}</td></tr>
-                <tr><td>{html.escape(TXT('Edad'))}:</td><td>{format_score(safe_get(player_df, 'age'))}</td></tr>
-                <tr><td>{html.escape(TXT('Temporada'))}:</td><td>{html.escape(str(safe_get(player_df, 'season')))}</td></tr>
-                <tr><td>{html.escape(TXT('Minutos en liga'))}:</td><td>{int(float(safe_get(player_df, 'minutes_played', 0))):,}</td></tr>
-                <tr><td>{html.escape(TXT('Tier'))}:</td><td>{tier_badge(safe_get(player_df, 'dashboard_tier'))}</td></tr>
-                <tr><td>{html.escape(TXT('Nivel de riesgo'))}:</td><td>{html.escape(risk_level_display_name(safe_get(player_df, 'risk_level')))}</td></tr>
-            </table>
-            """
-            st.markdown(profile_table, unsafe_allow_html=True)
-    with reading_col:
-        with st.container(border=True):
-            st.subheader("🧠 " + TXT("Lectura analítica"))
-            recommendation = build_recommendation(player_df)
-            st.markdown(f"**{html.escape(TXT('Recomendación'))}:** <span class='recommendation'>{html.escape(V(recommendation))}</span> <span class='info-icon'>i</span>", unsafe_allow_html=True)
-            st.markdown(TXT("Este jugador aparece en la shortlist porque combina una señal de infravaloración con potencial de crecimiento y una fiabilidad analítica suficiente."))
-            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
-            gap_rel = calculate_gap_relative(player_df)
-            gap_text = f"{gap_rel:.1%}" if gap_rel is not None else "N/A"
-            s1, s2, s3, s4 = st.columns(4)
-            with s1:
-                render_metric_card("Gap relativo", gap_text)
-            with s2:
-                render_metric_card("Growth", f"{format_score(safe_get(player_df, 'growth_score'))} / 100")
-            with s3:
-                render_metric_card("Confidence", f"{format_score(safe_get(player_df, 'confidence_score'))} / 100")
-            with s4:
-                render_metric_card("Opp. ajustada", f"{format_score(safe_get(player_df, 'risk_adjusted_opportunity_score'))} / 100")
-    st.markdown("### 🔍 Model Drivers")
-    with st.expander(TXT("Ver metodología técnica del modelo"), expanded=False):
-        st.markdown("""
-**Model Drivers / SHAP proxy** explains how each variable contributes to the player's estimated valuation. Positive bars push the estimated value upward; negative bars reduce the estimated value. SHAP explains model logic and should not be read as direct sporting causality.
-""" if LANG == "EN" else """
-**Model Drivers / SHAP proxy** explica cómo contribuye cada variable a la valoración estimada del jugador. Las contribuciones positivas elevan el valor estimado; las negativas lo reducen. SHAP explica la lógica interna del modelo y no debe interpretarse como causalidad deportiva directa.
-""")
+
+    rank = int(table_df.index[table_df[name_col].astype(str) == str(selected_player)][0]) + 1
+
+    # TM.6.9B — Current Context Consistency Closure
+    # The lower Scouting Report must not reintroduce the historical player-season
+    # market value as if it were current. Current decision context is always based
+    # on the Transfermarkt snapshot overlay, while the historical gap is retained
+    # only as model traceability.
+    def _num_from_row(row_obj, keys, default=np.nan):
+        for key in keys:
+            try:
+                value = safe_get(row_obj, key, np.nan)
+                value = float(value)
+                if pd.notna(value):
+                    return value
+            except Exception:
+                continue
+        return default
+
+    current_market_raw = _num_from_row(
+        player_df,
+        [
+            "current_market_value_eur",
+            "current_market_value_eur_snapshot",
+            "current_market_value_eur_snapshot.1",
+            "current_market_value_eur_snapshot.2",
+            "market_value_in_eur",
+            "market_value_eur",
+        ],
+    )
+    historical_market_raw = _num_from_row(player_df, ["season_context_market_value_eur", "market_value_eur"])
+    expected_market_raw = _num_from_row(player_df, ["predicted_market_value_eur", "predicted_market_value_ml_eur"])
+    current_gap_abs_raw = expected_market_raw - current_market_raw if pd.notna(expected_market_raw) and pd.notna(current_market_raw) else np.nan
+    current_gap_pct_raw = current_gap_abs_raw / current_market_raw if pd.notna(current_gap_abs_raw) and current_market_raw not in (0, np.nan) else np.nan
+    historical_gap_abs_raw = expected_market_raw - historical_market_raw if pd.notna(expected_market_raw) and pd.notna(historical_market_raw) else _num_from_row(player_df, ["market_value_gap_eur"])
+    historical_gap_pct_raw = historical_gap_abs_raw / historical_market_raw if pd.notna(historical_gap_abs_raw) and pd.notna(historical_market_raw) and historical_market_raw != 0 else _num_from_row(player_df, ["market_value_gap_pct"])
+
+    gap_rel = current_gap_pct_raw if pd.notna(current_gap_pct_raw) else calculate_gap_relative(player_df)
+    gap_text = f"{gap_rel:.1%}" if pd.notna(gap_rel) else "N/A"
+    historical_gap_text = f"{historical_gap_pct_raw:.1%}" if pd.notna(historical_gap_pct_raw) else "N/A"
+    recommendation = build_recommendation(player_df)
+    if pd.notna(current_gap_pct_raw):
+        if current_gap_pct_raw <= -0.15:
+            recommendation = "Validate price / monitor" if LANG == "EN" else "Validar precio / monitorizar"
+        elif current_gap_pct_raw < 0:
+            recommendation = "Monitor price" if LANG == "EN" else "Monitorizar precio"
+        elif current_gap_pct_raw >= 0.25:
+            recommendation = "Priority scouting" if LANG == "EN" else "Scouting prioritario"
+        else:
+            recommendation = "Shortlist" if LANG == "EN" else "Shortlist"
+
+    market_value = format_money_tm(current_market_raw)
+    expected_value = format_money_tm(expected_market_raw)
+    gap_value = format_signed_money_short(current_gap_abs_raw)
+    historical_market_value = format_money_tm(historical_market_raw)
+    historical_gap_value = format_signed_money_short(historical_gap_abs_raw)
+    opportunity = f"{format_score(safe_get(player_df, 'opportunity_score'))} / 100"
+    risk = f"{format_score(safe_get(player_df, 'risk_score'))} / 100"
+    confidence = f"{format_score(safe_get(player_df, 'confidence_score'))} / 100"
+    growth = f"{format_score(safe_get(player_df, 'growth_score'))} / 100"
+    adjusted_opp = f"{format_score(safe_get(player_df, 'risk_adjusted_opportunity_score'))} / 100"
+    minutes = safe_get(player_df, "minutes_played", 0)
+    try:
+        minutes_display = f"{int(float(minutes)):,}"
+    except Exception:
+        minutes_display = "N/A"
+
+    player_name = html.escape(str(selected_player))
+    club = html.escape(str(safe_get(player_df, "club")))
+    league = html.escape(str(league_display_name(safe_get(player_df, "league"))))
+    report_position_raw = str(safe_get(player_df, "position_group"))
+    report_position_role_map = {
+        "GK": "Goalkeeper",
+        "DEF": "Central Defender",
+        "CB": "Centre Back",
+        "FB": "Full Back",
+        "WB": "Wing Back",
+        "MID": "Central Midfielder",
+        "CM": "Central Midfielder",
+        "DM": "Defensive Midfielder",
+        "AM": "Attacking Midfielder",
+        "ATT": "Forward",
+        "FWD": "Forward",
+        "FW": "Forward",
+        "W": "Winger",
+    }
+    report_position_key = report_position_raw.upper().strip()
+    position = html.escape(f"{report_position_raw} · {report_position_role_map.get(report_position_key, 'Football role')}")
+    age = html.escape(format_score(safe_get(player_df, "age")))
+    raw_model_season = str(safe_get(player_df, "season", "N/A"))
+
+    def _season_sort_key(value: object) -> tuple[int, int]:
+        """Sort season labels such as 2025-2026, 2025/26 or 2025."""
+        value_str = str(value)
+        years = re.findall(r"(20\d{2})", value_str)
+        if len(years) >= 2:
+            return (int(years[0]), int(years[1]))
+        if len(years) == 1:
+            return (int(years[0]), int(years[0]))
+        return (-1, -1)
+
+    def _latest_player_data_season(player_name_value: str, fallback_season: str) -> str:
+        """Use the latest available player-season for display, while retaining model-season traceability."""
+        candidates: list[str] = []
+        for candidate_df in [globals().get("football_df"), globals().get("scouting_df"), table_df]:
+            if isinstance(candidate_df, pd.DataFrame) and "season" in candidate_df.columns and not candidate_df.empty:
+                candidate_subset = candidate_df
+                candidate_name_col = get_player_name_column(candidate_df)
+                if candidate_name_col is not None and candidate_name_col in candidate_df.columns:
+                    name_mask = (
+                        candidate_df[candidate_name_col]
+                        .fillna("")
+                        .astype(str)
+                        .map(normalize_search_text)
+                        == normalize_search_text(player_name_value)
+                    )
+                    if bool(name_mask.any()):
+                        candidate_subset = candidate_df[name_mask]
+                candidates.extend(
+                    candidate_subset["season"].dropna().astype(str).loc[
+                        lambda s: s.str.strip().ne("") & s.str.lower().ne("nan")
+                    ].tolist()
+                )
+        if not candidates:
+            return fallback_season
+        return max(candidates, key=_season_sort_key)
+
+    latest_data_season_raw = _latest_player_data_season(str(selected_player), raw_model_season)
+    season = html.escape(str(latest_data_season_raw))
+    model_season = html.escape(str(raw_model_season))
+    show_model_season = (
+        str(latest_data_season_raw).strip()
+        and str(raw_model_season).strip()
+        and str(latest_data_season_raw).strip() != str(raw_model_season).strip()
+        and str(raw_model_season).strip().upper() != "N/A"
+    )
+    risk_level = html.escape(risk_level_display_name(safe_get(player_df, "risk_level")))
+    tier = html.escape(V(str(safe_get(player_df, "dashboard_tier", "N/A"))))
+
+    # TM.4.1 v6: explicit report labels. These were previously local to
+    # Player Snapshot and caused a NameError when Scouting Report rendered.
+    lbl_opportunity = "Opportunity"
+    lbl_risk = "Risk"
+    lbl_confidence = "Confidence" if LANG == "EN" else "Confianza"
+    lbl_player_details = "Player Details" if LANG == "EN" else "Detalles del jugador"
+    lbl_analytical_read = "Analytical Read" if LANG == "EN" else "Lectura analítica"
+
     st.markdown(
         f"""
-<div class="shap-executive-box">
-{('<b>Executive readout:</b> the chart shows the main factors explaining the selected player estimated value. This layer adds traceability and helps defend the recommendation.' if LANG == 'EN' else '<b>Lectura ejecutiva:</b> el gráfico muestra los principales factores que explican la estimación de valor del jugador seleccionado. Esta capa aporta trazabilidad y ayuda a defender la recomendación.')}
-</div>
-""",
+        <div class="scouting-report-kpi-grid">
+            <div class="scouting-report-kpi"><span>{html.escape('Current TM value' if LANG == 'EN' else 'Valor TM actual')}</span><b>{html.escape(market_value)}</b></div>
+            <div class="scouting-report-kpi"><span>{html.escape('Scouting IQ fair value' if LANG == 'EN' else 'Fair value Scouting IQ')}</span><b>{html.escape(expected_value)}</b></div>
+            <div class="scouting-report-kpi"><span>{html.escape('Current market gap' if LANG == 'EN' else 'Gap actual')}</span><b>{html.escape(gap_value)}</b></div>
+            <div class="scouting-report-kpi"><span>{html.escape(lbl_opportunity)}</span><b>{html.escape(opportunity)}</b></div>
+            <div class="scouting-report-kpi"><span>Risk Score</span><b>{html.escape(risk)}</b></div>
+            <div class="scouting-report-kpi"><span>{html.escape(TXT('Ranking'))}</span><b>#{rank} / {len(table_df)}</b></div>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
+
+    operational_label = "Operational Summary" if LANG == "EN" else "Resumen operativo"
+    operational_caption = (
+        "Decision context aligned with the current Transfermarkt snapshot; historical model gap is kept only as traceability."
+        if LANG == "EN"
+        else "Contexto de decisión alineado con el snapshot actual de Transfermarkt; el gap histórico queda sólo como trazabilidad."
+    )
+    model_trace = f"<div><span>{html.escape('Model trained to' if LANG == 'EN' else 'Modelo hasta')}</span><b>{model_season}</b></div>" if show_model_season else ""
+    details_html = f"""
+        <div class="scouting-report-card scouting-report-card-details scouting-report-card-operational">
+            <div class="scouting-report-card-eyebrow">{html.escape(operational_label.upper())}</div>
+            <div class="scouting-report-card-title">{html.escape('Decision context' if LANG == 'EN' else 'Contexto de decisión')}</div>
+            <div class="scouting-report-card-meta">{html.escape(operational_caption)}</div>
+            <div class="scouting-detail-grid">
+                <div><span>{html.escape('Data season' if LANG == 'EN' else 'Temporada datos')}</span><b>{season}</b></div>
+                {model_trace}
+                <div><span>{html.escape(TXT('Minutos en liga'))}</span><b>{minutes_display}</b></div>
+                <div><span>{html.escape('Current TM value' if LANG == 'EN' else 'Valor TM actual')}</span><b>{market_value}</b></div>
+                <div><span>{html.escape('Scouting IQ fair value' if LANG == 'EN' else 'Fair value Scouting IQ')}</span><b>{expected_value}</b></div>
+                <div><span>{html.escape('Current Market Gap' if LANG == 'EN' else 'Gap actual')}</span><b>{gap_value}</b></div>
+                <div><span>{html.escape(TXT('Nivel de riesgo'))}</span><b>{risk_level}</b></div>
+            </div>
+        </div>
+    """
+
+    if pd.notna(current_gap_pct_raw) and current_gap_pct_raw < 0:
+        reading_copy = (
+            f"The current market has already corrected above the model fair value. Sporting upside remains relevant, but the acquisition case should be validated on price, alternatives and timing. "
+            if LANG == "EN"
+            else f"El mercado actual ya ha corregido por encima del fair value del modelo. El upside deportivo sigue siendo relevante, pero la operación debe validarse por precio, alternativas y timing."
+        )
+    else:
+        reading_copy = (
+            f"The player still shows a positive current market gap versus Scouting IQ fair value. "
+            if LANG == "EN"
+            else f"El jugador mantiene un gap actual positivo frente al fair value Scouting IQ."
+        )
+    details_label = lbl_analytical_read
+    details_html_2 = f"""
+        <div class="scouting-report-card scouting-report-card-read">
+            <div class="scouting-report-card-eyebrow">{details_label.upper()}</div>
+            <div class="scouting-report-reco-row">
+                <span>{html.escape(TXT('Recomendación'))}</span>
+                <b>{html.escape(V(recommendation))}</b>
+            </div>
+            <p class="scouting-report-copy">{html.escape(reading_copy)}</p>
+            <div class="scouting-read-grid">
+                <div><span>{html.escape('Current gap' if LANG == 'EN' else 'Gap actual')}</span><b>{html.escape(gap_text)}</b></div>
+                <div><span>Growth</span><b>{html.escape(growth)}</b></div>
+                <div><span>{html.escape(lbl_confidence)}</span><b>{html.escape(confidence)}</b></div>
+                <div><span>Opp. ajustada</span><b>{html.escape(adjusted_opp)}</b></div>
+            </div>
+        </div>
+    """
+
+    st.markdown(
+        f"""
+        <div class="scouting-report-grid">
+            {details_html}
+            {details_html_2}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("Model traceability" if LANG == "EN" else "Trazabilidad del modelo", expanded=False):
+        st.markdown(
+            f"""
+            <div class="scouting-report-card scouting-report-card-details scouting-report-trace-card">
+                <div class="scouting-report-card-eyebrow">{html.escape('MODEL CONTEXT' if LANG == 'EN' else 'CONTEXTO MODELO')}</div>
+                <div class="scouting-report-card-title">{html.escape('Historical player-season evidence' if LANG == 'EN' else 'Evidencia histórica player-season')}</div>
+                <div class="scouting-report-card-meta">{html.escape('Used for model traceability only. It is not the current market decision context.' if LANG == 'EN' else 'Se usa sólo para trazabilidad del modelo. No es el contexto actual de decisión de mercado.')}</div>
+                <div class="scouting-detail-grid">
+                    <div><span>{html.escape('Model trained to' if LANG == 'EN' else 'Modelo hasta')}</span><b>{model_season}</b></div>
+                    <div><span>{html.escape('Historical model base' if LANG == 'EN' else 'Base histórica modelo')}</span><b>{historical_market_value}</b></div>
+                    <div><span>{html.escape('Historical gap' if LANG == 'EN' else 'Gap histórico')}</span><b>{historical_gap_value}</b></div>
+                    <div><span>{html.escape('Historical gap pct' if LANG == 'EN' else 'Gap histórico %')}</span><b>{html.escape(historical_gap_text)}</b></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     shap_values = make_shap_proxy(player_df)
+    shap_display = shap_values.copy()
     if LANG == "EN":
-        shap_values = shap_values.copy()
-        shap_values["feature"] = shap_values["feature"].apply(V)
+        shap_display["feature"] = shap_display["feature"].apply(V)
+
+    positive = shap_display[shap_display["impact"] >= 0].sort_values("impact", ascending=False).head(5)
+    negative = shap_display[shap_display["impact"] < 0].sort_values("impact").head(5)
+
+    def _driver_rows(df: pd.DataFrame, sign: str) -> str:
+        if df.empty:
+            if sign == "negative":
+                empty_text = "No material negative drivers detected" if LANG == "EN" else "Sin drivers negativos materiales detectados"
+            else:
+                empty_text = "No relevant positive drivers" if LANG == "EN" else "Sin drivers positivos relevantes"
+            return f"<div class='market-driver-empty'>{html.escape(empty_text)}</div>"
+        rows = []
+        for _, item in df.iterrows():
+            feature = html.escape(str(item.get("feature", "N/A")))
+            impact = item.get("impact", np.nan)
+            try:
+                value = f"{float(impact):+.2f}"
+            except Exception:
+                value = "N/A"
+            rows.append(
+                f"<div class='market-driver-row market-driver-row-{sign}'>"
+                f"<span>{feature}</span><b>{html.escape(value)}</b>"
+                f"</div>"
+            )
+        if sign == "negative" and len(df) < 3:
+            empty_text = "No material negative drivers detected beyond the signals above" if LANG == "EN" else "Sin señales negativas materiales adicionales"
+            rows.append(f"<div class='market-driver-empty market-driver-empty-secondary'>{html.escape(empty_text)}</div>")
+        return "".join(rows)
+
+    driver_intro = (
+        "Main factors explaining the Scouting IQ fair value. The detailed contribution chart remains a technical traceability layer."
+        if LANG == "EN"
+        else "Factores principales que explican el fair value Scouting IQ. El gráfico técnico queda como capa de trazabilidad, no como causalidad deportiva directa."
+    )
+
+    st.markdown(
+        f"""
+        <div class="market-drivers-shell">
+            <div class="market-drivers-heading">
+                <div>
+                    <div class="market-drivers-eyebrow">{'VALUE EXPLAINABILITY' if LANG == 'EN' else 'EXPLICABILIDAD DEL VALOR'}</div>
+                    <div class="market-drivers-title">4. {'Fair Value Drivers' if LANG == 'EN' else 'Factores que explican el fair value'}</div>
+                    <div class="market-drivers-subtitle">{html.escape(driver_intro)}</div>
+                </div>
+            </div>
+            <div class="market-drivers-grid">
+                <div class="market-driver-card">
+                    <div class="market-driver-card-title market-driver-card-positive">{'Positive contribution' if LANG == 'EN' else 'Contribución positiva'}</div>
+                    {_driver_rows(positive, 'positive')}
+                </div>
+                <div class="market-driver-card">
+                    <div class="market-driver-card-title market-driver-card-negative">{'Negative contribution' if LANG == 'EN' else 'Contribución negativa'}</div>
+                    {_driver_rows(negative, 'negative')}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     fig_shap = go.Figure(
         go.Bar(
-            x=shap_values["impact"],
-            y=shap_values["feature"],
+            x=shap_display["impact"],
+            y=shap_display["feature"],
             orientation="h",
-            marker_color=np.where(shap_values["impact"] >= 0, "#2563eb", "#ef4444"),
-            text=[f"{v:+.2f}" for v in shap_values["impact"]],
+            marker_color=np.where(shap_display["impact"] >= 0, "#22c55e", "#ef4444"),
+            text=[f"{v:+.2f}" for v in shap_display["impact"]],
             textposition="outside",
         )
     )
-    fig_shap.update_layout(height=340, margin=dict(l=10, r=30, t=20, b=35), xaxis_title=("SHAP contribution on estimated log-value" if LANG == "EN" else "Contribución SHAP sobre log-valor estimado"), yaxis_title="", plot_bgcolor="white", paper_bgcolor="white")
-    fig_shap.update_xaxes(showgrid=True, gridcolor="#e5e7eb", zeroline=True)
+    fig_shap.update_layout(
+        height=285,
+        margin=dict(l=12, r=34, t=12, b=30),
+        bargap=0.32,
+        font=dict(color="#334155", family="Inter, Arial, sans-serif"),
+        xaxis_title=("Contribution on estimated log-value" if LANG == "EN" else "Contribución sobre log-valor estimado"),
+        yaxis_title="",
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+    )
+    fig_shap.update_xaxes(showgrid=True, gridcolor="rgba(226,232,240,0.42)", zeroline=True)
     fig_shap.update_yaxes(showgrid=False)
     with st.expander(TXT("Ver contribución técnica detallada"), expanded=False):
         st.plotly_chart(fig_shap, use_container_width=True)
 
 
 def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
-    render_product_page_header("Player Intelligence", "Player Intelligence", "Radar, positional benchmark, individual profile and model drivers." if LANG == "EN" else "Radar, benchmark posicional, perfil individual y drivers del modelo.")
-    render_layer_badge("PLAYER ANALYSIS LAYER")
-    table = build_ranked_table_df(source_df)
-    render_player_radar_benchmarking(table)
-    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+    render_product_page_header("Player Intelligence", "Player Profile Intelligence Platform", "Player snapshot, benchmark and market value drivers." if LANG == "EN" else "Player Snapshot, benchmark y drivers de valor.")
+    table = add_role_display_columns(build_ranked_table_df(source_df))
+
+    # TM.4.1 final UX: the Player Snapshot is the first analytical block.
+    # The scout should understand who the player is, where he plays, market value,
+    # opportunity and risk before entering the radar/benchmark layer.
+    if not table.empty:
+        name_col = get_player_name_column(table) or ("player_name_tm" if "player_name_tm" in table.columns else "player_name_fbref")
+        if name_col in table.columns:
+            player_names = table[name_col].fillna("Jugador").astype(str).tolist()
+            selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+            if str(selected_player) not in set(map(str, player_names)):
+                selected_player = player_names[0] if player_names else "Jugador"
+            try:
+                snapshot_row = table[table[name_col].astype(str) == str(selected_player)].iloc[0]
+            except Exception:
+                snapshot_row = table.iloc[0]
+            render_tm69_executive_scouting_card(snapshot_row, name_col)
+            st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
+            render_player_radar_benchmarking(table, show_snapshot=False)
+            with st.expander("Technical role analysis and comparables" if LANG == "EN" else "Ver análisis técnico de rol y comparables", expanded=False):
+                st.markdown(
+                    f"<div class='role-section-card'><div class='role-section-title'>{html.escape('TECHNICAL ROLE ANALYSIS' if LANG == 'EN' else 'ANÁLISIS TÉCNICO DE ROL')}</div><div class='role-section-subtitle'>{html.escape('Detailed taxonomy, role purity, hybridisation and nearest role-based comparables. The executive identity card above remains the canonical player summary.' if LANG == 'EN' else 'Taxonomía detallada, pureza de rol, hibridación y comparables por rol. La Executive Scouting Card superior queda como resumen canónico del jugador.')}</div></div>",
+                    unsafe_allow_html=True,
+                )
+                render_role_profile_block(snapshot_row)
+                render_role_dna_block(snapshot_row)
+                render_role_similar_players_block(snapshot_row, table)
+
+    st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
     render_individual_player_report(table)
 
 
 def render_recruitment_board_page(source_df: pd.DataFrame) -> None:
-    render_product_page_header("Recruitment Board", "Recruitment Board", "Candidate comparison, replacements, similar profiles, investment analysis and model drivers." if LANG == "EN" else "Comparación de candidatos, reemplazos, perfiles similares, análisis de inversión y drivers del modelo.")
-    table = build_ranked_table_df(source_df)
+    render_product_page_header("Recruitment Intelligence", "Player Recruitment Intelligence Platform", "Operational scouting workspace: target validation, similar players, replacement analysis, investment view and model drivers." if LANG == "EN" else "Validación de targets, comparables, assessment y soporte a la decisión.")
+    table = add_role_display_columns(build_ranked_table_df(source_df))
+    table = render_role_context_filters(table, "recruitment_center", expanded=False)
+    table = render_role_dna_filters(table, "recruitment_center")
+    st.markdown(
+        f"""
+        <div class="recruitment-center-hero">
+            <div>
+                <div class="recruitment-center-eyebrow">{'RECRUITMENT WORKFLOW' if LANG == 'EN' else 'FLUJO DE RECRUITMENT'}</div>
+                <div class="recruitment-center-title">{'Target → Alternatives → Comparison → Contract' if LANG == 'EN' else 'Target → Alternativas → Comparación → Contrato'}</div>
+                <div class="recruitment-center-copy">{html.escape('Similar Players and Recruitment Assessment are prioritised as the core validation workflow before contract timing and portfolio strategy.' if LANG == 'EN' else 'Similar Players y Recruitment Assessment quedan priorizados como flujo principal de validación antes del timing contractual y la estrategia de cartera.')}</div>
+            </div>
+            <div class="recruitment-center-actions">
+                <span>Role Market</span>
+                <span>Similar Players</span>
+                <span>Recruitment Assessment</span>
+                <span>{'Contract Analysis' if LANG == 'EN' else 'Análisis contractual'}</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     render_shortlist_intelligence_dashboard(table)
 
+
+
+def _first_existing_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
+    for col in candidates:
+        if col in df.columns:
+            return col
+    return None
+
+
+def _contract_bool_filter(series: pd.Series) -> pd.Series:
+    if series.empty:
+        return pd.Series(dtype=bool)
+    if series.dtype == bool:
+        return series.fillna(False)
+    text_values = series.astype(str).str.strip().str.lower()
+    return text_values.isin({"true", "1", "yes", "y", "si", "sí", "expiring", "free_agent", "free agent"})
+
+
+def _format_contract_date(value: object) -> str:
+    if pd.isna(value):
+        return "N/A"
+    try:
+        parsed = pd.to_datetime(value, errors="coerce")
+        if pd.isna(parsed):
+            return str(value)
+        return parsed.strftime("%Y-%m-%d")
+    except Exception:
+        return str(value)
+
+
+def _contract_status_display(value: object) -> str:
+    raw = "N/A" if pd.isna(value) else str(value).strip()
+    if LANG == "EN":
+        mapping = {
+            "expired": "Expired",
+            "expiry_imminent": "Expiry imminent",
+            "critical_window": "Critical window",
+            "negotiation_window": "Negotiation window",
+            "neutral_contract": "Neutral contract",
+            "protected_asset": "Protected asset",
+            "long_term_locked_asset": "Long-term locked asset",
+            "unknown": "Unknown",
+        }
+        return mapping.get(raw.lower().replace(" ", "_"), raw.replace("_", " ").title())
+    mapping = {
+        "expired": "Contrato expirado",
+        "expiry_imminent": "Vencimiento inmediato",
+        "critical_window": "Zona crítica",
+        "negotiation_window": "Ventana negociadora",
+        "neutral_contract": "Contrato neutral",
+        "protected_asset": "Activo protegido",
+        "long_term_locked_asset": "Contrato largo",
+        "unknown": "Sin dato",
+        "active": "Activo",
+        "critical": "Zona crítica",
+        "expiring_12m": "Expira <12m",
+        "free_agent_horizon": "Horizonte agente libre",
+        "medium_term": "Medio plazo",
+        "long_term": "Largo plazo",
+        "negotiable_target": "Ventana negociadora",
+    }
+    return mapping.get(raw.lower().replace(" ", "_"), raw.replace("_", " ").capitalize())
+
+
+def _contract_reference_date() -> pd.Timestamp:
+    """Use execution date as operational reference for the DSS contract layer."""
+    return pd.Timestamp.today().normalize()
+
+
+def _add_dynamic_contract_timing(data: pd.DataFrame) -> pd.DataFrame:
+    """Recalculate contract timing at dashboard runtime.
+
+    The TM.3 CSV is a Transfermarkt snapshot. For executive use, the dashboard
+    must display days/months remaining relative to the current date, otherwise
+    contracts such as 2026-06-30 can be incorrectly presented as 12 months away.
+    """
+    data = data.copy()
+    ref_date = _contract_reference_date()
+    expiration = pd.to_datetime(data.get("contract_expiration_date"), errors="coerce")
+    days_remaining = (expiration - ref_date).dt.days
+    data["contract_days_remaining_dynamic"] = days_remaining
+    data["contract_months_remaining_dynamic"] = np.floor(days_remaining.clip(lower=0) / 30.4375)
+    data.loc[expiration.isna(), "contract_months_remaining_dynamic"] = np.nan
+    data["contract_expiring_12m_bool"] = days_remaining.between(0, 365, inclusive="both").fillna(False)
+    data["free_agent_horizon_bool"] = days_remaining.between(0, 183, inclusive="both").fillna(False)
+
+    def _window(days):
+        if pd.isna(days):
+            return "Unknown" if LANG == "EN" else "Sin dato"
+        days = int(days)
+        if days < 0:
+            return "Expired" if LANG == "EN" else "Expirado"
+        if days <= 30:
+            return "0-30 days" if LANG == "EN" else "0-30 días"
+        if days <= 90:
+            return "1-3 months" if LANG == "EN" else "1-3 meses"
+        if days <= 183:
+            return "3-6 months" if LANG == "EN" else "3-6 meses"
+        if days <= 365:
+            return "6-12 months" if LANG == "EN" else "6-12 meses"
+        if days <= 730:
+            return "12-24 months" if LANG == "EN" else "12-24 meses"
+        return ">24 months" if LANG == "EN" else ">24 meses"
+
+    def _status(days):
+        if pd.isna(days):
+            return "unknown"
+        days = int(days)
+        if days < 0:
+            return "expired"
+        if days <= 30:
+            return "expiry_imminent"
+        if days <= 183:
+            return "critical_window"
+        if days <= 365:
+            return "negotiation_window"
+        if days <= 730:
+            return "neutral_contract"
+        if days <= 1095:
+            return "protected_asset"
+        return "long_term_locked_asset"
+
+    def _action(days, recruitment_score):
+        score = pd.to_numeric(pd.Series([recruitment_score]), errors="coerce").iloc[0]
+        if pd.isna(days):
+            return "Data review" if LANG == "EN" else "Revisar dato"
+        days = int(days)
+        if days < 0:
+            return "Free-agent check" if LANG == "EN" else "Verificar agente libre"
+        if days <= 30:
+            return "Contact now" if LANG == "EN" else "Contactar ya"
+        if days <= 183:
+            return "Pre-negotiate" if LANG == "EN" else "Pre-negociación"
+        if days <= 365:
+            return "Monitor renewal" if LANG == "EN" else "Monitorizar renovación"
+        if pd.notna(score) and score >= 75:
+            return "Strategic tracking" if LANG == "EN" else "Seguimiento estratégico"
+        return "Low priority" if LANG == "EN" else "No prioritario"
+
+    data["contract_window_display"] = days_remaining.apply(_window)
+    data["contract_status_dynamic"] = days_remaining.apply(_status)
+    data["contract_status_display"] = data["contract_status_dynamic"].apply(_contract_status_display)
+    data["contract_action_recommended"] = [
+        _action(days, score)
+        for days, score in zip(days_remaining, data.get("recruitment_contract_score", pd.Series(index=data.index, dtype=float)))
+    ]
+    return data
+
+
+def _render_contract_kpi(label: str, value: str, caption: str = "") -> None:
+    st.markdown(
+        f"""
+<div class="contract-card">
+    <div class="contract-card-label">{html.escape(str(label))}</div>
+    <div class="contract-card-value">{html.escape(str(value))}</div>
+    <div class="contract-card-caption">{html.escape(str(caption))}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+
+def _shorten_contract_club_name(club_name: object) -> str:
+    """Return product-facing club aliases without changing the underlying dataset."""
+    raw = "" if pd.isna(club_name) else str(club_name).strip()
+    if not raw:
+        return "N/A"
+    key = raw.lower()
+    aliases = {
+        "nooit opgeven altijd doorzetten aangenaam door vermaak en nuttig door ontspanning combinatie breda": "NAC Breda",
+        "prins hendrik ende desespereert nimmer combinatie zwolle": "PEC Zwolle",
+        "borussia verein für leibesübungen 1900 mönchengladbach": "Borussia M'gladbach",
+        "borussia verein fur leibesubungen 1900 monchengladbach": "Borussia M'gladbach",
+        "panthessalonikios athlitikos omilos konstantinoupoliton": "PAOK",
+        "reial club deportiu espanyol de barcelona s.a.d.": "Espanyol",
+        "reial club deportiu espanyol de barcelona s.a.d": "Espanyol",
+        "real club celta de vigo s. a. d.": "Celta de Vigo",
+        "real club celta de vigo s.a.d.": "Celta de Vigo",
+        "real club celta de vigo s. a. d": "Celta de Vigo",
+        "getafe club de fútbol s. a. d. team dubai": "Getafe CF",
+        "getafe club de futbol s. a. d. team dubai": "Getafe CF",
+        "getafe club de fútbol s.a.d. team dubai": "Getafe CF",
+        "rayo vallecano de madrid s. a. d.": "Rayo Vallecano",
+        "real club deportivo mallorca s.a.d.": "RCD Mallorca",
+        "girona fútbol club s. a. d.": "Girona FC",
+        "girona futbol club s. a. d.": "Girona FC",
+        "royal standard club de liège": "Standard Liège",
+        "yellow-red koninklijke voetbalclub mechelen": "KV Mechelen",
+        "cercle brugge koninklijke sportvereniging": "Cercle Brugge",
+        "fußballclub blau-weiß linz": "Blau-Weiß Linz",
+        "football club utrecht": "FC Utrecht",
+        "football club groningen": "FC Groningen",
+        "association de la jeunesse auxerroise": "AJ Auxerre",
+        "angers sporting club de l'ouest": "Angers SCO",
+        "wattener sportgemeinschaft swarovski tirol": "WSG Tirol",
+        "royal antwerp football club": "Royal Antwerp",
+        "brighton and hove albion football club": "Brighton",
+        "eintracht frankfurt fußball ag": "Eintracht Frankfurt",
+        "olympique de marseille": "Marseille",
+        "futebol clube de famalicão": "Famalicão",
+        "grupo desportivo estoril praia": "Estoril Praia",
+        "stade brestois 29": "Brest",
+    }
+    if key in aliases:
+        return aliases[key]
+    # Generic product clean-up for legal suffixes and very long names.
+    cleaned = raw
+    for suffix in [" Football Club", " Fútbol Club", " Futebol Clube", " Club de Fútbol", " Fußball AG", " S.A.D.", " S. A. D.", " SA"]:
+        cleaned = cleaned.replace(suffix, "")
+    return cleaned if len(cleaned) <= 34 else cleaned[:31].rstrip() + "…"
+
+
+def _contract_score_display(value: object) -> str:
+    numeric = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    return "N/D" if pd.isna(numeric) else f"{float(numeric):.1f}"
+
+
+def _prepare_contract_dataset(contract_source_df: pd.DataFrame) -> pd.DataFrame:
+    if contract_source_df.empty:
+        return pd.DataFrame()
+
+    data = contract_source_df.copy()
+
+    rename_map = {}
+    name_col = _first_existing_column(data, ["player_name_fbref", "player_name", "player_name_tm", "name"])
+    club_col = _first_existing_column(data, ["current_club_name_tm", "club", "club_actual", "squad"])
+    pos_col = _first_existing_column(data, ["position_group", "position", "position_tm"])
+    league_col = _first_existing_column(data, ["league", "league_name"])
+
+    if name_col and name_col != "player_name_display":
+        rename_map[name_col] = "player_name_display"
+    if club_col and club_col != "club_display":
+        rename_map[club_col] = "club_display"
+    if pos_col and pos_col != "position_display":
+        rename_map[pos_col] = "position_display"
+    if league_col and league_col != "league_display":
+        rename_map[league_col] = "league_display"
+    data = data.rename(columns=rename_map)
+
+    for col, default in {
+        "player_name_display": "N/A",
+        "club_display": "N/A",
+        "position_display": "N/A",
+        "league_display": "N/A",
+        "contract_status": "unknown",
+        "contract_expiration_date": pd.NaT,
+    }.items():
+        if col not in data.columns:
+            data[col] = default
+
+    numeric_contract_cols = [
+        "opportunity_score",
+        "contract_opportunity_score",
+        "recruitment_contract_score",
+        "negotiation_leverage_score",
+        "market_value_eur",
+        "predicted_market_value_eur",
+        "market_value_gap_eur",
+        "market_value_gap_pct",
+        "contract_months_remaining",
+        "contract_years_remaining",
+    ]
+    for col in numeric_contract_cols:
+        if col not in data.columns:
+            data[col] = np.nan
+        data[col] = pd.to_numeric(data[col], errors="coerce")
+
+    age_col = _first_existing_column(data, ["age", "age_fbref", "player_age", "age_years", "tm_age", "transfermarkt_age"])
+    if age_col is not None:
+        data["age_display"] = pd.to_numeric(data[age_col], errors="coerce").map(lambda x: "N/A" if pd.isna(x) else f"{float(x):.1f}")
+    else:
+        data["age_display"] = "N/A"
+
+    data = _add_dynamic_contract_timing(data)
+
+    # Product-facing action correction: an urgent contract window is not enough
+    # when the model estimates negative upside. In those cases the scouting
+    # action should trigger price validation instead of an automatic contact
+    # recommendation.
+    if "market_value_gap_eur" in data.columns and "contract_action_recommended" in data.columns:
+        _gap = pd.to_numeric(data["market_value_gap_eur"], errors="coerce")
+        _action_norm = data["contract_action_recommended"].astype(str).str.strip().str.lower()
+        _price_check_mask = (_gap < 0) & _action_norm.isin({
+            "contact now", "contactar ya",
+            "free-agent check", "verificar agente libre",
+            "pre-negotiate", "pre-negociación", "pre-negociacion",
+        })
+        data.loc[_price_check_mask, "contract_action_recommended"] = "Validate price" if LANG == "EN" else "Validar precio"
+
+    data["club_display_full"] = data["club_display"].fillna("N/A").astype(str)
+    data["club_display"] = data["club_display_full"].apply(_shorten_contract_club_name)
+    data["league_display"] = data["league_display"].apply(league_display_name)
+
+    sort_col = "recruitment_contract_score" if "recruitment_contract_score" in data.columns else "contract_opportunity_score"
+    data = data.sort_values(sort_col, ascending=False, na_position="last").reset_index(drop=True)
+    data["contract_rank"] = np.arange(1, len(data) + 1)
+    return data
+
+
+def _contract_action_class(action: str) -> str:
+    normalized = str(action).strip().lower()
+    if normalized in {"contact now", "contactar ya", "free-agent check", "verificar agente libre"}:
+        return "contract-action-urgent"
+    if normalized in {"pre-negotiate", "pre-negociación", "pre-negociacion"}:
+        return "contract-action-high"
+    if normalized in {"monitor renewal", "monitorizar renovación", "monitorizar renovacion", "validate price", "validar precio"}:
+        return "contract-action-medium"
+    if normalized in {"strategic tracking", "seguimiento estratégico", "seguimiento estrategico"}:
+        return "contract-action-watch"
+    return "contract-action-low"
+
+
+
+
+# =============================================================================
+# TM.3.4 Final UX polish: internal navigation + frameless DSS Action Board
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Top Target native workflow: keep the visual toolbar integrated but use Streamlit buttons. */
+.contract-player-toolbar-native {
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid #dcfce7;
+}
+.contract-player-toolbar-native .contract-player-toolbar-label {
+    color:#15803d !important;
+    font-size:.70rem !important;
+    font-weight:950 !important;
+    letter-spacing:.06em !important;
+    text-transform:uppercase !important;
+    margin-bottom:7px !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] {
+    width: fit-content !important;
+    max-width: 100% !important;
+    margin-top: -16px !important;
+    margin-bottom: 18px !important;
+    padding: 10px 18px 14px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #86efac !important;
+    border-top: 0 !important;
+    border-left-width: 6px !important;
+    border-left-color: #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+    gap: 8px !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] button {
+    min-height: 31px !important;
+    padding: 0.24rem 0.62rem !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+.contract-player-toolbar-native-anchor + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+
+/* Action Board: DSS command center, no outer lane boxes. */
+.contract-action-board-title-wrap {
+    background:#ffffff !important;
+    border:1px solid #e2e8f0 !important;
+    border-left:5px solid #0f2f5f !important;
+    border-radius:18px !important;
+    padding:16px 18px !important;
+    box-shadow:0 12px 28px rgba(15,23,42,.050) !important;
+    margin:20px 0 12px 0 !important;
+}
+.contract-native-lane-head {
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid #edf2f7 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 0 8px 0 !important;
+    margin-bottom: 10px !important;
+}
+.contract-native-lane-title {
+    color:#0f172a !important;
+    font-size:.90rem !important;
+    font-weight:950 !important;
+    line-height:1.15 !important;
+}
+.contract-native-lane-count {
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:30px !important;
+    height:24px !important;
+    border-radius:999px !important;
+    padding:0 8px !important;
+    background:#eff6ff !important;
+    color:#1d4ed8 !important;
+    border:1px solid #bfdbfe !important;
+    font-size:.70rem !important;
+    font-weight:950 !important;
+}
+.contract-native-player-card {
+    background:#ffffff !important;
+    border:1px solid #edf2f7 !important;
+    border-radius:14px !important;
+    padding:10px 11px !important;
+    margin-bottom:7px !important;
+    box-shadow:0 6px 16px rgba(15,23,42,.030) !important;
+}
+.contract-native-player-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15,23,42,.055) !important;
+    transition: all .15s ease;
+}
+.contract-card-button-anchor + div[data-testid="stButton"] button,
+.contract-lane-footer-anchor + div[data-testid="stButton"] button {
+    width: 100% !important;
+    border-radius: 999px !important;
+    border: 1px solid #dbeafe !important;
+    background: #f8fbff !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    min-height: 30px !important;
+    padding: .22rem .58rem !important;
+    font-size: .72rem !important;
+    box-shadow: none !important;
+    margin: -1px 0 8px 0 !important;
+}
+.contract-card-button-anchor + div[data-testid="stButton"] button:hover,
+.contract-lane-footer-anchor + div[data-testid="stButton"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+.contract-lane-footer-anchor + div[data-testid="stButton"] button {
+    margin-top: 4px !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.3.15 Streamlit-native premium refactor: top target toolbar + Action Board
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Streamlit-native premium: one clean card + one attached native toolbar. */
+.contract-target-card-final {
+    margin-bottom: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border: 1px solid #22c55e !important;
+    border-left: 5px solid #22c55e !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .060) !important;
+}
+.contract-native-toolbar-shell {
+    width: 100%;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%);
+    border: 1px solid #22c55e;
+    border-top: 0;
+    border-left: 5px solid #22c55e;
+    border-radius: 0 0 18px 18px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .060);
+    margin: 0 0 0 0;
+    padding: 10px 18px 6px 18px;
+}
+.contract-native-toolbar-label {
+    color: #15803d;
+    font-size: .70rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: -3px !important;
+    margin-bottom: 20px !important;
+    padding: 0 18px 12px 18px !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fff9 100%) !important;
+    border: 1px solid #22c55e !important;
+    border-top: 0 !important;
+    border-left: 5px solid #22c55e !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .060) !important;
+    gap: 8px !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button {
+    min-height: 32px !important;
+    padding: .26rem .70rem !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-size: .75rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+
+/* Action Board: Streamlit-native lanes with a premium decision-board feel. */
+.contract-action-board-title-wrap.contract-action-board-premium {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 5px solid #0f2f5f !important;
+    border-radius: 18px !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050) !important;
+    margin: 22px 0 14px 0 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.contract-premium-lane) {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.052) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+.contract-premium-lane {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.contract-premium-lane-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: -12px -12px 10px -12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #edf2f7;
+    background: #f8fafc;
+}
+.contract-premium-lane--free .contract-premium-lane-header { background: linear-gradient(90deg, #fff1f2 0%, #ffffff 100%); }
+.contract-premium-lane--now .contract-premium-lane-header { background: linear-gradient(90deg, #fff7ed 0%, #ffffff 100%); }
+.contract-premium-lane--summer .contract-premium-lane-header { background: linear-gradient(90deg, #fffbeb 0%, #ffffff 100%); }
+.contract-premium-lane--track .contract-premium-lane-header { background: linear-gradient(90deg, #eff6ff 0%, #ffffff 100%); }
+.contract-premium-lane-title {
+    color: #0f172a;
+    font-size: .88rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+.contract-premium-lane-count {
+    display: inline-flex;
+    min-width: 30px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 8px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: .70rem;
+    font-weight: 950;
+}
+.contract-premium-player-card {
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 14px;
+    padding: 9px 10px;
+    margin-bottom: 7px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.contract-premium-player-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15,23,42,.055);
+    transition: all .15s ease;
+}
+.contract-premium-player-top {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
+}
+.contract-premium-rank {
+    color: #1d4ed8;
+    font-size: .68rem;
+    font-weight: 950;
+    flex: 0 0 auto;
+}
+.contract-premium-name {
+    color: #0f172a;
+    font-size: .84rem;
+    font-weight: 950;
+    line-height: 1.14;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contract-premium-meta {
+    color: #64748b;
+    font-size: .68rem;
+    line-height: 1.25;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.contract-premium-kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 7px;
+}
+.contract-premium-kpis span {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 3px 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: .62rem;
+    font-weight: 850;
+}
+.contract-premium-kpis b { color: #0f172a; font-weight: 950; }
+.contract-premium-arrow-anchor + div[data-testid="stButton"] button {
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 !important;
+    margin-top: 18px !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    color: #1e3a8a !important;
+    font-size: 1.05rem !important;
+    font-weight: 950 !important;
+    box-shadow: 0 4px 12px rgba(15,23,42,.045) !important;
+}
+.contract-premium-arrow-anchor + div[data-testid="stButton"] button:hover {
+    background: #eff6ff !important;
+    border-color: #93c5fd !important;
+    transform: translateX(1px);
+}
+.contract-premium-view-all-anchor + div[data-testid="stButton"] button {
+    width: 100% !important;
+    margin-top: 4px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    border: 1px solid #dbeafe !important;
+    color: #1e3a8a !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    min-height: 32px !important;
+    box-shadow: none !important;
+}
+.contract-premium-view-all-anchor + div[data-testid="stButton"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+.contract-premium-empty {
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 850;
+    padding: 10px 0 8px 0;
+}
+/* Final TM.3.4 UX: toolbar buttons in one line and premium board wrapper. */
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button p {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button {
+    min-height: 36px !important;
+    padding: 0.30rem 0.86rem !important;
+    font-size: .82rem !important;
+}
+.contract-board-shell-anchor + div[data-testid="stHorizontalBlock"] {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%) !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 20px !important;
+    padding: 16px 16px 14px 16px !important;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .060) !important;
+    margin: 0 0 18px 0 !important;
+}
+.contract-board-shell-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+}
+.contract-board-shell-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    background: transparent !important;
+}
+.contract-action-board-title-wrap.contract-action-board-premium {
+    margin-bottom: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+}
+.contract-premium-lane-header {
+    border-radius: 14px 14px 0 0 !important;
+}
+.contract-premium-player-card {
+    min-height: 78px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+def _contract_set_player_context(player_name: str) -> None:
+    """Store selected player across modules so contract CTAs feel navigable."""
+    if not player_name:
+        return
+    player_name = str(player_name)
+    st.session_state["selected_player"] = player_name
+    st.session_state["contract_selected_player"] = player_name
+    st.session_state["contract_focus_player"] = player_name
+    # Existing selectors in Player Intelligence and Recruitment Center.
+    st.session_state["player_intelligence_report_selector"] = player_name
+    st.session_state["radar_selected_player"] = player_name
+    st.session_state["sprint11_similarity_target"] = player_name
+    st.session_state["sprint11_replacement_target"] = player_name
+    st.session_state["driver_analysis_player"] = player_name
+
+
+def _contract_nav_to(page_name: str, player_name: str, module: str | None = None) -> None:
+    """Internal app navigation for contract workflows; never uses href or new tabs."""
+    _contract_set_player_context(player_name)
+    if module:
+        st.session_state["selected_module"] = module
+        st.session_state["selected_page"] = page_name
+    st.session_state.dashboard_navigation_page = page_name
+    st.rerun()
+
+
+def _contract_age_value(row: pd.Series) -> str:
+    age_value = get_first_valid_numeric(
+        row,
+        [
+            "age",
+            "age_fbref",
+            "player_age",
+            "age_years",
+            "tm_age",
+            "transfermarkt_age",
+        ],
+    )
+    if pd.isna(age_value):
+        return "N/A"
+    return f"{float(age_value):.1f}"
+
+
+def _contract_table_html(table_df: pd.DataFrame, title_score_col: str = "recruitment_contract_score", max_rows: int = 25) -> str:
+    """Render a compact scouting-terminal table for contract-aware recruitment."""
+    if table_df.empty:
+        return ""
+    display_df = table_df.head(max_rows).copy()
+    columns = [
+        ("contract_rank", "#"),
+        ("player_name_display", "Player" if LANG == "EN" else "Jugador"),
+        ("age_display", "Age" if LANG == "EN" else "Edad"),
+        ("club_display", "Club"),
+        ("league_display", "League" if LANG == "EN" else "Liga"),
+        ("position_display", "Position" if LANG == "EN" else "Posición"),
+        ("market_value_eur", "Value"),
+        ("predicted_market_value_eur", "Expected"),
+        ("market_value_gap_eur", "Upside"),
+        ("contract_expiration_date", "Contract End" if LANG == "EN" else "Fin contrato"),
+        ("contract_window_display", "Window" if LANG == "EN" else "Ventana"),
+        ("contract_days_remaining_dynamic", "Days" if LANG == "EN" else "Días"),
+        ("contract_opportunity_score", "Contract"),
+        ("recruitment_contract_score", "RC"),
+        ("contract_action_recommended", "Action" if LANG == "EN" else "Acción"),
+    ]
+    columns = [(c, l) for c, l in columns if c in display_df.columns]
+    thead = "".join(f"<th>{html.escape(label)}</th>" for _, label in columns)
+    rows = []
+    money_cols = {"market_value_eur", "predicted_market_value_eur", "market_value_gap_eur"}
+    for _, row in display_df.iterrows():
+        cells = []
+        for col, _label in columns:
+            raw_value = row[col]
+            attrs = ""
+            if col == "recruitment_contract_score":
+                value = _contract_score_display(raw_value)
+            elif col in money_cols:
+                value = format_signed_money_short(raw_value) if col == "market_value_gap_eur" else format_money_short(raw_value)
+            elif col == "contract_days_remaining_dynamic":
+                value = "N/A" if pd.isna(raw_value) else f"{int(float(raw_value))}"
+            elif col == "club_display":
+                value = "N/A" if pd.isna(raw_value) else str(raw_value)
+                full_club = str(safe_get(row, "club_display_full", value))
+                attrs = f" title='{html.escape(full_club, quote=True)}'"
+            else:
+                value = "N/A" if pd.isna(raw_value) else str(raw_value)
+
+            if col == title_score_col:
+                cells.append(f"<td{attrs}><span class='contract-score-pill'>{html.escape(str(value))}</span></td>")
+            elif col == "contract_action_recommended":
+                action_class = _contract_action_class(str(value))
+                cells.append(f"<td{attrs}><span class='contract-action-pill {action_class}'>{html.escape(str(value))}</span></td>")
+            elif col == "market_value_gap_eur":
+                gap_num = pd.to_numeric(pd.Series([raw_value]), errors="coerce").iloc[0]
+                gap_class = "contract-gap-positive" if pd.notna(gap_num) and gap_num > 0 else ("contract-gap-negative" if pd.notna(gap_num) and gap_num < 0 else "contract-gap-neutral")
+                cells.append(f"<td{attrs}><span class='{gap_class}'>{html.escape(str(value))}</span></td>")
+            else:
+                cells.append(f"<td{attrs}>{html.escape(str(value))}</td>")
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+    return f"<div class='comparison-table-wrapper contract-table-wrapper'><table class='player-table contract-table'><thead><tr>{thead}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>"
+
+
+def _contract_window_order(value: str) -> int:
+    order = {
+        "Expired": 0,
+        "Expirado": 0,
+        "0-30 days": 1,
+        "0-30 días": 1,
+        "1-3 months": 2,
+        "1-3 meses": 2,
+        "3-6 months": 3,
+        "3-6 meses": 3,
+        "6-12 months": 4,
+        "6-12 meses": 4,
+        "12-24 months": 5,
+        "12-24 meses": 5,
+        ">24 months": 6,
+        ">24 meses": 6,
+        "Unknown": 7,
+        "Sin dato": 7,
+    }
+    return order.get(str(value), 99)
+
+
+def _contract_metric(value: object, fallback: str = "N/A") -> str:
+    numeric_value = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(numeric_value):
+        return fallback
+    return f"{float(numeric_value):.1f}"
+
+
+def _contract_count_card(label: str, value: str, caption: str = "") -> str:
+    return f"""
+    <div class="contract-insight-card">
+        <div class="contract-insight-label">{html.escape(label)}</div>
+        <div class="contract-insight-value">{html.escape(value)}</div>
+        <div class="contract-insight-caption">{html.escape(caption)}</div>
+    </div>
+    """
+
+
+
+def _render_contract_opportunity_matrix(data: pd.DataFrame, matrix_view: str | None = None) -> None:
+    """Render a decision-oriented contract opportunity matrix.
+
+    Default view is Top 50 to keep the matrix readable for scouting use. Wider
+    views remain available, but the visual layer should prioritise signal over
+    density.
+    """
+    if data.empty:
+        return
+
+    matrix_df = data.copy()
+    view_key = str(matrix_view or "").lower()
+
+    if view_key in {"top 25"}:
+        matrix_df = matrix_df.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(25)
+    elif view_key in {"top 50"}:
+        matrix_df = matrix_df.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(50)
+    elif view_key in {"actionable only", "solo accionables"}:
+        matrix_df = matrix_df[
+            matrix_df["contract_action_recommended"].astype(str).str.lower().isin(
+                {"contact now", "contactar ya", "free-agent check", "verificar agente libre", "pre-negotiate", "pre-negociación"}
+            )
+        ]
+    elif view_key in {"u23 only", "solo sub-23"}:
+        matrix_df = matrix_df[pd.to_numeric(matrix_df.get("age_display"), errors="coerce") <= 23]
+    elif view_key in {"all", "todos"}:
+        pass
+    else:
+        matrix_df = matrix_df.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(50)
+
+    matrix_df["contract_days_remaining_dynamic"] = pd.to_numeric(matrix_df.get("contract_days_remaining_dynamic"), errors="coerce")
+    matrix_df["opportunity_score"] = pd.to_numeric(matrix_df.get("opportunity_score"), errors="coerce")
+    matrix_df = matrix_df.dropna(subset=["contract_days_remaining_dynamic", "opportunity_score"])
+    matrix_df = matrix_df[matrix_df["contract_days_remaining_dynamic"].between(-30, 1200, inclusive="both")].copy()
+
+    if matrix_df.empty:
+        st.info("No matrix data available for the selected view." if LANG == "EN" else "No hay datos disponibles para la vista seleccionada.")
+        return
+
+    ineff = pd.to_numeric(matrix_df.get("market_value_gap_eur"), errors="coerce").fillna(0).clip(lower=0)
+    matrix_df["positive_inefficiency_eur"] = ineff
+    matrix_df["bubble_size"] = 12 if ineff.max() <= 0 else 9 + 30 * np.sqrt(ineff / ineff.max())
+    matrix_df["market_value_for_color"] = pd.to_numeric(matrix_df.get("market_value_eur"), errors="coerce").fillna(0)
+
+    matrix_df["market_value_hover"] = matrix_df["market_value_for_color"].apply(format_money_short)
+    matrix_df["expected_value_hover"] = pd.to_numeric(matrix_df.get("predicted_market_value_eur"), errors="coerce").apply(format_money_short)
+    matrix_df["positive_inefficiency_hover"] = matrix_df["positive_inefficiency_eur"].apply(format_money_short)
+
+    custom_cols = [
+        "player_name_display", "club_display", "league_display", "position_display",
+        "market_value_hover", "expected_value_hover", "positive_inefficiency_hover",
+        "contract_window_display", "contract_action_recommended", "age_display", "recruitment_contract_score",
+    ]
+    for col in custom_cols:
+        if col not in matrix_df.columns:
+            matrix_df[col] = "N/A"
+
+    fig = go.Figure()
+    zones = [
+        (-30, 0, "#fee2e2", "Expired" if LANG == "EN" else "Expirado"),
+        (0, 30, "#fecaca", "0-30d"),
+        (30, 180, "#ffedd5", "1-6m"),
+        (180, 365, "#fef3c7", "6-12m"),
+        (365, 1200, "#eff6ff", ">12m"),
+    ]
+    for x0, x1, color, _ in zones:
+        fig.add_vrect(x0=x0, x1=x1, fillcolor=color, opacity=0.18, line_width=0)
+    # Zone backgrounds are intentionally left unlabelled inside the plot to avoid
+    # overlaps such as "Expired0-30d" in the demo view. The explanatory copy above
+    # the matrix describes the contract windows.
+    for x in [0, 30, 180, 365]:
+        fig.add_vline(x=x, line_width=1, line_dash="dash", line_color="#94a3b8")
+    for y, label, color in [(70, "Opp 70", "#60a5fa"), (80, "Opp 80", "#22c55e")]:
+        fig.add_hline(y=y, line_width=1, line_dash="dot", line_color=color)
+        fig.add_annotation(x=1180, y=y, text=label, showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=9, color=color))
+
+    fig.add_trace(go.Scatter(
+        x=matrix_df["contract_days_remaining_dynamic"],
+        y=matrix_df["opportunity_score"],
+        mode="markers",
+        marker=dict(size=matrix_df["bubble_size"], color=matrix_df["market_value_for_color"], colorscale="Blues", showscale=True, colorbar=dict(title="Market" if LANG == "EN" else "Valor"), line=dict(width=0.8, color="#0f172a"), opacity=0.56),
+        customdata=matrix_df[custom_cols],
+        hovertemplate=(
+            "<b>%{customdata[0]}</b><br>%{customdata[1]} · %{customdata[2]} · %{customdata[3]}<br>"
+            + ("Age" if LANG == "EN" else "Edad") + ": %{customdata[9]}<br>"
+            + ("Days left" if LANG == "EN" else "Días restantes") + ": %{x:.0f}<br>Opportunity: %{y:.1f}<br>Recruitment Contract: %{customdata[10]:.1f}<br>Market: %{customdata[4]}<br>Expected: %{customdata[5]}<br>Positive inefficiency: %{customdata[6]}<br>"
+            + ("Window" if LANG == "EN" else "Ventana") + ": %{customdata[7]}<br>"
+            + ("Action" if LANG == "EN" else "Acción") + ": %{customdata[8]}<extra></extra>"
+        ),
+    ))
+
+    # No in-plot labels in the final demo view: the Top 5 side card carries identity,
+    # while the hover keeps the scatter readable even when targets cluster tightly.
+    fig.update_layout(height=465, margin=dict(l=45, r=20, t=10, b=35), xaxis_title="Contract days remaining" if LANG == "EN" else "Días restantes de contrato", yaxis_title="Opportunity Score", paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF", font=dict(color="#0f172a"), showlegend=False)
+    fig.update_xaxes(showgrid=True, gridcolor="#edf2f7", range=[-30, 1200], zeroline=True, zerolinecolor="#334155")
+    y_min = max(0, float(matrix_df["opportunity_score"].min()) - 5)
+    fig.update_yaxes(showgrid=True, gridcolor="#edf2f7", range=[y_min, 105])
+    top_visible = matrix_df.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(5).copy()
+    top_rows = []
+    for idx, (_, row) in enumerate(top_visible.iterrows(), start=1):
+        top_rows.append(
+            f"""
+            <div class='contract-matrix-top5-row'>
+                <div class='contract-matrix-top5-rank'>{idx}</div>
+                <div>
+                    <div class='contract-matrix-top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div>
+                    <div class='contract-matrix-top5-meta'>{html.escape(str(safe_get(row, 'club_display', 'N/A')))} · {html.escape(str(safe_get(row, 'position_display', 'N/A')))} · {html.escape(str(safe_get(row, 'contract_days_remaining_dynamic', 'N/A')))}d</div>
+                </div>
+                <div class='contract-matrix-top5-score'>{html.escape(_contract_score_display(safe_get(row, 'recruitment_contract_score', np.nan)))}</div>
+            </div>
+            """
+        )
+
+    chart_col, top_col = st.columns([3.15, 0.95])
+    with chart_col:
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "displayModeBar": False})
+    with top_col:
+        st.markdown(
+            f"""
+            <div class='contract-matrix-top5-card'>
+                <div class='contract-matrix-top5-title'>{html.escape('Top 5 visible targets' if LANG == 'EN' else 'Top 5 visibles en matriz')}</div>
+                <div class='contract-matrix-top5-subtitle'>{html.escape('Ordered by Recruitment Contract Score within the selected matrix view.' if LANG == 'EN' else 'Ordenados por Recruitment Contract Score dentro de la vista seleccionada.')}</div>
+                {''.join(top_rows)}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+def _render_contract_action_board(data: pd.DataFrame, max_items: int = 3) -> None:
+    """Render clean horizontal Priority Actions cards for contract timing."""
+    if data.empty:
+        return
+
+    board_df = data.copy()
+    board_df["_rc"] = pd.to_numeric(board_df.get("recruitment_contract_score"), errors="coerce")
+    board_df = board_df.dropna(subset=["_rc"]).copy()
+    if board_df.empty:
+        st.info("No scored players available for Priority Actions." if LANG == "EN" else "No hay jugadores con RC disponible para Acciones prioritarias.")
+        return
+
+    actions = board_df["contract_action_recommended"].astype(str).str.lower() if "contract_action_recommended" in board_df.columns else pd.Series([""] * len(board_df), index=board_df.index)
+    days = pd.to_numeric(board_df.get("contract_days_remaining_dynamic"), errors="coerce")
+
+    def _lane_df(kind: str) -> pd.DataFrame:
+        if kind == "free_agent":
+            mask = (days < 0) | actions.isin({"free-agent check", "verificar agente libre"})
+        elif kind == "now":
+            mask = (days.between(0, 30, inclusive="both")) | actions.isin({"contact now", "contactar ya"})
+            mask = mask & ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}))
+        elif kind == "summer":
+            mask = actions.isin({"pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"}) | days.between(31, 365, inclusive="both")
+            mask = mask & ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}))
+        else:
+            mask = ~((days < 0) | actions.isin({"free-agent check", "verificar agente libre"}) | days.between(0, 365, inclusive="both") | actions.isin({"contact now", "contactar ya", "pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"}))
+        return board_df[mask].sort_values("_rc", ascending=False, na_position="last")
+
+    lanes = [
+        ("🔥 Contact Now" if LANG == "EN" else "🔥 Contactar ahora", "now", _lane_df("now"), "0-30 días" if LANG == "ES" else "0-30 days"),
+        ("⏳ Summer Targets" if LANG == "EN" else "⏳ Objetivos de verano", "summer", _lane_df("summer"), "1-12 meses" if LANG == "ES" else "1-12 months"),
+        ("👁 Monitor" if LANG == "EN" else "👁 Seguimiento", "track", _lane_df("tracking"), "Seguimiento activo" if LANG == "ES" else "Active monitoring"),
+        ("🆓 Free Agents" if LANG == "EN" else "🆓 Oportunidades de mercado", "free", _lane_df("free_agent"), "Libre / expirado" if LANG == "ES" else "Free / expired"),
+    ]
+
+    def _player_row(item_idx: int, row: pd.Series) -> str:
+        days_value = safe_get(row, "contract_days_remaining_dynamic", np.nan)
+        days_txt = "N/A" if pd.isna(days_value) else f"{int(float(days_value))}d"
+        upside_txt = format_signed_money_short(safe_get(row, "market_value_gap_eur", np.nan))
+        score_txt = _contract_score_display(safe_get(row, "recruitment_contract_score", np.nan))
+        opp_txt = format_score(safe_get(row, "opportunity_score", np.nan), decimals=0)
+        name_txt = str(safe_get(row, "player_name_display", safe_get(row, "player_name_fbref", "N/A")))
+        meta_txt = f"{safe_get(row, 'age_display', 'N/A')} · {safe_get(row, 'position_display', 'N/A')} · {safe_get(row, 'league_display', 'N/A')}"
+        return (
+            "<div class='contract-action-horizontal-player'>"
+            f"<div class='contract-action-horizontal-rank'>#{item_idx}</div>"
+            "<div class='contract-action-horizontal-main'>"
+            f"<div class='contract-action-horizontal-name'>{html.escape(name_txt)}</div>"
+            f"<div class='contract-action-horizontal-meta'>{html.escape(meta_txt)}</div>"
+            "</div>"
+            "<div class='contract-action-horizontal-kpis'>"
+            f"<span>{html.escape('Days' if LANG == 'EN' else 'Días')}: <b>{html.escape(days_txt)}</b></span>"
+            f"<span>{html.escape('Upside' if LANG == 'EN' else 'Plusvalía')}: <b>{html.escape(upside_txt)}</b></span>"
+            f"<span>Opp: <b>{html.escape(str(opp_txt))}</b></span>"
+            f"<span>RC: <b>{html.escape(score_txt)}</b></span>"
+            "</div>"
+            "</div>"
+        )
+
+    lane_blocks = []
+    for title, lane_class, lane, lane_caption in lanes:
+        if lane.empty:
+            rows_html = f"<div class='contract-action-horizontal-empty'>{html.escape('No players in this action lane' if LANG == 'EN' else 'Sin jugadores en esta acción')}</div>"
+        else:
+            rows_html = "".join(_player_row(item_idx, row) for item_idx, (_, row) in enumerate(lane.head(max_items).iterrows(), start=1))
+        lane_blocks.append(
+            "<div class='contract-action-horizontal-lane contract-action-horizontal-lane-{}'>"
+            "<div class='contract-action-horizontal-head'>"
+            "<div>"
+            "<div class='contract-action-horizontal-title'>{}</div>"
+            "<div class='contract-action-horizontal-caption'>{}</div>"
+            "</div>"
+            "<div class='contract-action-horizontal-count'>{}</div>"
+            "</div>"
+            "{}"
+            "</div>".format(html.escape(lane_class), html.escape(title), html.escape(lane_caption), len(lane), rows_html)
+        )
+
+    board_html = (
+        "<div class='contract-action-horizontal-board'>"
+        "<div class='contract-action-horizontal-board-head'>"
+        "<div>"
+        f"<div class='contract-panel-title'>{html.escape('Priority Actions' if LANG == 'EN' else 'Acciones prioritarias')}</div>"
+        f"<div class='contract-panel-subtitle'>{html.escape('Prioritise negotiation actions by urgency, recruitment value and upside.' if LANG == 'EN' else 'Prioriza acciones negociadoras por urgencia, valor de recruitment y plusvalía.')}</div>"
+        "</div>"
+        "</div>"
+        f"<div class='contract-action-horizontal-grid'>{''.join(lane_blocks)}</div>"
+        "</div>"
+    )
+    st.markdown(board_html, unsafe_allow_html=True)
+
+
+def _render_contract_window_distribution(data: pd.DataFrame) -> None:
+    if data.empty or "contract_window_display" not in data.columns:
+        st.info("No window data available." if LANG == "EN" else "No hay datos de ventana contractual disponibles.")
+        return
+    dist = data["contract_window_display"].fillna("Unknown" if LANG == "EN" else "Sin dato").astype(str).value_counts().reset_index()
+    dist.columns = ["window", "players"]
+    dist["order"] = dist["window"].apply(_contract_window_order)
+    dist = dist.sort_values("order")
+    fig = go.Figure(go.Bar(
+        x=dist["players"],
+        y=dist["window"],
+        orientation="h",
+        text=dist["players"],
+        textposition="outside",
+        marker=dict(color="#2563eb"),
+        hovertemplate="%{y}: %{x} players<extra></extra>" if LANG == "EN" else "%{y}: %{x} jugadores<extra></extra>",
+    ))
+    fig.update_layout(
+        height=360,
+        margin=dict(l=10, r=40, t=20, b=20),
+        xaxis_title="Players" if LANG == "EN" else "Jugadores",
+        yaxis_title="",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        font=dict(color="#0f172a"),
+    )
+    fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+
+
+def _render_contract_league_distribution(data: pd.DataFrame) -> None:
+    if data.empty or "league_display" not in data.columns:
+        st.info("No league data available." if LANG == "EN" else "No hay datos de liga disponibles.")
+        return
+    top_leagues = data.groupby("league_display", dropna=False).agg(
+        players=("player_name_display", "count"),
+        avg_recruitment=("recruitment_contract_score", "mean"),
+    ).reset_index().sort_values(["players", "avg_recruitment"], ascending=False).head(10)
+    fig = go.Figure(go.Bar(
+        x=top_leagues["players"],
+        y=top_leagues["league_display"],
+        orientation="h",
+        text=top_leagues["players"],
+        textposition="outside",
+        marker=dict(color="#0f2f5f"),
+        customdata=np.round(top_leagues["avg_recruitment"].fillna(0), 1),
+        hovertemplate="%{y}<br>Players: %{x}<br>Avg recruitment: %{customdata}<extra></extra>" if LANG == "EN" else "%{y}<br>Jugadores: %{x}<br>Recruitment medio: %{customdata}<extra></extra>",
+    ))
+    fig.update_layout(
+        height=360,
+        margin=dict(l=10, r=40, t=20, b=20),
+        xaxis_title="Players" if LANG == "EN" else "Jugadores",
+        yaxis_title="",
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        font=dict(color="#0f172a"),
+    )
+    fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+
+
+def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
+    render_product_page_header(
+        "Contract Intelligence",
+        "Contract Intelligence Platform",
+        "Negotiation timing and contract opportunity layer." if LANG == "EN" else "Timing negociador y oportunidades contractuales.",
+    )
+
+    data = _prepare_contract_dataset(contract_source_df)
+    if data.empty:
+        st.warning("Contract Intelligence dataset not found." if LANG == "EN" else "No se ha encontrado el dataset de Contract Intelligence.")
+        return
+    if "age_display" not in data.columns:
+        data["age_display"] = data.apply(_contract_age_value, axis=1)
+    st.markdown(f"""
+<div class="contract-exec-banner contract-product-hero">
+    <div class="contract-exec-eyebrow">CONTRACT INTELLIGENCE</div>
+    <div class="contract-exec-title">{html.escape('Contract timing meets recruitment priority' if LANG == 'EN' else 'Prioridad de recruitment con timing contractual')}</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown(
+        f"<div class='contract-filter-title'>{html.escape('Contract opportunity controls' if LANG == 'EN' else 'Controles de oportunidad contractual')}</div>"
+        f"<div class='contract-filter-subtitle'>{html.escape('Start with an action chip. Open advanced filters only when you need to narrow the universe.' if LANG == 'EN' else 'Empieza con un chip accionable. Abre filtros avanzados solo cuando necesites acotar el universo.')}</div>",
+        unsafe_allow_html=True,
+    )
+    quick_options = ["All", "Immediate action", "Expiring <6m", "Expiring <12m", "U23", "Recruitment >70", "High upside"] if LANG == "EN" else ["Todos", "Acción inmediata", "Expiran <6m", "Expiran <12m", "Sub-23", "Recruitment >70", "Alta plusvalía"]
+    quick_preset = st.radio("Quick action" if LANG == "EN" else "Vista rápida", quick_options, horizontal=True, key="contract_quick_preset_v36")
+    if st.session_state.get("contract_quick_preset_last_v36") != quick_preset:
+        st.session_state["contract_action_board_lane"] = None
+        st.session_state["contract_quick_preset_last_v36"] = quick_preset
+    selected_leagues, selected_positions, selected_status = [], [], []
+    quick_filter = "All" if LANG == "EN" else "Todos"
+    min_contract_score = 0.0
+    min_recruitment_contract = 0.0
+    with st.expander("Advanced filters" if LANG == "EN" else "Filtros avanzados", expanded=False):
+        league_options = sorted([x for x in data["league_display"].dropna().astype(str).unique().tolist() if x])
+        position_options = sorted([x for x in data["position_display"].dropna().astype(str).unique().tolist() if x])
+        status_options = sorted([x for x in data["contract_status_display"].dropna().astype(str).unique().tolist() if x])
+        all_label = "All" if LANG == "EN" else "Todos"
+        f1, f2, f3, f4 = st.columns(4)
+        with f1:
+            selected_league = st.selectbox("League" if LANG == "EN" else "Liga", [all_label] + league_options, index=0, key="contract_filter_league_select_v38")
+        with f2:
+            selected_position = st.selectbox("Position" if LANG == "EN" else "Posición", [all_label] + position_options, index=0, key="contract_filter_position_select_v38")
+        with f3:
+            selected_status_one = st.selectbox("Contract status" if LANG == "EN" else "Estado contractual", [all_label] + status_options, index=0, key="contract_filter_status_select_v38")
+        with f4:
+            quick_filter = st.selectbox("Contract window" if LANG == "EN" else "Ventana contractual", ["All", "Expired", "0-30 days", "1-3 months", "3-6 months", "6-12 months", "12-24 months", ">24 months"] if LANG == "EN" else ["Todos", "Expirado", "0-30 días", "1-3 meses", "3-6 meses", "6-12 meses", "12-24 meses", ">24 meses"], key="contract_filter_window_v38")
+        s1, s2 = st.columns(2)
+        with s1:
+            min_contract_score = float(st.number_input("Min Contract Opportunity Score", min_value=0.0, max_value=100.0, value=0.0, step=1.0, key="min_contract_score_number_v38"))
+        with s2:
+            min_recruitment_contract = float(st.number_input("Min Recruitment Contract Score", min_value=0.0, max_value=100.0, value=0.0, step=1.0, key="min_recruitment_contract_score_number_v38"))
+        selected_leagues = [] if selected_league == all_label else [selected_league]
+        selected_positions = [] if selected_position == all_label else [selected_position]
+        selected_status = [] if selected_status_one == all_label else [selected_status_one]
+
+    filtered_contract = data.copy()
+    quick_key = str(quick_preset).lower()
+    days_series = pd.to_numeric(filtered_contract.get("contract_days_remaining_dynamic"), errors="coerce")
+    if quick_key in {"immediate action", "acción inmediata"}:
+        filtered_contract = filtered_contract[filtered_contract["contract_action_recommended"].astype(str).str.lower().isin({"contact now", "contactar ya", "free-agent check", "verificar agente libre"})]
+    elif quick_key in {"expiring <6m", "expiran <6m"}:
+        filtered_contract = filtered_contract[days_series.between(0, 183, inclusive="both")]
+    elif quick_key in {"expiring <12m", "expiran <12m"}:
+        filtered_contract = filtered_contract[days_series.between(0, 365, inclusive="both")]
+    elif quick_key in {"u23", "sub-23"}:
+        filtered_contract = filtered_contract[pd.to_numeric(filtered_contract.get("age_display"), errors="coerce") <= 23]
+    elif quick_key == "recruitment >70":
+        filtered_contract = filtered_contract[pd.to_numeric(filtered_contract["recruitment_contract_score"], errors="coerce") >= 70]
+    elif quick_key in {"high upside", "alta plusvalía"}:
+        filtered_contract = filtered_contract[pd.to_numeric(filtered_contract.get("market_value_gap_eur"), errors="coerce").fillna(0) > 1_000_000]
+
+    board_lane_filter = st.session_state.get("contract_action_board_lane")
+    if board_lane_filter in {"urgent", "now", "summer", "track"}:
+        lane_actions = filtered_contract["contract_action_recommended"].astype(str).str.lower()
+        lane_days = pd.to_numeric(filtered_contract.get("contract_days_remaining_dynamic"), errors="coerce")
+        free_mask = (lane_days < 0) | lane_actions.isin({"free-agent check", "verificar agente libre"})
+        now_mask = ((lane_days.between(0, 30, inclusive="both")) | lane_actions.isin({"contact now", "contactar ya"})) & ~free_mask
+        summer_mask = (
+            lane_actions.isin({"pre-negotiate", "pre-negociación", "pre-negociacion", "monitor renewal", "monitorizar renovación", "monitorizar renovacion"})
+            | lane_days.between(31, 365, inclusive="both")
+        ) & ~free_mask
+        track_mask = ~(free_mask | now_mask | summer_mask)
+        lane_masks = {"urgent": free_mask, "now": now_mask, "summer": summer_mask, "track": track_mask}
+        filtered_contract = filtered_contract[lane_masks[board_lane_filter]]
+    if selected_leagues:
+        filtered_contract = filtered_contract[filtered_contract["league_display"].isin(selected_leagues)]
+    if selected_positions:
+        filtered_contract = filtered_contract[filtered_contract["position_display"].isin(selected_positions)]
+    if selected_status:
+        filtered_contract = filtered_contract[filtered_contract["contract_status_display"].isin(selected_status)]
+    if quick_filter not in {"All", "Todos"}:
+        filtered_contract = filtered_contract[filtered_contract["contract_window_display"].astype(str).eq(str(quick_filter))]
+    filtered_contract = filtered_contract[pd.to_numeric(filtered_contract["contract_opportunity_score"], errors="coerce").fillna(0) >= min_contract_score]
+    filtered_contract = filtered_contract[pd.to_numeric(filtered_contract["recruitment_contract_score"], errors="coerce").fillna(0) >= min_recruitment_contract]
+    filtered_contract = filtered_contract.sort_values("recruitment_contract_score", ascending=False, na_position="last").reset_index(drop=True)
+    filtered_contract["contract_rank"] = np.arange(1, len(filtered_contract) + 1)
+
+    active_chips = [str(quick_preset)]
+    board_lane_label_map = {
+        "urgent": "Free-agent check" if LANG == "EN" else "Verificar agente libre",
+        "now": "Contact now" if LANG == "EN" else "Contactar ahora",
+        "summer": "Summer negotiation" if LANG == "EN" else "Negociación de verano",
+        "track": "Tracking" if LANG == "EN" else "Seguimiento",
+    }
+    if st.session_state.get("contract_action_board_lane") in board_lane_label_map:
+        active_chips.append(("Board" if LANG == "EN" else "Board") + f": {board_lane_label_map[st.session_state.get('contract_action_board_lane')]}")
+    if selected_leagues:
+        active_chips.append(("Leagues" if LANG == "EN" else "Ligas") + f": {len(selected_leagues)}")
+    if selected_positions:
+        active_chips.append(("Positions" if LANG == "EN" else "Posiciones") + f": {', '.join(selected_positions)}")
+    if selected_status:
+        active_chips.append(("Status" if LANG == "EN" else "Estado") + f": {len(selected_status)}")
+    if quick_filter not in {"All", "Todos"}:
+        active_chips.append(str(quick_filter))
+    chip_html = "".join([f"<span class='contract-chip'>{html.escape(chip)}</span>" for chip in active_chips])
+    st.markdown(f"<div class='contract-active-summary'>{chip_html}<span class='contract-chip contract-chip-muted'>{len(filtered_contract):,} targets</span></div>", unsafe_allow_html=True)
+
+    if filtered_contract.empty:
+        st.info("No contract targets match the active filters." if LANG == "EN" else "No hay targets contractuales que cumplan los filtros activos.")
+        return
+
+    active_days = pd.to_numeric(filtered_contract.get("contract_days_remaining_dynamic"), errors="coerce")
+    avg_recruitment_contract = pd.to_numeric(filtered_contract.get("recruitment_contract_score"), errors="coerce").mean()
+    expiring_12m = int(active_days.between(0, 365, inclusive="both").sum())
+    immediate_count = int(filtered_contract["contract_action_recommended"].astype(str).str.lower().isin({"contact now", "contactar ya", "free-agent check", "verificar agente libre"}).sum())
+    u23_actionable = int(((pd.to_numeric(filtered_contract.get("age_display"), errors="coerce") <= 23) & filtered_contract["contract_action_recommended"].astype(str).str.lower().isin({"contact now", "contactar ya", "pre-negotiate", "pre-negociación", "monitor renewal", "monitorizar renovación", "free-agent check", "verificar agente libre"})).sum())
+    urgent_or_expired = int((active_days <= 30).sum())
+    potential_gain = pd.to_numeric(filtered_contract.get("market_value_gap_eur"), errors="coerce").clip(lower=0).sum() if "market_value_gap_eur" in filtered_contract.columns else np.nan
+    potential_gain_txt = format_money_short(potential_gain) if pd.notna(potential_gain) and potential_gain > 0 else "N/A"
+
+
+
+
+    top_contract_target = filtered_contract.iloc[0]
+    top_days = safe_get(top_contract_target, "contract_days_remaining_dynamic", np.nan)
+    top_days_txt = "N/A" if pd.isna(top_days) else f"{int(float(top_days))}"
+    top_age = str(safe_get(top_contract_target, "age_display", "N/A"))
+    player_name_top = str(safe_get(top_contract_target, 'player_name_display', 'N/A'))
+    initials_top = ''.join([part[:1] for part in player_name_top.split()[:2]]).upper() or 'IQ'
+    current_value_txt = format_money_short(safe_get(top_contract_target, "market_value_eur", np.nan))
+    expected_value_txt = format_money_short(safe_get(top_contract_target, "predicted_market_value_eur", np.nan))
+    upside_txt = format_signed_money_short(safe_get(top_contract_target, "market_value_gap_eur", np.nan))
+
+    st.markdown(f"""
+<div class="contract-target-card contract-target-card-pro contract-target-card-premium contract-target-card-final">
+    <div class="contract-target-main contract-target-main-final">
+        <div class="contract-target-identity contract-target-identity-final">
+            <div class="contract-player-photo-shell"><div class="contract-player-avatar contract-player-avatar-final">{html.escape(initials_top)}</div></div>
+            <div class="contract-target-copy-final">
+                <div class="contract-target-eyebrow">Top Contract Target</div>
+                <div class="contract-target-name">{html.escape(player_name_top)}</div>
+                <div class="contract-target-meta">{html.escape(str(safe_get(top_contract_target, 'club_display', 'N/A')))} · {html.escape(str(safe_get(top_contract_target, 'league_display', 'N/A')))} · {html.escape(str(safe_get(top_contract_target, 'position_display', 'N/A')))} · {html.escape(top_age)} {'years' if LANG == 'EN' else 'años'}</div>
+                <div class="contract-target-primary-action"><span class="contract-action-pill {_contract_action_class(str(safe_get(top_contract_target, 'contract_action_recommended', '')))}">{html.escape(str(safe_get(top_contract_target, 'contract_action_recommended', 'N/A')))}</span></div>
+            </div>
+        </div>
+        <div class="contract-target-metric-strip">
+            <div class="contract-target-kpi contract-target-kpi-score"><span>Recruitment<br>Contract Score</span><b>{html.escape(format_score(safe_get(top_contract_target, 'recruitment_contract_score', np.nan)))}</b><i></i></div>
+            <div class="contract-target-kpi contract-target-kpi-score"><span>{html.escape(lbl_opportunity)}<br>Score</span><b>{html.escape(format_score(safe_get(top_contract_target, 'opportunity_score', np.nan)))}</b><i></i></div>
+            <div class="contract-target-kpi"><span>{html.escape('Current Value' if LANG == 'EN' else 'Valor actual')}</span><b>{html.escape(current_value_txt)}</b><small>{html.escape(lbl_market_value)}</small></div>
+            <div class="contract-target-kpi"><span>{html.escape('Expected Value' if LANG == 'EN' else 'Valor esperado')}</span><b>{html.escape(expected_value_txt)}</b><small>{html.escape(lbl_expected_value)}</small></div>
+            <div class="contract-target-kpi"><span>{html.escape('Potential Upside' if LANG == 'EN' else 'Plusvalía potencial')}</span><b class="contract-gap-positive">{html.escape(upside_txt)}</b><small>Upside</small></div>
+            <div class="contract-target-kpi"><span>{html.escape('Days left' if LANG == 'EN' else 'Días restantes')}</span><b class="contract-days-highlight">{html.escape(top_days_txt)}</b><small>{html.escape(str(safe_get(top_contract_target, 'contract_window_display', '')))}</small></div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+<div class='contract-native-toolbar-shell'>
+    <div class='contract-native-toolbar-label'>{html.escape('Player workflow' if LANG == 'EN' else 'Flujo del jugador')}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    st.markdown("<div class='contract-native-toolbar-anchor'></div>", unsafe_allow_html=True)
+    wf_cols = st.columns([1.15, 1.35, 1.25, 1.15, 1.10], gap="small")
+    with wf_cols[0]:
+        if st.button(("Player Dossier" if LANG == "EN" else "Perfil"), key=f"contract_top_profile_{player_name_top}"):
+            _contract_nav_to("Player Intelligence", player_name_top, "Profile")
+    with wf_cols[1]:
+        if st.button(("Similar Profiles" if LANG == "EN" else "Comparables"), key=f"contract_top_similar_{player_name_top}"):
+            _contract_nav_to("Recruitment Intelligence", player_name_top, "Similar Players")
+    with wf_cols[2]:
+        if st.button("Assessment", key=f"contract_top_assessment_{player_name_top}"):
+            _contract_nav_to("Recruitment Intelligence", player_name_top, "Recruitment Assessment")
+    with wf_cols[3]:
+        if st.button(("Contract" if LANG == "EN" else "Contrato"), key=f"contract_top_contract_{player_name_top}"):
+            _contract_nav_to("Strategy Center", player_name_top, "Contract Detail")
+    with wf_cols[4]:
+        if st.button(("Strategy" if LANG == "EN" else "Estrategia"), key=f"contract_top_strategy_{player_name_top}"):
+            _contract_nav_to("Strategy Center", player_name_top, "Transfer Strategy")
+
+    st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
+    kpi_cols = st.columns(6)
+    with kpi_cols[0]:
+        _render_contract_kpi("Actionable Targets" if LANG == "EN" else "Targets accionables", f"{immediate_count:,}", "active filtered view" if LANG == "EN" else "vista filtrada activa")
+    with kpi_cols[1]:
+        _render_contract_kpi("Expiring <12M", f"{expiring_12m:,}", "short contract window" if LANG == "EN" else "ventana contractual corta")
+    with kpi_cols[2]:
+        _render_contract_kpi("Avg Score" if LANG == "EN" else "Score medio", f"{avg_recruitment_contract:.1f}" if pd.notna(avg_recruitment_contract) else "N/A", "recruitment + contract" if LANG == "EN" else "recruitment + contrato")
+    with kpi_cols[3]:
+        _render_contract_kpi("U23 Actionable" if LANG == "EN" else "U23 accionables", f"{u23_actionable:,}", "young targets with action" if LANG == "EN" else "jóvenes con acción")
+    with kpi_cols[4]:
+        _render_contract_kpi("Expired / Immediate" if LANG == "EN" else "Expirados / inmediato", f"{urgent_or_expired:,}", "≤30 days or expired" if LANG == "EN" else "≤30 días o expirados")
+    with kpi_cols[5]:
+        _render_contract_kpi("Potential Market Gain" if LANG == "EN" else "Plusvalía potencial", potential_gain_txt, "positive inefficiency sum in filtered view" if LANG == "EN" else "suma positiva en la vista filtrada")
+    st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
+
+    # 1) What should the sporting department do first?
+    _render_contract_action_board(filtered_contract)
+
+    # 2) Executive insight before the visual exploration layer.
+    top_leagues = []
+    if "league_display" in filtered_contract.columns:
+        league_scores = (
+            filtered_contract.assign(_rc=pd.to_numeric(filtered_contract.get("recruitment_contract_score"), errors="coerce"))
+            .dropna(subset=["_rc"])
+            .groupby("league_display")["_rc"]
+            .mean()
+            .sort_values(ascending=False)
+            .head(2)
+        )
+        top_leagues = [str(x) for x in league_scores.index.tolist()]
+    u23_share = 0
+    if "age_display" in filtered_contract.columns and len(filtered_contract) > 0:
+        u23_share = int((pd.to_numeric(filtered_contract["age_display"], errors="coerce") <= 23).mean() * 100)
+    immediate_share = int((active_days <= 30).mean() * 100) if len(active_days.dropna()) > 0 else 0
+    if LANG == "EN":
+        league_part = " and ".join(top_leagues) if top_leagues else "the leading leagues"
+        insight_copy = "Among active targets, the strongest signals combine U23 profiles, short contract windows and positive market upside. The Action Board prioritises negotiation action; the matrix works as an exploratory layer for timing, concentration and upside."
+    else:
+        league_part = " y ".join(top_leagues) if top_leagues else "las ligas líderes"
+        insight_copy = "Entre los targets activos, las mejores señales combinan perfiles sub-23, vencimiento corto y plusvalía positiva. El Action Board prioriza la acción negociadora; la matriz funciona como capa exploratoria para contrastar concentración, timing y upside."
+    st.markdown(
+        f"""
+        <div class="contract-executive-insight">
+            <div class="contract-executive-insight-label">{html.escape('Executive insight' if LANG == 'EN' else 'Insight ejecutivo')}</div>
+            <div class="contract-executive-insight-text">{html.escape(insight_copy)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # 3) Visual exploration after the action layer.
+    st.markdown(
+        f"<div class='contract-panel-title'>{html.escape('Contract Opportunity Matrix' if LANG == 'EN' else 'Matriz de oportunidad contractual')}</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div class='contract-panel-subtitle'>{html.escape('X-axis is contract days remaining. Y-axis is Opportunity Score. Bubble size is positive market inefficiency; colour is current market value. Identification is handled through hover and the Top 5 side panel.' if LANG == 'EN' else 'El eje X muestra días restantes. El eje Y muestra Opportunity Score. El tamaño es plusvalía positiva; el color es valor actual. Identificación mediante hover y Top 5 lateral.')}</div>",
+        unsafe_allow_html=True,
+    )
+    matrix_options = ["Top 25", "Top 50", "Actionable only", "U23 only", "All"] if LANG == "EN" else ["Top 25", "Top 50", "Solo accionables", "Solo sub-23", "Todos"]
+    matrix_view = st.radio("Matrix view" if LANG == "EN" else "Vista de matriz", matrix_options, horizontal=True, index=1, key="contract_matrix_view_v38")
+    _render_contract_opportunity_matrix(filtered_contract, matrix_view)
+
+    # 4) Detailed scouting terminal: compact by default, expandable through row selector.
+    st.markdown(
+        f"<div class='helper-caption contract-result-caption'>{html.escape(('Showing ' + str(len(filtered_contract)) + ' contract-aware targets') if LANG == 'EN' else ('Mostrando ' + str(len(filtered_contract)) + ' targets con contexto contractual'))}</div>",
+        unsafe_allow_html=True,
+    )
+    row_options = ["20", "50", "100", "All"] if LANG == "EN" else ["20", "50", "100", "Todos"]
+    selected_rows = st.selectbox(
+        "Rows to display" if LANG == "EN" else "Mostrar filas",
+        row_options,
+        index=0,
+        key="contract_rows_to_display_v37",
+    )
+    max_table_rows = len(filtered_contract) if selected_rows in {"All", "Todos"} else int(selected_rows)
+
+    tab1, tab2, tab3 = st.tabs([
+        "Recruitment targets" if LANG == "EN" else "Targets de recruitment",
+        "Pure contract opportunities" if LANG == "EN" else "Oportunidades contractuales",
+        "Market distribution" if LANG == "EN" else "Distribución de mercado",
+    ])
+    with tab1:
+        st.markdown(_contract_table_html(filtered_contract, "recruitment_contract_score", max_table_rows), unsafe_allow_html=True)
+    with tab2:
+        contract_rank = filtered_contract.sort_values("contract_opportunity_score", ascending=False, na_position="last").reset_index(drop=True)
+        contract_rank["contract_rank"] = np.arange(1, len(contract_rank) + 1)
+        st.markdown(_contract_table_html(contract_rank, "contract_opportunity_score", max_table_rows), unsafe_allow_html=True)
+    with tab3:
+        cdist1, cdist2 = st.columns(2)
+        with cdist1:
+            st.markdown(f"<div class='contract-panel-title'>{html.escape('Contract window distribution' if LANG == 'EN' else 'Distribución por ventana contractual')}</div>", unsafe_allow_html=True)
+            _render_contract_window_distribution(filtered_contract)
+        with cdist2:
+            st.markdown(f"<div class='contract-panel-title'>{html.escape('Top leagues by contract opportunity' if LANG == 'EN' else 'Ligas con mayor oportunidad contractual')}</div>", unsafe_allow_html=True)
+            _render_contract_league_distribution(filtered_contract)
+
+    with st.expander("Score methodology" if LANG == "EN" else "Metodología del score", expanded=False):
+        st.markdown("""`Recruitment Contract Score = 0.70 × Opportunity Score + 0.30 × Contract Opportunity Score`\n\nRisk Score is not included in this composite metric because it is not available homogeneously for the full universe. Contract Intelligence is an operational decision layer and does not modify the econometric or Machine Learning models.""" if LANG == "EN" else """`Recruitment Contract Score = 0.70 × Opportunity Score + 0.30 × Contract Opportunity Score`\n\nRisk Score no se incorpora a esta métrica compuesta porque no está disponible de forma homogénea para todo el universo. Contract Intelligence es una capa operativa de decisión y no modifica los modelos econométricos ni de Machine Learning.""")
+
+
+st.markdown(
+    """
+<style>
+.snapshot-health-panel {
+    margin: 18px 0 18px 0;
+    padding: 20px 22px;
+    border: 1px solid #e5e7eb;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+.snapshot-health-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+.snapshot-health-kicker {
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+.snapshot-health-title {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.15;
+}
+.snapshot-health-subtitle,
+.snapshot-health-muted {
+    margin-top: 6px;
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+.snapshot-health-scorebox {
+    min-width: 168px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    text-align: right;
+}
+.snapshot-health-score {
+    margin-top: 8px;
+    font-size: 1.45rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+.snapshot-health-score-caption {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.snapshot-health-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+.snapshot-health-card {
+    padding: 12px 13px;
+    border-radius: 15px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+.snapshot-health-card span {
+    display: block;
+    color: #64748b;
+    font-size: 0.73rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+}
+.snapshot-health-card b {
+    color: #0f172a;
+    font-size: 0.94rem;
+    font-weight: 900;
+}
+.snapshot-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+}
+.snapshot-status-green {
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+}
+.snapshot-status-yellow {
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+.snapshot-status-red {
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+}
+.snapshot-status-neutral {
+    color: #334155;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+.snapshot-metric-card .metric-value,
+.snapshot-metric-badge-value {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    font-size: 1rem !important;
+    line-height: 1.1 !important;
+}
+.snapshot-metric-card .snapshot-status-badge {
+    margin-top: 2px;
+}
+@media (max-width: 1100px) {
+    .snapshot-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .snapshot-health-header { flex-direction: column; }
+    .snapshot-health-scorebox { text-align: left; width: 100%; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+
+# =============================================================================
+# TM.6.6c — Snapshot Governance visual polish: KPI icons, traceability and architecture
+# =============================================================================
+st.markdown(
+    """
+<style>
+.snapshot-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.045);
+    min-height: 116px;
+}
+.snapshot-kpi-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 8px;
+}
+.snapshot-kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 0.88rem;
+    font-weight: 950;
+}
+.snapshot-kpi-label {
+    color: #64748b;
+    font-size: 0.74rem;
+    font-weight: 950;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+}
+.snapshot-kpi-value {
+    color: #0f172a;
+    font-size: 1.62rem;
+    font-weight: 950;
+    line-height: 1.05;
+}
+.snapshot-kpi-caption {
+    color: #64748b;
+    font-size: 0.75rem;
+    line-height: 1.30;
+    margin-top: 6px;
+}
+.snapshot-kpi-card .snapshot-status-badge {
+    margin-top: 1px;
+}
+.snapshot-source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 8px 0 14px 0;
+}
+.snapshot-source-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 11px 12px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.snapshot-source-card span {
+    display: block;
+    color: #64748b;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.snapshot-source-card b {
+    display: block;
+    color: #0f172a;
+    font-size: .88rem;
+    font-weight: 950;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+.snapshot-architecture-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid #2563eb;
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 26px rgba(15,23,42,.045);
+    margin: 12px 0 14px 0;
+}
+.snapshot-architecture-title {
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 950;
+    margin-bottom: 10px;
+}
+.snapshot-architecture-flow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    align-items: stretch;
+}
+.snapshot-architecture-node {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 10px 11px;
+    min-height: 72px;
+    position: relative;
+}
+.snapshot-architecture-node:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2563eb;
+    font-weight: 950;
+    z-index: 2;
+}
+.snapshot-architecture-node span {
+    display: block;
+    color: #1d4ed8;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.snapshot-architecture-node b {
+    display: block;
+    color: #0f172a;
+    font-size: .84rem;
+    font-weight: 950;
+    line-height: 1.16;
+}
+.snapshot-governance-conclusion {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 11px 12px;
+    color: #334155;
+    font-size: .82rem;
+    line-height: 1.42;
+    margin-top: 12px;
+}
+.snapshot-governance-conclusion b {
+    color: #0f172a;
+}
+@media (max-width: 1200px) {
+    .snapshot-source-grid { grid-template-columns: 1fr; }
+    .snapshot-architecture-flow { grid-template-columns: 1fr; }
+    .snapshot-architecture-node:not(:last-child)::after { display: none; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<style>
+/* TM.6.8e.1 Methodology UX Harmonization */
+.methodology-governance-panel {
+    margin-top: 22px !important;
+    margin-bottom: 18px !important;
+}
+.methodology-kpi-card {
+    min-height: 124px !important;
+    margin-bottom: 4px !important;
+}
+.methodology-architecture-card {
+    margin-top: 18px !important;
+    margin-bottom: 16px !important;
+}
+.methodology-governance-note {
+    margin-top: 16px !important;
+    margin-bottom: 18px !important;
+}
+.snapshot-health-grid .snapshot-health-card b {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (max-width: 1200px) {
+    .snapshot-health-grid[style] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.6c — Snapshot Governance: Health Report UI
+# =============================================================================
+def _safe_json_load(path: Path) -> dict:
+    """Load a JSON file safely for dashboard governance panels."""
+    try:
+        if path.exists():
+            with path.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+    return {}
+
+
+def load_snapshot_health_report() -> dict:
+    """Load the official snapshot health report generated by TM.6.6c."""
+    return _safe_json_load(ROOT / "reports" / "data_quality" / "snapshot_health_report.json")
+
+
+def _status_badge_html(status: object) -> str:
+    status_text = str(status or "UNKNOWN").upper()
+    cls = "green" if status_text == "GREEN" else "yellow" if status_text == "YELLOW" else "red" if status_text == "RED" else "neutral"
+    return f"<span class='snapshot-status-badge snapshot-status-{cls}'>{html.escape(status_text)}</span>"
+
+
+def _fmt_pct(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{float(value):.2f}%"
+    except Exception:
+        return "N/A"
+
+
+def _fmt_score(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{float(value):.1f}/100"
+    except Exception:
+        return "N/A"
+
+
+def render_snapshot_health_panel() -> None:
+    """Render current-player-snapshot freshness, coverage, quality, traceability and architecture status."""
+    report = load_snapshot_health_report()
+    if not report:
+        st.markdown(
+            "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Data Freshness & Snapshot Status</div>"
+            "<p class='snapshot-health-muted'>Snapshot health report not found. Run <code>python src/dss/build_snapshot_health_report.py</code>.</p></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    snapshot = report.get("snapshot", {}) if isinstance(report.get("snapshot"), dict) else {}
+    freshness = report.get("freshness", {}) if isinstance(report.get("freshness"), dict) else {}
+    coverage = report.get("coverage", {}) if isinstance(report.get("coverage"), dict) else {}
+    quality = report.get("quality", {}) if isinstance(report.get("quality"), dict) else {}
+    recommendation = report.get("recommendation", {}) if isinstance(report.get("recommendation"), dict) else {}
+
+    title = "Data Freshness & Snapshot Status" if LANG == "EN" else "Actualidad de datos y estado del snapshot"
+    subtitle = (
+        "Current market context is monitored separately from historical player-season observations."
+        if LANG == "EN"
+        else "El contexto actual de mercado se monitoriza separado de las observaciones históricas player-season."
+    )
+    status = report.get("snapshot_status", "UNKNOWN")
+    score = report.get("snapshot_score", np.nan)
+    score_text = _fmt_score(score)
+
+    snapshot_version = snapshot.get("snapshot_version", "N/A")
+    snapshot_date = snapshot.get("snapshot_date", "N/A")
+    latest_valuation_date = snapshot.get("latest_valuation_date", "N/A")
+    match_key = snapshot.get("match_key", "N/A")
+    fallback_match_key = snapshot.get("fallback_match_key", "N/A")
+    source = snapshot.get("source", "N/A")
+    players_total = snapshot.get("players_total", "N/A")
+    leagues_total = snapshot.get("leagues_total", "N/A")
+    next_action = recommendation.get("next_action", "")
+    governance_note = report.get("governance_note", "")
+
+    players_display = f"{int(players_total):,}" if isinstance(players_total, (int, float)) and not pd.isna(players_total) else str(players_total)
+
+    st.markdown(
+        f"""
+        <div class='snapshot-health-panel'>
+            <div class='snapshot-health-header'>
+                <div>
+                    <div class='snapshot-health-kicker'>Snapshot Governance</div>
+                    <div class='snapshot-health-title'>{html.escape(title)}</div>
+                    <div class='snapshot-health-subtitle'>{html.escape(subtitle)}</div>
+                </div>
+                <div class='snapshot-health-scorebox'>
+                    {_status_badge_html(status)}
+                    <div class='snapshot-health-score'>{html.escape(score_text)}</div>
+                    <div class='snapshot-health-score-caption'>Snapshot Health Score</div>
+                </div>
+            </div>
+            <div class='snapshot-health-grid'>
+                <div class='snapshot-health-card'><span>Snapshot version</span><b>{html.escape(str(snapshot_version))}</b></div>
+                <div class='snapshot-health-card'><span>Snapshot date</span><b>{html.escape(str(snapshot_date))}</b></div>
+                <div class='snapshot-health-card'><span>Latest valuation</span><b>{html.escape(str(latest_valuation_date))}</b></div>
+                <div class='snapshot-health-card'><span>Match key</span><b>{html.escape(str(match_key))}</b></div>
+                <div class='snapshot-health-card'><span>Players</span><b>{html.escape(players_display)}</b></div>
+                <div class='snapshot-health-card'><span>Leagues</span><b>{html.escape(str(leagues_total))}</b></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    freshness_status_html = _status_badge_html(freshness.get("status", "N/A"))
+    coverage_status_html = _status_badge_html(coverage.get("status", "N/A"))
+    quality_status_html = _status_badge_html(quality.get("status", "N/A"))
+
+    h1, h2, h3 = st.columns(3)
+    with h1:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🟢</div><div class="snapshot-kpi-label">Freshness</div></div>
+                <div class="snapshot-kpi-value">{freshness_status_html}</div>
+                <div class="snapshot-kpi-caption">valuation age: {html.escape(str(freshness.get('valuation_age_days', 'N/A')))} days · snapshot age: {html.escape(str(freshness.get('snapshot_age_days', 'N/A')))} days</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with h2:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🛡</div><div class="snapshot-kpi-label">Coverage</div></div>
+                <div class="snapshot-kpi-value">{html.escape(_fmt_pct(coverage.get('dss_pct')))}</div>
+                <div class="snapshot-kpi-caption">portfolio {_fmt_pct(coverage.get('portfolio_pct'))} · contract {_fmt_pct(coverage.get('contract_pct'))} · {coverage_status_html}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with h3:
+        st.markdown(
+            f"""
+            <div class="snapshot-kpi-card">
+                <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">🔍</div><div class="snapshot-kpi-label">Quality</div></div>
+                <div class="snapshot-kpi-value">{html.escape(str(quality.get('homonym_names', 'N/A')))}</div>
+                <div class="snapshot-kpi-caption">homonym names monitored · {quality_status_html}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("Snapshot health details" if LANG == "EN" else "Detalle del estado del snapshot", expanded=False):
+        st.markdown(
+            f"""
+            <div class="snapshot-source-grid">
+                <div class="snapshot-source-card"><span>Snapshot source</span><b>{html.escape(str(source))}</b></div>
+                <div class="snapshot-source-card"><span>Valuation date max</span><b>{html.escape(str(latest_valuation_date))}</b></div>
+                <div class="snapshot-source-card"><span>Monitoring cadence</span><b>Monthly</b></div>
+                <div class="snapshot-source-card"><span>Official match key</span><b>{html.escape(str(match_key))}</b></div>
+                <div class="snapshot-source-card"><span>Fallback match key</span><b>{html.escape(str(fallback_match_key))}</b></div>
+                <div class="snapshot-source-card"><span>Refresh command</span><b>build_current_player_snapshot.py</b></div>
+            </div>
+            <div class="snapshot-architecture-card">
+                <div class="snapshot-architecture-title">Snapshot architecture</div>
+                <div class="snapshot-architecture-flow">
+                    <div class="snapshot-architecture-node"><span>01 Raw source</span><b>Transfermarkt Raw</b></div>
+                    <div class="snapshot-architecture-node"><span>02 Current layer</span><b>Current Player Snapshot</b></div>
+                    <div class="snapshot-architecture-node"><span>03 Overlay</span><b>DSS Current Context</b></div>
+                    <div class="snapshot-architecture-node"><span>04 Product modules</span><b>Market · Player · Recruitment · Strategy</b></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        detail_rows = [
+            ["Snapshot status", str(status)],
+            ["Snapshot score", score_text],
+            ["Snapshot age", f"{freshness.get('snapshot_age_days', 'N/A')} days"],
+            ["Valuation age", f"{freshness.get('valuation_age_days', 'N/A')} days"],
+            ["DSS coverage", _fmt_pct(coverage.get("dss_pct"))],
+            ["Contract coverage", _fmt_pct(coverage.get("contract_pct"))],
+            ["Portfolio coverage", _fmt_pct(coverage.get("portfolio_pct"))],
+            ["DSS unmatched", str((coverage.get("unmatched_rows") or {}).get("dss", "N/A"))],
+            ["Portfolio unmatched", str((coverage.get("unmatched_rows") or {}).get("portfolio", "N/A"))],
+            ["Recommendation", str(next_action or "N/A")],
+        ]
+        details_df = pd.DataFrame(detail_rows, columns=["Metric", "Value"])
+        st.dataframe(details_df, width="stretch", hide_index=True)
+        conclusion_text = (
+            "Snapshot health is GREEN. No refresh action is required under the current governance thresholds. "
+            "Current market context remains suitable for decision support."
+            if str(status).upper() == "GREEN"
+            else "Snapshot governance requires review according to the current thresholds before release promotion."
+        )
+        st.markdown(
+            f"""
+            <div class="snapshot-governance-conclusion">
+                <b>Governance conclusion.</b> {html.escape(conclusion_text)}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if governance_note:
+            st.caption(governance_note)
+
+
+def load_json_report(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+@st.cache_data(show_spinner=False)
+def load_current_performance_snapshot_governance() -> tuple[dict, dict]:
+    """Load TM.6.7 current performance snapshot metadata and health report."""
+    metadata_path = PROCESSED_PATH / "current_performance_snapshot_metadata.json"
+    health_path = ROOT / "reports" / "data_quality" / "current_performance_snapshot_health_report.json"
+
+    metadata = {}
+    health = {}
+    if metadata_path.exists():
+        try:
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except Exception:
+            metadata = {}
+    if health_path.exists():
+        try:
+            health = json.loads(health_path.read_text(encoding="utf-8"))
+        except Exception:
+            health = {}
+    return metadata, health
+
+
+def _fmt_int_compact(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{int(float(value)):,}"
+    except Exception:
+        return "N/A" if value in [None, ""] else str(value)
+
+
+def _fmt_pct_1(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{float(value):.1f}%"
+    except Exception:
+        return "N/A" if value in [None, ""] else str(value)
+
+
+def _status_from_score(score: object) -> str:
+    raw = str(score or "").upper().strip()
+    if raw in {"GREEN", "YELLOW", "RED"}:
+        return raw
+    try:
+        value = float(score)
+        if value >= 85:
+            return "GREEN"
+        if value >= 70:
+            return "YELLOW"
+        return "RED"
+    except Exception:
+        return "UNKNOWN"
+
+
+def _fmt_days(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return "N/A"
+        return f"{int(float(value))} days" if LANG == "EN" else f"{int(float(value))} días"
+    except Exception:
+        return "N/A" if value in [None, ""] else str(value)
+
+
+def _render_methodology_governance_header(
+    kicker: str,
+    title: str,
+    subtitle: str,
+    status: object,
+    score: object,
+    score_caption: str,
+    cards: list[tuple[str, object]],
+) -> None:
+    score_text = _fmt_score(score)
+    cards_html = "".join(
+        f"<div class='snapshot-health-card'><span>{html.escape(str(label))}</span><b>{html.escape(str(value))}</b></div>"
+        for label, value in cards
+    )
+    st.markdown(
+        f"""
+        <div class='snapshot-health-panel methodology-governance-panel'>
+            <div class='snapshot-health-header'>
+                <div>
+                    <div class='snapshot-health-kicker'>{html.escape(kicker)}</div>
+                    <div class='snapshot-health-title'>{html.escape(title)}</div>
+                    <div class='snapshot-health-subtitle'>{html.escape(subtitle)}</div>
+                </div>
+                <div class='snapshot-health-scorebox'>
+                    {_status_badge_html(status)}
+                    <div class='snapshot-health-score'>{html.escape(score_text)}</div>
+                    <div class='snapshot-health-score-caption'>{html.escape(score_caption)}</div>
+                </div>
+            </div>
+            <div class='snapshot-health-grid' style='grid-template-columns: repeat({max(len(cards), 1)}, minmax(0, 1fr));'>
+                {cards_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_methodology_kpi_card(icon: str, label: str, value: object, caption: str) -> None:
+    st.markdown(
+        f"""
+        <div class="snapshot-kpi-card methodology-kpi-card">
+            <div class="snapshot-kpi-head"><div class="snapshot-kpi-icon">{html.escape(str(icon))}</div><div class="snapshot-kpi-label">{html.escape(str(label))}</div></div>
+            <div class="snapshot-kpi-value">{html.escape(str(value))}</div>
+            <div class="snapshot-kpi-caption">{html.escape(str(caption))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_methodology_architecture_flow(title: str, nodes: list[tuple[str, str]]) -> None:
+    nodes_html = "".join(
+        f"<div class='snapshot-architecture-node'><span>{html.escape(step)}</span><b>{html.escape(label)}</b></div>"
+        for step, label in nodes
+    )
+    st.markdown(
+        f"""
+        <div class="snapshot-architecture-card methodology-architecture-card">
+            <div class="snapshot-architecture-title">{html.escape(title)}</div>
+            <div class="snapshot-architecture-flow">
+                {nodes_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_methodology_governance_note(text: str) -> None:
+    if not text:
+        return
+    st.markdown(
+        f"""
+        <div class="snapshot-governance-conclusion methodology-governance-note">
+            <b>{'Governance note.' if LANG == 'EN' else 'Nota de gobernanza.'}</b> {html.escape(str(text))}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_current_performance_snapshot_methodology_block() -> None:
+    """Render TM.6.7 using the same governance visual system as TM.6.6c."""
+    metadata, health = load_current_performance_snapshot_governance()
+
+    if not metadata and not health:
+        st.markdown(
+            "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Current Performance Snapshot</div>"
+            "<p class='snapshot-health-muted'>Current Performance Snapshot metadata is not available yet. Run <code>python src/dss/run_current_performance_snapshot_refresh.py</code>.</p></div>"
+            if LANG == "EN"
+            else "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Current Performance Snapshot</div>"
+            "<p class='snapshot-health-muted'>La metadata de Current Performance Snapshot todavía no está disponible. Ejecuta <code>python src/dss/run_current_performance_snapshot_refresh.py</code>.</p></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    score = health.get("score", metadata.get("health_score", metadata.get("score", "N/A")))
+    status = health.get("status", metadata.get("status", _status_from_score(score)))
+    snapshot_date = metadata.get("snapshot_date") or health.get("snapshot_date", "N/A")
+    latest_season = metadata.get("latest_performance_season") or metadata.get("latest_season") or health.get("latest_performance_season", health.get("latest_season", "N/A"))
+    players_total = metadata.get("players_total", health.get("players_total", "N/A"))
+    leagues_total = metadata.get("leagues_total", health.get("leagues_total", "N/A"))
+    coverage_dss = metadata.get("coverage_dss_pct", health.get("coverage_dss_pct", health.get("coverage", {}).get("dss_pct", "N/A") if isinstance(health.get("coverage"), dict) else "N/A"))
+    freshness_days = health.get("freshness_days", health.get("snapshot_age_days", metadata.get("snapshot_age_days", "N/A")))
+    feature_groups = metadata.get("feature_groups", {})
+    feature_count = sum(len(v) for v in feature_groups.values() if isinstance(v, list)) if isinstance(feature_groups, dict) else 0
+    feature_caption = f"{feature_count} tracked variables" if LANG == "EN" else f"{feature_count} variables monitorizadas"
+    governance_note = metadata.get("governance_note", health.get("governance_note", ""))
+    if not governance_note:
+        governance_note = (
+            "Current performance snapshot is a latest-available FBref Standard layer for DSS context. It must not be used to overwrite historical player-season training variables."
+            if LANG == "EN"
+            else "Current Performance Snapshot es una capa FBref Standard latest-available para contexto DSS. No debe utilizarse para sobrescribir variables históricas player-season de entrenamiento."
+        )
+
+    _render_methodology_governance_header(
+        kicker="CURRENT PERFORMANCE SNAPSHOT",
+        title="Current Performance Snapshot",
+        subtitle=(
+            "Latest-available FBref Standard layer for current DSS context. It remains separated from historical player-season training data."
+            if LANG == "EN"
+            else "Capa FBref Standard latest-available para contexto DSS actual. Permanece separada de los datos históricos player-season usados en entrenamiento."
+        ),
+        status=status,
+        score=score,
+        score_caption="Performance Health Score",
+        cards=[
+            ("Snapshot date", snapshot_date),
+            ("Latest season", latest_season),
+            ("Coverage", _fmt_pct_1(coverage_dss)),
+            ("Players", _fmt_int_compact(players_total)),
+            ("Leagues", _fmt_int_compact(leagues_total)),
+        ],
+    )
+
+    k1, k2, k3 = st.columns(3)
+    with k1:
+        _render_methodology_kpi_card("🟢", "Freshness", _fmt_days(freshness_days), "latest available FBref Standard layer" if LANG == "EN" else "última capa FBref Standard disponible")
+    with k2:
+        _render_methodology_kpi_card("🛡", "Coverage", _fmt_pct_1(coverage_dss), "DSS match coverage" if LANG == "EN" else "cobertura de matching DSS")
+    with k3:
+        _render_methodology_kpi_card("🔍", "Feature availability", str(feature_count), feature_caption)
+
+    with st.expander("Current Performance Snapshot details" if LANG == "EN" else "Detalle del current performance snapshot", expanded=False):
+        _render_methodology_architecture_flow(
+            "Current performance architecture" if LANG == "EN" else "Arquitectura de rendimiento actual",
+            [
+                ("01 SOURCE", "FBref Standard"),
+                ("02 CURRENT LAYER", "Current Performance Snapshot"),
+                ("03 DSS CONTEXT", "Latest Performance Context"),
+                ("04 PRODUCT MODULES", "Player · Recruitment · Strategy"),
+            ],
+        )
+        if isinstance(feature_groups, dict) and feature_groups:
+            rows = []
+            for group, features in feature_groups.items():
+                rows.append({"Feature group": group, "Columns": ", ".join(map(str, features)) if isinstance(features, list) else str(features)})
+            st.markdown("**Key performance features**" if LANG == "EN" else "**Variables deportivas clave**")
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+        detail_df = pd.DataFrame(
+            [
+                ["Status", str(status)],
+                ["Score", _fmt_score(score)],
+                ["Snapshot date", str(snapshot_date)],
+                ["Latest season", str(latest_season)],
+                ["DSS coverage", _fmt_pct_1(coverage_dss)],
+                ["Players", _fmt_int_compact(players_total)],
+                ["Leagues", _fmt_int_compact(leagues_total)],
+                ["Feature groups", str(len(feature_groups)) if isinstance(feature_groups, dict) else "N/A"],
+                ["Tracked variables", str(feature_count)],
+            ],
+            columns=["Metric", "Value"],
+        )
+        st.dataframe(detail_df, width="stretch", hide_index=True)
+        _render_methodology_governance_note(governance_note)
+
+
+def render_understat_xg_methodology_block() -> None:
+    """Render TM.6.8 using the same governance visual system as TM.6.6c."""
+    health_path = ROOT / "reports" / "data_quality" / "current_xg_snapshot_health_report.json"
+    score_path = ROOT / "reports" / "data_quality" / "current_xg_snapshot_health_score.json"
+    audit_path = ROOT / "reports" / "data_quality" / "tm6_8_understat_audit.json"
+    matching_path = ROOT / "reports" / "data_quality" / "tm6_8_understat_matching_audit.json"
+    metadata_path = PROCESSED_PATH / "current_xg_snapshot_metadata.json"
+
+    health = load_json_report(health_path)
+    score = load_json_report(score_path)
+    audit = load_json_report(audit_path)
+    matching = load_json_report(matching_path)
+    metadata = load_json_report(metadata_path)
+
+    if not health and not metadata:
+        st.markdown(
+            "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Understat xG Intelligence Layer</div>"
+            "<p class='snapshot-health-muted'>Current xG snapshot health report not found. Run the Understat snapshot scripts.</p></div>"
+            if LANG == "EN"
+            else "<div class='snapshot-health-panel'><div class='snapshot-health-title'>Understat xG Intelligence Layer</div>"
+            "<p class='snapshot-health-muted'>No se ha encontrado el health report del current xG snapshot. Ejecuta los scripts de Understat.</p></div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    identity = health.get("identity", {}) if isinstance(health.get("identity"), dict) else {}
+    coverage = health.get("coverage", {}) if isinstance(health.get("coverage"), dict) else {}
+    freshness = health.get("freshness", {}) if isinstance(health.get("freshness"), dict) else {}
+    feature_availability = health.get("feature_availability", {}) if isinstance(health.get("feature_availability"), dict) else {}
+
+    health_score = health.get("health_score", score.get("health_score", metadata.get("health_score", "N/A")))
+    status = health.get("snapshot_status", score.get("status", _status_from_score(health_score)))
+    snapshot_date = metadata.get("snapshot_date", health.get("snapshot_date", "N/A"))
+    season = health.get("season") or metadata.get("season") or audit.get("coverage", {}).get("latest_season", "N/A") if isinstance(audit.get("coverage"), dict) else "N/A"
+    source = health.get("source", metadata.get("source", "understat"))
+    players = identity.get("unique_understat_players", metadata.get("players_total", identity.get("players", "N/A")))
+    leagues = identity.get("leagues", metadata.get("leagues_total", "N/A"))
+    snapshot_age_days = freshness.get("snapshot_age_days", metadata.get("snapshot_age_days", "N/A"))
+    feature_score = health.get("feature_score", feature_availability.get("score", score.get("feature_score", "N/A")))
+
+    dss_big5 = coverage.get("dss_big5_pct", coverage.get("dss_pct", "N/A"))
+    portfolio_big5 = coverage.get("portfolio_big5_pct", coverage.get("portfolio_pct", "N/A"))
+    contract_big5 = coverage.get("contract_big5_pct", coverage.get("contract_pct", "N/A"))
+    features = feature_availability.get("features", {}) if isinstance(feature_availability, dict) else {}
+    feature_count = len(features) if isinstance(features, dict) else 0
+
+    _render_methodology_governance_header(
+        kicker="UNDERSTAT XG INTELLIGENCE",
+        title="Understat xG Intelligence Layer",
+        subtitle=(
+            "Governed current expected-goals layer based on Understat. Designed for future DSS enrichment and separated from historical training datasets."
+            if LANG == "EN"
+            else "Capa gobernada de expected goals actuales basada en Understat. Diseñada para enriquecer el DSS futuro y separada de los datasets históricos de entrenamiento."
+        ),
+        status=status,
+        score=health_score,
+        score_caption="xG Snapshot Health Score",
+        cards=[
+            ("Snapshot date", snapshot_date),
+            ("Season", season),
+            ("Source", str(source).upper()),
+            ("Players", _fmt_int_compact(players)),
+            ("Leagues", _fmt_int_compact(leagues)),
+        ],
+    )
+
+    k1, k2, k3 = st.columns(3)
+    with k1:
+        _render_methodology_kpi_card("🟢", "Freshness", _fmt_days(snapshot_age_days), "current xG snapshot age" if LANG == "EN" else "antigüedad del snapshot xG")
+    with k2:
+        _render_methodology_kpi_card("🛡", "DSS Coverage", _fmt_pct_1(dss_big5), f"portfolio {_fmt_pct_1(portfolio_big5)} · contract {_fmt_pct_1(contract_big5)}")
+    with k3:
+        _render_methodology_kpi_card("🔍", "Feature availability", _fmt_score(feature_score) if feature_score != "N/A" else str(feature_count), f"{feature_count} xG features monitored" if LANG == "EN" else f"{feature_count} variables xG monitorizadas")
+
+    _render_methodology_architecture_flow(
+        "Understat xG architecture" if LANG == "EN" else "Arquitectura Understat xG",
+        [
+            ("01 SOURCE", "Understat"),
+            ("02 CURRENT LAYER", "Current xG Snapshot"),
+            ("03 ENRICHMENT", "DSS xG Context"),
+            ("04 PRODUCT MODULES", "Player · Recruitment · Strategy"),
+        ],
+    )
+
+    with st.expander("xG snapshot details" if LANG == "EN" else "Detalle del xG snapshot", expanded=False):
+        if isinstance(features, dict) and features:
+            feature_df = pd.DataFrame(
+                [{"Feature": k, "Availability": _fmt_pct_1(v)} for k, v in features.items()]
+            )
+            st.markdown("**Feature availability**" if LANG == "EN" else "**Disponibilidad de variables**")
+            st.dataframe(feature_df, width="stretch", hide_index=True)
+
+        components = score.get("components", {}) if isinstance(score.get("components"), dict) else {}
+        if components:
+            score_rows = []
+            for name, component in components.items():
+                if isinstance(component, dict):
+                    score_rows.append(
+                        {
+                            "Component": name,
+                            "Raw Score": component.get("raw_score"),
+                            "Weight": component.get("weight"),
+                            "Weighted Score": component.get("weighted_score"),
+                        }
+                    )
+            if score_rows:
+                st.markdown("**Health Score Breakdown**" if LANG == "EN" else "**Desglose del Health Score**")
+                st.dataframe(pd.DataFrame(score_rows), width="stretch", hide_index=True)
+
+        detail_df = pd.DataFrame(
+            [
+                ["Status", str(status)],
+                ["Health score", _fmt_score(health_score)],
+                ["Snapshot date", str(snapshot_date)],
+                ["Season", str(season)],
+                ["Source", str(source)],
+                ["Players", _fmt_int_compact(players)],
+                ["Leagues", _fmt_int_compact(leagues)],
+                ["DSS coverage", _fmt_pct_1(dss_big5)],
+                ["Portfolio coverage", _fmt_pct_1(portfolio_big5)],
+                ["Contract coverage", _fmt_pct_1(contract_big5)],
+            ],
+            columns=["Metric", "Value"],
+        )
+        st.dataframe(detail_df, width="stretch", hide_index=True)
+
+    _render_methodology_governance_note(
+        "FBref Advanced = Historical Advanced Layer. Understat = Official Current xG Intelligence Layer. The current xG snapshot must not be used to retrain historical market-value models without temporal validation."
+        if LANG == "EN"
+        else "FBref Advanced = Historical Advanced Layer. Understat = Official Current xG Intelligence Layer. El current xG snapshot no debe utilizarse para reentrenar modelos históricos de valor de mercado sin validación temporal."
+    )
+
+
+
+
+# =============================================================================
+# TM.6.8e.2 — Methodology architecture closure
+# =============================================================================
+def _render_methodology_crisp_dm_flow() -> None:
+    """Render CRISP-DM as an executive horizontal workflow instead of plain text."""
+    if LANG == "EN":
+        steps = [
+            ("01", "BUSINESS", "🎯", "Scouting problem, market inefficiency and recruitment decision framing."),
+            ("02", "DATA", "🗂", "Transfermarkt, FBref, Understat and internal role-engine inputs."),
+            ("03", "PREPARATION", "🧱", "Identity resolution, panel construction, feature engineering and quality controls."),
+            ("04", "MODELING", "🤖", "Econometric baseline and supervised ML for market-value expectation."),
+            ("05", "EVALUATION", "📊", "Temporal out-of-sample validation, ranking quality and business interpretability."),
+            ("06", "DEPLOYMENT", "🚀", "Governed DSS layer for Player, Recruitment, Contract and Strategy workflows."),
+        ]
+        conclusion = (
+            "The dashboard separates historical evaluation, operational exploitation and executive decision support. "
+            "This avoids mixing academic validation with live scouting recommendations."
+        )
+    else:
+        steps = [
+            ("01", "BUSINESS", "🎯", "Problema de scouting, ineficiencia de mercado y decisión de reclutamiento."),
+            ("02", "DATA", "🗂", "Transfermarkt, FBref, Understat y Role Engine propio como inputs analíticos."),
+            ("03", "PREPARATION", "🧱", "Resolución de identidad, panel player-season, features y controles de calidad."),
+            ("04", "MODELING", "🤖", "Baseline econométrico y ML supervisado para valor esperado de mercado."),
+            ("05", "EVALUATION", "📊", "Validación temporal out-of-sample, calidad del ranking e interpretabilidad."),
+            ("06", "DEPLOYMENT", "🚀", "Capa DSS gobernada para Player, Recruitment, Contract y Strategy workflows."),
+        ]
+        conclusion = (
+            "El dashboard separa evaluación histórica, explotación operativa y soporte ejecutivo a la decisión. "
+            "Esto evita mezclar validación académica con recomendaciones vivas de scouting."
+        )
+
+    steps_html = "".join(
+        f"""
+        <div class='crisp-flow-card'>
+            <div class='crisp-flow-icon'>{html.escape(icon)}</div>
+            <div class='crisp-flow-step'>{html.escape(num)}</div>
+            <div class='crisp-flow-title'>{html.escape(title)}</div>
+            <div class='crisp-flow-copy'>{html.escape(copy)}</div>
+        </div>
+        """
+        for num, title, icon, copy in steps
+    )
+    st.markdown(
+        f"""
+        <div class='crisp-flow-shell'>
+            <div class='crisp-flow-head'>
+                <div>
+                    <div class='crisp-flow-kicker'>CRISP-DM</div>
+                    <div class='crisp-flow-heading'>{'From Data to Decision' if LANG == 'EN' else 'Del dato a la decisión'}</div>
+                </div>
+                <div class='crisp-flow-badge'>{'Methodology backbone' if LANG == 'EN' else 'Eje metodológico'}</div>
+            </div>
+            <div class='crisp-flow-line'></div>
+            <div class='crisp-flow-grid'>{steps_html}</div>
+            <div class='crisp-flow-conclusion'>{html.escape(conclusion)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_methodology_scoring_architecture() -> None:
+    """Render the DSS scoring architecture expanded by default with all core scores visible."""
+    score_cards = [
+        ("01", "Market Value Prediction", "Predicted fair market value" if LANG == "EN" else "Valor de mercado esperado"),
+        ("02", "Opportunity Score", "Undervaluation + growth + confidence" if LANG == "EN" else "Infravaloración + crecimiento + confianza"),
+        ("03", "Risk Score", "Age, minutes, confidence and downside risk" if LANG == "EN" else "Edad, minutos, confianza y riesgo operativo"),
+        ("04", "Contract Score", "Contract timing and negotiation window" if LANG == "EN" else "Timing contractual y ventana de negociación"),
+        ("05", "Portfolio Score", "Budget-constrained squad-building logic" if LANG == "EN" else "Optimización de cartera bajo presupuesto"),
+        ("06", "Decision Score", "Executive recruitment prioritisation" if LANG == "EN" else "Priorización ejecutiva de reclutamiento"),
+    ]
+    cards_html = "".join(
+        f"""
+        <div class='score-architecture-card'>
+            <span>{html.escape(num)}</span>
+            <b>{html.escape(title)}</b>
+            <small>{html.escape(copy)}</small>
+        </div>
+        """
+        for num, title, copy in score_cards
+    )
+    st.markdown(
+        f"""
+        <div class='score-architecture-shell'>
+            <div class='score-architecture-title'>{'Decision scoring architecture' if LANG == 'EN' else 'Arquitectura de scoring de decisión'}</div>
+            <div class='score-architecture-subtitle'>
+                {html.escape('The DSS converts predictive outputs into actionable recruitment, risk and portfolio decisions.' if LANG == 'EN' else 'El DSS convierte salidas predictivas en decisiones accionables de reclutamiento, riesgo y cartera.')}
+            </div>
+            <div class='score-architecture-grid'>{cards_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_global_dss_architecture() -> None:
+    """Render the master DSS architecture connecting all methodological layers."""
+    layers = [
+        ("01", "DATA SOURCES", "FBref · Transfermarkt · Understat"),
+        ("02", "MARKET VALUE ENGINE", "Expected market value" if LANG == "EN" else "Valor de mercado esperado"),
+        ("03", "OPPORTUNITY DETECTION", "Inefficiency signal" if LANG == "EN" else "Señal de ineficiencia"),
+        ("04", "RISK ASSESSMENT", "Reliability and downside control" if LANG == "EN" else "Fiabilidad y control de downside"),
+        ("05", "PLAYER INTELLIGENCE", "Individual profile and benchmarking" if LANG == "EN" else "Perfil individual y benchmarking"),
+        ("06", "RECRUITMENT INTELLIGENCE", "Replacement and shortlist logic" if LANG == "EN" else "Reemplazos y shortlists"),
+        ("07", "CONTRACT INTELLIGENCE", "Timing and negotiation windows" if LANG == "EN" else "Timing y ventanas contractuales"),
+        ("08", "STRATEGY CENTER", "Portfolio and budget scenarios" if LANG == "EN" else "Cartera y escenarios presupuestarios"),
+        ("09", "DECISION SUPPORT SYSTEM", "Executive football recruitment workflow" if LANG == "EN" else "Workflow ejecutivo de reclutamiento"),
+    ]
+    layers_html = "".join(
+        f"""
+        <div class='dss-master-node'>
+            <span>{html.escape(num)}</span>
+            <b>{html.escape(title)}</b>
+            <small>{html.escape(copy)}</small>
+        </div>
+        """
+        for num, title, copy in layers
+    )
+    st.markdown(
+        f"""
+        <div class='dss-master-shell'>
+            <div class='dss-master-kicker'>{'Master Architecture' if LANG == 'EN' else 'Arquitectura maestra'}</div>
+            <div class='dss-master-title'>{'Scouting IQ Football Recruitment Decision Support System' if LANG == 'EN' else 'Scouting IQ Football Recruitment Decision Support System'}</div>
+            <div class='dss-master-subtitle'>
+                {html.escape('Global view of how governed data sources, prediction engines and product modules connect into one decision-support platform.' if LANG == 'EN' else 'Vista global de cómo las fuentes gobernadas, los motores predictivos y los módulos de producto conectan en una única plataforma de soporte a la decisión.')}
+            </div>
+            <div class='dss-master-flow'>{layers_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_methodology_closure_css() -> None:
+    """Local CSS for the final Methodology architecture closure."""
+    st.markdown(
+        """
+        <style>
+        .crisp-flow-shell, .score-architecture-shell, .dss-master-shell {
+            background: #ffffff;
+            border: 1px solid #dbe3ee;
+            border-left: 5px solid #2563eb;
+            border-radius: 18px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.055);
+            padding: 16px 18px;
+            margin: 6px 0 16px 0;
+        }
+        .crisp-flow-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .crisp-flow-kicker, .dss-master-kicker {
+            color: #1d4ed8;
+            font-size: .70rem;
+            font-weight: 950;
+            letter-spacing: .085em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .crisp-flow-heading, .score-architecture-title, .dss-master-title {
+            color: #0f172a;
+            font-size: 1.08rem;
+            font-weight: 950;
+            line-height: 1.15;
+        }
+        .crisp-flow-badge {
+            display: inline-flex;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            border: 1px solid #bfdbfe;
+            font-size: .70rem;
+            font-weight: 950;
+            white-space: nowrap;
+        }
+        .crisp-flow-line {
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb 0%, #60a5fa 55%, #dbeafe 100%);
+            margin: 4px 0 13px 0;
+        }
+        .crisp-flow-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .crisp-flow-card, .score-architecture-card, .dss-master-node {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 11px 12px;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.030);
+            position: relative;
+        }
+        .crisp-flow-card:not(:last-child)::after {
+            content: '↓';
+            position: absolute;
+            right: -9px;
+            top: 44%;
+            color: #2563eb;
+            font-weight: 950;
+            transform: rotate(-90deg);
+            z-index: 2;
+        }
+        .crisp-flow-icon { font-size: 1.20rem; margin-bottom: 5px; }
+        .crisp-flow-step, .score-architecture-card span, .dss-master-node span {
+            display: block;
+            color: #1d4ed8;
+            font-size: .64rem;
+            font-weight: 950;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .crisp-flow-title, .score-architecture-card b, .dss-master-node b {
+            display: block;
+            color: #0f172a;
+            font-size: .78rem;
+            font-weight: 950;
+            line-height: 1.15;
+            margin-bottom: 4px;
+        }
+        .crisp-flow-copy, .score-architecture-card small, .dss-master-node small {
+            display: block;
+            color: #64748b;
+            font-size: .70rem;
+            line-height: 1.30;
+            font-weight: 750;
+        }
+        .crisp-flow-conclusion {
+            margin-top: 13px;
+            color: #334155;
+            font-size: .82rem;
+            line-height: 1.42;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 13px;
+            padding: 10px 12px;
+        }
+        .score-architecture-subtitle, .dss-master-subtitle {
+            color: #64748b;
+            font-size: .82rem;
+            line-height: 1.38;
+            margin-top: 4px;
+            margin-bottom: 12px;
+        }
+        .score-architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .dss-master-shell {
+            margin-top: 20px;
+            border-left-color: #0f2f5f;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        }
+        .dss-master-flow {
+            display: grid;
+            grid-template-columns: repeat(9, minmax(0, 1fr));
+            gap: 8px;
+            align-items: stretch;
+            margin-top: 14px;
+        }
+        .dss-master-node {
+            min-height: 108px;
+        }
+        .dss-master-node:not(:last-child)::after {
+            content: '↓';
+            position: absolute;
+            right: -9px;
+            top: 45%;
+            color: #2563eb;
+            font-weight: 950;
+            transform: rotate(-90deg);
+            z-index: 2;
+        }
+        .dss-master-node:last-child {
+            border-color: #86efac;
+            background: linear-gradient(180deg, #ffffff 0%, #f7fff9 100%);
+            box-shadow: inset 4px 0 0 #22c55e, 0 8px 20px rgba(15, 23, 42, 0.035);
+        }
+        .scouting-iq-footer {
+            margin-top: 64px !important;
+            padding: 26px 0 16px 0 !important;
+            border-top: 2px solid #dbe4f0 !important;
+            font-size: .86rem !important;
+            line-height: 1.45 !important;
+        }
+        .scouting-iq-footer b {
+            font-size: .95rem !important;
+            letter-spacing: .14em !important;
+            margin-bottom: 8px !important;
+        }
+        @media (max-width: 1450px) {
+            .crisp-flow-grid, .score-architecture-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .dss-master-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .crisp-flow-card:not(:last-child)::after, .dss-master-node:not(:last-child)::after { display: none; }
+        }
+        @media (max-width: 900px) {
+            .crisp-flow-grid, .score-architecture-grid, .dss-master-flow { grid-template-columns: 1fr; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def render_methodology_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Methodology", "Methodology", "Data, modeling, validation and business evaluation." if LANG == "EN" else "Datos, modelización, validación y evaluación de negocio.")
     st.markdown('<div class="methodology-grid">', unsafe_allow_html=True)
-    m1, m2, m3, m4 = st.columns(4)
+    m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
         render_metric_card_with_caption("Dataset", f"{len(source_df):,}", "eligible prospects" if LANG == "EN" else "prospects elegibles")
     with m2:
-        league_source_df = shortlist if "league" in shortlist.columns else source_df
-
-        render_metric_card_with_caption(
-            "Coverage",
-            f"{league_source_df['league'].dropna().nunique() if 'league' in league_source_df.columns else 'N/A'}",
-            "European leagues" if LANG == "EN" else "ligas europeas"
-        )
+        render_metric_card_with_caption("Coverage", f"{count_current_dss_leagues(source_df)}", "European leagues" if LANG == "EN" else "ligas europeas")
     with m3:
         render_metric_card_with_caption("Model", "XGBoost", "production ML estimator" if LANG == "EN" else "estimador ML productivo")
     with m4:
         render_metric_card_with_caption("Validation", "Temporal", "out-of-sample scouting logic" if LANG == "EN" else "lógica out-of-sample para scouting")
+    with m5:
+        render_metric_card_with_caption("Contract Intelligence", "Active", "decision layer" if LANG == "EN" else "capa de decisión")
     st.markdown('</div>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -14287,47 +26319,934 @@ def render_methodology_page(source_df: pd.DataFrame) -> None:
         render_metric_card_with_caption("Tuned XGBoost", "R² 0.5664", "mejor validación externa" if LANG == "ES" else "best external validation")
     with c3:
         render_metric_card_with_caption("Precision@K", "90%", "Ranking evaluation" if LANG == "EN" else "Evaluación de ranking")
-    with st.expander("CRISP-DM / Del Dato al Conocimiento", expanded=False):
-        st.markdown("""
-Business Understanding → Data Understanding → Data Preparation → Modeling → Evaluation → Deployment
 
-The dashboard separates historical evaluation, operational exploitation, Player Intelligence, Recruitment Intelligence and Decision Support. This architecture avoids mixing academic validation with executive recommendation and prepares strategic transfer optimization.
-""" if LANG == "EN" else """
-Business Understanding → Data Understanding → Data Preparation → Modeling → Evaluation → Deployment
+    render_snapshot_health_panel()
 
-El dashboard separa evaluación histórica, explotación operativa, Player Intelligence, Recruitment Intelligence y Decision Support System. Esta arquitectura evita mezclar validación académica con recomendación ejecutiva y prepara la evolución hacia optimización estratégica de fichajes.
-""")
-    with st.expander("Scoring architecture", expanded=False):
-        st.markdown("""
-Predictions  
-↓  
-Inefficiency Score  
-↓  
-Growth Score  
-↓  
-Confidence Score  
-↓  
-Opportunity Score  
-↓  
-Risk Score  
-↓  
-Executive Decision Score
-""")
+    render_current_performance_snapshot_methodology_block()
 
+    render_understat_xg_methodology_block()
+
+    _render_methodology_closure_css()
+
+    with st.expander("CRISP-DM / Del Dato al Conocimiento", expanded=True):
+        _render_methodology_crisp_dm_flow()
+
+    with st.expander("Scoring architecture", expanded=True):
+        _render_methodology_scoring_architecture()
+
+    _render_global_dss_architecture()
+
+
+
+
+
+def render_market_intelligence_page(source_df: pd.DataFrame) -> None:
+    """Sprint 1A grouped entry point for market opportunity discovery."""
+    view_options = ["Executive Overview", "Opportunity Universe"]
+    selected_view = st.radio(
+        "Market Intelligence view" if LANG == "EN" else "Vista Market Intelligence",
+        view_options,
+        index=view_options.index(st.session_state.get("market_intelligence_view", "Executive Overview")) if st.session_state.get("market_intelligence_view", "Executive Overview") in view_options else 0,
+        horizontal=True,
+        key="market_intelligence_view",
+        label_visibility="collapsed",
+    )
+    if selected_view == "Executive Overview":
+        render_executive_overview_page(source_df)
+    else:
+        render_market_opportunities_page(source_df)
+
+
+def render_strategy_center_page(source_df: pd.DataFrame, contract_source_df: pd.DataFrame) -> None:
+    """Sprint 1A grouped entry point for contract and transfer decision layers."""
+    render_product_page_header(
+        "Strategy Center",
+        "Transfer Strategy Intelligence Platform",
+        "Portfolio optimization, contract timing and market planning."
+        if LANG == "EN"
+        else "Optimización de cartera, timing contractual y planificación de mercado.",
+    )
+    source_df = add_role_display_columns(source_df)
+    view_options = ["Contract Intelligence", "Transfer Strategy"]
+    st.markdown("<div class='product-tab-nav'><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Contract Intelligence" else "") + "'>Contrato</span><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Transfer Strategy" else "") + "'>Estrategia</span></div>", unsafe_allow_html=True)
+    selected_view = st.radio(
+        "Strategy Center view" if LANG == "EN" else "Vista Strategy Center",
+        view_options,
+        index=view_options.index(st.session_state.get("strategy_center_view", "Contract Intelligence")) if st.session_state.get("strategy_center_view", "Contract Intelligence") in view_options else 0,
+        horizontal=True,
+        key="strategy_center_view",
+        label_visibility="collapsed",
+    )
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+    if selected_view == "Transfer Strategy":
+        segment_df = render_role_context_filters(source_df, "strategy_center_transfer", expanded=False)
+        if not segment_df.empty:
+            top_contexts = (
+                segment_df["taxonomy_role_context"].value_counts().head(5).index.tolist()
+                if "taxonomy_role_context" in segment_df.columns
+                else []
+            )
+            st.markdown(
+                f"<div class='radar-info-box'><b>{html.escape('Role segmentation active' if LANG == 'EN' else 'Segmentación táctica activa')}:</b> {html.escape(', '.join(map(str, top_contexts)) if top_contexts else ('No role context available' if LANG == 'EN' else 'Sin contexto de rol disponible'))}</div>",
+                unsafe_allow_html=True,
+            )
+        render_transfer_strategy_placeholder()
+    else:
+        render_contract_intelligence_page(contract_source_df)
+
+
+# =============================================================================
+# TM.3.4.1 Phase 1 closure patch: compact DSS, methodology grid and CTA coherence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove remaining top Quick Guide real estate: guidance now belongs to Methodology. */
+.search-helper-row > .search-quick-guide,
+.quick-guide-inline.search-quick-guide,
+[data-testid="stAppViewContainer"] .main div[data-testid="stPopover"] button:has(p) {
+    max-height: 30px;
+}
+/* Recruitment CTA toolbar mirrors Contract player workflow without adding navigation complexity. */
+.recruitment-workflow-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 8px 0 12px 0;
+    padding: 8px 11px;
+    background: #ffffff;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040);
+}
+.recruitment-workflow-toolbar span {
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.recruitment-workflow-toolbar b {
+    color: #1e3a8a;
+    font-size: .74rem;
+    font-weight: 950;
+    white-space: nowrap;
+}
+/* Contract controls become secondary; Top Contract Target and Action Board carry the decision hierarchy. */
+.contract-filter-title {
+    color: #64748b !important;
+    font-size: .78rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+    margin-top: 4px !important;
+}
+.contract-filter-subtitle {
+    color: #94a3b8 !important;
+    font-size: .72rem !important;
+    margin-bottom: 6px !important;
+}
+/* Methodology scoring architecture: horizontal DSS chain instead of a tall vertical list. */
+.scoring-architecture-chain {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin: 6px 0 8px 0;
+}
+.scoring-architecture-step {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 10px;
+    min-height: 58px;
+    box-shadow: 0 6px 16px rgba(15,23,42,.030);
+}
+.scoring-architecture-step span {
+    display: block;
+    color: #1d4ed8;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.scoring-architecture-step b {
+    display: block;
+    color: #0f172a;
+    font-size: .76rem;
+    font-weight: 950;
+    line-height: 1.15;
+}
+@media (max-width: 1350px) {
+    .scoring-architecture-chain { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .recruitment-workflow-toolbar { border-radius: 16px; align-items: flex-start; flex-direction: column; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 UX Repair v2: compact search, correct module order, professional benchmark shell
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* ---------- TM.4 command row: compact global search aligned with active context ---------- */
+.final-search-compact-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .045) !important;
+    padding: 12px 14px 6px 14px !important;
+    margin: 0 !important;
+}
+.final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    min-height: 24px !important;
+    margin: 0 !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .10em !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.final-search-examples-top {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 24px !important;
+    white-space: nowrap !important;
+    padding: 4px 9px !important;
+    border-radius: 999px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: .62rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+/* The selectbox directly following the compact card is the actual search input. */
+.final-search-compact-card + div[data-testid="stSelectbox"] {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-top: 0 !important;
+    border-radius: 0 0 16px 16px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .045) !important;
+    padding: 0 14px 12px 14px !important;
+    margin: 0 0 12px 0 !important;
+}
+.final-search-compact-card + div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    height: 42px !important;
+    border-radius: 999px !important;
+    border: 1px solid #93c5fd !important;
+    background: #ffffff !important;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, .065) !important;
+}
+.final-search-compact-card + div[data-testid="stSelectbox"] div[data-baseweb="select"] *,
+.final-search-compact-card + div[data-testid="stSelectbox"] div[data-baseweb="select"] input,
+.final-search-compact-card + div[data-testid="stSelectbox"] div[data-baseweb="select"] span {
+    font-size: .86rem !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    line-height: 1.15 !important;
+}
+/* Disable older search-card rules that wrapped the title alone and produced a second empty card. */
+div[data-testid="stElementContainer"]:has(.final-search-title):not(:has(.final-search-compact-card)),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title):not(:has(.final-search-compact-card)) {
+    background: transparent !important;
+    border: 0 !important;
+    border-left: 0 !important;
+    border-top: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
+.compact-context-panel, .context-strip-v2.compact-context-panel {
+    min-height: 104px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 12px !important;
+}
+
+/* ---------- Player page hero: compact SaaS header, not a dominant banner ---------- */
+.product-page-hero-unified,
+.product-page-hero {
+    min-height: 74px !important;
+    padding: 12px 18px !important;
+    margin: 10px 0 14px 0 !important;
+    border-radius: 16px !important;
+}
+.product-page-title,
+.product-page-hero-unified .product-page-title {
+    font-size: 1.24rem !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.015em !important;
+    word-spacing: .10em !important;
+    white-space: normal !important;
+}
+.product-page-subtitle,
+.product-page-hero-unified .product-page-subtitle {
+    font-size: .78rem !important;
+    line-height: 1.25 !important;
+}
+.product-page-eyebrow,
+.product-page-hero-unified .product-page-eyebrow {
+    font-size: .68rem !important;
+    letter-spacing: .12em !important;
+}
+
+/* ---------- Player Snapshot first: compact but still executive ---------- */
+.player-snapshot-shell {
+    margin: 8px 0 14px 0 !important;
+    padding: 13px 15px 15px 15px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+}
+.player-snapshot-kicker {
+    color: #1d4ed8 !important;
+    font-size: .70rem !important;
+    letter-spacing: .095em !important;
+}
+.player-snapshot-title { font-size: 1.30rem !important; }
+.player-snapshot-subtitle { font-size: .78rem !important; }
+.player-snapshot-grid { gap: 10px !important; }
+.snapshot-card {
+    padding: 13px 14px !important;
+    min-height: 0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040) !important;
+}
+.snapshot-tags-row {
+    padding: 10px 12px 12px 12px !important;
+    margin-top: 10px !important;
+    border-radius: 14px !important;
+}
+.snapshot-tag { padding: 8px 10px !important; min-height: 48px !important; border-radius: 12px !important; }
+.snapshot-tag-label { font-size: .78rem !important; }
+.snapshot-tag-caption { font-size: .68rem !important; }
+
+/* ---------- Performance Benchmark: a single closed scouting engine ---------- */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.055) !important;
+    padding: 16px 18px !important;
+    margin: 14px 0 14px 0 !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"] {
+    gap: .55rem !important;
+}
+.tm4-section-header.tm4-performance-header {
+    margin: 0 0 10px 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+}
+.tm4-section-eyebrow {
+    color: #1d4ed8 !important;
+    font-size: .70rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .095em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 4px !important;
+}
+.tm4-section-title {
+    color: #0f172a !important;
+    font-size: 1.22rem !important;
+    font-weight: 950 !important;
+    line-height: 1.10 !important;
+    letter-spacing: -.015em !important;
+}
+.tm4-section-subtitle {
+    color: #64748b !important;
+    font-size: .80rem !important;
+    line-height: 1.35 !important;
+    margin-top: 3px !important;
+}
+.tm4-benchmark-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    background: #f8fafc !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 15px !important;
+    padding: 10px 12px !important;
+    margin: 6px 0 12px 0 !important;
+    box-shadow: none !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) label p {
+    color: #334155 !important;
+    font-size: .76rem !important;
+    font-weight: 850 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d1dbe8 !important;
+    box-shadow: none !important;
+}
+.tm4-benchmark-engine {
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    padding: 12px !important;
+    margin-top: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-info-box {
+    margin: 0 0 10px 0 !important;
+    background: #f8fbff !important;
+    border: 1px solid #e5eaf1 !important;
+    box-shadow: none !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .035) !important;
+    overflow: hidden !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-card {
+    min-height: 96px !important;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+    box-shadow: 0 7px 18px rgba(15,23,42,.035) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-readout-card {
+    margin: 10px 0 0 0 !important;
+    border-radius: 13px !important;
+    background: #f8fbff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+}
+
+/* ---------- Scouting Report and Drivers: consistent titles + softer analytical read ---------- */
+.scouting-report-header,
+.market-drivers-heading {
+    margin: 14px 0 12px 0 !important;
+}
+.scouting-report-eyebrow,
+.market-drivers-eyebrow {
+    color: #1d4ed8 !important;
+    font-size: .70rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .095em !important;
+    text-transform: uppercase !important;
+}
+.scouting-report-title,
+.market-drivers-title {
+    color: #0f172a !important;
+    font-size: 1.22rem !important;
+    font-weight: 950 !important;
+    line-height: 1.10 !important;
+    word-spacing: .10em !important;
+}
+.scouting-report-subtitle,
+.market-drivers-subtitle {
+    color: #64748b !important;
+    font-size: .80rem !important;
+    line-height: 1.35 !important;
+}
+.scouting-report-card-read {
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #8b5cf6 !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.040) !important;
+}
+.scouting-report-kpi-grid { display: none !important; }
+.market-drivers-grid { gap: 14px !important; }
+.market-driver-card { min-height: 176px !important; }
+.market-driver-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 120px 58px !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.market-driver-row::before {
+    content: "";
+    grid-column: 2;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 75%, #e5e7eb 75%);
+}
+.market-driver-row-negative::before { background: linear-gradient(90deg, #ef4444 38%, #fee2e2 38%); }
+.market-driver-row span { grid-column: 1; }
+.market-driver-row b { grid-column: 3; text-align: right; }
+.market-driver-empty,
+.market-driver-empty-secondary {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 62px !important;
+    padding: 12px !important;
+    border: 1px dashed #fecaca !important;
+    border-radius: 13px !important;
+    color: #991b1b !important;
+    background: rgba(254, 242, 242, .58) !important;
+    font-weight: 850 !important;
+    text-align: center !important;
+    font-size: .78rem !important;
+}
+.player-intelligence-report-gap { height: 6px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.4.1 UX repair v5: stable benchmark rendering, compact search and ES labels
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search: same visual weight as Contexto Activo, with clear title/input separation. */
+.final-search-shell,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    min-height: 120px !important;
+    padding: 14px 18px 14px 18px !important;
+    border-radius: 17px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.045) !important;
+}
+.final-search-title {
+    font-size: .78rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 9px !important;
+    letter-spacing: .085em !important;
+}
+.final-search-caption,
+.final-search-microcopy,
+.search-helper-row { display: none !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.final-search-title) + div[data-testid="stElementContainer"] div[data-baseweb="select"] > div {
+    min-height: 44px !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+}
+/* Remove orphan blank bars/spacers produced by previous benchmark wrappers. */
+.tm4-benchmark-engine:empty,
+.tm4-benchmark-engine:has(> div:empty),
+[data-testid="stElementContainer"]:has(.tm4-benchmark-engine:empty),
+[data-testid="stVerticalBlockBorderWrapper"]:empty {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+/* Performance Benchmark: one clean module without escaped HTML. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    padding: 16px 18px !important;
+    margin: 14px 0 !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050) !important;
+}
+.tm4-benchmark-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    background: #f8fafc !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 14px !important;
+    padding: 9px 11px !important;
+    margin: 8px 0 10px 0 !important;
+}
+.tm4-native-signal-card {
+    min-height: 108px !important;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+}
+.tm4-native-signal-card .radar-card-title { font-size: .72rem !important; }
+.tm4-native-signal-card .radar-card-percentile { font-size: 1.20rem !important; }
+.tm4-native-signal-card .radar-card-label { font-size: .70rem !important; }
+.tm4-native-signal-card .radar-card-value { font-size: .66rem !important; }
+.tm4-signals-title { margin-bottom: 8px !important; }
+/* Slightly calmer analytical read. */
+.scouting-report-card-read {
+    border-color: #e2e8f0 !important;
+    border-left: 3px solid #8b5cf6 !important;
+}
+/* More Spanish product vocabulary when ES is active; scouting terms can remain where intentional. */
+.snapshot-section-label { letter-spacing: .06em !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Player Intelligence final director-sporting closure: decision status, why-him,
+# premium recommendation, product-safe role labels and richer comparables.
+# =============================================================================
+
+def _tm69_decision_status_badge(status: str, priority: float, gap_txt: str, risk: float) -> tuple[str, str, str]:
+    """Return a director-facing status label, css tone and short action copy."""
+    is_en = globals().get("LANG") == "EN"
+    status_l = str(status).lower()
+    try:
+        gap_num = float(str(gap_txt).replace("%", "").replace("+", ""))
+    except Exception:
+        gap_num = np.nan
+    if pd.notna(risk) and float(risk) >= 70:
+        return (("Avoid" if is_en else "No activar"), "red", ("Risk profile too high" if is_en else "Riesgo excesivo"))
+    if "price" in status_l or "precio" in status_l or (pd.notna(gap_num) and gap_num < -10):
+        return (("Validate Price" if is_en else "Validar precio"), "yellow", ("Price already corrected" if is_en else "Precio ya corregido"))
+    if pd.notna(priority) and float(priority) >= 82:
+        return (("Priority A" if is_en else "Prioridad A"), "green", ("Activate recruitment workflow" if is_en else "Activar workflow de captación"))
+    if pd.notna(priority) and float(priority) >= 65:
+        return (("Priority B" if is_en else "Prioridad B"), "blue", ("Shortlist and validate context" if is_en else "Shortlist y validación contextual"))
+    return (("Watchlist" if is_en else "Monitorizar"), "neutral", ("Keep under observation" if is_en else "Mantener en seguimiento"))
+
+
+def _tm69_decision_card_html(ctx: dict, player_name: str, club: str, league: str, status: str, priority: float, tactical_fit: float, accessibility: str, risk: float, gap_txt: str, market_value: float, expected_value: float, transfer_band: str, window_txt: str, role: str) -> str:
+    """Final compact acquisition decision hero with explicit status and grouped KPIs."""
+    is_en = globals().get("LANG") == "EN"
+    score_txt = "—" if pd.isna(priority) else f"{priority:.0f}"
+    fit_txt = "—" if pd.isna(tactical_fit) else f"{tactical_fit:.0f}/100"
+    risk_label = _tm69_score_label("risk", risk)
+    title = "Acquisition Decision" if is_en else "Decisión de adquisición"
+    score_label = "Target Grade" if is_en else "Target Grade"
+    fit_label = "Tactical Fit" if is_en else "Encaje táctico"
+    transfer_label = "Expected Fee" if is_en else "Fee esperado"
+    window_label = "Window" if is_en else "Ventana"
+    tm_label = "Transfermarkt" if is_en else "Transfermarkt"
+    fair_label = "Scouting IQ" if is_en else "Scouting IQ"
+    tm_txt = format_money_short(market_value)
+    fair_txt = format_money_short(expected_value)
+    status_label, status_tone, status_copy = _tm69_decision_status_badge(status, priority, gap_txt, risk)
+    price_corrected = status_tone == "yellow"
+    if price_corrected:
+        thesis = (
+            f"Sporting fit remains strong, but current market price is above Scouting IQ fair value: {tm_txt} Transfermarkt vs {fair_txt} ({gap_txt})."
+            if is_en else
+            f"El encaje deportivo sigue siendo fuerte, pero el precio actual está por encima del fair value Scouting IQ: {tm_txt} Transfermarkt vs {fair_txt} ({gap_txt})."
+        )
+    else:
+        thesis = (
+            f"Acquisition case for {role}. Decision combines fit {fit_txt}, risk, accessibility and current market gap {gap_txt}."
+            if is_en else
+            f"Caso de adquisición para {role}. La decisión combina encaje {fit_txt}, riesgo, accesibilidad y gap actual {gap_txt}."
+        )
+    gap_class = "negative" if str(gap_txt).startswith("-") else ("positive" if str(gap_txt).startswith("+") else "neutral")
+    return f"""
+    <div class="exec-decision-hero exec-decision-hero-v2 exec-decision-hero-final">
+        <div class="exec-decision-left">
+            <div class="exec-decision-eyebrow">{html.escape(title)}</div>
+            <div class="exec-status-band exec-status-{html.escape(status_tone)}"><b>{html.escape(status_label)}</b><span>{html.escape(status_copy)}</span></div>
+            <div class="exec-decision-name">{html.escape(player_name)}</div>
+            <div class="exec-decision-meta">{html.escape(club)} · {html.escape(str(league))} · {html.escape(role)}</div>
+            <div class="exec-decision-thesis">{html.escape(thesis)}</div>
+        </div>
+        <div class="exec-decision-scorebox exec-decision-scorebox-v2">
+            <span>{html.escape(score_label)}</span><b>{html.escape(score_txt)}</b><small>{html.escape(_tm69_target_priority_grade(priority))}</small>
+        </div>
+        <div class="exec-decision-groups">
+            <div class="exec-decision-group exec-group-economy">
+                <div class="exec-decision-group-title">{html.escape('Economy' if is_en else 'Economía')}</div>
+                <div class="exec-decision-group-grid">
+                    <div><span>{html.escape(tm_label)}</span><b>{html.escape(tm_txt)}</b><small>{html.escape('current value' if is_en else 'valor actual')}</small></div>
+                    <div><span>{html.escape(fair_label)}</span><b>{html.escape(fair_txt)}</b><small>{html.escape('fair value' if is_en else 'fair value')}</small></div>
+                    <div class="gap-{gap_class}"><span>{html.escape('Gap' if is_en else 'Gap')}</span><b>{html.escape(gap_txt)}</b><small>{html.escape('IQ vs TM' if is_en else 'IQ vs TM')}</small></div>
+                </div>
+            </div>
+            <div class="exec-decision-group exec-group-fit">
+                <div class="exec-decision-group-title">{html.escape('Fit & Risk' if is_en else 'Fit y riesgo')}</div>
+                <div class="exec-decision-group-grid">
+                    <div><span>{html.escape(fit_label)}</span><b>{html.escape(fit_txt)}</b><small>{html.escape(_tm69_score_to_label(tactical_fit))}</small></div>
+                    <div><span>{html.escape('Risk' if is_en else 'Riesgo')}</span><b>{html.escape(risk_label)}</b><small>{html.escape(_tm69_format_score(risk))}/100</small></div>
+                    <div><span>{html.escape('Accessibility' if is_en else 'Accesibilidad')}</span><b>{html.escape(accessibility)}</b><small>{html.escape('market + contract' if is_en else 'mercado + contrato')}</small></div>
+                </div>
+            </div>
+            <div class="exec-decision-group exec-group-deal">
+                <div class="exec-decision-group-title">{html.escape('Deal' if is_en else 'Operación')}</div>
+                <div class="exec-decision-group-grid exec-decision-group-grid-2">
+                    <div><span>{html.escape(transfer_label)}</span><b>{html.escape(transfer_band)}</b><small>{html.escape('indicative band' if is_en else 'banda indicativa')}</small></div>
+                    <div><span>{html.escape(window_label)}</span><b>{html.escape(window_txt)}</b><small>{html.escape('recommended timing' if is_en else 'timing recomendado')}</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+
+def _tm69_why_him_html(opportunity: float, growth: float, risk: float, tactical_fit: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    bullets = []
+    if pd.notna(growth):
+        bullets.append(("Future asset signal", f"Growth {_tm69_format_score(growth)}/100") if is_en else ("Señal future asset", f"Growth {_tm69_format_score(growth)}/100"))
+    if pd.notna(opportunity):
+        bullets.append(("Opportunity context", f"Opportunity {_tm69_format_score(opportunity)}/100") if is_en else ("Contexto oportunidad", f"Opportunity {_tm69_format_score(opportunity)}/100"))
+    if pd.notna(tactical_fit):
+        bullets.append(("Tactical fit", f"Fit {_tm69_format_score(tactical_fit)}/100") if is_en else ("Encaje táctico", f"Fit {_tm69_format_score(tactical_fit)}/100"))
+    if pd.notna(risk):
+        bullets.append(("Risk control", _tm69_score_label("risk", risk)) if is_en else ("Control riesgo", _tm69_score_label("risk", risk)))
+    rows = "".join(f"<div class='exec-why-him-item'><b>✓ {html.escape(a)}</b><span>{html.escape(b)}</span></div>" for a, b in bullets[:4])
+    return f"<div class='exec-why-him-card'><div class='exec-recruitment-eyebrow'>{html.escape('Why him?' if is_en else '¿Por qué él?')}</div>{rows}</div>"
+
+
+def _tm69_recruitment_recommendation_html(status: str, opportunity: float, growth: float, risk: float, gap_txt: str, transfer_band: str, tactical_fit: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    conf = _tm69_target_priority_score(opportunity, growth, risk, tactical_fit)
+    conf_txt = "—" if pd.isna(conf) else f"{conf:.0f}%"
+    status_label, status_tone, status_copy = _tm69_decision_status_badge(status, conf, gap_txt, risk)
+    if status_tone == "yellow":
+        action = "Validate price / monitor" if is_en else "Validar precio / monitorizar"
+        motive = "Current fee expectation requires validation against alternatives and internal depth." if is_en else "La expectativa de fee actual exige validación frente a alternativas e integrantes de plantilla."
+    elif status_tone == "green":
+        action = "Activate target" if is_en else "Activar target"
+        motive = "Strong fit and opportunity profile support recruitment activation." if is_en else "El encaje y la oportunidad justifican activar la captación."
+    else:
+        action = "Monitor" if is_en else "Monitorizar"
+        motive = "Keep in watchlist until price, risk or timing improves." if is_en else "Mantener en watchlist hasta mejora de precio, riesgo o timing."
+    return f"""
+    <div class="exec-recruitment-engine exec-recommendation-premium exec-status-{html.escape(status_tone)}">
+        <div class="exec-recruitment-eyebrow">{html.escape('Recommendation' if is_en else 'Recomendación')}</div>
+        <div class="exec-recruitment-title">{html.escape(action)}</div>
+        <div class="exec-recommendation-motive"><b>{html.escape('Motive' if is_en else 'Motivo')}:</b> {html.escape(motive)}</div>
+        <div class="exec-recruitment-grid">
+            <div><span>{html.escape('Confidence' if is_en else 'Confianza')}</span><b>{html.escape(conf_txt)}</b></div>
+            <div><span>{html.escape('Market gap' if is_en else 'Gap mercado')}</span><b>{html.escape(gap_txt)}</b></div>
+            <div><span>{html.escape('Fee reference' if is_en else 'Fee referencia')}</span><b>{html.escape(transfer_band)}</b></div>
+        </div>
+    </div>
+    """
+
+
+def _tm69_why_now_html(status: str, opportunity: float, growth: float, risk: float, contract: float, gap_txt: str, transfer_band: str, tactical_fit: float, window_txt: str) -> str:
+    """Compact Director of Football layer: why him + why now + indicative deal probability."""
+    is_en = globals().get("LANG") == "EN"
+    deal = 50.0
+    if pd.notna(contract): deal += (float(contract) - 50.0) * 0.22
+    if pd.notna(risk): deal += (50.0 - float(risk)) * 0.16
+    if pd.notna(tactical_fit): deal += (float(tactical_fit) - 65.0) * 0.18
+    if pd.notna(growth): deal += (float(growth) - 70.0) * 0.08
+    try:
+        gap_num = float(str(gap_txt).replace("%", "").replace("+", ""))
+        if gap_num < -10: deal -= min(22.0, abs(gap_num) * 0.35)
+        elif gap_num > 10: deal += min(14.0, gap_num * 0.20)
+    except Exception:
+        pass
+    deal = max(5.0, min(95.0, deal))
+    deal_txt = f"{deal:.0f}%"
+    status_l = str(status).lower()
+    if "precio" in status_l or "price" in status_l:
+        bullets = [
+            "Sporting upside remains attractive, but price has corrected." if is_en else "El upside deportivo sigue siendo atractivo, pero el precio ya ha corregido.",
+            f"{('Indicative fee band' if is_en else 'Banda indicativa')}: {transfer_band}.",
+            f"{('Recommended window' if is_en else 'Ventana recomendada')}: {window_txt}.",
+        ]
+    else:
+        bullets = [
+            "High opportunity signal with controlled sporting risk." if is_en else "Señal de oportunidad alta con riesgo deportivo controlado.",
+            "Growth profile supports future asset thesis." if is_en else "El perfil de crecimiento sostiene la tesis de future asset.",
+            f"{('Recommended window' if is_en else 'Ventana recomendada')}: {window_txt}.",
+        ]
+    bullet_html = "".join(f"<li>{html.escape(b)}</li>" for b in bullets)
+    return f"""
+    <div class="exec-why-stack">
+        {_tm69_why_him_html(opportunity, growth, risk, tactical_fit)}
+        <div class="exec-why-now-card">
+            <div class="exec-why-main">
+                <div class="exec-recruitment-eyebrow">{html.escape('Why now' if is_en else 'Por qué ahora')}</div>
+                <ul>{bullet_html}</ul>
+            </div>
+            <div class="exec-deal-probability">
+                <span>{html.escape('Deal probability' if is_en else 'Probabilidad de operación')}</span><b>{html.escape(deal_txt)}</b><small>{html.escape('Indicative, not a model output' if is_en else 'Indicativa, no output del modelo')}</small>
+            </div>
+        </div>
+    </div>
+    """
+
+
+def _tm69_market_benchmark_html(ctx: dict, player_name: str, market_value: float, expected_value: float, primary_pos: str) -> str:
+    is_en = globals().get("LANG") == "EN"
+    comps = []
+    for i in range(1, 6):
+        n = _tm69_first(ctx, [f"similar_player_{i}", f"comparable_player_{i}", f"role_similar_player_{i}"], np.nan)
+        v = _tm69_numeric(ctx, [f"similar_value_{i}", f"comparable_market_value_{i}", f"role_similar_value_{i}"])
+        sim = _tm69_numeric(ctx, [f"similarity_{i}", f"role_similarity_{i}"])
+        age = _tm69_numeric(ctx, [f"similar_age_{i}", f"comparable_age_{i}", f"role_similar_age_{i}"])
+        if _tm69_is_valid(n):
+            comps.append((str(n), v, sim, age))
+    if not comps:
+        base = market_value if pd.notna(market_value) else expected_value
+        if pd.isna(base): base = 10_000_000
+        comps = [("Peer valuation band · upper", base * 1.35, np.nan, np.nan), ("Peer valuation band · median", base * 1.18, np.nan, np.nan), ("Peer valuation band · lower", base * 0.95, np.nan, np.nan)]
+    valid_values = [v for _, v, _, _ in comps if pd.notna(v)]
+    avg_comp = np.nanmean(valid_values) if valid_values else np.nan
+    discount = np.nan
+    if pd.notna(avg_comp) and pd.notna(market_value) and avg_comp:
+        discount = (avg_comp - market_value) / avg_comp
+    rows = "".join(
+        f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape('Age' if is_en else 'Edad')}: {html.escape('N/A' if pd.isna(age) else f'{age:.0f}')} · {html.escape('Sim' if is_en else 'Sim')}: {html.escape('N/A' if pd.isna(s) else f'{s:.0f}')}</span><strong>{html.escape(format_money_short(v))}</strong></div>"
+        for n, v, s, age in comps[:3]
+    )
+    return f"""
+    <div class="exec-benchmark-market">
+        <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Market Comparables' if is_en else 'Comparables de mercado')}</div><div class="exec-panel-subtitle">{html.escape('Economic context against similar player profiles.' if is_en else 'Contexto económico contra perfiles similares.')}</div></div></div>
+        <div class="exec-benchmark-summary">
+            <div><span>{html.escape('Peer avg. value' if is_en else 'Valor medio peers')}</span><b>{html.escape(format_money_short(avg_comp))}</b></div>
+            <div><span>{html.escape('Implied discount' if is_en else 'Descuento implícito')}</span><b>{html.escape('N/A' if pd.isna(discount) else f'{discount*100:+.0f}%')}</b></div>
+            <div><span>{html.escape('Player value' if is_en else 'Valor jugador')}</span><b>{html.escape(format_money_short(market_value))}</b></div>
+        </div>
+        <div class="exec-benchmark-list">{rows}</div>
+    </div>
+    """
+
+
+def _tm69_career_trajectory_html(ctx: dict, market_value: float, expected_value: float, growth_1y: float) -> str:
+    is_en = globals().get("LANG") == "EN"
+    current = market_value if pd.notna(market_value) else expected_value
+    if pd.isna(current): current = 0
+    prev = _tm69_numeric(ctx, ["market_value_prev_eur", "tm69_market_value_prev_eur"])
+    if pd.isna(prev) and current:
+        rate = 0.0 if pd.isna(growth_1y) else float(growth_1y)
+        prev = current / max(0.25, 1 + (rate if abs(rate) <= 3 else rate / 100))
+    projection = expected_value if pd.notna(expected_value) else (current * 1.18 if current else np.nan)
+    steps = [("Historical" if is_en else "Histórico", prev), ("Current TM" if is_en else "TM actual", current), ("Scouting IQ" if is_en else "Scouting IQ", projection)]
+    bridge = "".join(
+        f"<div class='exec-trajectory-bridge-step'><span>{html.escape(label)}</span><b>{html.escape(format_money_short(value))}</b></div>"
+        for label, value in steps
+    )
+    return f"<div class='exec-trajectory-card exec-trajectory-bridge-card'><div class='exec-panel-title'>{html.escape('Market Trajectory' if is_en else 'Trayectoria de mercado')}</div><div class='exec-panel-subtitle'>{html.escape('Historical TM value → current Transfermarkt → Scouting IQ fair value.' if is_en else 'Valor TM histórico → Transfermarkt actual → fair value Scouting IQ.')}</div><div class='exec-trajectory-bridge'>{bridge}</div></div>"
+
+
+st.markdown("""
+<style>
+.exec-decision-hero-final { grid-template-columns: minmax(360px,.92fr) 116px minmax(560px,1.45fr) !important; }
+.exec-status-band { display:inline-flex; align-items:center; gap:8px; width:fit-content; border-radius:999px; padding:7px 11px; margin-bottom:10px; border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; }
+.exec-status-band b { font-size:.78rem; font-weight:950; letter-spacing:.05em; text-transform:uppercase; }
+.exec-status-band span { font-size:.74rem; font-weight:850; }
+.exec-status-green { background:#dcfce7 !important; border-color:#86efac !important; color:#166534 !important; }
+.exec-status-yellow { background:#fef3c7 !important; border-color:#fde68a !important; color:#92400e !important; }
+.exec-status-red { background:#fee2e2 !important; border-color:#fecaca !important; color:#991b1b !important; }
+.exec-status-blue { background:#dbeafe !important; border-color:#bfdbfe !important; color:#1d4ed8 !important; }
+.exec-status-neutral { background:#f1f5f9 !important; border-color:#e2e8f0 !important; color:#475569 !important; }
+.exec-recommendation-premium { border-left:5px solid #2563eb; border-radius:16px; padding:13px 14px; background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); }
+.exec-recommendation-premium.exec-status-yellow { border-left-color:#f59e0b; background:linear-gradient(135deg,#ffffff 0%,#fffaf0 100%); }
+.exec-recommendation-premium.exec-status-green { border-left-color:#22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.exec-recommendation-motive { color:#334155; font-size:.82rem; line-height:1.38; margin:7px 0 10px 0; font-weight:750; }
+.exec-why-stack { display:grid; gap:10px; margin-top:12px; }
+.exec-why-him-card { border:1px solid #dbeafe; border-left:4px solid #2563eb; border-radius:16px; padding:11px 12px; background:#ffffff; }
+.exec-why-him-item { display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px solid #edf2f7; }
+.exec-why-him-item:first-of-type { border-top:0; }
+.exec-why-him-item b { color:#0f172a; font-size:.76rem; font-weight:950; }
+.exec-why-him-item span { color:#1e3a8a; font-size:.74rem; font-weight:900; text-align:right; }
+.exec-benchmark-row-rich { grid-template-columns: minmax(0,1fr) 110px 76px !important; }
+.exec-trajectory-spark-card { padding-bottom: 14px !important; }
+.exec-sparkline { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; height:122px; align-items:end; margin-top:8px; }
+.exec-spark-step { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; height:100%; }
+.exec-spark-step i { width:100%; max-width:44px; border-radius:8px 8px 3px 3px; background:linear-gradient(180deg,#60a5fa,#2563eb); display:block; min-height:8px; }
+.exec-spark-step b { color:#0f172a; font-size:.78rem; font-weight:950; }
+.exec-spark-step span { color:#64748b; font-size:.68rem; font-weight:850; }
+.role-profile-card .role-profile-value { line-height:1.12 !important; }
+.role-top-role-score { color:#1e3a8a !important; font-weight:950 !important; }
+@media(max-width:1500px){ .exec-decision-hero-final { grid-template-columns:1fr !important; } }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# =============================================================================
+# TM.6.9 final director-sporting closure: placeholders, role labels and compact cards
+# =============================================================================
+st.markdown(
+    """
+<style>
+.exec-club-shield-empty {
+    min-height: 38px !important;
+    padding: 7px 8px !important;
+    background: #f8fafc !important;
+    border: 1px dashed #cbd5e1 !important;
+    box-shadow: none !important;
+}
+.exec-club-shield-empty .exec-club-shield-label {
+    font-size: .58rem !important;
+    line-height: 1.05 !important;
+    color: #64748b !important;
+    max-width: 62px !important;
+}
+.exec-club-shield-empty .exec-club-shield-code { display: none !important; }
+.exec-mid-grid { align-items: stretch !important; }
+.exec-role-panel { padding-bottom: 12px !important; }
+.exec-pitch { aspect-ratio: 1.85 / 1 !important; min-height: 178px !important; max-height: 218px !important; }
+.exec-pitch::before, .exec-pitch::after { top: 29% !important; bottom: 29% !important; width: 10.5% !important; }
+.exec-pitch-overlay { bottom: 9px !important; left: 10px !important; }
+.exec-pitch-legend { margin-top: 6px !important; }
+.exec-position-distribution { margin-top: 8px !important; }
+.exec-trajectory-bridge-card { padding-bottom: 14px !important; }
+.exec-trajectory-bridge {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    align-items: stretch;
+    margin-top: 10px;
+}
+.exec-trajectory-bridge-step {
+    position: relative;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    padding: 10px 9px;
+    min-height: 66px;
+}
+.exec-trajectory-bridge-step:not(:last-child)::after {
+    content: "→";
+    position: absolute;
+    right: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2563eb;
+    font-weight: 950;
+    z-index: 2;
+}
+.exec-trajectory-bridge-step span {
+    display: block;
+    color: #64748b;
+    font-size: .66rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 5px;
+}
+.exec-trajectory-bridge-step b {
+    color: #0f172a;
+    font-size: .95rem;
+    font-weight: 950;
+}
+.role-dna-pro-kpi b, .role-top-role-score { font-size: .78rem !important; }
+.scouting-report-trace-card { background: #f8fbff !important; border-left: 4px solid #64748b !important; }
+@media(max-width:1200px){ .exec-trajectory-bridge { grid-template-columns: 1fr !important; } .exec-trajectory-bridge-step::after { display:none !important; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 if filtered_df.empty:
     st.warning("No players match the current filters." if LANG == "EN" else "No hay jugadores que cumplan los filtros actuales.")
 else:
-    if dashboard_page == "Executive Overview":
-        render_executive_overview_page(filtered_df)
-    elif dashboard_page == "Transfer Strategy":
-        render_transfer_strategy_placeholder()
-    elif dashboard_page == "Global Scouting Universe":
-        render_market_opportunities_page(filtered_df)
+    if dashboard_page == "Market Intelligence":
+        render_market_intelligence_page(filtered_df)
     elif dashboard_page == "Player Intelligence":
         render_player_intelligence_page(filtered_df)
-    elif dashboard_page == "Recruitment Board":
+    elif dashboard_page == "Recruitment Intelligence":
         render_recruitment_board_page(filtered_df)
+    elif dashboard_page == "Strategy Center":
+        render_strategy_center_page(filtered_df, contract_df)
     elif dashboard_page == "Methodology":
         render_methodology_page(filtered_df)
 
@@ -14501,7 +27420,7 @@ st.markdown(
 <div class="scouting-iq-footer">
     <b>SCOUTING IQ PLATFORM</b>
     <div>Market Value Intelligence System</div>
-    <div>Master Thesis · Sports Analytics &amp; Data Science</div>
+    <div>Football Recruitment Decision Support System</div>
 </div>
 """,
     unsafe_allow_html=True,
@@ -14710,6 +27629,3512 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
     .quick-guide-popover-body .quick-guide-layout,
     .quick-guide-popover-body .quick-guide-glossary { grid-template-columns: 1fr !important; }
 }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.3.6 deterministic widget readability patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Main-area select/multiselect readability: prevents cropped placeholders in Contract Intelligence filters. */
+[data-testid="stAppViewContainer"] .main div[data-baseweb="select"] > div {
+    min-height: 48px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+[data-testid="stAppViewContainer"] .main div[data-baseweb="select"] input,
+[data-testid="stAppViewContainer"] .main div[data-baseweb="select"] span,
+[data-testid="stAppViewContainer"] .main div[data-baseweb="select"] div[role="button"],
+[data-testid="stAppViewContainer"] .main div[data-baseweb="select"] div[role="combobox"] {
+    line-height: 1.35 !important;
+    min-height: 28px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    overflow: visible !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 visual harmony polish: compact search + premium Player Intelligence lower blocks
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact the global scouting search to match Active Context height. */
+.final-search-card,
+.final-search-shell,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 12px 14px 12px 14px !important;
+    margin-bottom: 14px !important;
+    border-radius: 16px !important;
+    border-left-width: 0 !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.055) !important;
+}
+.final-search-title {
+    font-size: .76rem !important;
+    letter-spacing: .09em !important;
+    margin-bottom: 4px !important;
+}
+.final-search-caption,
+.final-search-microcopy,
+.search-helper-row,
+.final-search-examples {
+    font-size: .70rem !important;
+    margin-bottom: 4px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div,
+.final-search-card div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    border-radius: 999px !important;
+    border-width: 1px !important;
+    box-shadow: 0 6px 16px rgba(37,99,235,.065) !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] input,
+.final-search-card div[data-baseweb="select"] input {
+    font-size: .88rem !important;
+    font-weight: 650 !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+}
+/* Player Snapshot: keep impact, reduce height and improve rhythm before radar. */
+.player-snapshot-shell {
+    padding: 13px 15px 15px 15px !important;
+    margin: 8px 0 30px 0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 34px rgba(15,23,42,.060) !important;
+}
+.player-snapshot-heading { margin-bottom: 10px !important; }
+.player-snapshot-title { font-size: 1.36rem !important; }
+.player-snapshot-subtitle { font-size: .78rem !important; }
+.player-snapshot-grid { gap: 10px !important; }
+.snapshot-card {
+    border-radius: 14px !important;
+    padding: 13px 14px !important;
+    min-height: 0 !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040) !important;
+}
+.snapshot-avatar { width: 62px !important; height: 62px !important; font-size: 1.02rem !important; }
+.snapshot-player-name { font-size: 1.46rem !important; margin-bottom: 6px !important; }
+.snapshot-position-row { margin-bottom: 7px !important; }
+.snapshot-club-line { font-size: .90rem !important; }
+.snapshot-league-line { font-size: .76rem !important; margin-bottom: 8px !important; }
+.snapshot-meta-grid { padding-top: 8px !important; gap: 6px !important; }
+.snapshot-market-values { margin: 12px 0 11px 0 !important; gap: 8px !important; }
+.snapshot-market-values b { font-size: 1.56rem !important; }
+.snapshot-inefficiency-box { padding: 9px 10px !important; border-radius: 12px !important; }
+.snapshot-score-grid { margin-top: 11px !important; gap: 8px !important; }
+.snapshot-score-item { padding: 2px 6px 8px 6px !important; }
+.snapshot-score-item b { font-size: 2.05rem !important; margin: 6px 0 !important; }
+.snapshot-score-item em { font-size: .72rem !important; padding-bottom: 6px !important; }
+.snapshot-tags-row { padding: 10px 12px 12px 12px !important; margin-top: 10px !important; border-radius: 14px !important; }
+.snapshot-tags-title { font-size: .70rem !important; margin-bottom: 8px !important; }
+.snapshot-tags-grid { gap: 8px !important; }
+.snapshot-tag { padding: 8px 10px !important; min-height: 48px !important; border-radius: 12px !important; }
+.snapshot-tag-label { font-size: .78rem !important; margin-bottom: 2px !important; }
+.snapshot-tag-caption { font-size: .68rem !important; }
+/* Radar and scouting cards: same premium language as snapshot. */
+.player-radar-compact-header {
+    margin: 10px 0 12px 0 !important;
+    padding: 0 !important;
+}
+.internal-module-title {
+    font-size: 1.18rem !important;
+    letter-spacing: -.015em !important;
+}
+.internal-module-title--sm { font-size: .92rem !important; text-transform: uppercase !important; letter-spacing: .06em !important; color:#0f2f5f !important; }
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.045) !important;
+    margin-bottom: 14px !important;
+}
+.radar-modern-grid,
+.radar-chart-card,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.radar-card),
+div[data-testid="stElementContainer"]:has(.radar-card) {
+    background:#ffffff !important;
+    border-color:#e2e8f0 !important;
+    border-radius:18px !important;
+    box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
+}
+.radar-card {
+    border-radius: 14px !important;
+    padding: 12px 13px !important;
+    min-height: 92px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+.radar-card-title { font-size: .76rem !important; text-transform: uppercase !important; color:#0f2f5f !important; letter-spacing:.045em !important; }
+.radar-card-percentile { font-size: 1.22rem !important; }
+.radar-card-label { font-size: .72rem !important; }
+.radar-card-value { font-size: .66rem !important; }
+.radar-readout-card {
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 14px !important;
+    padding: 11px 14px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.040) !important;
+    color: #334155 !important;
+    font-size: .84rem !important;
+    margin: 12px 0 22px 0 !important;
+}
+/* Scouting Report replacement. */
+.scouting-report-header {
+    margin: 10px 0 12px 0;
+}
+.scouting-report-eyebrow,
+.market-drivers-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:4px;
+}
+.scouting-report-title,
+.market-drivers-title {
+    color:#0f172a;
+    font-size:1.28rem;
+    font-weight:950;
+    line-height:1.08;
+    letter-spacing:-.02em;
+}
+.scouting-report-subtitle,
+.market-drivers-subtitle {
+    color:#64748b;
+    font-size:.82rem;
+    line-height:1.35;
+    margin-top:4px;
+}
+.scouting-report-kpi-grid {
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:10px;
+    margin: 10px 0 14px 0;
+}
+.scouting-report-kpi {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    padding:11px 12px;
+    box-shadow:0 8px 20px rgba(15,23,42,.040);
+    min-height:72px;
+}
+.scouting-report-kpi span,
+.scouting-detail-grid span,
+.scouting-read-grid span {
+    display:block;
+    color:#64748b;
+    font-size:.68rem;
+    font-weight:900;
+    letter-spacing:.03em;
+    margin-bottom:4px;
+}
+.scouting-report-kpi b {
+    display:block;
+    color:#0f172a;
+    font-size:1.12rem;
+    font-weight:950;
+    line-height:1.05;
+}
+.scouting-report-grid {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px;
+    margin: 8px 0 18px 0;
+}
+.scouting-report-card,
+.market-drivers-shell {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+}
+.scouting-report-card-details { border-left:5px solid #0f2f5f; }
+.scouting-report-card-read { border-left:5px solid #2563eb; }
+.scouting-report-card-eyebrow,
+.market-driver-card-title {
+    color:#0f2f5f;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+.scouting-report-card-title {
+    color:#0f172a;
+    font-size:1.18rem;
+    font-weight:950;
+    line-height:1.1;
+}
+.scouting-report-card-meta,
+.scouting-report-copy {
+    color:#475569;
+    font-size:.84rem;
+    line-height:1.42;
+    margin-top:6px;
+}
+.scouting-detail-grid,
+.scouting-read-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+    margin-top:13px;
+}
+.scouting-detail-grid div,
+.scouting-read-grid div {
+    background:#f8fbff;
+    border:1px solid #edf2f7;
+    border-radius:12px;
+    padding:9px 10px;
+}
+.scouting-detail-grid b,
+.scouting-read-grid b {
+    color:#0f172a;
+    font-size:.90rem;
+    font-weight:950;
+}
+.scouting-report-reco-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:#f0fdf4;
+    border:1px solid #bbf7d0;
+    border-radius:999px;
+    padding:8px 11px;
+    margin-bottom:10px;
+}
+.scouting-report-reco-row span { color:#166534; font-size:.72rem; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
+.scouting-report-reco-row b { color:#166534; font-size:.82rem; font-weight:950; }
+.market-drivers-shell {
+    margin: 16px 0 12px 0;
+    border-left:5px solid #2563eb;
+}
+.market-drivers-heading { margin-bottom:12px; }
+.market-drivers-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+.market-driver-card {
+    border:1px solid #edf2f7;
+    border-radius:14px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+    padding:12px 13px;
+}
+.market-driver-card-positive { color:#15803d !important; }
+.market-driver-card-negative { color:#dc2626 !important; }
+.market-driver-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border-top:1px solid #edf2f7;
+    padding:8px 0;
+    color:#334155;
+    font-size:.80rem;
+    font-weight:850;
+}
+.market-driver-row:first-of-type { border-top:0; }
+.market-driver-row b { font-weight:950; }
+.market-driver-row-positive b { color:#15803d; }
+.market-driver-row-negative b { color:#dc2626; }
+.market-driver-empty { color:#64748b; font-size:.80rem; font-weight:800; padding:8px 0; }
+@media (max-width: 1350px) {
+    .scouting-report-kpi-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .scouting-report-grid,
+    .market-drivers-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 820px) {
+    .scouting-report-kpi-grid { grid-template-columns:1fr; }
+    .scouting-detail-grid,
+    .scouting-read-grid { grid-template-columns:1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 final visual alignment based on generated Player Profile reference
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* TM.4.1 final: harmonize Player Profile with the generated scouting-platform reference. */
+:root {
+    --siq-navy: #061b37;
+    --siq-blue: #2563eb;
+    --siq-border: #e2e8f0;
+    --siq-bg: #f5f7fb;
+    --siq-text: #0f172a;
+    --siq-muted: #64748b;
+}
+html, body, [data-testid="stAppViewContainer"] { background: var(--siq-bg) !important; }
+.block-container { max-width: 1640px !important; padding-top: .72rem !important; }
+
+/* Global command row: compact search aligned with Active Context. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+[data-testid="stElementContainer"]:has(.final-search-title),
+.final-search-shell, .final-search-card {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+    padding: 12px 14px !important;
+    min-height: 132px !important;
+    margin-bottom: 14px !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: .72rem !important;
+    line-height: 1.1 !important;
+    letter-spacing: .095em !important;
+    margin-bottom: 5px !important;
+}
+.final-search-microcopy, .final-search-examples {
+    padding: 4px 9px !important;
+    font-size: .62rem !important;
+    border-radius: 999px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    height: 42px !important;
+    border: 1px solid #93c5fd !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 16px rgba(37,99,235,.060) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] input {
+    font-size: .82rem !important;
+    font-weight: 650 !important;
+}
+.context-strip-v2.compact-context-panel, .compact-context-panel {
+    min-height: 132px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+}
+
+/* Blue product hero: professional but less dominant than Snapshot. */
+.product-page-hero, .home-hero {
+    border-radius: 18px !important;
+    padding: 20px 24px !important;
+    margin: 12px 0 14px 0 !important;
+    box-shadow: 0 18px 40px rgba(15,23,42,.18) !important;
+}
+.product-page-title, .home-hero-title {
+    font-size: 1.78rem !important;
+    letter-spacing: -.035em !important;
+}
+.product-page-subtitle, .home-hero-subtitle { font-size: .84rem !important; }
+.product-page-pill, .home-hero-kpi, .product-page-hero span { border-radius: 999px !important; }
+
+/* Section shell system: every analytical layer reads as one product module. */
+.player-snapshot-shell, .market-drivers-shell,
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.050) !important;
+}
+.player-snapshot-shell { padding: 16px !important; margin: 8px 0 26px 0 !important; }
+.player-snapshot-kicker, .scouting-report-eyebrow, .market-drivers-eyebrow {
+    color: #1d4ed8 !important;
+    font-size: .68rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .085em !important;
+    text-transform: uppercase !important;
+}
+.player-snapshot-title, .scouting-report-title, .market-drivers-title {
+    color: var(--siq-text) !important;
+    font-size: 1.34rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -.02em !important;
+    line-height: 1.08 !important;
+}
+.player-snapshot-subtitle, .scouting-report-subtitle, .market-drivers-subtitle {
+    color: var(--siq-muted) !important;
+    font-size: .78rem !important;
+}
+.player-snapshot-grid {
+    grid-template-columns: minmax(0, 1.26fr) minmax(270px, .92fr) minmax(340px, 1.08fr) !important;
+    gap: 14px !important;
+}
+.snapshot-card {
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    min-height: 172px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+.snapshot-card-identity { grid-template-columns: 76px minmax(0,1fr) !important; gap: 14px !important; }
+.snapshot-avatar {
+    width: 72px !important; height: 72px !important; border-radius: 14px !important;
+    font-size: 1.26rem !important; background: linear-gradient(135deg,#0b2f5f,#2563eb) !important;
+}
+.snapshot-section-label {
+    color: #0b2f5f !important;
+    font-size: .66rem !important;
+    letter-spacing: .075em !important;
+    margin-bottom: 8px !important;
+}
+.snapshot-player-name { font-size: 1.28rem !important; margin-bottom: 7px !important; }
+.snapshot-position-pill, .snapshot-role-placeholder { padding: 4px 8px !important; font-size: .66rem !important; }
+.snapshot-club-line { font-size: .84rem !important; }
+.snapshot-league-line { font-size: .72rem !important; margin-bottom: 9px !important; }
+.snapshot-meta-grid { padding-top: 9px !important; }
+.snapshot-meta-grid span, .snapshot-market-values span, .snapshot-score-item span { font-size: .64rem !important; }
+.snapshot-meta-grid b { font-size: .72rem !important; }
+.snapshot-market-values { margin: 14px 0 12px 0 !important; }
+.snapshot-market-values b { font-size: 1.54rem !important; }
+.snapshot-inefficiency-box { padding: 10px 12px !important; border-radius: 12px !important; }
+.snapshot-score-grid { margin-top: 12px !important; }
+.snapshot-score-item b { font-size: 2.05rem !important; }
+.snapshot-score-item em { font-size: .68rem !important; }
+.snapshot-tags-row {
+    margin-top: 12px !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+}
+.snapshot-tags-title { font-size: .66rem !important; margin-bottom: 8px !important; }
+.snapshot-tags-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 10px !important; }
+.snapshot-tag { min-height: 48px !important; padding: 8px 10px !important; border-radius: 11px !important; }
+.snapshot-tag-label { font-size: .74rem !important; }
+.snapshot-tag-caption { font-size: .64rem !important; }
+
+/* Performance Benchmark: radar and cards inside a consistent white module. */
+.player-radar-compact-header { margin: 0 0 0 0 !important; }
+.player-radar-compact-header .internal-module-title {
+    background:#ffffff !important;
+    border:1px solid var(--siq-border) !important;
+    border-bottom:0 !important;
+    border-radius:18px 18px 0 0 !important;
+    padding:15px 18px 4px 18px !important;
+    color:#0f2f5f !important;
+    font-size:1.02rem !important;
+    font-weight:950 !important;
+    letter-spacing:.02em !important;
+    text-transform:uppercase !important;
+    box-shadow:0 12px 30px rgba(15,23,42,.040) !important;
+}
+.player-radar-compact-header + div[data-testid="stVerticalBlock"],
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    border-radius:0 0 18px 18px !important;
+    border-top:0 !important;
+    padding-top:8px !important;
+}
+.radar-info-box {
+    margin: 0 0 0 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border-left: 1px solid var(--siq-border) !important;
+    border-right: 1px solid var(--siq-border) !important;
+}
+.radar-chart-card, div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+}
+.internal-module-header--compact { margin: 0 0 8px 0 !important; }
+.internal-module-title--sm {
+    color: #0f2f5f !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .075em !important;
+    text-transform: uppercase !important;
+}
+.radar-card {
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 12px !important;
+    min-height: 112px !important;
+    box-shadow: 0 8px 18px rgba(15,23,42,.035) !important;
+}
+.radar-card-title { color:#0f2f5f !important; font-size:.70rem !important; letter-spacing:.045em !important; text-transform:none !important; }
+.radar-card-percentile { font-size:1.48rem !important; color:#0f172a !important; }
+.radar-readout-card {
+    background:#ffffff !important;
+    border:1px solid #dbeafe !important;
+    border-left:4px solid #2563eb !important;
+    border-radius:14px !important;
+    box-shadow:0 8px 20px rgba(15,23,42,.035) !important;
+    margin: 12px 0 22px 0 !important;
+}
+
+/* Scouting report: two-card interpretation layer, no table feel. */
+.scouting-report-header { margin: 4px 0 10px 0 !important; }
+.scouting-report-kpi-grid { display:none !important; }
+.scouting-report-grid { gap:14px !important; margin-bottom:18px !important; }
+.scouting-report-card {
+    border:1px solid var(--siq-border) !important;
+    border-radius:16px !important;
+    padding:16px !important;
+    box-shadow:0 10px 26px rgba(15,23,42,.045) !important;
+}
+.scouting-report-card-details { border-left:4px solid #0f2f5f !important; }
+.scouting-report-card-read { border-left:4px solid #a855f7 !important; }
+.scouting-report-card-eyebrow { font-size:.68rem !important; color:#0f2f5f !important; }
+.scouting-detail-grid div, .scouting-read-grid div {
+    background:#f8fbff !important;
+    border:1px solid #edf2f7 !important;
+    border-radius:11px !important;
+}
+.scouting-report-reco-row {
+    background:#f0fdf4 !important;
+    border:1px solid #bbf7d0 !important;
+    border-radius:999px !important;
+}
+
+/* Market value drivers: final explainability block with positive/negative cards. */
+.market-drivers-shell {
+    margin: 14px 0 18px 0 !important;
+    border-left:0 !important;
+    padding:16px !important;
+}
+.market-drivers-heading { margin-bottom:12px !important; }
+.market-driver-card {
+    border-radius:14px !important;
+    padding:14px !important;
+    min-height:158px !important;
+}
+.market-driver-card:first-child {
+    background: linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%) !important;
+    border-color:#bbf7d0 !important;
+}
+.market-driver-card:last-child {
+    background: linear-gradient(135deg,#fff1f2 0%,#ffffff 100%) !important;
+    border-color:#fecdd3 !important;
+}
+.market-driver-card-title { font-size:.70rem !important; }
+.market-driver-row { font-size:.78rem !important; }
+.market-driver-row-positive::after, .market-driver-row-negative::after {
+    content:"";
+    height:5px;
+    width:120px;
+    border-radius:999px;
+    background:#dbe3ee;
+    order:2;
+}
+.market-driver-row-positive::after { background:linear-gradient(90deg,#22c55e 68%,#e5e7eb 68%) !important; }
+.market-driver-row-negative::after { background:linear-gradient(90deg,#ef4444 36%,#fee2e2 36%) !important; }
+.market-driver-row span { min-width: 140px !important; }
+.market-driver-row b { order:3; min-width:46px; text-align:right; }
+
+@media (max-width: 1350px) {
+    .player-snapshot-grid { grid-template-columns:1fr !important; }
+    .snapshot-tags-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 Professional Player Profile final harmonization pass
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root {
+    --siq-navy: #061b37;
+    --siq-blue: #2563eb;
+    --siq-text: #0f172a;
+    --siq-muted: #64748b;
+    --siq-border: #e2e8f0;
+    --siq-bg: #f5f7fb;
+    --siq-shadow: 0 12px 30px rgba(15, 23, 42, 0.050);
+    --siq-shadow-soft: 0 8px 22px rgba(15, 23, 42, 0.040);
+}
+
+/* Global player-profile rhythm: compact command area and non-dominant hero. */
+.final-search-shell,
+.final-search-card,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    min-height: 132px !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    border: 1px solid #dbe7f5 !important;
+    border-left: 0 !important;
+    box-shadow: var(--siq-shadow-soft) !important;
+}
+.final-search-title { font-size: .72rem !important; line-height: 1.1 !important; letter-spacing: .10em !important; margin-bottom: 5px !important; }
+.final-search-caption { display: none !important; }
+.final-search-microcopy, .final-search-examples { font-size: .62rem !important; padding: 4px 8px !important; margin-bottom: 7px !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    height: 42px !important;
+    border-radius: 999px !important;
+    border-width: 1px !important;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, .065) !important;
+}
+.context-strip-v2.compact-context-panel, .compact-context-panel {
+    min-height: 132px !important;
+    border-radius: 16px !important;
+    box-shadow: var(--siq-shadow-soft) !important;
+}
+.product-page-hero,
+.product-page-hero-unified,
+.home-hero {
+    padding: 18px 22px !important;
+    margin: 12px 0 14px 0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, .16) !important;
+}
+.product-page-title, .product-page-hero-unified .product-page-title, .home-hero-title { font-size: 1.64rem !important; }
+.product-page-subtitle, .product-page-hero-unified .product-page-subtitle, .home-hero-subtitle { font-size: .82rem !important; }
+
+/* Unified section system for Player Intelligence. */
+.player-snapshot-shell,
+.market-drivers-shell {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--siq-shadow) !important;
+    padding: 16px !important;
+    margin: 14px 0 18px 0 !important;
+}
+.player-snapshot-kicker,
+.scouting-report-eyebrow,
+.market-drivers-eyebrow,
+.player-section-eyebrow {
+    color: #1d4ed8 !important;
+    font-size: .68rem !important;
+    line-height: 1.1 !important;
+    font-weight: 950 !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 5px !important;
+}
+.player-snapshot-title,
+.scouting-report-title,
+.market-drivers-title,
+.player-section-title {
+    color: var(--siq-text) !important;
+    font-size: 1.28rem !important;
+    line-height: 1.08 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.02em !important;
+}
+.player-snapshot-subtitle,
+.scouting-report-subtitle,
+.market-drivers-subtitle,
+.player-section-subtitle {
+    color: var(--siq-muted) !important;
+    font-size: .78rem !important;
+    line-height: 1.35 !important;
+    margin-top: 4px !important;
+}
+
+/* Player Snapshot: same visual density as the reference. */
+.player-snapshot-shell { margin-top: 10px !important; margin-bottom: 22px !important; }
+.player-snapshot-heading { margin-bottom: 12px !important; }
+.player-snapshot-grid {
+    grid-template-columns: minmax(0, 1.30fr) minmax(280px, .90fr) minmax(340px, 1.08fr) !important;
+    gap: 14px !important;
+}
+.snapshot-card {
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    min-height: 168px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+.snapshot-card-identity { grid-template-columns: 76px minmax(0, 1fr) !important; gap: 14px !important; }
+.snapshot-avatar { width: 72px !important; height: 72px !important; border-radius: 14px !important; font-size: 1.24rem !important; }
+.snapshot-section-label { color:#0b2f5f !important; font-size:.66rem !important; letter-spacing:.075em !important; margin-bottom:8px !important; }
+.snapshot-player-name { font-size: 1.30rem !important; margin-bottom: 7px !important; }
+.snapshot-position-pill, .snapshot-role-placeholder { padding: 4px 8px !important; font-size: .66rem !important; }
+.snapshot-club-line { font-size: .84rem !important; }
+.snapshot-league-line { font-size: .72rem !important; margin-bottom: 9px !important; }
+.snapshot-meta-grid { padding-top: 9px !important; }
+.snapshot-meta-grid span, .snapshot-market-values span, .snapshot-score-item span { font-size: .64rem !important; }
+.snapshot-meta-grid b { font-size: .72rem !important; }
+.snapshot-market-values { margin: 14px 0 12px 0 !important; }
+.snapshot-market-values b { font-size: 1.54rem !important; }
+.snapshot-inefficiency-box { border-radius: 12px !important; padding: 10px 12px !important; }
+.snapshot-score-grid { margin-top: 12px !important; }
+.snapshot-score-item b { font-size: 2.02rem !important; }
+.snapshot-score-item em { font-size: .68rem !important; }
+.snapshot-tags-row { margin-top: 12px !important; padding: 10px 12px !important; border-radius: 15px !important; box-shadow: var(--siq-shadow-soft) !important; }
+.snapshot-tags-title { font-size: .66rem !important; margin-bottom: 8px !important; }
+.snapshot-tags-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 10px !important; }
+.snapshot-tag { min-height: 48px !important; padding: 8px 10px !important; border-radius: 12px !important; }
+.snapshot-tag-label { font-size: .74rem !important; }
+.snapshot-tag-caption { font-size: .64rem !important; }
+
+/* Performance Benchmark: title, toolbar, radar and signals read as one closed product module. */
+.player-radar-compact-header {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-bottom: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 16px 18px 6px 18px !important;
+    margin: 6px 0 0 0 !important;
+    box-shadow: var(--siq-shadow) !important;
+}
+.player-radar-compact-header .internal-module-title {
+    color: var(--siq-text) !important;
+    font-size: 1.24rem !important;
+    font-weight: 950 !important;
+    letter-spacing: -.02em !important;
+    text-transform: none !important;
+}
+.player-radar-compact-header .internal-module-title::before {
+    content: "PLAYER INTELLIGENCE";
+    display: block;
+    color: #1d4ed8;
+    font-size: .68rem;
+    font-weight: 950;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.player-radar-compact-header .internal-module-title::after {
+    content: "Benchmark posicional, señales de rendimiento y lectura scouting.";
+    display: block;
+    color: var(--siq-muted);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    margin-top: 4px;
+}
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 20px 20px !important;
+    padding: 10px 18px 16px 18px !important;
+    box-shadow: var(--siq-shadow) !important;
+    margin-bottom: 14px !important;
+}
+.player-radar-compact-header + div[data-testid="stHorizontalBlock"] label p {
+    color: #475569 !important;
+    font-size: .72rem !important;
+    font-weight: 850 !important;
+}
+.radar-info-box {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--siq-shadow-soft) !important;
+    margin: 14px 0 12px 0 !important;
+    font-size: .78rem !important;
+}
+.radar-chart-card, div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+}
+.internal-module-header--compact { margin-bottom: 8px !important; }
+.internal-module-title--sm {
+    color: #0f2f5f !important;
+    font-size: .74rem !important;
+    line-height: 1.1 !important;
+    font-weight: 950 !important;
+    letter-spacing: .075em !important;
+    text-transform: uppercase !important;
+}
+.radar-card {
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 13px !important;
+    min-height: 106px !important;
+    box-shadow: 0 8px 18px rgba(15,23,42,.035) !important;
+}
+.radar-card-title { color:#0f2f5f !important; font-size:.70rem !important; letter-spacing:.04em !important; }
+.radar-card-percentile { font-size:1.42rem !important; color:var(--siq-text) !important; }
+.radar-readout-card {
+    background:#ffffff !important;
+    border:1px solid #dbeafe !important;
+    border-left:4px solid var(--siq-blue) !important;
+    border-radius:14px !important;
+    box-shadow:var(--siq-shadow-soft) !important;
+    margin: 12px 0 22px 0 !important;
+    padding: 11px 14px !important;
+}
+
+/* Scouting Report: section header plus two cards; remove duplicated KPI strip. */
+.scouting-report-header {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-bottom: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 16px 18px 6px 18px !important;
+    margin: 4px 0 0 0 !important;
+    box-shadow: var(--siq-shadow) !important;
+}
+.scouting-report-kpi-grid { display: none !important; }
+.scouting-report-grid {
+    background: #ffffff !important;
+    border: 1px solid var(--siq-border) !important;
+    border-top: 0 !important;
+    border-radius: 0 0 20px 20px !important;
+    padding: 10px 18px 18px 18px !important;
+    box-shadow: var(--siq-shadow) !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+    margin: 0 0 18px 0 !important;
+}
+.scouting-report-card {
+    border: 1px solid var(--siq-border) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    box-shadow: var(--siq-shadow-soft) !important;
+}
+.scouting-report-card-details { border-left: 4px solid #0f2f5f !important; }
+.scouting-report-card-read { border-left: 4px solid #a855f7 !important; }
+.scouting-report-card-eyebrow { color:#0f2f5f !important; font-size:.68rem !important; letter-spacing:.085em !important; }
+.scouting-detail-grid div, .scouting-read-grid div {
+    background:#f8fbff !important;
+    border:1px solid #edf2f7 !important;
+    border-radius:12px !important;
+}
+.scouting-report-reco-row {
+    background:#f0fdf4 !important;
+    border:1px solid #bbf7d0 !important;
+    border-radius:999px !important;
+}
+
+/* Market Value Drivers: final explainability module with executive language. */
+.market-drivers-shell {
+    padding: 16px !important;
+    border-left: 0 !important;
+}
+.market-drivers-heading { margin-bottom: 12px !important; }
+.market-drivers-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+.market-driver-card {
+    border-radius: 15px !important;
+    padding: 14px !important;
+    min-height: 158px !important;
+    box-shadow: var(--siq-shadow-soft) !important;
+}
+.market-driver-card:first-child { background: linear-gradient(135deg,#f0fdf4 0%,#ffffff 100%) !important; border-color:#bbf7d0 !important; }
+.market-driver-card:last-child { background: linear-gradient(135deg,#fff1f2 0%,#ffffff 100%) !important; border-color:#fecdd3 !important; }
+.market-driver-card-title { font-size: .70rem !important; }
+.market-driver-row {
+    display: grid !important;
+    grid-template-columns: minmax(140px, 1fr) minmax(90px, .7fr) 50px !important;
+    gap: 10px !important;
+    align-items: center !important;
+    font-size: .78rem !important;
+}
+.market-driver-row-positive::after, .market-driver-row-negative::after {
+    content: "";
+    height: 5px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    grid-column: 2;
+    grid-row: 1;
+}
+.market-driver-row-positive::after { background: linear-gradient(90deg,#22c55e 70%,#e5e7eb 70%) !important; }
+.market-driver-row-negative::after { background: linear-gradient(90deg,#ef4444 38%,#fee2e2 38%) !important; }
+.market-driver-row span { grid-column: 1; }
+.market-driver-row b { grid-column: 3; text-align: right; }
+
+@media (max-width: 1350px) {
+    .player-snapshot-grid, .scouting-report-grid, .market-drivers-grid { grid-template-columns: 1fr !important; }
+    .snapshot-tags-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.4.1 final professional UX correction
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Scope: final corrections for Player Profile Intelligence. This intentionally
+   overrides earlier TM.4 CSS that made the search and benchmark too tall. */
+
+/* 1) Global search: compact, same visual weight as Active Context. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    min-height: 104px !important;
+    height: auto !important;
+    padding: 10px 14px 12px 14px !important;
+    margin: 0 0 12px 0 !important;
+    border: 1px solid #dbe7f5 !important;
+    border-left: 0 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .045) !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stVerticalBlock"],
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-testid="stVerticalBlock"] {
+    gap: .35rem !important;
+}
+.final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    margin: 0 0 8px 0 !important;
+    min-height: 22px !important;
+}
+.final-search-title {
+    color: #0b2f5f !important;
+    font-size: .74rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .10em !important;
+    line-height: 1.05 !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.final-search-examples,
+.final-search-examples-top,
+.final-search-microcopy {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    font-size: .62rem !important;
+    line-height: 1 !important;
+    padding: 4px 8px !important;
+    border-radius: 999px !important;
+    margin: 0 !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-weight: 900 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-testid="stSelectbox"],
+div[data-testid="stElementContainer"]:has(.final-search-title) + div[data-testid="stElementContainer"] div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    height: 42px !important;
+    border: 1px solid #93c5fd !important;
+    border-radius: 999px !important;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, .065) !important;
+    background: #ffffff !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] *,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] * {
+    font-size: .86rem !important;
+    line-height: 1.15 !important;
+}
+.compact-context-panel, .context-strip-v2.compact-context-panel {
+    min-height: 104px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 12px !important;
+}
+
+/* 2) Compact product hero. */
+.product-page-hero-unified,
+.product-page-hero,
+.home-hero {
+    min-height: 76px !important;
+    padding: 12px 18px !important;
+    margin: 10px 0 14px 0 !important;
+    border-radius: 16px !important;
+}
+.product-page-title,
+.product-page-hero-unified .product-page-title,
+.home-hero-title {
+    font-size: 1.26rem !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.02em !important;
+    word-spacing: .08em !important;
+}
+.product-page-subtitle,
+.product-page-hero-unified .product-page-subtitle,
+.home-hero-subtitle {
+    font-size: .78rem !important;
+    line-height: 1.25 !important;
+}
+.product-page-eyebrow,
+.product-page-hero-unified .product-page-eyebrow {
+    font-size: .68rem !important;
+    letter-spacing: .12em !important;
+}
+
+/* 3) Unified section title system. */
+.tm4-section-header,
+.scouting-report-header,
+.market-drivers-heading,
+.player-snapshot-heading {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+}
+.tm4-section-eyebrow,
+.scouting-report-eyebrow,
+.market-drivers-eyebrow,
+.player-snapshot-kicker {
+    color: #1d4ed8 !important;
+    font-size: .68rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .10em !important;
+    text-transform: uppercase !important;
+    line-height: 1.1 !important;
+    margin-bottom: 4px !important;
+}
+.tm4-section-title,
+.scouting-report-title,
+.market-drivers-title,
+.player-snapshot-title {
+    color: #0f172a !important;
+    font-size: 1.10rem !important;
+    font-weight: 950 !important;
+    line-height: 1.12 !important;
+    letter-spacing: -0.02em !important;
+}
+.tm4-section-subtitle,
+.scouting-report-subtitle,
+.market-drivers-subtitle,
+.player-snapshot-subtitle {
+    color: #64748b !important;
+    font-size: .76rem !important;
+    line-height: 1.35 !important;
+    margin-top: 4px !important;
+}
+
+/* 4) Snapshot first block: compact but keep premium structure. */
+.player-snapshot-shell {
+    margin: 12px 0 14px 0 !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .050) !important;
+}
+.player-snapshot-grid { gap: 12px !important; }
+.snapshot-card { padding: 13px 14px !important; border-radius: 15px !important; }
+.snapshot-tags-row { margin-top: 12px !important; padding: 11px 12px !important; border-radius: 15px !important; }
+.snapshot-tags-grid { gap: 9px !important; }
+.snapshot-tag { padding: 9px 10px !important; border-radius: 12px !important; }
+.snapshot-tag-label { font-size: .78rem !important; }
+.snapshot-tag-caption { font-size: .68rem !important; }
+
+/* 5) Performance Benchmark: one closed SaaS card. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .055) !important;
+    padding: 16px 18px 14px 18px !important;
+    margin: 14px 0 16px 0 !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"] {
+    gap: .62rem !important;
+}
+.tm4-benchmark-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    background: #f8fafc !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 15px !important;
+    padding: 10px 12px !important;
+    margin: 4px 0 12px 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) label p {
+    color: #334155 !important;
+    font-size: .76rem !important;
+    font-weight: 850 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #d1dbe8 !important;
+    box-shadow: none !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .stRadio label {
+    border: 1px solid #dbeafe !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    padding: 5px 10px !important;
+    margin-right: 5px !important;
+}
+.tm4-benchmark-engine {
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    padding: 12px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-info-box {
+    margin: 0 0 10px 0 !important;
+    box-shadow: none !important;
+    background: #f8fbff !important;
+}
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .035) !important;
+    overflow: hidden !important;
+}
+.tm4-signals-title { margin-bottom: 8px !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-card {
+    min-height: 96px !important;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+    box-shadow: 0 7px 18px rgba(15,23,42,.035) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-readout-card {
+    margin: 10px 0 0 0 !important;
+    border-radius: 13px !important;
+    background: #f8fbff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+}
+
+/* 6) Scouting Report: softer Analytical Read, no purple box dominance. */
+.scouting-report-card-read {
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #8b5cf6 !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.040) !important;
+}
+.scouting-report-grid { gap: 14px !important; }
+.scouting-report-kpi-grid { display: none !important; }
+
+/* 7) Market Value Drivers: balanced empty-state, correct spacing. */
+.market-drivers-title { word-spacing: .08em !important; }
+.market-drivers-grid { gap: 14px !important; }
+.market-driver-card { min-height: 176px !important; }
+.market-driver-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 110px 56px !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+.market-driver-row::before {
+    content: "";
+    grid-column: 2;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 70%, #e5e7eb 70%);
+}
+.market-driver-row-negative::before {
+    background: linear-gradient(90deg, #ef4444 38%, #fee2e2 38%);
+}
+.market-driver-row span { grid-column: 1; }
+.market-driver-row b { grid-column: 3; text-align: right; }
+.market-driver-empty {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 76px !important;
+    padding: 12px !important;
+    border: 1px dashed #fecaca !important;
+    border-radius: 13px !important;
+    color: #991b1b !important;
+    background: rgba(254, 242, 242, .58) !important;
+    font-weight: 850 !important;
+    text-align: center !important;
+    font-size: .78rem !important;
+}
+.market-driver-empty-secondary {
+    margin-top: 10px !important;
+    min-height: 58px !important;
+}
+
+/* 8) Overall TM.4 vertical rhythm. */
+.player-intelligence-report-gap { height: 8px !important; }
+.scouting-report-header,
+.market-drivers-shell { margin-top: 14px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.4.1 UX Repair v2 FINAL OVERRIDE: must be last CSS block in the file
+# =============================================================================
+st.markdown(
+    """
+<style>
+.final-search-compact-card {
+    background:#ffffff !important;border:1px solid #dbe3ee !important;border-bottom:0 !important;border-radius:16px 16px 0 0 !important;
+    box-shadow:0 10px 26px rgba(15,23,42,.045) !important;padding:12px 14px 6px 14px !important;margin:0 !important;min-height:0 !important;height:auto !important;
+}
+.final-search-title-row{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:10px !important;min-height:24px !important;margin:0 !important;}
+.final-search-title{font-size:.74rem !important;line-height:1.05 !important;letter-spacing:.10em !important;margin:0 !important;color:#0b2f5f !important;font-weight:950 !important;text-transform:uppercase !important;}
+.final-search-examples-top{height:24px !important;min-height:24px !important;padding:4px 9px !important;font-size:.62rem !important;margin:0 !important;display:inline-flex !important;align-items:center !important;white-space:nowrap !important;border-radius:999px !important;background:#eff6ff !important;border:1px solid #bfdbfe !important;color:#1e3a8a !important;font-weight:900 !important;}
+.final-search-compact-card + div[data-testid="stSelectbox"]{background:#ffffff !important;border:1px solid #dbe3ee !important;border-top:0 !important;border-radius:0 0 16px 16px !important;box-shadow:0 10px 26px rgba(15,23,42,.045) !important;padding:0 14px 12px 14px !important;margin:0 0 12px 0 !important;min-height:0 !important;}
+.final-search-compact-card + div[data-testid="stSelectbox"] div[data-baseweb="select"] > div{min-height:42px !important;height:42px !important;border-radius:999px !important;border:1px solid #93c5fd !important;background:#ffffff !important;box-shadow:0 5px 14px rgba(37,99,235,.065) !important;}
+div[data-testid="stElementContainer"]:has(.final-search-title):not(:has(.final-search-compact-card)),div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title):not(:has(.final-search-compact-card)){background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;margin:0 !important;min-height:0 !important;}
+.product-page-hero-unified,.product-page-hero{min-height:74px !important;padding:12px 18px !important;margin:10px 0 14px 0 !important;border-radius:16px !important;}
+.product-page-title,.product-page-hero-unified .product-page-title{font-size:1.24rem !important;line-height:1.08 !important;word-spacing:.10em !important;white-space:normal !important;}
+.player-snapshot-shell{margin:8px 0 14px 0 !important;padding:13px 15px 15px 15px !important;}
+.player-snapshot-kicker{color:#1d4ed8 !important;font-size:.70rem !important;letter-spacing:.095em !important;}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header){background:#ffffff !important;border:1px solid #e2e8f0 !important;border-radius:18px !important;box-shadow:0 14px 34px rgba(15,23,42,.055) !important;padding:16px 18px !important;margin:14px 0 14px 0 !important;overflow:visible !important;}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"]{gap:.55rem !important;}
+.tm4-section-header.tm4-performance-header{margin:0 0 10px 0 !important;padding:0 !important;border:0 !important;background:transparent !important;}
+.tm4-benchmark-toolbar-anchor + div[data-testid="stHorizontalBlock"]{background:#f8fafc !important;border:1px solid #e5eaf1 !important;border-radius:15px !important;padding:10px 12px !important;margin:6px 0 12px 0 !important;box-shadow:none !important;}
+.tm4-benchmark-engine{border:1px solid #e5eaf1 !important;border-radius:16px !important;background:#ffffff !important;padding:12px !important;margin-top:0 !important;}
+.scouting-report-card-read{border:1px solid #e2e8f0 !important;border-left:4px solid #8b5cf6 !important;box-shadow:0 8px 22px rgba(15,23,42,.040) !important;}
+.market-drivers-title{word-spacing:.10em !important;}
+.market-driver-card{min-height:176px !important;}
+.player-intelligence-report-gap{height:6px !important;}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 UX repair v3: unified search + closed benchmark engine
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* 1) Global search: one compact card aligned with Contexto activo. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.045) !important;
+    padding: 10px 14px 12px 14px !important;
+    margin: 0 0 12px 0 !important;
+    min-height: 116px !important;
+    height: auto !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stVerticalBlock"] {
+    gap: .42rem !important;
+}
+.tm4-search-unified-card { margin: 0 !important; padding: 0 !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    min-height: 22px !important;
+    margin: 0 0 6px 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title {
+    font-size: .72rem !important;
+    line-height: 1.05 !important;
+    letter-spacing: .11em !important;
+    color: #0b2f5f !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-examples {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 4px 8px !important;
+    border-radius: 999px !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1e3a8a !important;
+    font-size: .60rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 44px !important;
+    height: 44px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: 0 4px 14px rgba(37,99,235,.075) !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] span {
+    font-size: .86rem !important;
+    font-weight: 650 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+/* Neutralize older search styles only for the new unified search container. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-compact-card,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-shell,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-card {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+/* Keep active-context panel visually paired with compact search. */
+.context-strip-v2.compact-context-panel {
+    min-height: 116px !important;
+    padding: 12px 14px !important;
+    margin-bottom: 12px !important;
+}
+
+/* 2) Hero: compact SaaS work-header. */
+.product-page-header,
+.player-product-hero,
+.tm4-product-hero,
+.player-intelligence-hero {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    min-height: 72px !important;
+    margin-bottom: 16px !important;
+}
+.product-page-header h1, .product-page-title { line-height: 1.05 !important; }
+
+/* 3) Performance Benchmark: closed scouting engine. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050) !important;
+    padding: 14px 16px 16px 16px !important;
+    margin: 14px 0 16px 0 !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"] {
+    gap: .55rem !important;
+}
+.tm4-performance-header {
+    border: 0 !important;
+    border-bottom: 1px solid #edf2f7 !important;
+    border-radius: 0 !important;
+    padding: 0 0 10px 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.tm4-section-eyebrow {
+    color:#1d4ed8 !important;
+    font-size:.68rem !important;
+    font-weight:950 !important;
+    letter-spacing:.09em !important;
+    text-transform:uppercase !important;
+}
+.tm4-section-title {
+    color:#0f172a !important;
+    font-size:1.08rem !important;
+    font-weight:950 !important;
+    line-height:1.10 !important;
+    margin-top:2px !important;
+}
+.tm4-section-subtitle {
+    color:#64748b !important;
+    font-size:.78rem !important;
+    line-height:1.30 !important;
+    margin-top:3px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stSelectbox"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stRadio"] {
+    background:#f8fbff !important;
+    border:1px solid #e2e8f0 !important;
+    border-radius:14px !important;
+    padding:8px 10px 7px 10px !important;
+    margin:0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-baseweb="select"] > div {
+    min-height: 38px !important;
+    border-radius: 10px !important;
+    border:1px solid #cbd5e1 !important;
+    box-shadow:none !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) label p {
+    color:#334155 !important;
+    font-size:.74rem !important;
+    font-weight:850 !important;
+}
+.tm4-benchmark-engine {
+    background: #f8fafc !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 16px !important;
+    padding: 12px 12px 10px 12px !important;
+    margin-top: 4px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.75) !important;
+}
+.tm4-benchmark-engine .radar-info-box {
+    margin: 0 0 10px 0 !important;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+    font-size: .74rem !important;
+    box-shadow: none !important;
+}
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
+.tm4-benchmark-engine div[data-testid="stPlotlyChart"] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+    overflow: hidden !important;
+}
+.tm4-signals-title { margin: 0 0 8px 0 !important; }
+.tm4-signals-grid {
+    display:grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+}
+.tm4-signal-card {
+    background:#ffffff !important;
+    border:1px solid #e2e8f0 !important;
+    border-radius:14px !important;
+    padding:10px 11px !important;
+    min-height:86px !important;
+    box-shadow:0 6px 16px rgba(15,23,42,.035) !important;
+}
+.tm4-signal-title { color:#334155 !important; font-size:.68rem !important; font-weight:950 !important; line-height:1.15 !important; margin-bottom:5px !important; }
+.tm4-signal-percentile { color:#0f172a !important; font-size:1.18rem !important; line-height:1.0 !important; font-weight:950 !important; }
+.tm4-signal-rating { color:#166534 !important; font-size:.68rem !important; font-weight:900 !important; margin-top:4px !important; }
+.tm4-signal-value { color:#94a3b8 !important; font-size:.62rem !important; margin-top:5px !important; }
+.radar-readout-card {
+    margin-top: 10px !important;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    color:#334155 !important;
+    font-size:.76rem !important;
+    line-height:1.35 !important;
+}
+
+/* 4) Snapshot slightly tighter. */
+.player-snapshot-shell { padding: 14px 16px !important; margin-bottom: 14px !important; }
+.snapshot-card { padding: 13px 14px !important; }
+.snapshot-tag { padding: 9px 11px !important; min-height: 54px !important; }
+
+/* 5) Scouting Report: analytical read gets a subtle left rail, not a full purple frame. */
+.scouting-report-card-read {
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #8b5cf6 !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+
+/* 6) Vertical rhythm for TM.4. */
+.player-intelligence-report-gap { height: 12px !important; }
+.scouting-report-header, .market-drivers-shell { margin-top: 14px !important; }
+@media (max-width: 1200px) {
+    .tm4-signals-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.4.1 UX repair v4: final Player Profile spacing and hierarchy polish
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final TM.4 scope: more air in the player page without touching global DSS architecture. */
+.product-page-hero-unified {
+    margin-top: 16px !important;
+    margin-bottom: 22px !important;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+    min-height: 78px !important;
+}
+.product-page-eyebrow {
+    margin-bottom: 5px !important;
+}
+.product-page-title {
+    line-height: 1.12 !important;
+    word-spacing: .08em !important;
+}
+.product-page-subtitle {
+    margin-top: 5px !important;
+}
+
+/* Global search: keep it compact, but avoid the top row feeling crushed. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    padding: 13px 14px 12px 14px !important;
+    min-height: 122px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title-row {
+    min-height: 28px !important;
+    margin: 0 0 9px 0 !important;
+    padding-top: 2px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-examples {
+    padding: 5px 9px !important;
+    line-height: 1.05 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 42px !important;
+    height: 42px !important;
+}
+.context-strip-v2.compact-context-panel {
+    min-height: 122px !important;
+}
+
+/* Snapshot: add breathing room after the page hero and reduce identity-card dominance. */
+.player-snapshot-shell {
+    margin-top: 18px !important;
+    margin-bottom: 18px !important;
+    padding: 15px 16px 16px 16px !important;
+}
+.player-snapshot-heading {
+    margin-bottom: 16px !important;
+}
+.player-snapshot-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(270px, .88fr) minmax(360px, 1.08fr) !important;
+    gap: 14px !important;
+}
+.snapshot-card-identity {
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 13px !important;
+}
+.snapshot-avatar {
+    width: 68px !important;
+    height: 68px !important;
+    border-radius: 14px !important;
+}
+.snapshot-player-name {
+    font-size: 1.22rem !important;
+}
+.snapshot-card {
+    min-height: 164px !important;
+}
+.snapshot-tags-row {
+    margin-top: 18px !important;
+    padding-top: 13px !important;
+}
+.snapshot-tags-title {
+    margin-bottom: 11px !important;
+}
+.snapshot-tag {
+    min-height: 50px !important;
+}
+
+/* Benchmark: keep the engine visually grouped and reduce PDF/page split risk. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header),
+.tm4-benchmark-engine,
+.tm4-signals-grid,
+.radar-readout-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+.tm4-benchmark-engine {
+    padding: 14px !important;
+    margin-top: 6px !important;
+}
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
+.tm4-benchmark-engine div[data-testid="stPlotlyChart"] {
+    min-height: 320px !important;
+}
+.tm4-signals-grid {
+    align-items: stretch !important;
+}
+.tm4-signal-card {
+    min-height: 90px !important;
+}
+
+/* Scouting Report: keep the purple cue as a left rail only, not a competing frame. */
+.scouting-report-card-read {
+    border-top: 1px solid #e2e8f0 !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-left: 3px solid #8b5cf6 !important;
+    box-shadow: 0 8px 18px rgba(15,23,42,.032) !important;
+}
+
+/* TM.4 vertical rhythm: premium spacing, not excessive air. */
+.player-intelligence-report-gap {
+    height: 14px !important;
+}
+.scouting-report-shell,
+.market-drivers-shell {
+    margin-top: 16px !important;
+}
+
+@media (max-width: 1300px) {
+    .player-snapshot-grid { grid-template-columns: 1fr !important; }
+    .snapshot-card-identity { grid-template-columns: 76px minmax(0, 1fr) !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 UX repair v6: final sprint closure fixes
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search and context must read as a balanced command row. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 128px !important;
+    height: 128px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    align-items: stretch !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stVerticalBlock"] {
+    width: 100% !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stVerticalBlock"] {
+    gap: .62rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title-row {
+    min-height: 28px !important;
+    margin: 0 0 12px 0 !important;
+    padding: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title {
+    font-size: .74rem !important;
+    line-height: 1.1 !important;
+    letter-spacing: .10em !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-examples {
+    font-size: .62rem !important;
+    padding: 5px 9px !important;
+    line-height: 1 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 44px !important;
+    height: 44px !important;
+    border-radius: 999px !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 128px !important;
+    height: 128px !important;
+    padding: 13px 14px !important;
+    overflow: hidden !important;
+}
+.compact-context-panel .context-chip-row {
+    max-height: 48px !important;
+    overflow: hidden !important;
+}
+
+/* Benchmark should not create an orphan blank pill/empty module. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stElementContainer"]:empty,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stMarkdownContainer"]:empty,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div:has(> .tm4-benchmark-toolbar-anchor):empty {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    padding: 15px 16px 16px 16px !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-info-box {
+    margin: 8px 0 10px 0 !important;
+}
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
+    min-height: 300px !important;
+    max-height: 330px !important;
+}
+.tm4-native-signal-card {
+    min-height: 86px !important;
+    padding: 10px 11px !important;
+}
+.tm4-native-signal-card .radar-card-title { font-size: .68rem !important; line-height: 1.15 !important; }
+.tm4-native-signal-card .radar-card-percentile { font-size: 1.22rem !important; }
+.tm4-native-signal-card .radar-card-label { font-size: .68rem !important; }
+.tm4-native-signal-card .radar-card-value { font-size: .62rem !important; }
+
+/* Spanish mode keeps industry terms where useful, but section labels become coherent. */
+.scouting-report-card-read {
+    border-left: 3px solid #8b5cf6 !important;
+    box-shadow: 0 6px 16px rgba(15,23,42,.028) !important;
+}
+.scouting-report-kpi-grid {
+    margin-top: 8px !important;
+    margin-bottom: 12px !important;
+}
+.market-drivers-shell { margin-top: 16px !important; }
+
+/* Fix tight product title rendering in PDF/export. */
+.player-snapshot-title,
+.tm4-section-title,
+.scouting-report-title,
+.market-drivers-title {
+    word-spacing: .08em !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 UX repair v7: final command row balance + benchmark compactness
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Command row final: search and active-context must have the same visual height,
+   but the search title, examples and select need enough breathing room. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 142px !important;
+    height: 142px !important;
+    padding: 16px 17px 15px 17px !important;
+    border-radius: 17px !important;
+    border: 1px solid #d6e2f0 !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stVerticalBlock"] {
+    gap: 0.72rem !important;
+    justify-content: flex-start !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title-row {
+    min-height: 30px !important;
+    margin: 0 0 13px 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title {
+    font-size: .76rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: .105em !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-examples,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-examples-top {
+    min-height: 26px !important;
+    height: 26px !important;
+    padding: 5px 10px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 46px !important;
+    height: 46px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: 0 4px 14px rgba(37,99,235,.07) !important;
+    background: #ffffff !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 142px !important;
+    height: 142px !important;
+    padding: 16px 17px 15px 17px !important;
+    border-radius: 17px !important;
+    overflow: hidden !important;
+}
+.compact-context-panel .context-strip-main { margin-bottom: 9px !important; }
+.compact-context-panel .context-current-value { font-size: 1.72rem !important; line-height: .95 !important; }
+.compact-context-panel .context-current-label { font-size: .73rem !important; margin-top: 3px !important; }
+.compact-context-panel .context-chip-row {
+    max-height: 49px !important;
+    overflow: hidden !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+}
+.compact-context-panel .context-chip {
+    padding: 5px 8px !important;
+    font-size: .68rem !important;
+}
+
+/* Performance Benchmark final: compact single engine, avoid PDF/page split. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    padding: 14px 16px 15px 16px !important;
+    margin: 14px 0 14px 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+.tm4-section-header.tm4-performance-header { margin-bottom: 9px !important; }
+.tm4-benchmark-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    padding: 9px 11px !important;
+    margin: 5px 0 9px 0 !important;
+    border-radius: 14px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-info-box {
+    margin: 6px 0 8px 0 !important;
+    padding: 9px 11px !important;
+    font-size: .76rem !important;
+}
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stPlotlyChart"] {
+    min-height: 285px !important;
+    max-height: 305px !important;
+    border-radius: 15px !important;
+}
+.tm4-native-signal-card {
+    min-height: 78px !important;
+    padding: 8px 10px !important;
+    border-radius: 13px !important;
+}
+.tm4-native-signal-card .radar-card-title { font-size: .64rem !important; line-height: 1.12 !important; margin-bottom: 3px !important; }
+.tm4-native-signal-card .radar-card-percentile { font-size: 1.08rem !important; }
+.tm4-native-signal-card .radar-card-label { font-size: .64rem !important; margin-top: 2px !important; }
+.tm4-native-signal-card .radar-card-value { font-size: .59rem !important; margin-top: 3px !important; }
+.radar-readout-card {
+    margin-top: 8px !important;
+    padding: 8px 11px !important;
+    font-size: .73rem !important;
+    line-height: 1.30 !important;
+}
+
+/* Small final text polish. */
+.snapshot-player-name { word-spacing: .04em !important; }
+.scouting-report-card-read { border-left-width: 3px !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 v8 final alignment patch: command row spacing + season traceability
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* TM.4 command row: search and active context should read as two cards of the same family. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 132px !important;
+    height: auto !important;
+    padding: 16px 18px 16px 18px !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.050) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.tm4-search-unified-card {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.tm4-search-unified-card .final-search-title-row,
+.final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin: 0 0 13px 0 !important;
+    min-height: 24px !important;
+}
+.tm4-search-unified-card .final-search-title,
+.final-search-title-row .final-search-title {
+    margin: 0 !important;
+    line-height: 1.15 !important;
+    font-size: 0.80rem !important;
+    letter-spacing: .09em !important;
+}
+.tm4-search-unified-card .final-search-examples-top,
+.final-search-examples-top {
+    margin: 0 !important;
+    padding: 5px 10px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stSelectbox"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 48px !important;
+    height: 48px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] span {
+    font-size: .92rem !important;
+    line-height: 1.2 !important;
+}
+.context-strip-v2.compact-context-panel {
+    min-height: 132px !important;
+    height: auto !important;
+    padding: 16px 18px !important;
+    margin-top: 0 !important;
+    margin-bottom: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.context-strip-v2.compact-context-panel .context-strip-main {
+    margin-bottom: 10px !important;
+}
+.context-strip-v2.compact-context-panel .context-chip-row {
+    margin-top: 4px !important;
+    margin-bottom: 0 !important;
+}
+/* Prevent older global selectbox rules from inflating the command-row search only. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .stSelectbox label {
+    display: none !important;
+}
+/* Scouting report: keep the analytical card premium but less visually dominant. */
+.scouting-report-card-read {
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #8b5cf6 !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 v9 final product polish: command row, snapshot, drivers, benchmark cards
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* 1) Command row: make Global Scouting Search closer in weight to Active Context. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: 18px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.050) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-testid="stVerticalBlock"] {
+    gap: 0.80rem !important;
+}
+.tm4-search-unified-card .final-search-title-row,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) .final-search-title-row {
+    margin: 0 0 14px 0 !important;
+    min-height: 28px !important;
+    align-items: center !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] > div {
+    min-height: 68px !important;
+    height: 68px !important;
+    padding: 0 1rem !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: 0 8px 20px rgba(37,99,235,.085) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] input,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-search-unified-card) div[data-baseweb="select"] span {
+    font-size: 0.98rem !important;
+    line-height: 1.25 !important;
+}
+.context-strip-v2.compact-context-panel {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+/* Approximate 1.8rem visual gap between the search and context columns. */
+div[data-testid="stHorizontalBlock"]:has(.tm4-search-unified-card) {
+    gap: 1.8rem !important;
+}
+
+/* 3) Player Snapshot: slight vertical padding increase only. */
+.player-snapshot-shell {
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+}
+.snapshot-card {
+    padding-top: 15px !important;
+    padding-bottom: 15px !important;
+}
+.snapshot-tags-row {
+    padding-top: 13px !important;
+    padding-bottom: 13px !important;
+}
+.snapshot-position-pill {
+    white-space: nowrap !important;
+}
+
+/* 4) Market drivers: strict 50/50 layout and centered negative empty state. */
+.market-drivers-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+}
+.market-driver-card {
+    min-height: 190px !important;
+    height: 100% !important;
+}
+.market-driver-empty,
+.market-driver-empty-secondary {
+    min-height: 86px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* 5) Performance Benchmark: make KPI signal cards easier to read. */
+.tm4-native-signal-card,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-card.tm4-native-signal-card {
+    min-height: 94px !important;
+    padding: 12px 12px !important;
+}
+.tm4-native-signal-card .radar-card-title {
+    font-size: .70rem !important;
+    line-height: 1.18 !important;
+    margin-bottom: 4px !important;
+}
+.tm4-native-signal-card .radar-card-percentile {
+    font-size: 1.32rem !important;
+    line-height: 1.05 !important;
+}
+.tm4-native-signal-card .radar-card-label {
+    font-size: .70rem !important;
+    margin-top: 4px !important;
+}
+.tm4-native-signal-card .radar-card-value {
+    font-size: .64rem !important;
+    margin-top: 4px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 final release polish v10: search prominence, benchmark cards and drivers balance
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* 1) Global Scouting Search: make it feel like the main entry point, not a small filter. */
+.final-search-shell,
+.final-search-card,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+div[data-testid="stElementContainer"]:has(.final-search-title) {
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 1rem !important;
+    min-height: 138px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.final-search-shell .final-search-title,
+.final-search-card .final-search-title,
+.final-search-title {
+    margin-bottom: 7px !important;
+}
+.final-search-shell .final-search-caption,
+.final-search-card .final-search-caption,
+.final-search-caption {
+    margin-bottom: 10px !important;
+}
+.final-search-shell div[data-baseweb="select"] > div,
+.final-search-card div[data-baseweb="select"] > div,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 68px !important;
+    height: 68px !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.final-search-shell div[data-baseweb="select"] input,
+.final-search-card div[data-baseweb="select"] input,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] input,
+div[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] input {
+    font-size: 1.02rem !important;
+    font-weight: 750 !important;
+}
+
+/* 2) More air between Global Search and Context Active in the command row. */
+div[data-testid="stHorizontalBlock"]:has(.final-search-title):has(.context-strip-v2),
+div[data-testid="stHorizontalBlock"]:has(.final-search-shell):has(.compact-context-panel) {
+    gap: 1.8rem !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 138px !important;
+}
+
+/* 3) Player Snapshot: small vertical boost so the main decision object breathes. */
+.player-snapshot-shell {
+    padding-top: 19px !important;
+    padding-bottom: 19px !important;
+}
+.player-snapshot-shell .snapshot-main-card,
+.player-snapshot-shell .snapshot-market-card,
+.player-snapshot-shell .snapshot-score-card,
+.player-snapshot-shell .snapshot-tags-card,
+.snapshot-identity-card,
+.snapshot-market-card,
+.snapshot-score-card,
+.snapshot-tags-card {
+    padding-top: 17px !important;
+    padding-bottom: 17px !important;
+}
+
+/* 4) Performance Benchmark: key signal cards +20%, stronger SaaS card feel. */
+.tm4-native-signal-card,
+.radar-card.tm4-native-signal-card {
+    min-height: 112px !important;
+    padding: 15px 16px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.060) !important;
+}
+.tm4-native-signal-card .radar-card-title {
+    font-size: .79rem !important;
+    min-height: 30px !important;
+    line-height: 1.15 !important;
+}
+.tm4-native-signal-card .radar-card-percentile {
+    font-size: 1.48rem !important;
+    line-height: 1.02 !important;
+    margin-top: 4px !important;
+}
+.tm4-native-signal-card .radar-card-label {
+    font-size: .78rem !important;
+    margin-top: 6px !important;
+}
+.tm4-native-signal-card .radar-card-value {
+    font-size: .70rem !important;
+    margin-top: 7px !important;
+}
+.tm4-signals-title {
+    margin-bottom: 10px !important;
+}
+.radar-readout-card {
+    margin-top: 14px !important;
+    margin-bottom: 18px !important;
+}
+
+/* 5) Market Value Drivers: strict 50/50 balance and neutral analytical symmetry. */
+.market-drivers-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+}
+.market-driver-card {
+    min-height: 300px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.market-driver-row {
+    min-height: 42px !important;
+}
+.market-driver-empty,
+.market-driver-empty-secondary {
+    flex: 1 1 auto !important;
+    min-height: 96px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border: 1px dashed #fecaca !important;
+    border-radius: 12px !important;
+    margin-top: 10px !important;
+    padding: 14px !important;
+    color: #991b1b !important;
+    background: rgba(254, 242, 242, .58) !important;
+}
+.market-driver-card:first-child .market-driver-empty,
+.market-driver-card:first-child .market-driver-empty-secondary {
+    border-color: #bbf7d0 !important;
+    color: #166534 !important;
+    background: rgba(240, 253, 244, .58) !important;
+}
+@media (max-width: 1350px) {
+    .market-drivers-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.4.1 + DSS stability polish v11: Player search, benchmark, overview CTAs
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Player command row: search card matches Contexto activo height and feels like a primary action. */
+.final-search-shell,
+.final-search-card,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+[data-testid="stElementContainer"]:has(.final-search-title) {
+    min-height: 150px !important;
+    padding: 1.00rem 1.10rem !important;
+    justify-content: center !important;
+}
+.final-search-title-row {
+    margin-bottom: 11px !important;
+}
+.final-search-title, .final-search-shell .final-search-title {
+    font-size: .88rem !important;
+    line-height: 1.12 !important;
+}
+.final-search-examples-top, .final-search-microcopy {
+    min-height: 28px !important;
+    padding: 6px 11px !important;
+}
+.final-search-shell div[data-baseweb="select"] > div,
+.final-search-card div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div,
+[data-testid="stElementContainer"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 72px !important;
+    height: 72px !important;
+    border-radius: 19px !important;
+}
+.context-strip-v2.compact-context-panel, .compact-context-panel {
+    min-height: 150px !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+}
+/* Safer gap between search and context active without relying on global Streamlit layout. */
+div[data-testid="stHorizontalBlock"]:has(.final-search-title):has(.compact-context-panel),
+div[data-testid="stHorizontalBlock"]:has(.final-search-shell):has(.compact-context-panel) {
+    column-gap: 1.8rem !important;
+    gap: 1.8rem !important;
+}
+
+/* Performance Benchmark: larger KPI cards and no awkward title breaks. */
+.tm4-native-signal-card,
+.radar-card.tm4-native-signal-card {
+    min-height: 124px !important;
+    padding: 17px 17px !important;
+    border-radius: 17px !important;
+}
+.tm4-native-signal-card .radar-card-title {
+    font-size: .74rem !important;
+    line-height: 1.12 !important;
+    min-height: 26px !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+}
+.tm4-native-signal-card .radar-card-percentile {
+    font-size: 1.62rem !important;
+}
+.tm4-native-signal-card .radar-card-label {
+    font-size: .80rem !important;
+}
+.tm4-native-signal-card .radar-card-value {
+    font-size: .71rem !important;
+}
+
+/* Overview CTAs below quick-action cards. */
+.quick-action-grid + div[data-testid="stHorizontalBlock"] button {
+    min-height: 42px !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-weight: 950 !important;
+    box-shadow: 0 8px 20px rgba(37,99,235,.08) !important;
+}
+.quick-action-grid + div[data-testid="stHorizontalBlock"] button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+
+/* Strategy / Recruitment fallback: avoid visual overflows in error-free contract cards. */
+.contract-target-kpi-score span, .exec-kpi-label {
+    white-space: normal !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# role intelligence.8.1 Role Intelligence + Player Profile UX repair
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Command/search row: align the search module with Contexto Activo. */
+.final-search-shell,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-shell {
+    min-height: 208px !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 20px 22px !important;
+}
+.final-search-title { font-size: .98rem !important; margin-bottom: 9px !important; }
+.final-search-caption { font-size: .86rem !important; margin-bottom: 12px !important; }
+.final-search-shell div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 64px !important;
+    border-radius: 18px !important;
+    align-items: center !important;
+}
+.context-strip-v2.compact-context-panel {
+    min-height: 208px !important;
+    height: 100% !important;
+    padding: 20px 22px !important;
+}
+
+/* Role Intelligence: stronger premium cards, close to the Joao Neves visual reference. */
+.role-section-card {
+    margin-top: 18px !important;
+    margin-bottom: 16px !important;
+    border-radius: 20px !important;
+    border-left-width: 6px !important;
+    box-shadow: 0 16px 38px rgba(15,23,42,.065) !important;
+}
+.role-profile-grid {
+    gap: 16px !important;
+    margin: 14px 0 20px 0 !important;
+}
+.role-profile-card {
+    min-height: 118px !important;
+    border-radius: 18px !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.055) !important;
+}
+.role-profile-value { font-size: 1.16rem !important; }
+.role-similar-grid { gap: 14px !important; }
+.role-similar-card {
+    min-height: 128px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.052) !important;
+}
+
+/* Performance Benchmark: give radar signal cards more air and a modern SaaS card feel. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) {
+    padding: 22px 24px !important;
+    border-radius: 22px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) div[data-testid="stVerticalBlock"] {
+    gap: 1.05rem !important;
+}
+.tm4-native-signal-card,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm4-performance-header) .radar-card.tm4-native-signal-card {
+    min-height: 136px !important;
+    padding: 18px 20px !important;
+    border-radius: 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 16px 34px rgba(15,23,42,.060) !important;
+}
+.tm4-native-signal-card .radar-card-title { font-size: .74rem !important; margin-bottom: 10px !important; }
+.tm4-native-signal-card .radar-card-percentile { font-size: 1.58rem !important; margin-bottom: 8px !important; }
+.tm4-native-signal-card .radar-card-label { font-size: .76rem !important; margin-top: 5px !important; }
+.tm4-native-signal-card .radar-card-value { font-size: .68rem !important; margin-top: 10px !important; }
+.tm4-radar-card-anchor + div[data-testid="stPlotlyChart"] {
+    border-radius: 18px !important;
+    box-shadow: 0 14px 32px rgba(15,23,42,.045) !important;
+}
+.radar-readout-card {
+    margin-top: 16px !important;
+    min-height: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Market Value Drivers / SHAP: avoid raw-looking technical chart when expanded. */
+.market-drivers-shell {
+    border-radius: 22px !important;
+    box-shadow: 0 18px 42px rgba(15,23,42,.060) !important;
+    margin-top: 24px !important;
+}
+.market-driver-card {
+    border-radius: 18px !important;
+    padding: 18px 20px !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) {
+    border-radius: 18px !important;
+    border: 1px solid #dbeafe !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.050) !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) details > summary {
+    min-height: 48px !important;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    color: #0f2f5f !important;
+    font-weight: 950 !important;
+}
+div[data-testid="stExpander"]:has(div[data-testid="stPlotlyChart"]) div[data-testid="stPlotlyChart"] {
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: none !important;
+    border-top: 1px solid #edf2f7 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# role intelligence.8.2 UX repair: search/context height, Role cards and SHAP technical chart
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Search and context must read as sibling modules. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+.final-search-shell {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 18px 20px !important;
+    box-sizing: border-box !important;
+}
+.context-strip-v2.compact-context-panel,
+.compact-context-panel {
+    min-height: 150px !important;
+    height: 150px !important;
+    padding: 18px 20px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.context-current-value { font-size: 1.55rem !important; line-height: 1.0 !important; }
+.compact-context-panel .context-chip-row { max-height: 48px !important; overflow: hidden !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 58px !important;
+    border-radius: 18px !important;
+}
+/* Role cards: no NaN visual leakage and closer to the premium player-card system. */
+.role-profile-grid { gap: 18px !important; margin: 18px 0 24px 0 !important; }
+.role-profile-card {
+    border-radius: 18px !important;
+    padding: 18px 20px !important;
+    min-height: 112px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.050) !important;
+}
+.role-profile-value { font-size: 1.13rem !important; line-height: 1.16 !important; }
+.role-profile-caption { color:#64748b !important; font-weight:750 !important; }
+.snapshot-role-placeholder { background:#f8fafc !important; color:#475569 !important; border-color:#e2e8f0 !important; }
+/* SHAP technical chart in the expander should no longer look like a raw notebook plot. */
+div[data-testid="stExpander"]:has(.js-plotly-plot) {
+    border-radius: 18px !important;
+    border: 1px solid #dbe3ee !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    overflow: hidden !important;
+}
+div[data-testid="stExpander"]:has(.js-plotly-plot) details > summary {
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    color:#0f2f5f !important;
+    font-weight:950 !important;
+}
+div[data-testid="stExpander"]:has(.js-plotly-plot) div[data-testid="stPlotlyChart"] {
+    background:#ffffff !important;
+    border-radius: 0 0 18px 18px !important;
+    box-shadow: none !important;
+    padding: 8px 12px 12px 12px !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# tactical intelligence.5.1 Role Intelligence visibility patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+.role-identity-pipeline {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    border-radius:18px;
+    padding:15px 17px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    margin: 12px 0 14px 0;
+}
+.role-identity-eyebrow {
+    color:#1d4ed8;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+}
+.role-identity-flow {
+    display:grid;
+    grid-template-columns: minmax(160px,1fr) 24px minmax(160px,1fr) 24px minmax(180px,1.15fr) 24px minmax(160px,1fr);
+    gap:8px;
+    align-items:center;
+}
+.role-identity-step {
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+    padding:10px 12px;
+    min-height:72px;
+}
+.role-identity-step-tax { border-color:#bfdbfe; background:#eff6ff; }
+.role-identity-step span {
+    display:block;
+    color:#64748b;
+    font-size:.66rem;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.055em;
+    margin-bottom:4px;
+}
+.role-identity-step b {
+    display:block;
+    color:#0f172a;
+    font-size:.92rem;
+    font-weight:950;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.role-identity-step small {
+    display:block;
+    color:#475569;
+    font-size:.70rem;
+    font-weight:800;
+    margin-top:4px;
+    line-height:1.25;
+}
+.role-identity-arrow {
+    color:#2563eb;
+    font-weight:950;
+    text-align:center;
+    font-size:1.05rem;
+}
+.role-profile-card-taxonomy {
+    border-left:4px solid #2563eb !important;
+}
+.role-context-availability {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:11px 13px;
+    box-shadow:0 8px 20px rgba(15,23,42,.035);
+    margin: 0 0 12px 0;
+}
+.role-context-availability-title {
+    color:#0f172a;
+    font-size:.80rem;
+    font-weight:950;
+    margin-bottom:7px;
+}
+.role-context-chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+.role-context-chip {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.70rem;
+    font-weight:900;
+}
+.role-context-chip b {
+    color:#0f172a;
+    font-weight:950;
+}
+[data-testid="stSidebar"] .role-availability-panel {
+    margin: 0.25rem 0 0.95rem 0;
+    padding: 9px 10px;
+    border-radius: 12px;
+    background: rgba(219,234,254,.10);
+    border: 1px solid rgba(191,219,254,.24);
+}
+[data-testid="stSidebar"] .role-availability-title {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    font-size:.74rem;
+    font-weight:950;
+    letter-spacing:.055em;
+    text-transform:uppercase;
+    margin-bottom:3px;
+}
+[data-testid="stSidebar"] .role-availability-subtitle {
+    color:#b9d4f5 !important;
+    -webkit-text-fill-color:#b9d4f5 !important;
+    font-size:.66rem;
+    line-height:1.25;
+    margin-bottom:7px;
+}
+[data-testid="stSidebar"] .role-availability-chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+}
+[data-testid="stSidebar"] .role-availability-chip {
+    display:inline-flex;
+    gap:5px;
+    border-radius:999px;
+    padding:4px 7px;
+    color:#dbeafe !important;
+    -webkit-text-fill-color:#dbeafe !important;
+    background:rgba(239,246,255,.10);
+    border:1px solid rgba(191,219,254,.22);
+    font-size:.64rem;
+    font-weight:850;
+    line-height:1.1;
+}
+[data-testid="stSidebar"] .role-availability-chip b {
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    font-weight:950;
+}
+[data-testid="stSidebar"] .role-availability-chip-active {
+    background:#2563eb !important;
+    border-color:#93c5fd !important;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+}
+.eligibility-panel {
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-left:5px solid #0f2f5f;
+    border-radius:18px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050);
+    padding:14px 16px;
+    margin: 12px 0 18px 0;
+}
+.eligibility-panel-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:10px;
+}
+.eligibility-eyebrow {
+    color:#1d4ed8;
+    font-size:.68rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+    margin-bottom:4px;
+}
+.eligibility-title {
+    color:#0f172a;
+    font-size:.96rem;
+    font-weight:950;
+}
+.eligibility-summary {
+    display:inline-flex;
+    border-radius:999px;
+    padding:6px 10px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:.72rem;
+    font-weight:950;
+    white-space:nowrap;
+}
+.eligibility-grid {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:9px;
+}
+.eligibility-card {
+    border-radius:13px;
+    padding:9px 10px;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    min-height:86px;
+}
+.eligibility-card-pass {
+    background:#f0fdf4;
+    border-color:#bbf7d0;
+}
+.eligibility-card-fail {
+    background:#fef2f2;
+    border-color:#fecaca;
+}
+.eligibility-status {
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.78rem;
+    font-weight:950;
+    margin-bottom:5px;
+}
+.eligibility-card-pass .eligibility-status { background:#dcfce7; color:#166534; }
+.eligibility-card-fail .eligibility-status { background:#fee2e2; color:#991b1b; }
+.eligibility-label {
+    color:#64748b;
+    font-size:.64rem;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:2px;
+}
+.eligibility-value {
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+    line-height:1.1;
+}
+.eligibility-detail {
+    color:#475569;
+    font-size:.66rem;
+    font-weight:800;
+    margin-top:4px;
+}
+.outside-reasons {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:11px;
+}
+.outside-reasons b {
+    width:100%;
+    color:#0f172a;
+    font-size:.76rem;
+    font-weight:950;
+}
+.outside-reasons span {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 8px;
+    background:#fef2f2;
+    color:#991b1b;
+    border:1px solid #fecaca;
+    font-size:.70rem;
+    font-weight:850;
+}
+@media (max-width: 1350px) {
+    .role-identity-flow { grid-template-columns: 1fr; }
+    .role-identity-arrow { display:none; }
+    .eligibility-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 800px) {
+    .eligibility-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5.1 UX Harmonization & Visual Intelligence Refactor
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root {
+    --iq-primary:#2F5BFF;
+    --iq-success:#58C27D;
+    --iq-warning:#F5A623;
+    --iq-danger:#E05658;
+    --iq-neutral:#7C8DB5;
+}
+/* Executive SaaS chips replacing academic legends */
+.matrix-exec-legend {
+    display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin: 8px 0 12px 0;
+}
+.matrix-exec-chip {
+    display:inline-flex; align-items:center; gap:7px; padding:7px 11px; border-radius:999px;
+    background:#ffffff; border:1px solid #e2e8f0; color:#334155; font-size:.74rem; font-weight:950;
+    box-shadow:0 6px 14px rgba(15,23,42,.035);
+}
+.matrix-exec-dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+.matrix-exec-card {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 16px;
+    box-shadow:0 12px 28px rgba(15,23,42,.050); margin: 10px 0 16px 0;
+}
+/* Role filters: readable pills, no white-on-white mini-bars */
+.role-context-availability {
+    background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:18px !important;
+    padding:14px 16px !important; box-shadow:0 10px 24px rgba(15,23,42,.045) !important; margin: 10px 0 14px 0 !important;
+}
+.role-context-availability-title {
+    color:#0f172a !important; font-size:.80rem !important; font-weight:950 !important; margin-bottom:10px !important;
+}
+.role-context-chip-row { display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
+.role-context-chip, .role-badge {
+    display:inline-flex !important; align-items:center !important; gap:5px !important; border-radius:999px !important;
+    padding:6px 10px !important; background:#eff6ff !important; color:#1e3a8a !important;
+    -webkit-text-fill-color:#1e3a8a !important; border:1px solid #bfdbfe !important;
+    font-size:.72rem !important; font-weight:950 !important; white-space:nowrap !important;
+}
+.role-context-chip b { color:#0f2f5f !important; -webkit-text-fill-color:#0f2f5f !important; }
+.role-badge-pending { background:#f8fafc !important; color:#475569 !important; -webkit-text-fill-color:#475569 !important; border-color:#e2e8f0 !important; }
+.role-filter-controls {
+    display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr) minmax(230px,.7fr); gap:16px; align-items:end; margin: 6px 0 8px 0;
+}
+.role-filter-controls div[data-baseweb="select"] > div { min-height:46px !important; border-radius:14px !important; background:#ffffff !important; }
+/* Recruitment table executive badges */
+.exec-mini-badge, .decision-stars {
+    display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 9px;
+    font-size:.70rem; font-weight:950; white-space:nowrap; border:1px solid #e2e8f0; background:#ffffff; color:#334155;
+}
+.exec-mini-badge b, .decision-stars b { font-size:.68rem; opacity:.82; }
+.exec-mini-badge-success { background:#eaf7ee; color:#166534; border-color:#bbf7d0; }
+.exec-mini-badge-primary { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+.exec-mini-badge-warning { background:#fff4e8; color:#92400e; border-color:#fed7aa; }
+.exec-mini-badge-danger { background:#fdecec; color:#991b1b; border-color:#fecaca; }
+.exec-mini-badge-neutral { background:#f8fafc; color:#475569; border-color:#e2e8f0; }
+.decision-stars { color:#b45309; background:#fffbeb; border-color:#fde68a; letter-spacing:.02em; }
+/* Similar Players: balanced 2x2 decision layout */
+.similarity-recommended-card-compact { max-width:100% !important; margin-bottom:14px !important; }
+.similarity-decision-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; align-items:stretch !important; }
+.similarity-decision-card { min-height: 210px !important; }
+.similarity-decision-grid .similarity-decision-card:nth-child(3) { grid-column: 2 / 3 !important; }
+.similarity-chart-shell, .similarity-rank-card, .similarity-assessment-card, .contract-card, .contract-action-board, .contract-target-card-premium {
+    border-radius:18px !important; box-shadow:0 12px 28px rgba(15,23,42,.05) !important;
+}
+/* DSS bar: product navigation, not numbered wireframe */
+.dss-compact-step { padding:6px 11px !important; border-radius:999px !important; }
+.dss-compact-step.is-active { background:#eff6ff !important; color:#1d4ed8 !important; border:1px solid #bfdbfe !important; }
+/* Plotly charts inherit the card look */
+div[data-testid="stPlotlyChart"] { border-radius:18px !important; box-shadow:0 8px 20px rgba(15,23,42,.035) !important; }
+@media (max-width: 1200px) {
+    .role-filter-controls, .similarity-decision-grid { grid-template-columns:1fr !important; }
+    .similarity-decision-grid .similarity-decision-card:nth-child(3) { grid-column:auto !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# tactical intelligence.5.2 Senior Product UX patch: roles, similarity, contract and GM simulator
+# =============================================================================
+st.markdown(
+    """
+<style>
+:root {
+  --siq-primary:#2F5BFF; --siq-success:#58C27D; --siq-warning:#F5A623;
+  --siq-danger:#E05658; --siq-neutral:#7C8DB5; --siq-border:#e2e8f0;
+}
+.metric-card,.scouting-hero-card,.exec-player-card,.exec-score-card,.exec-kpi-card,.radar-card,.compact-top5-card,.pro-section-card,
+.similarity-decision-card,.similarity-benchmark-card,.similarity-recommended-card,.similarity-chart-shell,.similarity-rank-card,
+.contract-card,.contract-target-card-premium,.contract-action-board-title-wrap,.contract-premium-player-card,.contract-premium-lane,
+.contract-matrix-shell,.contract-matrix-top5-card,.player-table,.radar-info-box {
+    border-radius:16px !important;
+    box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
+}
+/* Sidebar roles: replace unreadable mini-bars with tactical pills. */
+[data-testid="stSidebar"] .role-availability-panel {
+    background:rgba(15, 42, 75, .88) !important;
+    border:1px solid rgba(147,197,253,.28) !important;
+    border-radius:16px !important;
+    padding:11px 12px !important;
+    margin: 0.45rem 0 1.05rem 0 !important;
+}
+[data-testid="stSidebar"] .role-availability-title {
+    color:#ffffff !important; -webkit-text-fill-color:#ffffff !important;
+    font-size:.76rem !important; font-weight:950 !important; letter-spacing:.075em !important;
+}
+[data-testid="stSidebar"] .role-availability-subtitle {
+    color:#bfdbfe !important; -webkit-text-fill-color:#bfdbfe !important;
+    font-size:.67rem !important; line-height:1.32 !important; margin-bottom:9px !important;
+}
+[data-testid="stSidebar"] .role-availability-chip-row { gap:7px !important; }
+[data-testid="stSidebar"] .role-availability-chip,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-defensive,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-build_up,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-creative,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-attacking,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-balanced {
+    display:inline-flex !important; align-items:center !important; gap:6px !important;
+    background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important;
+    border:1px solid #bfdbfe !important; border-radius:999px !important;
+    padding:5px 8px !important; font-size:.68rem !important; font-weight:900 !important; line-height:1.05 !important;
+    box-shadow:0 4px 12px rgba(2,6,23,.14) !important;
+}
+[data-testid="stSidebar"] .role-availability-chip b { color:#1d4ed8 !important; -webkit-text-fill-color:#1d4ed8 !important; font-weight:950 !important; }
+[data-testid="stSidebar"] .role-availability-share { display:none !important; }
+[data-testid="stSidebar"] .role-availability-dot { width:8px; height:8px; border-radius:999px; background:#60a5fa; display:inline-block; flex:0 0 auto; }
+[data-testid="stSidebar"] .role-badge-family-defensive .role-availability-dot { background:#3b82f6; }
+[data-testid="stSidebar"] .role-badge-family-build_up .role-availability-dot { background:#8b5cf6; }
+[data-testid="stSidebar"] .role-badge-family-creative .role-availability-dot { background:#22c55e; }
+[data-testid="stSidebar"] .role-badge-family-attacking .role-availability-dot { background:#f97316; }
+[data-testid="stSidebar"] .role-availability-chip-active { outline:2px solid #60a5fa !important; }
+/* Better role select dropdown: never looks truncated. */
+[data-testid="stSidebar"] div[data-baseweb="popover"] ul,
+[data-testid="stSidebar"] div[role="listbox"] { max-height:360px !important; }
+[data-testid="stSidebar"] div[role="option"] { min-height:34px !important; }
+/* Similar Players decision support. */
+.similarity-decision-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; align-items:stretch !important; }
+.context-fit-bars { display:grid; gap:8px; }
+.fit-row { display:grid; grid-template-columns:70px 38px minmax(0,1fr); gap:8px; align-items:center; color:#334155; font-size:.74rem; font-weight:850; }
+.fit-row span { color:#64748b; }
+.fit-row b { color:#0f172a; text-align:right; font-weight:950; }
+.fit-row i { display:block; height:7px; border-radius:999px; background:linear-gradient(90deg,#22c55e var(--w,70%),#e5eaf1 var(--w,70%)); position:relative; overflow:hidden; }
+.fit-row i::before { content:""; display:block; height:100%; width:inherit; max-width:100%; background:#22c55e; border-radius:999px; }
+/* Contract Intelligence as CRM-like action board. */
+.contract-action-board-title-wrap.contract-action-board-premium {
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%) !important;
+    border-left:6px solid #0f2f5f !important;
+    margin-top:22px !important;
+}
+.contract-premium-lane-header { min-height:54px !important; }
+.contract-premium-lane-title { font-size:.92rem !important; }
+.contract-premium-player-card { border-left:3px solid #bfdbfe !important; }
+.contract-premium-lane--now .contract-premium-player-card { border-left-color:#f97316 !important; }
+.contract-premium-lane--summer .contract-premium-player-card { border-left-color:#eab308 !important; }
+.contract-premium-lane--track .contract-premium-player-card { border-left-color:#2563eb !important; }
+.contract-premium-lane--free .contract-premium-player-card { border-left-color:#22c55e !important; }
+/* Recruitment tables: more product-board, less CSV. */
+.player-table td .exec-mini-badge, .player-table td .decision-stars, .player-table td .role-badge { white-space:nowrap !important; }
+.player-table th { background:#f8fbff !important; color:#334155 !important; font-weight:950 !important; }
+.player-table tr:hover td { background:#f8fbff !important; }
+/* GM Simulator executive summary. */
+.gm-summary-card {
+    display:grid; grid-template-columns:minmax(0,1.1fr) minmax(420px,1.35fr); gap:18px; align-items:center;
+    background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); border:1px solid #bfdbfe; border-left:6px solid #2F5BFF;
+    border-radius:18px; box-shadow:0 14px 34px rgba(15,23,42,.06); padding:16px 18px; margin: 0 0 16px 0;
+}
+.gm-summary-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:5px; }
+.gm-summary-title { color:#0f172a; font-size:1.18rem; font-weight:950; line-height:1.12; }
+.gm-summary-copy { color:#475569; font-size:.86rem; margin-top:6px; line-height:1.35; }
+.gm-summary-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.gm-summary-kpis div { background:#ffffff; border:1px solid #e2e8f0; border-radius:13px; padding:10px 11px; }
+.gm-summary-kpis span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.gm-summary-kpis b { display:block; color:#0f172a; font-size:.90rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media(max-width:1200px){ .similarity-decision-grid,.gm-summary-card { grid-template-columns:1fr !important; } .gm-summary-kpis { grid-template-columns:1fr !important; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Product UX v3: dossier, tactical filters, horizontal priority actions, unified nav
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Global design system stabilization */
+.metric-card,.scouting-hero-card,.exec-player-card,.exec-score-card,.exec-kpi-card,.radar-card,.compact-top5-card,.pro-section-card,
+.similarity-decision-card,.similarity-benchmark-card,.similarity-recommended-card,.similarity-chart-shell,.similarity-rank-card,
+.contract-card,.contract-target-card-premium,.contract-action-horizontal-board,.contract-action-horizontal-lane,.contract-matrix-shell,
+.contract-matrix-top5-card,.player-table,.radar-info-box,.role-filter-shell,.role-context-availability,.player-dossier-shell {
+    border-radius:16px !important;
+    box-shadow:0 4px 12px rgba(15,23,42,.05) !important;
+}
+
+/* Player Dossier: executive scouting card */
+.player-dossier-shell {
+    background:#ffffff;
+    border:1px solid #dbeafe;
+    border-left:5px solid #2563eb;
+    padding:16px 18px;
+    margin: 0 0 18px 0;
+}
+.player-dossier-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:14px; }
+.player-dossier-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:5px; }
+.player-dossier-title { color:#0f172a; font-size:1.25rem; font-weight:950; line-height:1.08; }
+.player-dossier-meta { color:#64748b; font-size:.80rem; font-weight:750; margin-top:5px; }
+.player-dossier-score { min-width:128px; background:#f8fbff; border:1px solid #bfdbfe; border-radius:14px; padding:10px 12px; text-align:right; }
+.player-dossier-score span { display:block; color:#64748b; font-size:.68rem; font-weight:950; letter-spacing:.06em; text-transform:uppercase; }
+.player-dossier-score b { display:block; color:#166534; font-size:1.25rem; font-weight:950; margin-top:2px; }
+.player-dossier-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr .85fr; gap:12px; align-items:stretch; }
+.player-dossier-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 13px; min-height:132px; }
+.player-dossier-card span { display:block; color:#1d4ed8; font-size:.68rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:8px; }
+.player-dossier-card ul { margin:0; padding-left:0; list-style:none; display:grid; gap:7px; }
+.player-dossier-card li { color:#334155; font-size:.78rem; line-height:1.35; font-weight:750; }
+.dossier-ok { display:inline !important; color:#16a34a !important; margin-right:7px !important; }
+.dossier-warn { display:inline !important; color:#f97316 !important; margin-right:7px !important; }
+.player-dossier-mini { display:grid; grid-template-columns:1fr; gap:7px; }
+.player-dossier-mini div { display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #edf2f7; border-radius:10px; padding:6px 8px; }
+.player-dossier-mini b { color:#0f172a; font-size:.82rem; font-weight:950; }
+.player-dossier-mini small { color:#64748b; font-size:.66rem; font-weight:900; text-transform:uppercase; }
+
+/* Tactical filters: compact four-column professional layout */
+.role-filter-shell-compact { margin:10px 0 10px 0 !important; padding:14px 16px !important; }
+.role-filter-controls-v2 { margin: 4px 0 8px 0 !important; }
+.role-filter-controls-v2 div[data-baseweb="select"] > div,
+.role-filter-controls-v2 div[data-baseweb="slider"] {
+    background:#ffffff !important;
+    border-color:#cbd5e1 !important;
+    min-height:46px !important;
+}
+.role-filter-controls-v2 div[data-baseweb="select"] input,
+.role-filter-controls-v2 div[data-baseweb="select"] span,
+.role-filter-controls-v2 div[data-baseweb="select"] div { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
+.role-filter-status-v2 { border-radius:999px !important; display:inline-flex !important; gap:9px !important; background:#ffffff !important; }
+.role-context-dot { width:8px; height:8px; border-radius:999px; display:inline-block; background:#60a5fa; }
+.role-context-dot-defensive { background:#3b82f6; }
+.role-context-dot-build_up { background:#8b5cf6; }
+.role-context-dot-creative { background:#22c55e; }
+.role-context-dot-attacking { background:#f97316; }
+
+/* Sidebar roles: readable chips over dark chrome */
+[data-testid="stSidebar"] .role-availability-panel { background:rgba(15,42,75,.88) !important; border:1px solid rgba(147,197,253,.32) !important; border-radius:16px !important; padding:11px 12px !important; }
+[data-testid="stSidebar"] .role-availability-chip,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-defensive,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-build_up,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-creative,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-attacking,
+[data-testid="stSidebar"] .role-availability-chip.role-badge-family-balanced {
+    background:#ffffff !important; color:#0f172a !important; -webkit-text-fill-color:#0f172a !important;
+    border:1px solid #bfdbfe !important; padding:5px 8px !important; font-size:.68rem !important;
+}
+[data-testid="stSidebar"] .role-availability-chip b { color:#1d4ed8 !important; -webkit-text-fill-color:#1d4ed8 !important; }
+[data-testid="stSidebar"] .role-availability-title { color:#ffffff !important; -webkit-text-fill-color:#ffffff !important; }
+[data-testid="stSidebar"] .role-availability-subtitle { color:#bfdbfe !important; -webkit-text-fill-color:#bfdbfe !important; }
+[data-testid="stSidebar"] div[data-baseweb="popover"] ul, [data-testid="stSidebar"] div[role="listbox"] { max-height:420px !important; }
+
+/* Opportunity Matrix legend and quadrant labels */
+.matrix-exec-legend { gap:7px !important; margin:5px 0 8px 0 !important; }
+.matrix-exec-chip { padding:5px 9px !important; font-size:.68rem !important; box-shadow:none !important; }
+
+/* Horizontal Contract Priority Actions: no Trello/Kanban feel */
+.contract-action-horizontal-board { background:#ffffff; border:1px solid #e2e8f0; border-left:5px solid #0f2f5f; padding:16px 18px; margin:18px 0; }
+.contract-action-horizontal-board-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.contract-action-horizontal-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.contract-action-horizontal-lane { background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); border:1px solid #dbe3ee; padding:13px 14px; }
+.contract-action-horizontal-lane-now { border-left:4px solid #f97316; }
+.contract-action-horizontal-lane-summer { border-left:4px solid #eab308; }
+.contract-action-horizontal-lane-track { border-left:4px solid #2563eb; }
+.contract-action-horizontal-lane-free { border-left:4px solid #ef4444; }
+.contract-action-horizontal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; border-bottom:1px solid #edf2f7; margin-bottom:8px; }
+.contract-action-horizontal-title { color:#0f172a; font-size:.92rem; font-weight:950; }
+.contract-action-horizontal-count { min-width:30px; height:24px; padding:0 8px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-player { display:grid; grid-template-columns:38px minmax(0,1fr) minmax(300px,.95fr); gap:12px; align-items:center; border-top:1px solid #edf2f7; padding:9px 0; }
+.contract-action-horizontal-player:first-of-type { border-top:0; }
+.contract-action-horizontal-rank { width:28px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eff6ff; color:#1d4ed8; font-size:.70rem; font-weight:950; }
+.contract-action-horizontal-name { color:#0f172a; font-size:.88rem; font-weight:950; line-height:1.15; }
+.contract-action-horizontal-meta { color:#64748b; font-size:.70rem; line-height:1.25; margin-top:3px; }
+.contract-action-horizontal-kpis { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.contract-action-horizontal-kpis span { display:inline-flex; border-radius:999px; padding:4px 8px; background:#f8fafc; border:1px solid #e2e8f0; color:#334155; font-size:.67rem; font-weight:850; }
+.contract-action-horizontal-kpis b { color:#0f172a; font-weight:950; }
+.contract-action-horizontal-empty { color:#64748b; font-size:.78rem; font-weight:850; padding:8px 0; }
+
+/* Unified internal navigation buttons */
+button[kind="secondary"], button[kind="primary"] { border-radius:999px !important; font-weight:900 !important; }
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button,
+.quick-action-grid + div[data-testid="stHorizontalBlock"] button {
+    border-radius:999px !important;
+    border:1px solid #bfdbfe !important;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important;
+    min-height:34px !important;
+    box-shadow:0 4px 12px rgba(37,99,235,.08) !important;
+}
+
+/* Similar Players product cards */
+.fit-row i { height:8px; border-radius:999px; background:linear-gradient(90deg,#2563eb,#22c55e); display:block; }
+.similarity-decision-card { min-height:190px !important; }
+.similarity-professional-layout { margin-top:14px !important; }
+
+/* GM simulator hero */
+.gm-summary-card { background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); border:1px solid #bfdbfe; border-left:5px solid #2563eb; border-radius:18px; padding:16px 18px; box-shadow:0 12px 28px rgba(15,23,42,.05); margin: 14px 0 18px 0; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(420px,1fr); gap:18px; align-items:center; }
+.gm-summary-eyebrow { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.085em; text-transform:uppercase; margin-bottom:5px; }
+.gm-summary-title { color:#0f172a; font-size:1.20rem; font-weight:950; line-height:1.12; }
+.gm-summary-copy { color:#475569; font-size:.86rem; line-height:1.35; margin-top:6px; }
+.gm-summary-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.gm-summary-kpis div { background:#ffffff; border:1px solid #e2e8f0; border-radius:13px; padding:10px 11px; }
+.gm-summary-kpis span { display:block; color:#64748b; font-size:.64rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.gm-summary-kpis b { display:block; color:#0f172a; font-size:.86rem; font-weight:950; line-height:1.12; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width: 1280px) {
+  .player-dossier-grid { grid-template-columns:1fr 1fr; }
+  .contract-action-horizontal-player { grid-template-columns:32px minmax(0,1fr); }
+  .contract-action-horizontal-kpis { grid-column: 2 / 3; justify-content:flex-start; }
+  .gm-summary-card { grid-template-columns:1fr; }
+}
+@media (max-width: 760px) {
+  .player-dossier-grid { grid-template-columns:1fr; }
+  .player-dossier-head { flex-direction:column; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.5.6 Director Sporting polish: no phantom modules, professional tabs, compact filters
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Remove phantom empty shell generated by legacy markdown wrappers around Similar Player controls. */
+.similar-final-controls:empty,
+.similar-final-controls { display:none !important; height:0 !important; min-height:0 !important; padding:0 !important; margin:0 !important; border:0 !important; box-shadow:none !important; }
+/* Rebuild the Similar controls with native widgets only; no empty white card. */
+div[data-testid="stHorizontalBlock"]:has(#sprint11_similarity_target),
+div[data-testid="stHorizontalBlock"]:has(input[aria-label="Jugador de referencia"]) {
+    background:#ffffff !important; border:1px solid #dbe3ee !important; border-left:5px solid #2563eb !important;
+    border-radius:18px !important; padding:14px 16px !important; box-shadow:0 12px 28px rgba(15,23,42,.045) !important;
+    margin: 8px 0 18px 0 !important;
+}
+/* Stable 2x2 Similar Player decision board. */
+.similar-final-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px !important; align-items:stretch !important; }
+.similar-final-card { min-height:190px !important; height:100% !important; }
+.similar-card-list { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+.similar-advanced-view div[data-testid="stDataFrame"], .replacement-advanced-view div[data-testid="stDataFrame"] { max-height: none !important; }
+.replacement-table-title { color:#0f172a; font-size:.90rem; font-weight:950; margin: 2px 0 8px 0; }
+/* Recruitment and Strategy tactical filters: readable input text, no cropped placeholders. */
+.role-filter-controls-stable div[data-baseweb="select"] > div {
+    min-height:48px !important; background:#ffffff !important; border:1px solid #cbd5e1 !important; border-radius:14px !important;
+    display:flex !important; align-items:center !important; overflow:visible !important;
+}
+.role-filter-controls-stable div[data-baseweb="select"] input,
+.role-filter-controls-stable div[data-baseweb="select"] span,
+.role-filter-controls-stable div[data-baseweb="select"] div {
+    color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; font-weight:800 !important; line-height:1.35 !important;
+}
+.role-filter-controls-stable label p { color:#334155 !important; font-weight:900 !important; }
+.role-filter-status-v2 { margin: 12px 0 12px 0 !important; }
+/* Contract target hero: align identity, action and KPIs as a professional target dossier. */
+.contract-target-card-final { padding:18px 20px !important; }
+.contract-target-main-final { display:grid !important; grid-template-columns:minmax(330px,.9fr) minmax(0,1.55fr) !important; gap:22px !important; align-items:center !important; }
+.contract-target-identity-final { align-items:center !important; }
+.contract-target-primary-action { margin-top:8px !important; }
+.contract-target-primary-action .contract-action-pill { background:#eff6ff !important; border-color:#bfdbfe !important; color:#1e3a8a !important; }
+.contract-target-metric-strip { display:grid !important; grid-template-columns:repeat(6,minmax(0,1fr)) !important; gap:10px !important; align-items:stretch !important; }
+.contract-target-metric-strip .contract-target-kpi { min-height:86px !important; background:#ffffff !important; }
+/* Contract workflow: professional tabs, no emoji dashboard buttons. */
+.contract-native-toolbar-shell { display:none !important; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    width:fit-content !important; max-width:100% !important; margin: 0 0 20px 0 !important; padding:7px !important;
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important; box-shadow:0 8px 20px rgba(15,23,42,.045) !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="column"] { flex:0 0 auto !important; width:auto !important; min-width:0 !important; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button {
+    border-radius:999px !important; border:1px solid transparent !important; background:#ffffff !important; color:#1e3a8a !important;
+    font-size:.76rem !important; font-weight:950 !important; min-height:34px !important; padding:.30rem .74rem !important; box-shadow:none !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button:hover { background:#eff6ff !important; border-color:#bfdbfe !important; transform:translateY(-1px); }
+/* Priority Actions: horizontal CRM-style rows instead of Kanban lanes. */
+.contract-action-horizontal-grid { grid-template-columns:1fr !important; gap:12px !important; }
+.contract-action-horizontal-lane { border-radius:18px !important; padding:13px 15px !important; }
+.contract-action-horizontal-player { grid-template-columns:38px minmax(0,1fr) minmax(320px,.95fr) !important; }
+/* Portfolio map: white premium card, reduced notebook feel. */
+.strategy-map-card { background:#ffffff !important; border:1px solid #e2e8f0 !important; border-radius:20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+.strategy-map-card + div[data-testid="stPlotlyChart"], .strategy-map-card div[data-testid="stPlotlyChart"] { box-shadow:none !important; }
+.strategy-ranking-card { border-radius:20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+/* Tables: main views use cards; advanced tables can scroll but stay visually contained. */
+.replacement-advanced-view div[data-testid="stDataFrame"], .similar-advanced-view div[data-testid="stDataFrame"] { border-radius:16px !important; }
+@media (max-width: 1300px) {
+  .contract-target-main-final { grid-template-columns:1fr !important; }
+  .contract-target-metric-strip { grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+  .contract-action-horizontal-player { grid-template-columns:36px minmax(0,1fr) !important; }
+  .contract-action-horizontal-kpis { grid-column:2 !important; justify-content:flex-start !important; }
+}
+@media (max-width: 900px) {
+  .similar-final-grid,.similar-card-list { grid-template-columns:1fr !important; }
+  .contract-target-metric-strip { grid-template-columns:1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.5.7 Director Sporting final polish: data freshness, tabs and pro visuals
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Data freshness and product-grade internal navigation */
+.data-freshness-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 8px; background:#ecfdf5; color:#166534; border:1px solid #bbf7d0; font-size:.68rem; font-weight:950; }
+.data-freshness-badge.warning { background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"],
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"],
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] {
+    background:#ffffff !important; border:1px solid #dbeafe !important; border-radius:999px !important; padding:7px !important;
+    box-shadow:0 10px 24px rgba(15,23,42,.055) !important; width:fit-content !important; max-width:100% !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button,
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button {
+    border:1px solid transparent !important; background:#ffffff !important; color:#1e3a8a !important; border-radius:999px !important;
+    min-height:36px !important; padding:.34rem .82rem !important; font-size:.78rem !important; font-weight:950 !important; box-shadow:none !important;
+}
+.contract-native-toolbar-anchor + div[data-testid="stHorizontalBlock"] button:hover,
+.contract-workflow-button-anchor + div[data-testid="stHorizontalBlock"] button:hover { background:#eff6ff !important; border-color:#bfdbfe !important; transform:translateY(-1px); }
+/* Strategy: more like a portfolio room, less like a notebook */
+.strategy-filter-panel { background:#ffffff !important; border:1px solid #dbe3ee !important; border-left:5px solid #2563eb !important; border-radius:20px !important; padding:18px 20px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+.strategy-filter-panel div[data-baseweb="select"] > div, .strategy-filter-panel div[data-baseweb="slider"] { background:#ffffff !important; border-radius:14px !important; border-color:#cbd5e1 !important; min-height:46px !important; }
+.gm-summary-card { border-radius:22px !important; border-left-width:6px !important; box-shadow:0 18px 42px rgba(15,23,42,.075) !important; }
+.strategy-map-card { padding:16px 18px !important; border-radius:22px !important; border:1px solid #e2e8f0 !important; background:#ffffff !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.strategy-map-title { font-size:1.06rem !important; font-weight:950 !important; color:#0f172a !important; margin-bottom:4px !important; }
+.strategy-map-subtitle { color:#64748b !important; font-size:.80rem !important; margin-bottom:10px !important; }
+.strategy-ranking-card { border-radius:22px !important; border:1px solid #e2e8f0 !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.strategy-ranking-row { border:1px solid #edf2f7 !important; border-radius:14px !important; padding:8px 9px !important; margin-bottom:8px !important; background:#ffffff !important; }
+/* Tables remain advanced artefacts, not the dominant product surface */
+div[data-testid="stDataFrame"] { max-height:520px !important; border-radius:18px !important; }
+/* Contract Priority Actions: CRM-style action rows */
+.contract-action-horizontal-board { border-radius:22px !important; box-shadow:0 18px 42px rgba(15,23,42,.065) !important; }
+.contract-action-horizontal-lane { border-radius:18px !important; box-shadow:0 8px 20px rgba(15,23,42,.035) !important; }
+.contract-action-horizontal-player { min-height:52px !important; }
+/* Similar Player: eliminate phantom block impression */
+.similar-intel-header { margin-bottom:10px !important; }
+.similar-final-grid { margin-top:12px !important; }
+.similar-final-card { border-radius:18px !important; box-shadow:0 14px 34px rgba(15,23,42,.055) !important; }
+/* Input readability in Recruitment and Strategy */
+.role-filter-controls-stable div[data-baseweb="select"] > div, .strategy-filter-panel div[data-baseweb="select"] > div { overflow:visible !important; }
+.role-filter-controls-stable div[data-baseweb="select"] span, .strategy-filter-panel div[data-baseweb="select"] span { color:#0f172a !important; -webkit-text-fill-color:#0f172a !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Player Intelligence final product UX closure: compact decision card, premium pitch, no sprint labels
+# =============================================================================
+st.markdown(
+    """
+<style>
+.exec-decision-hero { grid-template-columns: minmax(0, 1.02fr) minmax(560px, .98fr) !important; gap: 18px !important; align-items: stretch !important; padding: 16px 18px !important; margin-bottom: 14px !important; }
+.exec-decision-left { display:flex !important; flex-direction:column !important; justify-content:center !important; min-height: 0 !important; padding: 4px 0 !important; }
+.exec-decision-right { display:grid !important; grid-template-columns: 116px minmax(0, 1fr) !important; gap: 10px !important; align-items: stretch !important; }
+.exec-decision-scorebox { min-height: 0 !important; padding: 10px 8px !important; border-radius: 16px !important; }
+.exec-decision-scorebox b { font-size: 2.25rem !important; }
+.exec-decision-kpis { grid-template-columns: repeat(4, minmax(0,1fr)) !important; gap: 8px !important; }
+.exec-decision-kpis div { min-height: 68px !important; padding: 8px 9px !important; border-radius: 13px !important; }
+.exec-decision-kpis span { font-size: .60rem !important; }
+.exec-decision-kpis b { font-size: .86rem !important; }
+.exec-decision-kpis small { font-size: .64rem !important; }
+.exec-decision-thesis { max-width: 680px !important; }
+.exec-card-shell { padding: 16px 18px !important; margin: 8px 0 18px 0 !important; }
+.exec-card-top { margin-top: 12px !important; gap: 14px !important; }
+.exec-mid-grid { gap: 14px !important; margin-top: 14px !important; }
+.exec-context-details { margin-top: 12px !important; }
+.exec-context-body { gap: 14px !important; padding: 14px !important; }
+.exec-market-panel, .exec-role-panel, .exec-recommendation-panel, .exec-benchmark-market, .exec-trajectory-card { box-shadow: 0 8px 22px rgba(15,23,42,.040) !important; }
+.exec-pitch { aspect-ratio: 1.54 / 1 !important; min-height: 210px !important; max-height: 255px !important; height: auto !important; border-radius: 18px !important; border: 2px solid rgba(255,255,255,.68) !important; background: radial-gradient(circle at 50% 50%, transparent 0 30px, rgba(255,255,255,.72) 31px 32px, transparent 33px), linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.78) 49.85%, rgba(255,255,255,.78) 50.15%, transparent 50.45%), repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 9%, rgba(255,255,255,0) 9% 18%), linear-gradient(135deg, #2e8b57 0%, #247a4b 45%, #1f6f44 100%) !important; box-shadow: inset 0 0 0 5px rgba(255,255,255,.12), 0 14px 28px rgba(15,23,42,.10) !important; overflow: hidden !important; }
+.exec-pitch::before, .exec-pitch::after { top: 25% !important; bottom: 25% !important; width: 13.5% !important; border: 2px solid rgba(255,255,255,.70) !important; background: rgba(255,255,255,.035) !important; }
+.exec-pitch::before { left: 0 !important; border-left: 0 !important; border-radius: 0 14px 14px 0 !important; }
+.exec-pitch::after { right: 0 !important; border-right: 0 !important; border-radius: 14px 0 0 14px !important; }
+.exec-pos-marker { border: 1px solid rgba(255,255,255,.25) !important; background: rgba(15, 105, 61, .45) !important; color: rgba(255,255,255,.72) !important; backdrop-filter: blur(2px) !important; }
+.exec-pos-marker.primary { background: #2563eb !important; color: #ffffff !important; border: 3px solid #ffffff !important; box-shadow: 0 0 0 5px rgba(37,99,235,.24), 0 8px 18px rgba(15,23,42,.20) !important; transform: translate(-50%, -50%) scale(1.05) !important; }
+.exec-pos-marker.secondary { background: rgba(147,197,253,.62) !important; color: #0f2f5f !important; border: 2px solid rgba(255,255,255,.80) !important; }
+.exec-pitch-legend { margin-top: 8px !important; }
+.exec-club-shield { width: 58px !important; height: 48px !important; border-radius: 14px !important; }
+.exec-club-shield-label { font-size: .55rem !important; line-height: 1.0 !important; letter-spacing: .06em !important; }
+.exec-club-shield-code { font-size: .86rem !important; }
+.exec-why-now-card { display:grid; grid-template-columns: minmax(0,1fr) 132px; gap:10px; align-items:stretch; margin-top: 12px; padding: 12px; border:1px solid #dbeafe; border-radius:16px; background:linear-gradient(135deg,#ffffff 0%,#f8fbff 100%); }
+.exec-why-now-card ul { margin: 0; padding-left: 1.05rem; color:#334155; font-size:.78rem; line-height:1.35; font-weight:750; }
+.exec-why-now-card li { margin: 3px 0; }
+.exec-deal-probability { border:1px solid #bfdbfe; border-radius:14px; background:#eff6ff; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:8px; }
+.exec-deal-probability span { color:#1e3a8a; font-size:.60rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; }
+.exec-deal-probability b { color:#0f172a; font-size:1.55rem; font-weight:950; line-height:1.0; margin:4px 0; }
+.exec-deal-probability small { color:#64748b; font-size:.62rem; font-weight:800; }
+.tm4-section-title, .scouting-report-title { letter-spacing: -.01em !important; }
+.scouting-report-card-details, .scouting-report-card-analysis { box-shadow: 0 8px 22px rgba(15,23,42,.035) !important; }
+@media(max-width:1500px){ .exec-decision-hero { grid-template-columns: 1fr !important; } .exec-decision-right { grid-template-columns: 116px minmax(0,1fr) !important; } }
+@media(max-width:980px){ .exec-decision-right { grid-template-columns: 1fr !important; } .exec-decision-kpis { grid-template-columns: repeat(2,minmax(0,1fr)) !important; } .exec-why-now-card { grid-template-columns: 1fr !important; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# Player Intelligence product UX final closure: compact decision, readiness, pitch overlays and percentile benchmark
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact first-screen decision card: grouped economics / fit / deal, less dead space. */
+.exec-decision-hero-v2 {
+    display: grid !important;
+    grid-template-columns: minmax(360px, .95fr) 118px minmax(560px, 1.35fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+    padding: 14px 16px !important;
+    min-height: 0 !important;
+}
+.exec-decision-hero-v2 .exec-decision-left { justify-content: center !important; }
+.exec-decision-hero-v2 .exec-decision-thesis { max-width: 720px !important; font-size: .86rem !important; line-height: 1.42 !important; }
+.exec-decision-scorebox-v2 { min-height: 100% !important; align-self: stretch !important; }
+.exec-decision-groups { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.exec-decision-group { background:#ffffff; border:1px solid #e2e8f0; border-radius:15px; padding:9px 10px; box-shadow:0 6px 16px rgba(15,23,42,.030); }
+.exec-decision-group-title { color:#1e3a8a; font-size:.64rem; font-weight:950; text-transform:uppercase; letter-spacing:.07em; margin-bottom:7px; }
+.exec-decision-group-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:7px; }
+.exec-decision-group-grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.exec-decision-group-grid div { background:#f8fbff; border:1px solid #edf2f7; border-radius:11px; padding:7px 8px; min-height:58px; }
+.exec-decision-group-grid span { display:block; color:#64748b; font-size:.58rem; font-weight:950; letter-spacing:.05em; text-transform:uppercase; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exec-decision-group-grid b { display:block; color:#0f172a; font-size:.84rem; font-weight:950; line-height:1.08; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exec-decision-group-grid small { display:block; color:#64748b; font-size:.60rem; line-height:1.1; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exec-group-deal { grid-column: 1 / -1; }
+.exec-decision-group-grid .gap-negative b { color:#b45309; }
+.exec-decision-group-grid .gap-positive b { color:#15803d; }
+
+/* Decision support row: single home for readiness, workflow status and ranking context. */
+.exec-decision-support-grid { display:grid; grid-template-columns: 1.15fr .85fr 1fr; gap:14px; margin: 14px 0 4px 0; }
+.exec-readiness-card, .exec-watchlist-card, .exec-rank-context-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 16px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.exec-readiness-card { border-left:5px solid #2563eb; }
+.exec-readiness-green { border-left-color:#22c55e; }
+.exec-readiness-yellow { border-left-color:#eab308; }
+.exec-readiness-red { border-left-color:#ef4444; }
+.exec-readiness-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:10px; }
+.exec-readiness-head span { display:block; color:#0f172a; font-size:.94rem; font-weight:950; }
+.exec-readiness-head small { display:block; color:#64748b; font-size:.72rem; line-height:1.28; margin-top:3px; }
+.exec-readiness-head b { color:#0f172a; font-size:1.35rem; font-weight:950; white-space:nowrap; }
+.exec-readiness-row { display:grid; grid-template-columns: 92px minmax(0,1fr) 34px; gap:9px; align-items:center; margin:7px 0; }
+.exec-readiness-row span { color:#475569; font-size:.72rem; font-weight:850; }
+.exec-readiness-row div { height:7px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.exec-readiness-row i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,#60a5fa,#2563eb); }
+.exec-readiness-row b { color:#0f172a; font-size:.72rem; font-weight:950; text-align:right; }
+.exec-watchlist-card { border-left:5px solid #2563eb; }
+.exec-watchlist-monitor { border-left-color:#f59e0b; background:linear-gradient(135deg,#ffffff 0%,#fffaf0 100%); }
+.exec-watchlist-priority { border-left-color:#22c55e; background:linear-gradient(135deg,#ffffff 0%,#f7fff9 100%); }
+.exec-watchlist-stage { color:#0f172a; font-size:1.18rem; font-weight:950; line-height:1.1; margin:4px 0 6px 0; }
+.exec-watchlist-copy { color:#475569; font-size:.80rem; line-height:1.42; font-weight:750; }
+.exec-rank-context-card { border-left:5px solid #0f2f5f; }
+.exec-rank-context-list { display:grid; gap:6px; margin-top:8px; }
+.exec-rank-context-row { display:grid; grid-template-columns:40px minmax(0,1fr) 42px; gap:8px; align-items:center; padding:6px 8px; border:1px solid #edf2f7; border-radius:11px; background:#f8fafc; }
+.exec-rank-context-row.active { background:#eff6ff; border-color:#bfdbfe; box-shadow: inset 4px 0 0 #2563eb; }
+.exec-rank-context-row span { color:#1d4ed8; font-size:.70rem; font-weight:950; }
+.exec-rank-context-row b { color:#0f172a; font-size:.78rem; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exec-rank-context-row strong { color:#166534; font-size:.78rem; font-weight:950; text-align:right; }
+
+/* Premium pitch: more realistic proportions and on-field position distribution. */
+.exec-pitch { aspect-ratio: 1.72 / 1 !important; min-height: 245px !important; max-height: 300px !important; background: radial-gradient(circle at 50% 50%, transparent 0 34px, rgba(255,255,255,.70) 35px 36px, transparent 37px), linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.78) 49.85%, rgba(255,255,255,.78) 50.15%, transparent 50.45%), repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 10%, rgba(255,255,255,0) 10% 20%), linear-gradient(135deg,#2f8f58 0%,#25794d 47%,#1f6e45 100%) !important; }
+.exec-pitch::before, .exec-pitch::after { top: 28% !important; bottom: 28% !important; width: 12% !important; }
+.exec-pitch-overlay { position:absolute; left:14px; bottom:12px; display:flex; gap:7px; z-index:5; }
+.exec-pitch-overlay div { display:flex; align-items:center; gap:5px; border-radius:999px; padding:5px 8px; background:rgba(255,255,255,.92); color:#0f172a; border:1px solid rgba(255,255,255,.75); box-shadow:0 6px 16px rgba(15,23,42,.12); }
+.exec-pitch-overlay div.secondary { opacity:.86; }
+.exec-pitch-overlay b { font-size:.70rem; font-weight:950; }
+.exec-pitch-overlay span { font-size:.68rem; font-weight:900; color:#1d4ed8; }
+.exec-position-bars { margin-top:10px; }
+
+/* Performance Benchmark: replace radar dominance with readable percentile bars. */
+.perf-bars-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:15px 17px; box-shadow:0 12px 28px rgba(15,23,42,.045); }
+.perf-bars-title { color:#0f172a; font-size:.98rem; font-weight:950; margin-bottom:10px; }
+.perf-bar-row { display:grid; grid-template-columns: 160px minmax(0,1fr) 48px; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid #edf2f7; }
+.perf-bar-row:last-child { border-bottom:0; }
+.perf-bar-meta b { display:block; color:#0f172a; font-size:.82rem; font-weight:950; line-height:1.15; }
+.perf-bar-meta span { display:block; color:#64748b; font-size:.68rem; margin-top:2px; }
+.perf-bar-track { height:10px; border-radius:999px; background:#e8edf4; overflow:hidden; }
+.perf-bar-track i { display:block; height:100%; border-radius:999px; background:#60a5fa; }
+.perf-bar-elite .perf-bar-track i { background:#2563eb; }
+.perf-bar-high .perf-bar-track i { background:#38bdf8; }
+.perf-bar-avg .perf-bar-track i { background:#94a3b8; }
+.perf-bar-low .perf-bar-track i { background:#f59e0b; }
+.perf-bar-row strong { color:#0f172a; font-size:.86rem; font-weight:950; text-align:right; }
+
+/* Reduce repeated conclusion blocks: Recommendation remains canonical; downstream text is supporting evidence. */
+.exec-recruitment-engine { margin-top:10px !important; }
+.scouting-report-card-analysis .recommendation, .scouting-report-card-analysis .scouting-report-recommendation { opacity:.92; }
+
+@media(max-width:1500px){ .exec-decision-hero-v2 { grid-template-columns: 1fr !important; } .exec-decision-groups { grid-template-columns:1fr !important; } .exec-decision-support-grid { grid-template-columns:1fr !important; } }
+@media(max-width:980px){ .exec-decision-group-grid, .exec-decision-group-grid-2 { grid-template-columns:1fr !important; } .perf-bar-row { grid-template-columns:1fr; gap:6px; } .perf-bar-row strong { text-align:left; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 micro-closure: compact first screen, no badge placeholder, visible pitch, clearer action
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact the first screen: decision + identity + signals should feel like one product card. */
+.exec-card-shell { padding: 16px 18px !important; margin: 8px 0 18px 0 !important; }
+.exec-decision-hero-final { padding: 14px 16px !important; margin-bottom: 12px !important; grid-template-columns: minmax(340px,.95fr) 108px minmax(520px,1.5fr) !important; }
+.exec-decision-name { font-size: 1.42rem !important; }
+.exec-decision-thesis { font-size: .82rem !important; line-height: 1.35 !important; }
+.exec-decision-scorebox b { font-size: 2.30rem !important; }
+.exec-decision-group { padding: 8px 9px !important; }
+.exec-decision-group-grid div { min-height: 50px !important; padding: 6px 7px !important; }
+.exec-card-top { gap: 12px !important; margin-top: 10px !important; grid-template-columns: minmax(0,1.03fr) minmax(0,.97fr) !important; }
+.exec-identity-panel, .exec-signals-panel { padding: 13px 14px !important; min-height: 0 !important; }
+.exec-identity-grid { grid-template-columns: 76px minmax(0,1fr) !important; gap: 12px !important; align-items: center !important; }
+.exec-player-avatar { width: 70px !important; height: 84px !important; border-radius: 17px !important; font-size: 1.48rem !important; }
+.exec-club-shield-empty { display: none !important; }
+.exec-player-title { font-size: 1.46rem !important; margin-bottom: 5px !important; }
+.exec-player-clubline { gap: 6px !important; margin-bottom: 8px !important; font-size: .82rem !important; }
+.exec-league-pill, .exec-position-pill, .exec-role-pill { padding: 5px 8px !important; font-size: .68rem !important; }
+.exec-meta-grid { gap: 7px !important; }
+.exec-meta-item { min-height: 47px !important; padding: 7px 8px !important; }
+.exec-meta-item span { font-size: .60rem !important; }
+.exec-meta-item b { font-size: .82rem !important; }
+.exec-flex-line { gap: 6px !important; margin-top: 8px !important; }
+.exec-signals-grid { grid-template-columns: repeat(5, minmax(0,1fr)) !important; gap: 7px !important; }
+.exec-signal-card { min-height: 84px !important; padding: 9px 9px !important; border-radius: 14px !important; }
+.exec-signal-value { font-size: 1.42rem !important; margin: 9px 0 4px 0 !important; }
+.exec-signal-status { font-size: .62rem !important; padding: 4px 6px !important; }
+.exec-assessment-strip { padding: 8px 10px !important; margin-top: 8px !important; font-size: .75rem !important; }
+.exec-decision-drivers { margin-top: 7px !important; gap: 6px !important; }
+.exec-decision-driver { padding: 6px 8px !important; font-size: .68rem !important; }
+
+/* Keep the field visible as a compact tactical asset, not only hidden in a disclosure. */
+.exec-visible-pitch-panel {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:13px 15px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045); margin: 12px 0 12px 0;
+}
+.exec-visible-pitch-grid { display:grid; grid-template-columns: minmax(0, .72fr) minmax(320px,.28fr); gap:13px; align-items:center; }
+.exec-pitch-compact { min-height: 142px !important; max-height: 170px !important; aspect-ratio: 1.88 / 1 !important; }
+.exec-pitch-compact .exec-pos-marker { transform: translate(-50%, -50%) scale(.88) !important; }
+.exec-visible-pitch-side { min-width:0; }
+.exec-visible-pitch-side .exec-position-distribution, .exec-visible-pitch-side .exec-position-bars { margin-top: 8px !important; }
+.exec-visible-pitch-panel + .exec-decision-support-grid { margin-top: 12px !important; }
+.exec-context-details .exec-role-panel:first-child { display:none !important; }
+.exec-context-body { grid-template-columns: 1fr !important; }
+
+/* Recommendation must end with one explicit football action. */
+.exec-final-action-line {
+    margin-top: 10px; padding: 9px 11px; border-radius: 13px; border: 1px solid #bfdbfe;
+    background: #eff6ff; color: #1e3a8a; font-size: .76rem; font-weight: 950; line-height: 1.28;
+}
+
+/* Lower report and explainability read as supporting evidence, not a second decision screen. */
+.scouting-report-title { letter-spacing: -0.02em !important; }
+.market-drivers-title { font-size: 1.02rem !important; }
+.market-drivers-subtitle { max-width: 980px !important; }
+
+@media(max-width:1500px){
+  .exec-decision-hero-final, .exec-card-top, .exec-visible-pitch-grid { grid-template-columns: 1fr !important; }
+  .exec-signals-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+}
+@media(max-width:900px){ .exec-signals-grid, .exec-meta-grid { grid-template-columns: 1fr !important; } }
 </style>
 """,
     unsafe_allow_html=True,

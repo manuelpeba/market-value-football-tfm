@@ -141,3 +141,29 @@ artifacts/predictions/*
 # MLflow metadata
 artifacts/metadata/*.db
 artifacts/backups/
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+
+# MLflow
+mlruns/
+
+# Artifacts
+artifacts/
+
+# Logs
+logs/
+
+# Raw data
+data/raw/
+
+# Notebooks
+notebooks/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+

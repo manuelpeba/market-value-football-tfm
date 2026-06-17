@@ -1,0 +1,14 @@
+{
+  "tm10_source_audit": {
+    "transfermarkt_features_path": "data\\processed\\transfermarkt_features_v13a.parquet",
+    "current_snapshot_path": "data\\processed\\current_player_snapshot.parquet",
+    "transfermarkt_rows": 616377,
+    "transfermarkt_players": 39361,
+    "valuation_date_column": "valuation_date",
+    "valuation_date_max": "2026-03-30 00:00:00",
+    "current_snapshot_exists": true,
+    "current_snapshot_rows": 17430,
+    "current_snapshot_players": 17430,
+    "current_snapshot_valuation_date_max": "2026-03-27 00:00:00"
+  }
+}
