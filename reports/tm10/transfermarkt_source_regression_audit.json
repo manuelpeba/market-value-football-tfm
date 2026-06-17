@@ -1,0 +1,35 @@
+{
+  "processed_transfermarkt_features": {
+    "path": "data\\processed\\transfermarkt_features_v13a.parquet",
+    "rows": 616377,
+    "players": 39361,
+    "date_column": "valuation_date",
+    "date_min": "2000-01-20 00:00:00",
+    "date_max": "2026-03-30 00:00:00"
+  },
+  "current_player_snapshot": {
+    "path": "data\\processed\\current_player_snapshot.parquet",
+    "rows": 17430,
+    "players": 17430,
+    "date_column": "current_valuation_date",
+    "date_min": "2008-04-16 00:00:00",
+    "date_max": "2026-03-27 00:00:00"
+  },
+  "raw_kaggle_update": {
+    "path": "data\\raw\\transfermarkt\\update_2025_2026\\player_valuations.csv",
+    "rows": 507815,
+    "players": 31507,
+    "date_column": "date",
+    "date_min": "2000-01-20 00:00:00",
+    "date_max": "2026-02-27 00:00:00"
+  },
+  "regression_assessment": {
+    "status": "SOURCE_REGRESSION_DETECTED",
+    "official_source_to_keep": "data/processed/transfermarkt_features_v13a.parquet",
+    "raw_update_should_replace_official": false,
+    "date_max_processed": "2026-03-30 00:00:00",
+    "date_max_raw_update": "2026-02-27 00:00:00",
+    "rows_delta_raw_minus_processed": -108562,
+    "players_delta_raw_minus_processed": -7854
+  }
+}
