@@ -167,3 +167,4 @@ notebooks/
 # Streamlit secrets
 .streamlit/secrets.toml
 
+environment.local.yml
