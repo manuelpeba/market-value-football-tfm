@@ -6,10 +6,32 @@ import re
 import html
 import sys
 import unicodedata
+import difflib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+# =========================================================
+# TM6.9 HEADER EXTRACTION LAYER (GENERATED)
+# =========================================================
+def render_search():
+    import streamlit as st
+    return st.text_input("Search", label_visibility="collapsed")
+
+def render_context_state():
+    import streamlit as st
+    st.markdown("**Contexto activo**")
+    if "context_chip_renderer" in globals():
+        context_chip_renderer()
+    else:
+        st.caption("Filtros activos aplicados")
+
+def render_filter_summary():
+    import streamlit as st
+    st.markdown("**Filtros**")
+    st.caption("Edad · Min · Conf")
+
 
 
 # =============================================================================
@@ -7006,6 +7028,68 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# TM.6.9 final micro-closure patch: 50/50 pitch, compact identity, signal cleanup
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Player Intelligence: final professional polish for Director Deportivo view. */
+.exec-card-shell { padding: 16px 18px !important; }
+.exec-card-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; align-items: stretch !important; }
+.exec-identity-panel, .exec-signals-panel { min-height: 0 !important; height: 100% !important; }
+.exec-identity-grid { grid-template-columns: 76px minmax(0,1fr) !important; align-items: start !important; }
+.exec-player-title { font-size: 1.50rem !important; line-height: 1.05 !important; }
+.exec-meta-grid { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+.exec-specialisation-pill { gap: 7px !important; background:#eff6ff !important; border-color:#bfdbfe !important; color:#1e3a8a !important; }
+.exec-specialisation-pill > span { display:inline-flex !important; align-items:center !important; gap:4px !important; font-weight:950 !important; }
+.exec-specialisation-pill > b { color:#0f172a !important; font-size:.70rem !important; font-weight:950 !important; }
+.exec-specialisation-pill .exec-info { margin-left: 2px !important; background:#2563eb !important; color:#fff !important; border-color:#1d4ed8 !important; }
+.exec-identity-bottom-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:8px; margin-top:12px; }
+.exec-identity-bottom-grid div { border:1px solid #e2e8f0; border-radius:13px; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); padding:8px 9px; min-height:54px; }
+.exec-identity-bottom-grid span { display:block; color:#64748b; font-size:.61rem; font-weight:950; letter-spacing:.055em; text-transform:uppercase; margin-bottom:3px; }
+.exec-identity-bottom-grid b { display:block; color:#0f172a; font-size:.86rem; font-weight:950; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exec-identity-bottom-grid small { display:block; color:#64748b; font-size:.62rem; font-weight:800; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Avoid duplicate executive information: signal cards are the canonical signal view. */
+.exec-signals-panel .exec-decision-drivers { display:none !important; }
+.exec-signals-grid { grid-template-columns: repeat(5, minmax(0,1fr)) !important; }
+.exec-signal-card { min-height: 92px !important; }
+.exec-assessment-strip { margin-top: 9px !important; }
+/* Position module: true 50/50 split and a more realistic 105x68 pitch ratio. */
+.exec-visible-pitch-panel { padding: 14px 16px !important; }
+.exec-visible-pitch-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap:16px !important; align-items:stretch !important; }
+.exec-visible-pitch-side { display:flex !important; flex-direction:column !important; justify-content:center !important; min-height: 210px !important; border:1px solid #e2e8f0 !important; border-radius:16px !important; background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important; padding:14px 16px !important; }
+.exec-pitch, .exec-pitch-compact { aspect-ratio: 1.545 / 1 !important; min-height: 210px !important; max-height: 280px !important; height:auto !important; border-radius:20px !important; background: radial-gradient(circle at 50% 50%, transparent 0 34px, rgba(255,255,255,.72) 35px 36px, transparent 37px), radial-gradient(circle at 11% 50%, rgba(255,255,255,.85) 0 2px, transparent 3px), radial-gradient(circle at 89% 50%, rgba(255,255,255,.85) 0 2px, transparent 3px), linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.78) 49.85%, rgba(255,255,255,.78) 50.15%, transparent 50.45%), repeating-linear-gradient(90deg, rgba(255,255,255,.060) 0 10%, rgba(255,255,255,0) 10% 20%), linear-gradient(135deg,#2f8f58 0%,#25794d 47%,#1f6e45 100%) !important; box-shadow: inset 0 0 0 2px rgba(255,255,255,.42), 0 14px 28px rgba(15,23,42,.10) !important; }
+.exec-pitch::before, .exec-pitch::after { top: 30% !important; bottom: 30% !important; width: 13% !important; height:auto !important; border:1.5px solid rgba(255,255,255,.68) !important; }
+.exec-pitch::before { left:0 !important; border-left:0 !important; border-radius:0 13px 13px 0 !important; }
+.exec-pitch::after { right:0 !important; border-right:0 !important; border-radius:13px 0 0 13px !important; }
+.exec-pitch-compact .exec-pos-marker { transform: translate(-50%, -50%) scale(.95) !important; }
+.exec-pitch-overlay { display:none !important; }
+.exec-position-bars { margin-top: 14px !important; display:grid !important; gap:10px !important; }
+.exec-position-bar-row { grid-template-columns: 48px minmax(0,1fr) 46px !important; font-size:.76rem !important; }
+.exec-position-bar-track { height:10px !important; }
+.exec-position-bar-fill { background:linear-gradient(90deg,#2563eb,#4f6cff) !important; }
+.exec-position-bar-fill.secondary { background:#93c5fd !important; }
+/* Watchlist card: actionable, not empty. */
+.exec-watchlist-details { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.exec-watchlist-details div { border:1px solid #e2e8f0; background:#ffffff; border-radius:12px; padding:8px 9px; }
+.exec-watchlist-details span { display:block; color:#64748b; font-size:.61rem; font-weight:950; text-transform:uppercase; letter-spacing:.055em; margin-bottom:3px; }
+.exec-watchlist-details b { display:block; color:#0f172a; font-size:.75rem; font-weight:950; line-height:1.15; }
+.exec-decision-support-grid { grid-template-columns: 1fr 1fr 1fr !important; align-items:stretch !important; }
+.exec-readiness-card, .exec-watchlist-card, .exec-rank-context-card { min-height: 190px !important; }
+@media(max-width:1500px){
+  .exec-card-top, .exec-visible-pitch-grid, .exec-decision-support-grid { grid-template-columns: 1fr !important; }
+  .exec-visible-pitch-side { min-height: 0 !important; }
+}
+@media(max-width:900px){
+  .exec-identity-bottom-grid, .exec-signals-grid, .exec-watchlist-details { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -10393,24 +10477,63 @@ def _tm69_position_set(ctx: dict) -> tuple[str, list[str]]:
     return primary, list(dict.fromkeys(candidates))[:3]
 
 
-def _tm69_position_markers(primary: str, secondary: list[str]) -> str:
-    # Horizontal football pitch: own goal on the left, opponent goal on the right.
-    # This is closer to scouting platforms and avoids the old 90-degree rotated field.
-    coords = {
-        "GK": (10, 50),
-        "CB": (25, 50), "RB": (28, 72), "LB": (28, 28), "FB": (28, 72), "WB": (38, 78),
-        "DM": (42, 50), "CM": (52, 50), "AM": (64, 50),
-        "RW": (74, 76), "LW": (74, 24), "W": (74, 76),
-        "SS": (80, 50), "CF": (88, 50), "ATT": (88, 50), "MID": (52, 50), "DEF": (25, 50),
-    }
-    active = [primary] + [s for s in secondary if s != primary]
-    html_rows = []
-    for code in ["GK", "CB", "RB", "LB", "DM", "CM", "AM", "LW", "RW", "CF"]:
-        x, y = coords[code]
-        css = "primary" if code == primary else ("secondary" if code in active else "")
-        html_rows.append(f"<div class='exec-pos-marker {css}' style='left:{x}%;top:{y}%;'>{html.escape(code)}</div>")
-    return "".join(html_rows)
+def _tm69_position_marker_keys(code: str) -> set[str]:
+    """Map Scouting IQ taxonomy to a 4-3-3 positional board.
 
+    The field uses professional scouting labels rather than generic model labels:
+    POR; LI/CTI/CTD/LD; MC/MCO/MC; EI/DC/ED. When the data only exposes a broad
+    taxonomy (for instance CB or DEF), the marker highlights the natural zone(s)
+    instead of inventing a left/right side.
+    """
+    code = str(code or "").upper().strip()
+    mapping = {
+        "GK": {"GK"}, "POR": {"GK"},
+        "LB": {"LB"}, "LI": {"LB"},
+        "RB": {"RB"}, "LD": {"RB"},
+        "FB": {"LB", "RB"}, "WB": {"LB", "RB"},
+        "CB": {"LCB", "RCB"}, "DEF": {"LCB", "RCB"},
+        "DM": {"DM"},
+        "CM": {"LCM", "RCM"}, "MID": {"LCM", "RCM"},
+        "AM": {"AM"},
+        "LW": {"LW"}, "EI": {"LW"},
+        "RW": {"RW"}, "ED": {"RW"},
+        "W": {"LW", "RW"},
+        "CF": {"CF"}, "ST": {"CF"}, "DC": {"CF"}, "ATT": {"CF"}, "FWD": {"CF"}, "FW": {"CF"},
+    }
+    return mapping.get(code, set())
+
+
+def _tm69_position_markers(primary: str, secondary: list[str]) -> str:
+    """Render a 4-3-3 tactical board with real 105x68 pitch proportions."""
+    is_en = globals().get("LANG") == "EN"
+    # x/y use a horizontal 105x68 pitch: own goal left, attacking goal right.
+    slots = [
+        ("GK", 7, 50, "GK" if is_en else "POR"),
+        ("LB", 22, 20, "LB" if is_en else "LI"),
+        ("LCB", 22, 41, "LCB" if is_en else "CTI"),
+        ("RCB", 22, 59, "RCB" if is_en else "CTD"),
+        ("RB", 22, 80, "RB" if is_en else "LD"),
+        ("LCM", 50, 35, "CM" if is_en else "MC"),
+        ("AM", 61, 50, "AM" if is_en else "MCO"),
+        ("RCM", 50, 65, "CM" if is_en else "MC"),
+        ("LW", 80, 20, "LW" if is_en else "EI"),
+        ("CF", 90, 50, "ST" if is_en else "DC"),
+        ("RW", 80, 80, "RW" if is_en else "ED"),
+    ]
+    primary_keys = _tm69_position_marker_keys(primary)
+    secondary_keys: set[str] = set()
+    for sec in secondary or []:
+        secondary_keys |= _tm69_position_marker_keys(sec)
+    secondary_keys -= primary_keys
+
+    rows = []
+    for key, x, y, label in slots:
+        css = "primary" if key in primary_keys else ("secondary" if key in secondary_keys else "")
+        title = "Dominant" if (is_en and key in primary_keys) else ("Dominante" if key in primary_keys else ("Secondary" if is_en else "Secundaria"))
+        rows.append(
+            f"<div class='exec-pos-marker {css}' data-slot='{html.escape(key)}' title='{html.escape(title)}' style='left:{x}%;top:{y}%;'>{html.escape(label)}</div>"
+        )
+    return "".join(rows)
 
 def _tm69_signal_title(metric: str) -> str:
     is_en = globals().get("LANG") == "EN"
@@ -11023,7 +11146,7 @@ def _tm69_market_benchmark_html(ctx: dict, player_name: str, market_value: float
     avg_txt = format_money_short(avg_comp)
     discount_txt = "N/A" if pd.isna(discount) else f"{discount*100:+.0f}%"
     rows = "".join(
-        f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape('Peer band' if (pd.isna(s) and is_en) else ('Banda peer' if pd.isna(s) else f'{s:.0f} sim'))}</span><strong>{html.escape(format_money_short(v))}</strong></div>"
+        f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape('Valuation band' if (pd.isna(s) and is_en) else ('Banda de valoración' if pd.isna(s) else f'{s:.0f} sim'))}</span><strong>{html.escape(format_money_short(v))}</strong></div>"
         for n,v,s in comps[:3]
     )
     return f"""
@@ -11044,7 +11167,7 @@ def _tm69_career_trajectory_html(ctx: dict, market_value: float, expected_value:
     current = market_value if pd.notna(market_value) else expected_value
     if pd.isna(current):
         current = 0
-    prev = _tm69_numeric(ctx, ["market_value_prev_eur", "tm69_market_value_prev_eur"])
+    prev = _tm69_numeric(ctx, ["season_context_market_value_eur", "market_value_eur", "tm69_season_context_market_value_eur", "market_value_prev_eur", "tm69_market_value_prev_eur"])
     if pd.isna(prev) and current:
         rate = 0.0 if pd.isna(growth_1y) else float(growth_1y)
         if abs(rate) <= 3:
@@ -11193,11 +11316,24 @@ def _tm69_watchlist_status_html(status: str, gap_pct: float, risk: float, contra
         stage = "Shortlist" if is_en else "Shortlist"
         copy = "Relevant profile; requires additional validation before activation." if is_en else "Perfil relevante; requiere validación adicional antes de activar."
         css = "shortlist"
+    review = "30 days" if is_en else "30 días"
+    trigger = "Fee expectation improves" if is_en else "Fee ≤ fair value / banda objetivo"
+    priority = "Medium" if is_en else "Media"
+    if css == "priority":
+        priority = "High" if is_en else "Alta"
+        trigger = "Club-specific fit validation" if is_en else "Validación de encaje por club"
+    elif css == "shortlist":
+        priority = "Medium-high" if is_en else "Media-alta"
     return f"""
     <div class="exec-watchlist-card exec-watchlist-{css}">
         <div class="exec-recruitment-eyebrow">{html.escape('Watchlist status' if is_en else 'Estado watchlist')}</div>
         <div class="exec-watchlist-stage">{html.escape(stage)}</div>
         <div class="exec-watchlist-copy">{html.escape(copy)}</div>
+        <div class="exec-watchlist-details">
+            <div><span>{html.escape('Review' if is_en else 'Revisión')}</span><b>{html.escape(review)}</b></div>
+            <div><span>{html.escape('Buy trigger' if is_en else 'Trigger compra')}</span><b>{html.escape(trigger)}</b></div>
+            <div><span>{html.escape('Scouting priority' if is_en else 'Prioridad scouting')}</span><b>{html.escape(priority)}</b></div>
+        </div>
     </div>
     """
 
@@ -11419,8 +11555,14 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
                     </div>
                     <div class="exec-flex-line">
                         <span class="exec-role-pill">{html.escape('Born' if is_en else 'Nacimiento')}: {html.escape(birth_txt)}</span>
-                        <span class="exec-role-pill">{html.escape('Specialisation' if is_en else 'Especialización')} {tip_purity}: {html.escape(role_conf_quality)}</span>
+                        <span class="exec-role-pill exec-specialisation-pill"><span>{html.escape('Specialisation' if is_en else 'Especialización')}</span><b>{html.escape(role_conf_quality)} {tip_purity}</b></span>
                         <span class="exec-role-pill">{html.escape('Role Engine profile' if is_en else 'Perfil Role Engine')}</span>
+                    </div>
+                    <div class="exec-identity-bottom-grid">
+                        <div><span>{html.escape('TM Value' if is_en else 'Valor TM')}</span><b>{html.escape(market_txt)}</b><small>{html.escape('current Transfermarkt' if is_en else 'Transfermarkt actual')}</small></div>
+                        <div><span>{html.escape('IQ Fair Value' if is_en else 'Fair Value IQ')}</span><b>{html.escape(expected_txt)}</b><small>{html.escape('model estimate' if is_en else 'estimación modelo')}</small></div>
+                        <div><span>{html.escape('Current Gap' if is_en else 'Gap actual')}</span><b>{html.escape(gap_txt)}</b><small>{html.escape('IQ vs TM' if is_en else 'IQ vs TM')}</small></div>
+                        <div><span>{html.escape('Expected Fee' if is_en else 'Fee esperado')}</span><b>{html.escape(transfer_band)}</b><small>{html.escape('indicative band' if is_en else 'banda indicativa')}</small></div>
                     </div>
                 </div>
             </div>
@@ -12458,8 +12600,7 @@ def render_player_radar_benchmarking(shortlist_df: pd.DataFrame, show_snapshot: 
             f"""
 <div class="tm4-section-header tm4-performance-header">
     <div>
-        <div class="tm4-section-eyebrow">PLAYER INTELLIGENCE</div>
-        <div class="tm4-section-title">2. Performance Benchmark
+        <div class="tm4-section-title">{'Position Benchmark' if LANG == 'EN' else 'Benchmark posicional'}
             <details class="module-info-details">
                 <summary>i</summary>
                 <div><b>{UI('Radar scouting')}:</b> {html.escape(str(radar_help))}</div>
@@ -14813,19 +14954,23 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         return
 
     st.markdown("<div class='similar-final-controls'>", unsafe_allow_html=True)
-    controls = st.columns([1.55, 0.75, 0.85, 0.55])
-    with controls[0]:
-        target_player = st.selectbox(TXT("Jugador de referencia"), options, key="sprint11_similarity_target")
-    with controls[1]:
+    target_player = st.selectbox(
+        TXT("Jugador de referencia"),
+        options,
+        key="sprint11_similarity_target",
+        use_container_width=True,
+    )
+    secondary_controls = st.columns([0.75, 0.85, 0.55, 1.85])
+    with secondary_controls[0]:
         restrict_same_position = st.checkbox(UI("Misma posición"), value=True, key="sprint11_similarity_same_position")
-    with controls[2]:
+    with secondary_controls[1]:
         restrict_same_role_context = st.checkbox(
             "Rol/taxonomía" if LANG == "ES" else "Role/taxonomy",
             value=True,
             key="sprint11_similarity_same_role_context",
             help="Filtra comparables por taxonomía posicional y rol primario." if LANG == "ES" else "Filters comparables by taxonomy and primary role.",
         )
-    with controls[3]:
+    with secondary_controls[2]:
         top_n = st.selectbox("Top", [5, 8, 10, 15, 20], index=2, key="sprint11_similarity_top_n_select")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -15090,11 +15235,21 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         selector_df = selector_df.sort_values("opportunity_score", ascending=False)
 
     options = selector_df[name_col].astype(str).drop_duplicates().tolist()
-    controls = st.columns([1.6, 0.6])
-    with controls[0]:
-        target_player = st.selectbox(TXT("Jugador a sustituir / comparar"), options, key="sprint11_replacement_target")
-    with controls[1]:
-        top_n = st.selectbox(TXT("Número de sustitutos"), [5, 8, 10, 15, 20], index=2, key="sprint11_replacement_top_n_select")
+    target_player = st.selectbox(
+        TXT("Jugador a sustituir / comparar"),
+        options,
+        key="sprint11_replacement_target",
+        use_container_width=True,
+    )
+    st.markdown("<div class='secondary-filter-row'>", unsafe_allow_html=True)
+    top_n = st.selectbox(
+        TXT("Número de sustitutos"),
+        [5, 8, 10, 15, 20],
+        index=2,
+        key="sprint11_replacement_top_n_select",
+        use_container_width=False,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     target_rows = selector_df[selector_df[name_col].astype(str) == str(target_player)]
     if target_rows.empty:
@@ -19854,6 +20009,332 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
     return labels, label_to_raw
 
 
+def _command_entity_type(label: object) -> str:
+    label_str = str(label or "")
+    if label_str.startswith("Player ·"):
+        return "player"
+    if label_str.startswith("Club ·"):
+        return "club"
+    if label_str.startswith("League ·"):
+        return "league"
+    if label_str.startswith("Position ·"):
+        return "position"
+    return "entity"
+
+
+
+def _first_valid_command_value(row: pd.Series, candidates: list[str], default=np.nan):
+    """Return the first non-empty value from a row for the command palette."""
+    for col in candidates:
+        if col in row.index:
+            value = row.get(col)
+            try:
+                if pd.isna(value):
+                    continue
+            except Exception:
+                pass
+            if str(value).strip() not in {"", "nan", "None", "N/A"}:
+                return value
+    return default
+
+
+def _command_row_context(scoring_df: pd.DataFrame, raw_value: str) -> dict:
+    """Enrich one player search result with DSS signals for a scouting-grade preview."""
+    out = {
+        "club": "",
+        "league": "",
+        "position": "",
+        "age": np.nan,
+        "opportunity": np.nan,
+        "risk": np.nan,
+        "contract": np.nan,
+        "growth": np.nan,
+        "market_value": np.nan,
+        "fair_value": np.nan,
+        "gap_pct": np.nan,
+        "gap_eur": np.nan,
+        "rank": np.nan,
+        "action": "",
+    }
+    if scoring_df is None or scoring_df.empty or not raw_value:
+        return out
+    name_col = get_player_name_column(scoring_df)
+    if name_col is None or name_col not in scoring_df.columns:
+        return out
+    raw_norm = normalize_search_text(raw_value)
+    tmp = scoring_df[scoring_df[name_col].fillna("").astype(str).map(normalize_search_text) == raw_norm].copy()
+    if tmp.empty:
+        return out
+    if "opportunity_score" in tmp.columns:
+        tmp = tmp.sort_values("opportunity_score", ascending=False)
+    elif "executive_decision_score_v2" in tmp.columns:
+        tmp = tmp.sort_values("executive_decision_score_v2", ascending=False)
+    row = tmp.iloc[0]
+    out["club"] = str(_first_valid_command_value(row, ["display_club", "current_club", "club", "club_actual"], ""))
+    out["league"] = league_display_name(_first_valid_command_value(row, ["display_league", "current_league", "league"], ""))
+    out["position"] = str(_first_valid_command_value(row, ["position_group", "position", "role_subgroup"], ""))
+    out["age"] = _first_valid_command_value(row, ["current_age", "age", "season_context_age"], np.nan)
+    out["opportunity"] = _first_valid_command_value(row, ["opportunity_score", "opportunity_score_raw", "portfolio_value_score"], np.nan)
+    out["risk"] = _first_valid_command_value(row, ["risk_score", "risk_score_v2", "risk_proxy"], np.nan)
+    out["contract"] = _first_valid_command_value(row, ["contract_opportunity_score", "recruitment_contract_score", "negotiation_leverage_score"], np.nan)
+    out["growth"] = _first_valid_command_value(row, ["growth_score", "growth_index", "growth_score_raw"], np.nan)
+    out["market_value"] = _first_valid_command_value(row, ["current_market_value_eur", "market_value_eur", "market_value_in_eur"], np.nan)
+    out["fair_value"] = _first_valid_command_value(row, ["predicted_market_value_ml_eur", "predicted_market_value_eur", "expected_market_value_eur"], np.nan)
+    out["gap_pct"] = _first_valid_command_value(row, ["market_value_gap_pct", "market_value_gap_pct_winsorized"], np.nan)
+    out["gap_eur"] = _first_valid_command_value(row, ["market_value_gap_eur"], np.nan)
+    out["rank"] = _first_valid_command_value(row, ["opportunity_rank", "rank"], np.nan)
+    out["action"] = str(_first_valid_command_value(row, ["recommended_action", "action", "scouting_action"], ""))
+    return out
+
+
+def _format_command_pct(value: object) -> str:
+    try:
+        x = float(value)
+        if pd.isna(x):
+            return "N/A"
+        # market_value_gap_pct in this project can be ratio-like (2.2) or percent-like (-35).
+        if abs(x) <= 5:
+            x = x * 100
+        return f"{x:+.0f}%"
+    except Exception:
+        return "N/A"
+
+
+def _format_command_score(value: object, default: str = "N/A") -> str:
+    try:
+        x = float(value)
+        if pd.isna(x):
+            return default
+        return f"{x:.0f}"
+    except Exception:
+        return default
+
+
+def rank_global_command_search(
+    scoring_df: pd.DataFrame,
+    query: str,
+    search_options: list[str],
+    label_to_raw: dict[str, str],
+    max_results: int = 6,
+) -> pd.DataFrame:
+    """Hybrid DSS command search: fuzzy retrieval + Opportunity/Risk/Contract ranking."""
+    q_norm = normalize_search_text(query)
+    cols = [
+        "label", "raw", "entity_type", "similarity", "opportunity", "risk", "contract", "growth",
+        "market_value", "fair_value", "gap_pct", "gap_eur", "rank", "action", "typeahead_score",
+        "club", "league", "position", "age"
+    ]
+    if not q_norm:
+        return pd.DataFrame(columns=cols)
+
+    rows = []
+    seen = set()
+    for label in search_options:
+        raw = label_to_raw.get(label, label)
+        entity_type = _command_entity_type(label)
+        dedupe_key = (entity_type, normalize_search_text(raw))
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        label_norm = normalize_search_text(label)
+        raw_norm = normalize_search_text(raw)
+        if not label_norm and not raw_norm:
+            continue
+        label_sim = difflib.SequenceMatcher(None, q_norm, label_norm).ratio()
+        raw_sim = difflib.SequenceMatcher(None, q_norm, raw_norm).ratio()
+        contains_boost = 1.0 if (q_norm in label_norm or q_norm in raw_norm) else 0.0
+        token_boost = 0.0
+        q_tokens = [t for t in q_norm.split() if len(t) >= 2]
+        if q_tokens:
+            token_hits = sum(1 for t in q_tokens if t in label_norm or t in raw_norm)
+            token_boost = token_hits / max(len(q_tokens), 1)
+        text_similarity = max(label_sim, raw_sim, contains_boost, token_boost) * 100.0
+        if text_similarity < 34 and contains_boost == 0 and token_boost < 0.5:
+            continue
+
+        ctx = _command_row_context(scoring_df, raw) if entity_type == "player" else {
+            "club": "", "league": "", "position": "", "age": np.nan, "opportunity": np.nan, "risk": np.nan,
+            "contract": np.nan, "growth": np.nan, "market_value": np.nan, "fair_value": np.nan,
+            "gap_pct": np.nan, "gap_eur": np.nan, "rank": np.nan, "action": "",
+        }
+        opportunity = float(ctx.get("opportunity", np.nan)) if pd.notna(ctx.get("opportunity", np.nan)) else (55.0 if entity_type == "player" else 42.0)
+        risk = float(ctx.get("risk", np.nan)) if pd.notna(ctx.get("risk", np.nan)) else (50.0 if entity_type == "player" else 55.0)
+        contract = float(ctx.get("contract", np.nan)) if pd.notna(ctx.get("contract", np.nan)) else 50.0
+        entity_boost = 5.0 if entity_type == "player" else (2.0 if entity_type in {"club", "league"} else 0.0)
+        # Ranking de búsqueda: texto + señal deportiva/económica. Risk bajo suma.
+        typeahead_score = (0.45 * text_similarity) + (0.35 * opportunity) + (0.20 * (100.0 - risk)) + entity_boost
+        rows.append({
+            "label": label,
+            "raw": raw,
+            "entity_type": entity_type,
+            "similarity": round(text_similarity, 1),
+            "opportunity": round(opportunity, 1),
+            "risk": round(risk, 1),
+            "contract": round(contract, 1) if pd.notna(contract) else np.nan,
+            "growth": ctx.get("growth", np.nan),
+            "market_value": ctx.get("market_value", np.nan),
+            "fair_value": ctx.get("fair_value", np.nan),
+            "gap_pct": ctx.get("gap_pct", np.nan),
+            "gap_eur": ctx.get("gap_eur", np.nan),
+            "rank": ctx.get("rank", np.nan),
+            "action": ctx.get("action", ""),
+            "typeahead_score": round(typeahead_score, 1),
+            "club": ctx.get("club", ""),
+            "league": ctx.get("league", ""),
+            "position": ctx.get("position", ""),
+            "age": ctx.get("age", np.nan),
+        })
+
+    ranked = pd.DataFrame(rows)
+    if ranked.empty:
+        return pd.DataFrame(columns=cols)
+    ranked = ranked.sort_values(["typeahead_score", "similarity"], ascending=False).drop_duplicates(subset=["entity_type", "raw"]).head(max_results)
+    return ranked.reset_index(drop=True)
+
+
+def _command_set_player_context(player_name: str, destination: str | None = None) -> None:
+    """Set common session selectors used across Player/Recruitment/Contract modules."""
+    st.session_state["selected_player"] = player_name
+    st.session_state["contract_selected_player"] = player_name
+    st.session_state["contract_focus_player"] = player_name
+    st.session_state["player_intelligence_report_selector"] = player_name
+    st.session_state["radar_selected_player"] = player_name
+    st.session_state["sprint11_similarity_target"] = player_name
+    st.session_state["sprint11_replacement_target"] = player_name
+    st.session_state["driver_analysis_player"] = player_name
+    if destination:
+        st.session_state.dashboard_navigation_page = destination
+
+
+def render_command_palette_results(results: pd.DataFrame) -> None:
+    """Render compact command-palette rows with scouting previews and quick actions."""
+    if results is None or results.empty:
+        st.markdown(
+            f"<div class='tm69-command-empty'>{html.escape('Sin resultados relevantes' if LANG != 'EN' else 'No relevant results')}</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    top_player = results[results["entity_type"].astype(str) == "player"].head(1)
+    if not top_player.empty:
+        r0 = top_player.iloc[0]
+        insight_bits = []
+        opp_txt = _format_command_score(r0.get("opportunity"))
+        risk_txt = _format_command_score(r0.get("risk"))
+        gap_txt = _format_command_pct(r0.get("gap_pct"))
+        mv_txt = format_money_short(r0.get("market_value"))
+        fv_txt = format_money_short(r0.get("fair_value"))
+        if opp_txt != "N/A":
+            insight_bits.append(f"Opportunity {opp_txt}/100")
+        if gap_txt != "N/A":
+            insight_bits.append(f"Gap {gap_txt}")
+        if risk_txt != "N/A":
+            insight_bits.append(f"Risk {risk_txt}/100")
+        if mv_txt != "N/A" and fv_txt != "N/A":
+            insight_bits.append(f"TM {mv_txt} vs IQ {fv_txt}")
+        insight = " · ".join(insight_bits[:4])
+        st.markdown(
+            f"""
+<div class="tm69-ai-insight">
+    <span>{html.escape('AI Scouting Snapshot' if LANG == 'EN' else 'Scouting IQ Insight')}</span>
+    <b>{html.escape(str(r0.get('raw', '')))}</b>
+    <small>{html.escape(insight)}</small>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="tm69-command-list">', unsafe_allow_html=True)
+    for i, (_, row) in enumerate(results.iterrows()):
+        label = str(row.get("label", ""))
+        raw = str(row.get("raw", ""))
+        entity = str(row.get("entity_type", "entity"))
+        entity_label = {"player": "Jugador", "club": "Club", "league": "Liga", "position": "Posición"}.get(entity, "Entidad") if LANG != "EN" else entity.title()
+        club = str(row.get("club", "") or "")
+        league = str(row.get("league", "") or "")
+        position = str(row.get("position", "") or "")
+        age = row.get("age", np.nan)
+        age_txt = ""
+        try:
+            age_txt = f"{float(age):.0f} años" if LANG != "EN" and pd.notna(age) else (f"{float(age):.0f} yrs" if pd.notna(age) else "")
+        except Exception:
+            age_txt = ""
+        meta = " · ".join([x for x in [club, league, position, age_txt] if str(x).strip()]) or entity_label
+        opp = _format_command_score(row.get("opportunity"))
+        risk = _format_command_score(row.get("risk"))
+        contract = _format_command_score(row.get("contract"))
+        gap = _format_command_pct(row.get("gap_pct"))
+        market_value = format_money_short(row.get("market_value"))
+        fair_value = format_money_short(row.get("fair_value"))
+        score = _format_command_score(row.get("typeahead_score"))
+        rank = row.get("rank", np.nan)
+        try:
+            rank_txt = f"#{int(float(rank))}" if pd.notna(rank) else f"#{i+1}"
+        except Exception:
+            rank_txt = f"#{i+1}"
+
+        st.markdown(
+            f"""
+<div class="tm69-command-row">
+    <div class="tm69-command-rank">{html.escape(rank_txt)}</div>
+    <div class="tm69-command-main">
+        <div class="tm69-command-name">{html.escape(raw)}</div>
+        <div class="tm69-command-meta">{html.escape(meta)}</div>
+    </div>
+    <div class="tm69-command-signals">
+        <span><small>Opp</small><b>{html.escape(opp)}</b></span>
+        <span><small>Gap</small><b>{html.escape(gap)}</b></span>
+        <span><small>Risk</small><b>{html.escape(risk)}</b></span>
+        <span><small>Contract</small><b>{html.escape(contract)}</b></span>
+        <span><small>Value</small><b>{html.escape(market_value)}</b></span>
+        <span><small>IQ</small><b>{html.escape(fair_value)}</b></span>
+    </div>
+    <div class="tm69-command-score"><small>DSS</small><b>{html.escape(score)}</b></div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+        if entity == "player":
+            action_cols = st.columns([0.18, 0.18, 0.20, 0.20, 0.24], gap="small")
+            with action_cols[0]:
+                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Player Intelligence")
+                    st.rerun()
+            with action_cols[1]:
+                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Player Intelligence")
+                    st.session_state["selected_module"] = "Comparables"
+                    st.rerun()
+            with action_cols[2]:
+                if st.button("Recruitment", key=f"tm69_cmd_recruit_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Recruitment Intelligence")
+                    st.rerun()
+            with action_cols[3]:
+                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Strategy Center")
+                    st.session_state["strategy_center_view"] = "Contract Intelligence"
+                    st.rerun()
+            with action_cols[4]:
+                if st.button("Abrir" if LANG != "EN" else "Open", key=f"tm69_cmd_open_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, None)
+                    st.rerun()
+        else:
+            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_{i}_{abs(hash(label))}", use_container_width=True):
+                st.session_state["global_scouting_search"] = label
+                st.session_state["global_scouting_selected_label"] = label
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
 def render_action_badge(label: str) -> str:
     """Modern action badges for the recruitment ranking."""
     raw = str(label)
@@ -20015,6 +20496,212 @@ div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     color: #334155 !important;
     font-size: .88rem !important;
     line-height: 1.45 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.9 Command Palette professional closure: compact overlay/list results
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Command palette should behave like an interaction layer, not like a second dashboard. */
+.tm69-page-search-label-row {
+    margin-bottom: 5px !important;
+}
+.tm69-page-search-label {
+    font-size: .70rem !important;
+    letter-spacing: .11em !important;
+    line-height: 1.0 !important;
+}
+.tm69-page-search-help {
+    font-size: .68rem !important;
+    color: #64748b !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-page-search-label-row) div[data-testid="stTextInput"] {
+    margin-bottom: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-page-search-label-row) div[data-testid="stTextInput"] input {
+    min-height: 44px !important;
+    border-radius: 14px !important;
+    border: 1.5px solid #2563eb !important;
+    box-shadow: 0 7px 18px rgba(37,99,235,.08) !important;
+    font-size: .94rem !important;
+    font-weight: 700 !important;
+}
+.tm69-ai-insight {
+    display: grid;
+    grid-template-columns: 138px minmax(130px,.55fr) minmax(220px,1fr);
+    gap: 10px;
+    align-items: center;
+    margin: 7px 0 6px 0;
+    padding: 8px 10px;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #2563eb;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    box-shadow: 0 8px 18px rgba(15,23,42,.045);
+}
+.tm69-ai-insight span {
+    color:#1d4ed8;
+    font-size:.62rem;
+    font-weight:950;
+    letter-spacing:.085em;
+    text-transform:uppercase;
+}
+.tm69-ai-insight b {
+    color:#0f172a;
+    font-size:.86rem;
+    font-weight:950;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.tm69-ai-insight small {
+    color:#334155;
+    font-size:.70rem;
+    font-weight:800;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.tm69-command-empty {
+    margin-top: 6px;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 850;
+}
+.tm69-command-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 6px;
+}
+.tm69-command-row {
+    display: grid;
+    grid-template-columns: 34px minmax(170px, 1.05fr) minmax(330px, 1.45fr) 52px;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(15,23,42,.035);
+}
+.tm69-command-rank {
+    width: 28px;
+    height: 26px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: .68rem;
+    font-weight: 950;
+}
+.tm69-command-main { min-width: 0; }
+.tm69-command-name {
+    color: #0f172a;
+    font-size: .86rem;
+    font-weight: 950;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-command-meta {
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 750;
+    line-height: 1.1;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-command-signals {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+}
+.tm69-command-signals span {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border: 1px solid #edf2f7;
+    border-radius: 10px;
+    padding: 5px 6px;
+    background: #f8fafc;
+    min-width: 0;
+}
+.tm69-command-signals small,
+.tm69-command-score small {
+    color: #64748b;
+    font-size: .52rem;
+    font-weight: 950;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.tm69-command-signals b,
+.tm69-command-score b {
+    color: #0f172a;
+    font-size: .76rem;
+    font-weight: 950;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-command-score {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px;
+}
+.tm69-command-score b {
+    color: #166534;
+    font-size: .90rem;
+}
+/* Quick-action buttons under each row: compact, toolbar-like. */
+.tm69-command-list + div[data-testid="stHorizontalBlock"],
+div[data-testid="stHorizontalBlock"]:has(button[id*="tm69_cmd_"]) {
+    gap: 5px !important;
+    margin: -3px 0 4px 42px !important;
+    max-width: calc(100% - 42px) !important;
+}
+div[data-testid="stHorizontalBlock"]:has(button[id*="tm69_cmd_"]) button {
+    min-height: 28px !important;
+    padding: .20rem .48rem !important;
+    border-radius: 999px !important;
+    border: 1px solid #dbeafe !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color: #1e3a8a !important;
+    font-size: .68rem !important;
+    font-weight: 900 !important;
+    box-shadow: none !important;
+    white-space: nowrap !important;
+}
+div[data-testid="stHorizontalBlock"]:has(button[id*="tm69_cmd_"]) button:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+/* Legacy card grid no longer used; keep it hidden if any old HTML remains. */
+.tm69-typeahead-grid,
+.tm69-typeahead-card { display: none !important; }
+@media (max-width: 1280px) {
+    .tm69-command-row { grid-template-columns: 34px minmax(180px,1fr) 62px; }
+    .tm69-command-signals { grid-column: 2 / -1; grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .tm69-ai-insight { grid-template-columns: 1fr; }
 }
 </style>
 """,
@@ -20852,10 +21539,11 @@ header[data-testid="stHeader"] {
 )
 
 st.markdown(
-    """
-    <div class="scouting-topbar">
+    f"""
+    <div class="scouting-topbar scouting-topbar-compact-vfinal">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
-        <div class="scouting-topbar-right"><span>✓ Market Value Engine</span><span>✓ Future Asset</span><span>✓ Risk Layer</span><span>✓ Recruitment Intelligence</span><span>✓ Strategy Center</span></div>
+        <div class="scouting-topbar-section">{html.escape(dashboard_page)}</div>
+        <div class="scouting-topbar-breadcrumb">{html.escape('Market › Player › Recruitment › Strategy › Decision' if LANG == 'EN' else 'Market › Player › Recruitment › Strategy › Decisión')}</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -20871,58 +21559,1687 @@ SHOW_COMMAND_PANEL = dashboard_page not in {"Strategy Center", "Methodology"}
 
 # Sprint 13.5 v2: compact command row. Search and active context share the first viewport row
 # only where the command/search layer is relevant.
-if SHOW_COMMAND_PANEL:
-    command_left_col, command_right_col = st.columns([0.52, 0.48], gap="large")
-    context_panel_placeholder = command_right_col.empty()
-else:
-    context_panel_placeholder = st.empty()
+# TM.6.9 closure: title/search/context use a true 50/50 header to avoid three stacked
+# header modules before the player card.
+context_panel_placeholder = st.empty()
+
+def _page_command_copy(page_name: str) -> tuple[str, str, str]:
+    if page_name == "Player Intelligence":
+        return (
+            "PLAYER INTELLIGENCE",
+            "Player Intelligence",
+            "Ficha profesional de scouting: decisión, identidad, mercado, rendimiento y evidencia." if LANG != "EN" else "Professional scouting profile: decision, identity, market, performance and evidence.",
+        )
+    if page_name == "Recruitment Intelligence":
+        return (
+            "RECRUITMENT INTELLIGENCE",
+            "Recruitment Intelligence",
+            "Búsqueda de targets, reemplazos, comparables y validación operativa." if LANG != "EN" else "Target search, replacements, comparables and operational validation.",
+        )
+    return (
+        "MARKET INTELLIGENCE",
+        "Market Intelligence",
+        "Motor de valor, oportunidad, riesgo y priorización del universo prospect." if LANG != "EN" else "Value, opportunity, risk and prospect-universe prioritisation engine.",
+    )
+
+
+
+# =============================================================================
+# TM.6.9b Professional Command Palette: intent-aware compact DSS search
+# =============================================================================
+
+def _tm69_detect_search_intent(query: str) -> dict:
+    """Detect lightweight scouting intents from free text without external dependencies."""
+    q = normalize_search_text(query or "")
+    return {
+        "low_risk": any(x in q for x in ["low risk", "riesgo bajo", "safe", "seguro"]),
+        "undervalued": any(x in q for x in ["undervalued", "infravalorado", "value", "valor", "gap", "cheap", "barato"]),
+        "high_upside": any(x in q for x in ["high upside", "upside", "growth", "crecimiento", "future asset", "joven", "u23"]),
+        "contract": any(x in q for x in ["contract", "contrato", "expiring", "libre", "renovacion", "renovación"]),
+        "replacement": any(x in q for x in ["replacement", "reemplazo", "sustituto", "similar", "compare", "comparar"]),
+    }
+
+
+def _tm69_intent_label(intent: dict) -> str:
+    if not any(intent.values()):
+        return "Player lookup" if LANG == "EN" else "Búsqueda jugador"
+    labels_es = []
+    labels_en = []
+    if intent.get("undervalued"):
+        labels_es.append("valor infravalorado"); labels_en.append("undervalued")
+    if intent.get("low_risk"):
+        labels_es.append("riesgo bajo"); labels_en.append("low risk")
+    if intent.get("high_upside"):
+        labels_es.append("alto upside"); labels_en.append("high upside")
+    if intent.get("contract"):
+        labels_es.append("señal contractual"); labels_en.append("contract signal")
+    if intent.get("replacement"):
+        labels_es.append("comparables/reemplazo"); labels_en.append("replacement")
+    return " · ".join(labels_en if LANG == "EN" else labels_es)
+
+
+def rank_global_command_search(
+    scoring_df: pd.DataFrame,
+    query: str,
+    search_options: list[str],
+    label_to_raw: dict[str, str],
+    max_results: int = 6,
+) -> pd.DataFrame:
+    """Professional hybrid DSS command search: fuzzy retrieval + intent-aware sporting ranking."""
+    q_norm = normalize_search_text(query)
+    intent = _tm69_detect_search_intent(query)
+    cols = [
+        "label", "raw", "entity_type", "similarity", "opportunity", "risk", "contract", "growth",
+        "market_value", "fair_value", "gap_pct", "gap_eur", "rank", "action", "typeahead_score",
+        "club", "league", "position", "age", "intent_label", "why_positive", "why_negative"
+    ]
+    if not q_norm:
+        return pd.DataFrame(columns=cols)
+
+    rows = []
+    seen = set()
+    q_tokens = [t for t in q_norm.split() if len(t) >= 2]
+    for label in search_options:
+        raw = label_to_raw.get(label, label)
+        entity_type = _command_entity_type(label)
+        dedupe_key = (entity_type, normalize_search_text(raw))
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        label_norm = normalize_search_text(label)
+        raw_norm = normalize_search_text(raw)
+        if not label_norm and not raw_norm:
+            continue
+
+        label_sim = difflib.SequenceMatcher(None, q_norm, label_norm).ratio()
+        raw_sim = difflib.SequenceMatcher(None, q_norm, raw_norm).ratio()
+        contains_boost = 1.0 if (q_norm in label_norm or q_norm in raw_norm) else 0.0
+        token_boost = 0.0
+        if q_tokens:
+            token_hits = sum(1 for t in q_tokens if t in label_norm or t in raw_norm)
+            token_boost = token_hits / max(len(q_tokens), 1)
+        text_similarity = max(label_sim, raw_sim, contains_boost, token_boost) * 100.0
+
+        # Intent queries are allowed to retrieve more broadly; pure player lookup remains stricter.
+        intent_query = any(intent.values())
+        if not intent_query and text_similarity < 34 and contains_boost == 0 and token_boost < 0.5:
+            continue
+        if intent_query and entity_type != "player":
+            continue
+        if intent_query and text_similarity < 18 and token_boost < 0.25:
+            # Keep intent search broad, but avoid unrelated names when the query contains no sporting terms in the label.
+            sporting_terms = ["risk", "riesgo", "value", "valor", "growth", "crecimiento", "contract", "contrato", "u23"]
+            if not any(t in q_norm for t in sporting_terms):
+                continue
+
+        ctx = _command_row_context(scoring_df, raw) if entity_type == "player" else {
+            "club": "", "league": "", "position": "", "age": np.nan, "opportunity": np.nan, "risk": np.nan,
+            "contract": np.nan, "growth": np.nan, "market_value": np.nan, "fair_value": np.nan,
+            "gap_pct": np.nan, "gap_eur": np.nan, "rank": np.nan, "action": "",
+        }
+        opportunity = float(ctx.get("opportunity", np.nan)) if pd.notna(ctx.get("opportunity", np.nan)) else (55.0 if entity_type == "player" else 42.0)
+        risk = float(ctx.get("risk", np.nan)) if pd.notna(ctx.get("risk", np.nan)) else (50.0 if entity_type == "player" else 55.0)
+        contract = float(ctx.get("contract", np.nan)) if pd.notna(ctx.get("contract", np.nan)) else 50.0
+        growth = float(ctx.get("growth", np.nan)) if pd.notna(ctx.get("growth", np.nan)) else 50.0
+        gap_pct_raw = ctx.get("gap_pct", np.nan)
+        try:
+            gap_for_score = float(gap_pct_raw)
+            if abs(gap_for_score) <= 5:
+                gap_for_score *= 100
+        except Exception:
+            gap_for_score = 0.0
+
+        entity_boost = 6.0 if entity_type == "player" else (2.0 if entity_type in {"club", "league"} else 0.0)
+        intent_boost = 0.0
+        if intent.get("low_risk"):
+            intent_boost += max(0.0, 100.0 - risk) * 0.18
+        if intent.get("undervalued"):
+            intent_boost += opportunity * 0.10 + max(0.0, gap_for_score) * 0.08
+        if intent.get("high_upside"):
+            intent_boost += growth * 0.12 + opportunity * 0.06
+        if intent.get("contract"):
+            intent_boost += contract * 0.14
+        if intent.get("replacement"):
+            intent_boost += text_similarity * 0.06
+
+        # Ranking de búsqueda: texto + señal deportiva/económica. Risk bajo suma.
+        typeahead_score = (0.42 * text_similarity) + (0.34 * opportunity) + (0.18 * (100.0 - risk)) + (0.06 * contract) + entity_boost + intent_boost
+
+        positives = []
+        negatives = []
+        if opportunity >= 80:
+            positives.append(f"Opportunity {opportunity:.0f}")
+        if growth >= 75:
+            positives.append(f"Growth {growth:.0f}")
+        if risk <= 25:
+            positives.append(("Riesgo bajo" if LANG != "EN" else "Low risk"))
+        if contract >= 65:
+            positives.append(("Timing contractual" if LANG != "EN" else "Contract timing"))
+        if gap_for_score >= 20:
+            positives.append(f"Gap {_format_command_pct(gap_pct_raw)}")
+        if risk >= 60:
+            negatives.append(("Riesgo elevado" if LANG != "EN" else "High risk"))
+        if gap_for_score < -15:
+            negatives.append(("Precio por encima de IQ" if LANG != "EN" else "Price above IQ"))
+        if contract < 35:
+            negatives.append(("Contrato protegido" if LANG != "EN" else "Protected contract"))
+
+        rows.append({
+            "label": label,
+            "raw": raw,
+            "entity_type": entity_type,
+            "similarity": round(text_similarity, 1),
+            "opportunity": round(opportunity, 1),
+            "risk": round(risk, 1),
+            "contract": round(contract, 1) if pd.notna(contract) else np.nan,
+            "growth": ctx.get("growth", np.nan),
+            "market_value": ctx.get("market_value", np.nan),
+            "fair_value": ctx.get("fair_value", np.nan),
+            "gap_pct": ctx.get("gap_pct", np.nan),
+            "gap_eur": ctx.get("gap_eur", np.nan),
+            "rank": ctx.get("rank", np.nan),
+            "action": ctx.get("action", ""),
+            "typeahead_score": round(typeahead_score, 1),
+            "club": ctx.get("club", ""),
+            "league": ctx.get("league", ""),
+            "position": ctx.get("position", ""),
+            "age": ctx.get("age", np.nan),
+            "intent_label": _tm69_intent_label(intent),
+            "why_positive": " · ".join(positives[:3]),
+            "why_negative": " · ".join(negatives[:2]),
+        })
+
+    ranked = pd.DataFrame(rows)
+    if ranked.empty:
+        return pd.DataFrame(columns=cols)
+    ranked = ranked.sort_values(["typeahead_score", "similarity"], ascending=False).drop_duplicates(subset=["entity_type", "raw"]).head(max_results)
+    return ranked.reset_index(drop=True)
+
+
+def _tm69_add_to_watchlist(player_name: str) -> None:
+    wl = st.session_state.get("tm69_watchlist", [])
+    if player_name and player_name not in wl:
+        wl.append(player_name)
+    st.session_state["tm69_watchlist"] = wl
+
+
+def render_command_palette_results(results: pd.DataFrame) -> None:
+    """Render professional compact command-palette rows with scouting previews and action continuity."""
+    if results is None or results.empty:
+        st.markdown(
+            f"<div class='tm69-command-empty'>{html.escape('Sin resultados relevantes. Prueba con un jugador, club, liga o intención como infravalorado U23.' if LANG != 'EN' else 'No relevant results. Try a player, club, league or intent such as undervalued U23.')}</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    top_player = results[results["entity_type"].astype(str) == "player"].head(1)
+    if not top_player.empty:
+        r0 = top_player.iloc[0]
+        opp_txt = _format_command_score(r0.get("opportunity"))
+        risk_txt = _format_command_score(r0.get("risk"))
+        gap_txt = _format_command_pct(r0.get("gap_pct"))
+        mv_txt = format_money_short(r0.get("market_value"))
+        fv_txt = format_money_short(r0.get("fair_value"))
+        positive = str(r0.get("why_positive", "") or "")
+        negative = str(r0.get("why_negative", "") or "")
+        why = positive or ("Señal suficiente para revisión ejecutiva" if LANG != "EN" else "Sufficient signal for executive review")
+        if negative:
+            why = f"{why} · ⚠ {negative}"
+        st.markdown(
+            f"""
+<div class="tm69-ai-insight tm69-ai-insight-pro">
+    <div><span>{html.escape('Scouting IQ Insight')}</span><b>{html.escape(str(r0.get('raw', '')))}</b></div>
+    <small>{html.escape('Opportunity')} {html.escape(opp_txt)}/100 · Gap {html.escape(gap_txt)} · Risk {html.escape(risk_txt)}/100 · TM {html.escape(mv_txt)} vs IQ {html.escape(fv_txt)}</small>
+    <em>{html.escape(why)}</em>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="tm69-command-list tm69-command-list-pro">', unsafe_allow_html=True)
+    for i, (_, row) in enumerate(results.iterrows()):
+        label = str(row.get("label", ""))
+        raw = str(row.get("raw", ""))
+        entity = str(row.get("entity_type", "entity"))
+        entity_label = {"player": "Jugador", "club": "Club", "league": "Liga", "position": "Posición"}.get(entity, "Entidad") if LANG != "EN" else entity.title()
+        club = str(row.get("club", "") or "")
+        league = str(row.get("league", "") or "")
+        position = str(row.get("position", "") or "")
+        age = row.get("age", np.nan)
+        try:
+            age_txt = f"{float(age):.0f} años" if LANG != "EN" and pd.notna(age) else (f"{float(age):.0f} yrs" if pd.notna(age) else "")
+        except Exception:
+            age_txt = ""
+        meta = " · ".join([x for x in [club, league, position, age_txt] if str(x).strip()]) or entity_label
+        opp = _format_command_score(row.get("opportunity"))
+        risk = _format_command_score(row.get("risk"))
+        contract = _format_command_score(row.get("contract"))
+        gap = _format_command_pct(row.get("gap_pct"))
+        market_value = format_money_short(row.get("market_value"))
+        fair_value = format_money_short(row.get("fair_value"))
+        score = _format_command_score(row.get("typeahead_score"))
+        positive = str(row.get("why_positive", "") or "")
+        negative = str(row.get("why_negative", "") or "")
+        try:
+            rank = row.get("rank", np.nan)
+            rank_txt = f"#{int(float(rank))}" if pd.notna(rank) else f"#{i+1}"
+        except Exception:
+            rank_txt = f"#{i+1}"
+        why_line = positive if positive else ("Coincidencia por entidad" if LANG != "EN" else "Entity match")
+        if negative:
+            why_line += f" · ⚠ {negative}"
+
+        st.markdown(
+            f"""
+<div class="tm69-command-row tm69-command-row-pro">
+    <div class="tm69-command-rank">{html.escape(rank_txt)}</div>
+    <div class="tm69-command-main">
+        <div class="tm69-command-name">{html.escape(raw)}</div>
+        <div class="tm69-command-meta">{html.escape(meta)}</div>
+        <div class="tm69-command-why">{html.escape('Why this player: ' if LANG == 'EN' else 'Por qué aparece: ')}{html.escape(why_line)}</div>
+    </div>
+    <div class="tm69-command-signals tm69-command-signals-pro">
+        <span><small>Opp</small><b>{html.escape(opp)}</b></span>
+        <span><small>Gap</small><b>{html.escape(gap)}</b></span>
+        <span><small>Risk</small><b>{html.escape(risk)}</b></span>
+        <span><small>Contract</small><b>{html.escape(contract)}</b></span>
+        <span><small>Value</small><b>{html.escape(market_value)}</b></span>
+        <span><small>IQ</small><b>{html.escape(fair_value)}</b></span>
+    </div>
+    <div class="tm69-command-score"><small>DSS</small><b>{html.escape(score)}</b></div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+        if entity == "player":
+            action_cols = st.columns([0.18, 0.18, 0.18, 0.20, 0.26], gap="small")
+            with action_cols[0]:
+                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Player Intelligence")
+                    st.rerun()
+            with action_cols[1]:
+                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Player Intelligence")
+                    st.session_state["selected_module"] = "Comparables"
+                    st.rerun()
+            with action_cols[2]:
+                if st.button("Watchlist", key=f"tm69_cmd_watch_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                    _tm69_add_to_watchlist(raw)
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    st.rerun()
+            with action_cols[3]:
+                if st.button("Recruitment", key=f"tm69_cmd_recruit_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Recruitment Intelligence")
+                    st.rerun()
+            with action_cols[4]:
+                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                    st.session_state["global_scouting_search"] = label
+                    st.session_state["global_scouting_selected_label"] = label
+                    _command_set_player_context(raw, "Strategy Center")
+                    st.session_state["strategy_center_view"] = "Contract Intelligence"
+                    st.rerun()
+        else:
+            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                st.session_state["global_scouting_search"] = label
+                st.session_state["global_scouting_selected_label"] = label
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Clear the global search without external navigation.
 def clear_global_scouting_search() -> None:
+    """Clear the DSS command palette state deterministically."""
     st.session_state["global_scouting_search"] = None
+    st.session_state["global_scouting_query"] = ""
+    st.session_state["global_scouting_selected_label"] = None
+
+
+def clear_command_center_filters() -> None:
+    """Reset user-applied command-center filters and search state.
+
+    Important implementation detail:
+    the Command Center search is rendered with a native Streamlit selectbox.
+    Streamlit stores the selected option in the widget key
+    ``tm69_global_search_typeahead``. Clearing only the semantic keys
+    (``global_scouting_*``) is not enough, because on the next rerun the
+    selectbox can rehydrate the previous value and immediately re-apply the
+    filter. Therefore we remove both the semantic state and the widget state.
+    """
+    # 1) Clear semantic search state used by the ranking/filtering logic.
+    clear_global_scouting_search()
+
+    # 2) Clear native widget state for the Command Center search/typeahead.
+    exact_keys_to_clear = (
+        "tm69_global_search_typeahead",
+        "global_scouting_search",
+        "global_scouting_query",
+        "global_scouting_selected_label",
+    )
+    for key in exact_keys_to_clear:
+        st.session_state.pop(key, None)
+
+    # 3) Clear sidebar filter widgets so they fall back to the active preset
+    #    defaults on the next rerun. This covers every preset/universe suffix.
+    filter_prefixes = (
+        "max_age_",
+        "min_minutes_",
+        "league_",
+        "position_",
+        "role_",
+    )
+    for key in list(st.session_state.keys()):
+        if str(key).startswith(filter_prefixes):
+            st.session_state.pop(key, None)
+
+    # 4) Reset pagination/selection artefacts that can otherwise preserve an
+    #    old filtered view after the filters are cleared.
+    for key in ("players_page", "selected_player", "radar_selected_player"):
+        st.session_state.pop(key, None)
+
+    # 5) Marker for debugging and for preventing stale UI fragments in a rerun.
+    st.session_state["tm69_filters_last_cleared_at"] = datetime.now(timezone.utc).isoformat()
+
+
+# =============================================================================
+# TM.6.9C Command Center: rebuilt header + search logic from scratch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* TM.6.9C Command Center V2: one compact horizontal layer.
+   Search, title and context are rendered with native Streamlit containers,
+   then styled through stable anchors. */
+.tm69-command-center-css-anchor { display:none; }
+
+/* Collapse legacy search/context surfaces that caused double borders and extra vertical space. */
+.final-search-shell, .global-search-shell, .final-search-card,
+.context-strip, .context-strip-v2.compact-context-panel,
+.search-clear-row, .quick-guide-action-row,
+.tm69-intent-chip-title {
+    display: none !important;
+}
+
+/* Shared card sizing: lower height, tighter rhythm, less whitespace. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-left-anchor),
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor),
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-context-anchor) {
+    min-height: 148px !important;
+    height: 148px !important;
+    border: 1px solid #d8e2f1 !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.065) !important;
+    overflow: visible !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-left-anchor) {
+    border-left: 5px solid #2F5BFF !important;
+}
+
+/* Padding inside the three native containers. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-left-anchor) [data-testid="stVerticalBlock"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor) [data-testid="stVerticalBlock"],
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-context-anchor) [data-testid="stVerticalBlock"] {
+    gap: 0.35rem !important;
+    padding: 16px 22px !important;
+}
+
+/* Avoid Streamlit putting excess margins around markdown in command cards. */
+.tm69-command-copy,
+.tm69-search-copy,
+.tm69-context-copy {
+    margin: 0 !important;
+}
+.tm69-command-eyebrow {
+    color: #2F5BFF;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .105em;
+    text-transform: uppercase;
+    margin: 0 0 7px 0;
+}
+.tm69-command-title {
+    color: #061426;
+    font-size: 1.42rem;
+    line-height: 1.04;
+    font-weight: 950;
+    letter-spacing: -.025em;
+    margin: 0 0 7px 0;
+}
+.tm69-command-subtitle {
+    color: #475569;
+    font-size: .86rem;
+    line-height: 1.28;
+    max-width: 250px;
+    margin: 0;
+}
+.tm69-command-feature-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.tm69-command-feature-list span {
+    display: inline-flex;
+    height: 22px;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0 8px;
+    background: #f4f7ff;
+    border: 1px solid #e1eaff;
+    color: #1e3a8a;
+    font-size: .66rem;
+    font-weight: 850;
+}
+
+/* Search block: title + input + examples in the same card. */
+.tm69-command-search-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.tm69-command-search-label {
+    color: #0f2f5f;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .105em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.tm69-command-search-help {
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.tm69-search-example {
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.20;
+    font-weight: 750;
+    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-search-example b {
+    color: #1d4ed8;
+    font-weight: 950;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor) div[data-testid="stTextInput"] {
+    margin: 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor) div[data-testid="stTextInput"] label {
+    display: none !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor) div[data-testid="stTextInput"] input {
+    height: 48px !important;
+    min-height: 48px !important;
+    border: 1px solid #D8E2F1 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(15,23,42,.040) !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: .94rem !important;
+    font-weight: 750 !important;
+    padding-left: 46px !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor) div[data-testid="stTextInput"] input:focus {
+    border-color: #2F5BFF !important;
+    box-shadow: 0 0 0 4px rgba(47,91,255,.12), 0 9px 22px rgba(15,23,42,.050) !important;
+}
+.tm69-search-input-wrap {
+    position: relative;
+    z-index: 50;
+}
+.tm69-search-input-wrap::before {
+    content: "🔍";
+    position: absolute;
+    left: 17px;
+    top: 13px;
+    z-index: 5;
+    font-size: 1rem;
+    color: #2F5BFF;
+    pointer-events: none;
+}
+
+/* Manual typeahead. It floats under the input without moving the tabs or hero card. */
+.tm69-typeahead-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 54px;
+    z-index: 9999;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #D8E2F1;
+    border-radius: 14px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, .18);
+    overflow: hidden;
+}
+.tm69-typeahead-section {
+    padding: 9px 14px 6px 14px;
+    color: #94a3b8;
+    font-size: .66rem;
+    font-weight: 950;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    background: #ffffff;
+}
+.tm69-typeahead-row {
+    height: 60px;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 70px;
+    gap: 12px;
+    align-items: center;
+    padding: 0 14px;
+    border-top: 1px solid #edf2f7;
+    background: #ffffff;
+}
+.tm69-typeahead-row:hover { background: #f8fbff; }
+.tm69-typeahead-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: .72rem;
+    font-weight: 950;
+}
+.tm69-typeahead-name {
+    color: #0f172a;
+    font-size: .86rem;
+    font-weight: 950;
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-typeahead-meta {
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.20;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-typeahead-score {
+    text-align: right;
+    color: #64748b;
+    font-size: .68rem;
+    line-height: 1.05;
+}
+.tm69-typeahead-score b {
+    display: block;
+    color: #0f172a;
+    font-size: 1.20rem;
+    line-height: 1;
+    font-weight: 950;
+}
+.tm69-typeahead-tag {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 2px 6px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: .56rem;
+    font-weight: 950;
+    margin-bottom: 2px;
+}
+.tm69-typeahead-footer {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-top: 1px solid #edf2f7;
+    background: #f8fbff;
+    color: #2F5BFF;
+    font-size: .76rem;
+    font-weight: 950;
+}
+
+/* Context: full chip set across two compact lines and reset link integrated. */
+.tm69-command-context-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+.tm69-command-context-title {
+    color: #2F5BFF;
+    font-size: .72rem;
+    font-weight: 950;
+    letter-spacing: .105em;
+    text-transform: uppercase;
+    margin: 0;
+}
+.tm69-command-reset-label {
+    color: #2F5BFF;
+    font-size: .72rem;
+    font-weight: 950;
+    white-space: nowrap;
+}
+.tm69-command-context-summary {
+    color: #475569;
+    font-size: .80rem;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-command-context-summary b { color: #0f172a; font-weight: 950; }
+.tm69-command-chip-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    max-height: 58px;
+    overflow: hidden;
+    padding-right: 0;
+}
+.tm69-command-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    border-radius: 999px;
+    padding: 0 9px;
+    background: #F4F6FA;
+    border: 1px solid #E5EAF1;
+    color: #334155;
+    font-size: .68rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+.tm69-context-metrics {
+    display: flex;
+    gap: 8px;
+    margin-top: 7px;
+    color: #64748b;
+    font-size: .69rem;
+    font-weight: 800;
+}
+.tm69-context-metrics b { color: #0f172a; }
+
+/* Place the actual Streamlit clear button as a small link in the context header area. */
+.tm69-command-clear-anchor + div[data-testid="stButton"] {
+    position: absolute !important;
+    right: 24px !important;
+    top: 17px !important;
+    z-index: 20 !important;
+}
+.tm69-command-clear-anchor + div[data-testid="stButton"] button {
+    border: 0 !important;
+    background: transparent !important;
+    color: #2F5BFF !important;
+    font-weight: 950 !important;
+    min-height: 20px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    font-size: .72rem !important;
+}
+.tm69-command-clear-anchor + div[data-testid="stButton"] button:hover {
+    text-decoration: underline !important;
+    background: transparent !important;
+}
+
+@media (max-width: 1200px) {
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-left-anchor),
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-search-anchor),
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-panel-context-anchor) {
+        height: auto !important;
+        min-height: 138px !important;
+        margin-bottom: 10px !important;
+    }
+    .tm69-command-chip-row { max-height: none; }
+    .tm69-search-example { white-space: normal; }
+    .tm69-command-clear-anchor + div[data-testid="stButton"] {
+        position: static !important;
+        margin-top: -6px !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+def _tm69_initials(name: object) -> str:
+    parts = [p for p in re.split(r"\s+", str(name or "").strip()) if p]
+    if not parts:
+        return "IQ"
+    return "".join(p[0].upper() for p in parts[:2])[:2]
+
+
+def _tm69_typeahead_html(results: pd.DataFrame, query: str) -> str:
+    """Google/Transfermarkt-like typeahead. Visual only; selection is resolved by the ranking engine on rerun."""
+    if not str(query or "").strip():
+        return ""
+    if results is None or results.empty:
+        empty = "Sin resultados relevantes" if LANG != "EN" else "No relevant results"
+        return f"<div class='tm69-typeahead-panel'><div class='tm69-typeahead-section'>{html.escape(empty)}</div></div>"
+
+    rows = []
+    section = "JUGADORES" if LANG != "EN" else "PLAYERS"
+    for _, row in results.head(5).iterrows():
+        raw = str(row.get("raw", ""))
+        club = str(row.get("club", "") or "")
+        league = str(row.get("league", "") or "")
+        pos = str(row.get("position", "") or "")
+        age = row.get("age", np.nan)
+        try:
+            age_txt = f"{float(age):.0f} años" if LANG != "EN" and pd.notna(age) else (f"{float(age):.0f} yrs" if pd.notna(age) else "")
+        except Exception:
+            age_txt = ""
+        meta = " · ".join([x for x in [club, league, pos, age_txt] if str(x).strip()])
+        opp = _format_command_score(row.get("opportunity"))
+        tag = "Top Opportunity" if str(opp) not in {"N/A", "nan", "None"} and float(str(opp).replace(',', '.')) >= 85 else "Opportunity"
+        rows.append(
+            f"""
+            <div class='tm69-typeahead-row'>
+                <div class='tm69-typeahead-avatar'>{html.escape(_tm69_initials(raw))}</div>
+                <div>
+                    <div class='tm69-typeahead-name'>{html.escape(raw)}</div>
+                    <div class='tm69-typeahead-meta'>{html.escape(meta)}</div>
+                </div>
+                <div class='tm69-typeahead-score'><span class='tm69-typeahead-tag'>{html.escape(tag)}</span><b>{html.escape(str(opp))}</b>Opportunity</div>
+            </div>
+            """
+        )
+    footer = "Ver todos los resultados" if LANG != "EN" else "View all results"
+    return (
+        "<div class='tm69-typeahead-panel'>"
+        f"<div class='tm69-typeahead-section'>{html.escape(section)}</div>"
+        + "".join(rows)
+        + f"<div class='tm69-typeahead-footer'><span>{html.escape(footer)} para \"{html.escape(str(query))}\"</span><span>›</span></div>"
+        + "</div>"
+    )
+
+
+def _tm69_command_chip_html(items: list[str], limit: int = 7) -> str:
+    return "".join(f"<span class='tm69-command-chip'>{html.escape(str(item))}</span>" for item in items[:limit])
+
+
+
+def _tm69_safe_float(value, default=np.nan):
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _tm69_top_opportunity_html() -> str:
+    """Small executive signal for the command center; no DSS scoring logic is modified."""
+    try:
+        df = globals().get("filtered_df")
+        if df is None or df.empty or "opportunity_score" not in df.columns:
+            return ""
+        rank_df = df.copy()
+        rank_df["_opp"] = pd.to_numeric(rank_df["opportunity_score"], errors="coerce")
+        rank_df = rank_df.dropna(subset=["_opp"]).sort_values("_opp", ascending=False)
+        if rank_df.empty:
+            return ""
+        row = rank_df.iloc[0]
+        name = html.escape(str(get_player_name(row)))
+        club = html.escape(str(safe_get(row, "display_club", safe_get(row, "current_club", safe_get(row, "club_actual", "N/A")))))
+        pos = html.escape(str(safe_get(row, "position_group", safe_get(row, "position", "N/A"))))
+        score = _format_command_score(row.get("opportunity_score"))
+        label = "Top opportunity" if LANG == "EN" else "Top oportunidad"
+        return f"""
+        <div class='tm69-top-opportunity'>
+            <span>{html.escape(label)}</span>
+            <b>{name}</b>
+            <small>{club} · {pos} · Opportunity {html.escape(str(score))}</small>
+        </div>
+        """
+    except Exception:
+        return ""
+
+
+def _tm69_pipeline_html(filtered_universe: int, base_universe: int) -> str:
+    """Compact recruitment funnel. Uses already computed data, does not alter filters/scoring."""
+    try:
+        df = globals().get("filtered_df")
+        high_conf = int((pd.to_numeric(df.get("confidence_score", 0), errors="coerce").fillna(0) >= 70).sum()) if df is not None and not df.empty else 0
+        priority = int((pd.to_numeric(df.get("opportunity_score", 0), errors="coerce").fillna(0) >= 80).sum()) if df is not None and not df.empty else 0
+        elite = int((pd.to_numeric(df.get("opportunity_score", 0), errors="coerce").fillna(0) >= 90).sum()) if df is not None and not df.empty else 0
+    except Exception:
+        high_conf, priority, elite = 0, 0, 0
+    labels = [
+        ("Universe" if LANG == "EN" else "Universo", base_universe),
+        ("Eligible" if LANG == "EN" else "Elegibles", filtered_universe),
+        ("High conf." if LANG == "EN" else "Alta conf.", high_conf),
+        ("Priority" if LANG == "EN" else "Prioridad", priority),
+        ("Elite" if LANG == "EN" else "Élite", elite),
+    ]
+    return "<div class='tm69-pipeline'>" + "".join(
+        f"<div><b>{int(v):,}</b><span>{html.escape(k)}</span></div>" for k, v in labels
+    ) + "</div>"
+
+
+def _tm69_context_metrics_html(filtered_universe: int, base_universe: int, shortlist_universe: int, filtered_pct_shortlist: float) -> str:
+    try:
+        coverage = f"{filtered_pct_shortlist:.0%}"
+    except Exception:
+        coverage = "N/A"
+    labels = (
+        [("Candidates", filtered_universe), ("Universe", base_universe), ("Exec view", shortlist_universe), ("Coverage", coverage)]
+        if LANG == "EN"
+        else [("Candidatos", filtered_universe), ("Universo", base_universe), ("Vista ejec.", shortlist_universe), ("Cobertura", coverage)]
+    )
+    return "<div class='tm69-context-metrics'>" + "".join(
+        f"<div><b>{html.escape(str(v if isinstance(v, str) else f'{int(v):,}'))}</b><span>{html.escape(k)}</span></div>" for k, v in labels
+    ) + "</div>"
+
+
+def _tm69_quick_actions_html() -> str:
+    actions = (
+        ["Top Opportunities", "Rising Talents", "Contract Alerts", "Similar Players", "Shortlist"]
+        if LANG == "EN"
+        else ["Top oportunidades", "Talentos al alza", "Alertas contrato", "Similares", "Shortlist"]
+    )
+    return "<div class='tm69-quick-actions'>" + "".join(f"<span>{html.escape(x)}</span>" for x in actions) + "</div>"
+
+
+def render_player_intelligence_command_center(
+    page_name: str,
+    candidate_results: pd.DataFrame,
+    active_filters: list[str],
+    filtered_universe: int,
+    base_universe: int,
+    shortlist_universe: int,
+    filtered_pct_shortlist: float,
+    show_clear_filters: bool = False,
+    search_options: list[str] | None = None,
+    search_label_to_raw: dict[str, str] | None = None,
+) -> str:
+    """Render the Scouting IQ Command Center.
+
+    This replaces the fragmented title/search/context blocks with a single horizontal
+    operating layer. Search uses a native Streamlit selectbox/typeahead so options
+    appear while typing and no custom HTML is rendered inside the dropdown.
+    """
+    command_eyebrow, command_title, command_subtitle = _page_command_copy(page_name)
+    if page_name == "Player Intelligence":
+        command_eyebrow = "PLAYER INTELLIGENCE"
+        command_title = "Player Intelligence"
+        command_subtitle = (
+            "Professional scouting profile: decision, identity, market, performance and evidence."
+            if LANG == "EN"
+            else "Ficha profesional de scouting: decisión, identidad, mercado, rendimiento y evidencia."
+        )
+
+    search_label = "GLOBAL SEARCH" if LANG == "EN" else "BUSCADOR GLOBAL"
+    search_help = "Example: league · position · player · role" if LANG == "EN" else "Ejemplo: liga · posición · jugador · rol"
+    placeholder = "Search player, club, league, role or team..." if LANG == "EN" else "Buscar jugador, club, liga, rol o equipo..."
+    example = (
+        "Yan Diomandé · Winger · CD Leganés · LaLiga"
+        if LANG == "EN"
+        else "Yan Diomandé · Winger · CD Leganés · LaLiga"
+    )
+    context_title = "ACTIVE RECRUITMENT UNIVERSE" if LANG == "EN" else "UNIVERSO ACTIVO DE SCOUTING"
+    reset_label = "Clear filters" if LANG == "EN" else "Limpiar filtros"
+
+    context_chips_html = _tm69_command_chip_html(active_filters, 12)
+    coverage_text = f"{filtered_pct_shortlist:.0%}" if isinstance(filtered_pct_shortlist, (int, float)) else "N/A"
+
+    st.markdown("<div class='tm69-command-center-css-anchor'></div>", unsafe_allow_html=True)
+    left_col, search_col, context_col = st.columns([2.2, 4.3, 3.5], gap="small")
+
+    with left_col:
+        st.markdown(
+            f"""
+<div class="tm69-command-panel tm69-command-left">
+    <div class="tm69-command-eyebrow">{html.escape(command_eyebrow)}</div>
+    <div class="tm69-command-title">{html.escape(command_title)}</div>
+    <div class="tm69-command-subtitle">{html.escape(command_subtitle)}</div>
+
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+    with search_col:
+        # Native Streamlit typeahead. The search column is now a real Streamlit
+        # vertical block styled via a local anchor, instead of split/open HTML.
+        # This prevents the input from being detached and pushed down the page.
+        st.markdown(
+            f"""
+<div class="tm69-search-card-anchor"></div>
+<div class="tm69-command-search-label-row tm69-search-label-row-final">
+    <div class="tm69-command-search-label">{html.escape(search_label)}</div>
+    <div class="tm69-command-search-help">{html.escape(search_help)}</div>
+</div>
+<div class="tm69-search-vertical-spacer"></div>
+""",
+            unsafe_allow_html=True,
+        )
+        search_options = search_options or globals().get("search_options", []) or []
+        search_label_to_raw = search_label_to_raw or globals().get("search_label_to_raw", {}) or {}
+
+        current_selected = st.session_state.get("global_scouting_search")
+        select_options = [None] + list(search_options)
+        selected_index = 0
+        if current_selected in search_options:
+            selected_index = select_options.index(current_selected)
+
+        def _tm69_format_search_option(option: object) -> str:
+            if option is None:
+                return ""
+            label = str(option)
+            raw = str(search_label_to_raw.get(label, label))
+            entity = _command_entity_type(label)
+            if entity == "player":
+                ctx = _command_row_context(base_df if "base_df" in globals() else pd.DataFrame(), raw)
+                parts = [
+                    raw,
+                    str(ctx.get("position", "") or ""),
+                    str(ctx.get("club", "") or ""),
+                    str(ctx.get("league", "") or ""),
+                ]
+                clean = " · ".join([x for x in parts if str(x).strip() and str(x).strip().lower() != "nan"])
+                return clean or raw
+            if entity == "league":
+                return f"Liga · {raw}" if LANG != "EN" else f"League · {raw}"
+            if entity == "club":
+                return f"Club · {raw}"
+            if entity == "position":
+                return f"Posición · {raw}" if LANG != "EN" else f"Position · {raw}"
+            return raw
+
+        selected_label = st.selectbox(
+            "Search" if LANG == "EN" else "Búsqueda global",
+            options=select_options,
+            index=selected_index,
+            format_func=_tm69_format_search_option,
+            placeholder=placeholder,
+            key="tm69_global_search_typeahead",
+            label_visibility="collapsed",
+        )
+        if selected_label is not None and selected_label != st.session_state.get("global_scouting_search"):
+            st.session_state["global_scouting_search"] = selected_label
+            st.session_state["global_scouting_selected_label"] = selected_label
+            st.session_state["global_scouting_query"] = str(search_label_to_raw.get(selected_label, selected_label))
+            st.rerun()
+        elif selected_label is None and st.session_state.get("global_scouting_search") is not None:
+            clear_global_scouting_search()
+            st.rerun()
+
+        st.markdown(
+            f"""
+<div class="tm69-search-example tm69-search-example-final"><b>Buscar:</b> <span>{html.escape(example)}</span></div>
+""",
+            unsafe_allow_html=True,
+        )
+
+    with context_col:
+        st.markdown(
+            f"""
+<div class="tm69-command-panel tm69-command-context-panel">
+    <div class="tm69-command-context-head">
+        <div class="tm69-command-context-title">{html.escape(context_title)}</div>
+    </div>
+    <div class="tm69-command-context-summary"><b>{filtered_universe:,}</b> candidatos · <b>{base_universe:,}</b> universo · <b>{shortlist_universe:,}</b> vista ejecutiva · <b>{coverage_text}</b> cobertura</div>
+    <div class="tm69-command-chip-row">{context_chips_html}</div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+        if show_clear_filters:
+            st.markdown("<div class='tm69-clear-button-anchor'></div>", unsafe_allow_html=True)
+            st.button(
+                reset_label,
+                key="tm69_command_center_clear_filters",
+                on_click=clear_command_center_filters,
+            )
+
+    return str(st.session_state.get("global_scouting_query", "") or "")
+
+
+# =============================================================================
+# TM.6.9b Command Center definitive refinement: title + search + active context
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Hide residual legacy title/search/context shells only around the command row. */
+.tm69-command-center-css-anchor { display:none !important; }
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-center-css-anchor),
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    align-items: stretch !important;
+    gap: 14px !important;
+    margin: 0 0 18px 0 !important;
+}
+/* Remove the visual card generated by Streamlit columns around the new custom panels. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-panel),
+div[data-testid="stElementContainer"]:has(.tm69-command-panel) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+.tm69-command-panel {
+    height: 164px !important;
+    min-height: 164px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1px solid #d8e2f1 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.055) !important;
+    padding: 16px 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    overflow: visible !important;
+}
+.tm69-command-left { border-left: 5px solid #2F5BFF !important; }
+.tm69-command-eyebrow,
+.tm69-command-search-label,
+.tm69-command-context-title {
+    color: #2F5BFF !important;
+    font-size: .70rem !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: .105em !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.tm69-command-title {
+    color: #071426 !important;
+    font-size: 1.55rem !important;
+    line-height: 1.04 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+    margin: 10px 0 8px 0 !important;
+}
+.tm69-command-subtitle {
+    color: #475569 !important;
+    font-size: .84rem !important;
+    line-height: 1.30 !important;
+    max-width: 94% !important;
+    margin: 0 !important;
+}
+.tm69-quick-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: auto !important;
+    padding-top: 10px !important;
+}
+.tm69-quick-actions span,
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 5px 9px !important;
+    background: #F4F6FA !important;
+    color: #0f2f5f !important;
+    border: 1px solid #e1e8f2 !important;
+    font-size: .67rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+.tm69-command-search-label-row,
+.tm69-command-context-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+}
+.tm69-command-search-help {
+    color: #64748b !important;
+    font-size: .70rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+}
+.tm69-command-search-panel {
+    position: relative !important;
+    z-index: 20 !important;
+}
+.tm69-search-input-anchor { position: relative !important; z-index: 40 !important; }
+.tm69-search-input-anchor + div, .tm69-search-example { margin-top: 0 !important; }
+/* Make the Streamlit text_input look like the mockup input, without double border. */
+.tm69-command-search-panel div[data-testid="stTextInput"] { margin: 0 !important; }
+.tm69-command-search-panel div[data-testid="stTextInput"] > div { margin: 0 !important; }
+.tm69-command-search-panel div[data-baseweb="input"] > div,
+.tm69-command-search-panel div[data-testid="stTextInput"] input {
+    background: #ffffff !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input {
+    height: 48px !important;
+    min-height: 48px !important;
+    border: 1px solid #D8E2F1 !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    font-size: .90rem !important;
+    font-weight: 750 !important;
+    padding-left: 42px !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input:focus {
+    border-color: #2F5BFF !important;
+    box-shadow: 0 0 0 3px rgba(47,91,255,.12) !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"]::before {
+    content: "🔍";
+    position: absolute;
+    left: 16px;
+    top: 43px;
+    z-index: 50;
+    font-size: 1rem;
+    pointer-events: none;
+}
+.tm69-search-example {
+    color: #64748b !important;
+    font-size: .70rem !important;
+    font-weight: 850 !important;
+    margin: 7px 0 0 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-search-example b { color:#2F5BFF !important; }
+.tm69-pipeline {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0,1fr)) !important;
+    gap: 6px !important;
+    margin-top: auto !important;
+    padding-top: 8px !important;
+}
+.tm69-pipeline div {
+    border: 1px solid #e6edf6 !important;
+    background: #f8fbff !important;
+    border-radius: 10px !important;
+    padding: 6px 7px !important;
+    min-width: 0 !important;
+}
+.tm69-pipeline b { display:block !important; color:#071426 !important; font-size:.86rem !important; font-weight:950 !important; line-height:1 !important; }
+.tm69-pipeline span { display:block !important; color:#64748b !important; font-size:.58rem !important; font-weight:900 !important; line-height:1.15 !important; margin-top:3px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-context-metrics {
+    display:grid !important;
+    grid-template-columns: repeat(4, minmax(0,1fr)) !important;
+    gap: 6px !important;
+    margin: 0 0 8px 0 !important;
+}
+.tm69-context-metrics div {
+    border: 1px solid #e6edf6 !important;
+    border-radius: 10px !important;
+    background: #f8fbff !important;
+    padding: 7px 8px !important;
+    min-width: 0 !important;
+}
+.tm69-context-metrics b { display:block !important; color:#071426 !important; font-size:.95rem !important; font-weight:950 !important; line-height:1 !important; }
+.tm69-context-metrics span { display:block !important; color:#64748b !important; font-size:.58rem !important; font-weight:900 !important; margin-top:4px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-command-chip-row {
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap: 5px !important;
+    max-height: 48px !important;
+    overflow:hidden !important;
+}
+.tm69-top-opportunity {
+    margin-top: auto !important;
+    border-top: 1px solid #edf2f7 !important;
+    padding-top: 7px !important;
+}
+.tm69-top-opportunity span { display:block !important; color:#2F5BFF !important; font-size:.60rem !important; font-weight:950 !important; letter-spacing:.08em !important; text-transform:uppercase !important; }
+.tm69-top-opportunity b { display:block !important; color:#071426 !important; font-size:.84rem !important; font-weight:950 !important; line-height:1.1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-top-opportunity small { display:block !important; color:#64748b !important; font-size:.62rem !important; line-height:1.1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    position: relative !important;
+    margin-top: -42px !important;
+    margin-left: auto !important;
+    width: fit-content !important;
+    z-index: 30 !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    border: 0 !important;
+    background: transparent !important;
+    color: #2F5BFF !important;
+    font-weight: 950 !important;
+    font-size: .70rem !important;
+    min-height: 22px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button:hover { text-decoration: underline !important; }
+/* Floating manual autocomplete. */
+.tm69-typeahead-panel {
+    position: absolute !important;
+    top: 58px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    background:#ffffff !important;
+    border:1px solid #d8e2f1 !important;
+    border-radius:14px !important;
+    box-shadow:0 12px 30px rgba(15,23,42,.18) !important;
+    overflow:hidden !important;
+}
+.tm69-typeahead-section { color:#64748b !important; font-size:.64rem !important; font-weight:950 !important; letter-spacing:.08em !important; padding:8px 12px 4px 12px !important; }
+.tm69-typeahead-row { display:grid !important; grid-template-columns:34px minmax(0,1fr) 72px !important; gap:10px !important; align-items:center !important; min-height:60px !important; padding:8px 12px !important; border-top:1px solid #edf2f7 !important; }
+.tm69-typeahead-row:hover { background:#f8fbff !important; }
+.tm69-typeahead-avatar { width:32px !important; height:32px !important; border-radius:999px !important; background:#eaf2ff !important; color:#0f2f5f !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:.70rem !important; font-weight:950 !important; }
+.tm69-typeahead-name { color:#071426 !important; font-weight:950 !important; font-size:.82rem !important; line-height:1.1 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-typeahead-meta { color:#64748b !important; font-size:.68rem !important; line-height:1.2 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-typeahead-score { text-align:right !important; color:#64748b !important; font-size:.58rem !important; font-weight:800 !important; }
+.tm69-typeahead-score b { display:block !important; color:#071426 !important; font-size:1rem !important; line-height:1 !important; }
+.tm69-typeahead-tag { display:inline-flex !important; border-radius:999px !important; padding:2px 5px !important; background:#dcfce7 !important; color:#166534 !important; font-size:.50rem !important; font-weight:950 !important; margin-bottom:2px !important; }
+.tm69-typeahead-footer { display:flex !important; justify-content:space-between !important; align-items:center !important; color:#2F5BFF !important; font-size:.72rem !important; font-weight:950 !important; padding:9px 12px !important; border-top:1px solid #edf2f7 !important; }
+@media (max-width: 1150px) {
+    .tm69-command-panel { height:auto !important; min-height: 0 !important; }
+    .tm69-pipeline, .tm69-context-metrics { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+    .tm69-typeahead-panel { position: relative !important; top: 6px !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 practical command center closure: compact one-row header
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Practical final override: one discreet row, no secondary dashboard inside header. */
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    align-items: stretch !important;
+    gap: 14px !important;
+    margin: 0 0 14px 0 !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-panel),
+div[data-testid="stElementContainer"]:has(.tm69-command-panel) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+.tm69-command-panel {
+    height: 128px !important;
+    min-height: 128px !important;
+    max-height: 128px !important;
+    padding: 16px 18px !important;
+    background: #ffffff !important;
+    border: 1px solid #d8e2f1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+}
+.tm69-command-left { border-left: 5px solid #2F5BFF !important; }
+.tm69-command-eyebrow,
+.tm69-command-search-label,
+.tm69-command-context-title {
+    color: #2F5BFF !important;
+    font-size: .70rem !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: .105em !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.tm69-command-title {
+    color: #071426 !important;
+    font-size: 1.40rem !important;
+    line-height: 1.04 !important;
+    font-weight: 950 !important;
+    letter-spacing: -.03em !important;
+    margin: 9px 0 7px 0 !important;
+}
+.tm69-command-subtitle {
+    color: #475569 !important;
+    font-size: .81rem !important;
+    line-height: 1.25 !important;
+    max-width: 94% !important;
+    margin: 0 !important;
+}
+.tm69-quick-actions,
+.tm69-pipeline,
+.tm69-top-opportunity,
+.tm69-context-metrics { display: none !important; }
+.tm69-command-search-label-row,
+.tm69-command-context-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+}
+.tm69-command-search-help {
+    color: #64748b !important;
+    font-size: .70rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+}
+.tm69-command-search-panel { position: relative !important; z-index: 20 !important; }
+.tm69-search-input-anchor { position: relative !important; z-index: 40 !important; }
+.tm69-command-search-panel div[data-testid="stTextInput"] { margin: 0 !important; }
+.tm69-command-search-panel div[data-testid="stTextInput"] label { display: none !important; }
+.tm69-command-search-panel div[data-baseweb="input"] > div {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input {
+    height: 46px !important;
+    min-height: 46px !important;
+    border: 1px solid #D8E2F1 !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: .91rem !important;
+    font-weight: 750 !important;
+    padding-left: 42px !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input:focus {
+    border-color: #2F5BFF !important;
+    box-shadow: 0 0 0 3px rgba(47,91,255,.12) !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"]::before {
+    content: "🔍";
+    position: absolute;
+    left: 16px;
+    top: 40px;
+    z-index: 50;
+    font-size: .98rem;
+    pointer-events: none;
+}
+.tm69-search-example {
+    color: #64748b !important;
+    font-size: .70rem !important;
+    line-height: 1.2 !important;
+    font-weight: 850 !important;
+    margin: 7px 0 0 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-search-example b { color:#2F5BFF !important; }
+.tm69-command-context-summary {
+    color: #475569 !important;
+    font-size: .78rem !important;
+    line-height: 1.24 !important;
+    margin: 0 0 9px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-command-context-summary b { color:#071426 !important; font-weight:950 !important; }
+.tm69-command-chip-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 5px !important;
+    max-height: 54px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 22px !important;
+    border-radius: 999px !important;
+    padding: 0 8px !important;
+    background: #F4F6FA !important;
+    color: #0f2f5f !important;
+    border: 1px solid #e1e8f2 !important;
+    font-size: .65rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    position: relative !important;
+    margin-top: -118px !important;
+    margin-left: auto !important;
+    margin-right: 18px !important;
+    width: fit-content !important;
+    z-index: 30 !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    border: 0 !important;
+    background: transparent !important;
+    color: #2F5BFF !important;
+    font-weight: 950 !important;
+    font-size: .70rem !important;
+    min-height: 20px !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button:hover {
+    text-decoration: underline !important;
+    background: transparent !important;
+}
+.tm69-typeahead-panel {
+    position: absolute !important;
+    top: 55px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 9999 !important;
+    background: #ffffff !important;
+    border: 1px solid #d8e2f1 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.18) !important;
+    overflow: hidden !important;
+}
+@media (max-width: 1150px) {
+    .tm69-command-panel { height:auto !important; min-height: 118px !important; max-height:none !important; }
+    .tm69-clear-button-anchor + div[data-testid="stButton"] { margin-top: -110px !important; }
+    .tm69-typeahead-panel { position: relative !important; top: 6px !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+
+# =============================================================================
+# TM.6.9 final practical header override: Google-like search, compact top rhythm
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Reduce the vertical dead space between the blue topbar and the command row. */
+.scouting-topbar {
+    margin-bottom: 8px !important;
+}
+.block-container {
+    padding-top: .85rem !important;
+}
+
+/* Header row: title + search + active context aligned on one compact baseline. */
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    align-items: center !important;
+    gap: 14px !important;
+    margin: 0 0 12px 0 !important;
+}
+.tm69-command-panel {
+    height: 104px !important;
+    min-height: 104px !important;
+    max-height: 104px !important;
+    padding: 13px 16px !important;
+    border-radius: 15px !important;
+}
+.tm69-command-left, .tm69-command-context-panel {
+    background: #ffffff !important;
+    border: 1px solid #dfe7f2 !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.040) !important;
+}
+.tm69-command-left { border-left: 4px solid #2F5BFF !important; }
+
+/* Search is not a module/card: only the clean input remains, Google-like. */
+.tm69-command-search-panel {
+    height: 104px !important;
+    min-height: 104px !important;
+    max-height: 104px !important;
+    padding: 12px 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.tm69-command-search-label-row {
+    margin: 0 0 8px 2px !important;
+    height: 13px !important;
+}
+.tm69-command-search-label, .tm69-command-context-title, .tm69-command-eyebrow {
+    color: #2F5BFF !important;
+    font-size: .68rem !important;
+    letter-spacing: .11em !important;
+}
+.tm69-command-search-help {
+    color: #64748b !important;
+    font-size: .68rem !important;
+}
+.tm69-command-title {
+    font-size: 1.22rem !important;
+    margin: 7px 0 5px 0 !important;
+}
+.tm69-command-subtitle {
+    font-size: .76rem !important;
+    line-height: 1.20 !important;
+}
+.tm69-command-search-panel div[data-baseweb="input"] > div {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input {
+    height: 46px !important;
+    min-height: 46px !important;
+    border-radius: 999px !important;
+    border: 1px solid #d8e2f1 !important;
+    background: #ffffff !important;
+    box-shadow: 0 7px 18px rgba(15,23,42,.050) !important;
+    padding-left: 45px !important;
+    padding-right: 18px !important;
+    font-size: .93rem !important;
+    font-weight: 650 !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"] input:focus {
+    border-color: #9db7ff !important;
+    box-shadow: 0 0 0 3px rgba(47,91,255,.10), 0 9px 22px rgba(15,23,42,.060) !important;
+}
+.tm69-command-search-panel div[data-testid="stTextInput"]::before {
+    content: "🔍";
+    left: 16px !important;
+    top: 39px !important;
+    opacity: .72 !important;
+}
+.tm69-search-example {
+    margin: 6px 0 0 2px !important;
+    font-size: .67rem !important;
+}
+
+/* Active context stays compact; chips do not dominate the first fold. */
+.tm69-command-context-summary {
+    margin: 0 0 7px 0 !important;
+    font-size: .73rem !important;
+}
+.tm69-command-chip-row {
+    max-height: 47px !important;
+    gap: 4px !important;
+}
+.tm69-command-chip, .tm69-command-chip-row span {
+    height: 20px !important;
+    padding: 0 7px !important;
+    font-size: .61rem !important;
+    background: #f8fafc !important;
+    border-color: #e5eaf1 !important;
+    color: #334155 !important;
+}
+
+/* Clear filters appears only when rendered; make it a product-native pill. */
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    position: relative !important;
+    margin-top: -101px !important;
+    margin-right: 12px !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    border: 1px solid #dbeafe !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-radius: 999px !important;
+    padding: 3px 9px !important;
+    min-height: 24px !important;
+    font-size: .66rem !important;
+    font-weight: 950 !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button:hover {
+    background: #dbeafe !important;
+    text-decoration: none !important;
+}
+
+/* Typeahead remains attached to search input without pushing content down. */
+.tm69-typeahead-panel { top: 55px !important; }
+
+@media (max-width: 1150px) {
+    .tm69-command-panel, .tm69-command-search-panel {
+        height: auto !important;
+        min-height: 96px !important;
+        max-height: none !important;
+    }
+    .tm69-clear-button-anchor + div[data-testid="stButton"] { margin-top: -94px !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 # CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
-# Audit note: player suggestions are built from football_df, not from a hardcoded
-# demo dictionary. football_df is constrained to the latest available season in
-# build_football_universe_dataset() to avoid stale historical clubs in lookup.
+# TM.6.9C: search state is resolved before filters, but the visual Command Center
+# is rendered after active filters are computed so the context panel stays inside
+# the same horizontal header.
 search_options, search_label_to_raw = build_search_options(football_df)
 
-# Search header, input and examples are rendered as a single compact product card.
 current_global_search = st.session_state.get("global_scouting_search")
 if current_global_search is not None and str(current_global_search) not in search_options:
-    # Clear stale selections created before the latest-season Football Intelligence audit.
     st.session_state["global_scouting_search"] = None
 
-if SHOW_COMMAND_PANEL:
-    with command_left_col:
-        # TM.4.1 UX repair v3: single compact command card. The heading, examples
-        # and selectbox live inside the same Streamlit bordered container so the
-        # search module no longer renders as a title card plus a detached select.
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div class="tm4-search-unified-card">
-                    <div class="final-search-title-row">
-                        <div class="final-search-title">{html.escape('Global scouting search' if LANG == 'EN' else 'Buscador global de scouting')}</div>
-                        <span class="final-search-examples final-search-examples-top">{html.escape('Examples: Bundesliga · Bayern · Yan Diomandé · MID' if LANG == 'EN' else 'Ejemplos: Bundesliga · Bayern · Yan Diomandé · MID')}</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            global_search_label = st.selectbox(
-                "Search" if LANG == "EN" else "Búsqueda global",
-                options=search_options,
-                index=None,
-                placeholder="Search player, club, league or position..." if LANG == "EN" else "Buscar jugador, club, liga o posición...",
-                key="global_scouting_search",
-                label_visibility="collapsed",
-                help=(
-                    "Suggestions are grouped by league, club, player and position."
-                    if LANG == "EN"
-                    else "Las sugerencias aparecen diferenciadas por liga, club, jugador y posición."
-                ),
-            )
+query_value_state = str(st.session_state.get("global_scouting_query", "") or "")
+candidate_results = rank_global_command_search(base_df, query_value_state, search_options, search_label_to_raw, max_results=5)
+
+selected_from_session = st.session_state.get("global_scouting_search")
+if selected_from_session in search_label_to_raw:
+    global_search_label = selected_from_session
+elif str(query_value_state).strip() and candidate_results is not None and not candidate_results.empty:
+    # Typeahead auto-resolves to the top ranked entity. This preserves the old
+    # functional behaviour without using Streamlit selectbox/dropdown components.
+    global_search_label = str(candidate_results.iloc[0].get("label", ""))
 else:
     global_search_label = None
 
@@ -21258,28 +23575,37 @@ for item in active_filters:
         f"<span class='context-chip context-chip-neutral'>{html.escape(item_text)}</span>"
     )
 context_chips = "".join(context_chip_items)
+has_user_command_filters = bool(
+    search_query_clean
+    or selected_league != T("all_f")
+    or selected_position != T("all_f")
+    or selected_role != T("all_m")
+    or selected_tier != T("all_m")
+    or int(max_age) != int(preset.get("max_age", max_age))
+    or int(min_minutes) != int(preset.get("min_minutes", min_minutes))
+    or int(min_confidence) != int(preset.get("min_confidence", min_confidence))
+    or tuple(map(float, os_range)) != tuple(map(float, preset.get("opportunity_range", os_range)))
+    or float(max_market_value_m) != float(preset.get("max_market_value_m", max_market_value_m))
+    or float(min_roi) != float(preset.get("min_roi", min_roi))
+    or float(max_risk_filter) != float(preset.get("max_risk", max_risk_filter))
+)
+
 if SHOW_COMMAND_PANEL:
-    with context_panel_placeholder.container():
-        st.markdown(
-            f"""
-<div class="context-strip-v2 compact-context-panel">
-    <div class="context-strip-title">{html.escape(UI("Contexto activo"))}</div>
-    <div class="context-strip-main">
-        <div class="context-current-kpi">
-            <div class="context-current-value">{filtered_universe:,}</div>
-            <div class="context-current-label">{html.escape(UI("Candidatos actuales"))}</div>
-        </div>
-        <div class="context-secondary-kpis">
-            <span class="context-chip">{html.escape(UI("Universo prospect"))} · {len(base_df):,}</span>
-            <span class="context-chip">{html.escape(UI("Vista ejecutiva"))} · {shortlist_universe:,}</span>
-            <span class="context-chip context-chip-neutral">{filtered_pct_shortlist:.0%} {html.escape(UI("del universo"))}</span>
-        </div>
-    </div>
-    <div class="context-chip-row">{context_chips}</div>
-</div>
-""",
-            unsafe_allow_html=True,
-        )
+    # Single Command Center: left section title, central search/typeahead, right active context.
+    render_player_intelligence_command_center(
+        dashboard_page,
+        candidate_results,
+        active_filters,
+        filtered_universe,
+        len(base_df),
+        shortlist_universe,
+        filtered_pct_shortlist,
+        show_clear_filters=has_user_command_filters,
+        search_options=search_options,
+        search_label_to_raw=search_label_to_raw,
+    )
+
+
 
 
 if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_football_profile.empty:
@@ -21416,17 +23742,7 @@ if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_activ
         title="Active filter eligibility" if LANG == "EN" else "Elegibilidad con filtros activos",
     )
 
-# Contextual actions: clear search without detached guide duplication.
-if SHOW_COMMAND_PANEL and search_query_clean:
-    clear_col, _spacer_col = st.columns([0.16, 0.84])
-    with clear_col:
-        st.markdown('<div class="search-clear-row">', unsafe_allow_html=True)
-        st.button(
-            "Clear search" if LANG == "EN" else "Limpiar búsqueda",
-            key="clear_global_scouting_search_button",
-            on_click=clear_global_scouting_search,
-        )
-
+# Contextual actions are now embedded in the TM.6.9C Command Center.
 
 st.markdown('\n<style>\n.pro-section-card .compact-board-note { margin-top: 14px !important; }\n.pro-section-card + div[data-testid="stExpander"] { margin-top: 14px !important; }\n</style>\n', unsafe_allow_html=True)
 
@@ -22322,15 +24638,18 @@ st.markdown(
 )
 
 def render_product_page_header(eyebrow: str, title: str, subtitle: str) -> None:
-    """Render a unified page-level hero, aligned with the Executive Overview header style."""
+    """Render page titles only when the page does not already own the compact command header."""
+    # Market, Player and Recruitment now use the unified 50/50 command header
+    # (section title on the left, search + active context on the right). Rendering
+    # another title card below it recreates the duplicated header problem.
+    if globals().get("dashboard_page") in {"Market Intelligence", "Player Intelligence", "Recruitment Intelligence"}:
+        return
     st.markdown(
         f"""
-<div class="product-page-hero-unified">
-    <div>
-        <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
-        <div class="product-page-title">{html.escape(title)}</div>
-        <div class="product-page-subtitle">{html.escape(subtitle)}</div>
-    </div>
+<div class="product-page-hero-unified product-page-hero-compact-vfinal product-page-hero-minimal-v69">
+    <div class="product-page-eyebrow">{html.escape(eyebrow)}</div>
+    <div class="product-page-title">{html.escape(title)}</div>
+    <div class="product-page-subtitle">{html.escape(subtitle)}</div>
 </div>
 """,
         unsafe_allow_html=True,
@@ -23542,39 +25861,729 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
         st.plotly_chart(fig_shap, use_container_width=True)
 
 
+
+
+
+# =============================================================================
+# Player Intelligence final navigation refactor CSS
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Player Intelligence: tabbed professional scouting workspace */
+div[data-testid="stTabs"] { margin-top: 8px !important; }
+div[data-testid="stTabs"] [role="tablist"] {
+    gap: 14px !important;
+    border-bottom: 1px solid #d7e1ef !important;
+    margin-bottom: 16px !important;
+}
+div[data-testid="stTabs"] button[role="tab"] {
+    font-weight: 900 !important;
+    color: #334155 !important;
+    padding: 10px 4px !important;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #2563eb !important;
+    border-bottom: 3px solid #2563eb !important;
+}
+.pi-exec-shell, .pi-card, .pi-pitch-card {
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-radius: 22px;
+    box-shadow: 0 16px 38px rgba(15,23,42,.065);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+.pi-exec-shell { border-left: 6px solid #2563eb; }
+.pi-exec-main {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr) 120px;
+    gap: 18px;
+    align-items: stretch;
+}
+.pi-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    background: linear-gradient(135deg,#0f2f5f 0%, #2f5bff 100%);
+    color: #ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 950;
+    font-size: 1.35rem;
+    box-shadow: 0 14px 28px rgba(37,99,235,.20);
+}
+.pi-eyebrow {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    margin-bottom: 7px;
+}
+.pi-status {
+    display:inline-flex;
+    border-radius:999px;
+    padding:6px 11px;
+    font-size:.74rem;
+    font-weight:950;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+}
+.pi-status-price { background:#fef3c7; color:#92400e; border-color:#facc15; }
+.pi-status-buy { background:#dcfce7; color:#166534; border-color:#86efac; }
+.pi-status-monitor { background:#eff6ff; color:#1e3a8a; border-color:#bfdbfe; }
+.pi-exec-copy h2 {
+    margin: 0 0 5px 0 !important;
+    color:#0f172a !important;
+    font-size: 1.70rem !important;
+    line-height: 1.05 !important;
+    font-weight: 950 !important;
+}
+.pi-exec-copy p {
+    color:#334155;
+    font-size:.90rem;
+    line-height:1.48;
+    font-weight:750;
+    margin: 9px 0 0 0;
+}
+.pi-identity-chips, .pi-driver-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top: 7px;
+}
+.pi-identity-chips span, .pi-driver-row span {
+    display:inline-flex;
+    border-radius:999px;
+    padding:5px 9px;
+    background:#f8fbff;
+    border:1px solid #dbeafe;
+    color:#1e3a8a;
+    font-size:.72rem;
+    font-weight:900;
+}
+.pi-driver-row span { background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+.pi-action-line {
+    margin-top: 10px;
+    padding: 9px 12px;
+    border-radius: 13px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color:#1e3a8a;
+    font-size:.82rem;
+    font-weight:900;
+}
+.pi-grade-card {
+    border:1px solid #bfdbfe;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    min-height: 112px;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+}
+.pi-grade-card span { color:#1e3a8a; font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; font-weight:950; }
+.pi-grade-card b { color:#0f172a; font-size:2.35rem; line-height:1; font-weight:950; margin:6px 0 2px 0; }
+.pi-grade-card small { color:#64748b; font-size:.78rem; font-weight:950; }
+.pi-kpi-grid {
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+}
+.pi-kpi-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.pi-kpi {
+    border: 1px solid #e5eaf1;
+    border-radius: 14px;
+    background: #f8fbff;
+    padding: 10px 12px;
+    min-height: 76px;
+}
+.pi-kpi span {
+    display:block;
+    color:#64748b;
+    font-size:.68rem;
+    font-weight:950;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    margin-bottom: 4px;
+}
+.pi-kpi b { display:block; color:#0f172a; font-size:1.05rem; font-weight:950; line-height:1.1; }
+.pi-kpi small { display:block; color:#64748b; font-size:.68rem; margin-top: 3px; line-height:1.2; }
+.pi-exec-secondary-grid {
+    display:grid;
+    grid-template-columns: minmax(0,1.1fr) minmax(0,.95fr) minmax(0,1fr) minmax(0,1.05fr);
+    gap: 14px;
+    align-items: stretch;
+    margin-bottom: 14px;
+}
+.pi-exec-secondary-grid > div, .pi-exec-secondary-grid .exec-readiness-card, .pi-exec-secondary-grid .exec-watchlist-card, .pi-exec-secondary-grid .exec-rank-context-card, .pi-exec-secondary-grid .exec-why-him-card {
+    height: 100%;
+}
+.pi-section-head { margin-bottom: 12px; }
+.pi-section-head h3 { margin:0 0 4px 0 !important; color:#0f172a !important; font-size:1.12rem !important; font-weight:950 !important; }
+.pi-section-head p { margin:0 !important; color:#64748b !important; font-size:.84rem !important; line-height:1.35 !important; }
+.pi-profile-grid { display:grid; grid-template-columns: minmax(0,1.4fr) minmax(320px,.75fr); gap: 16px; align-items: stretch; }
+.pi-profile-left, .pi-profile-right { border:1px solid #e5eaf1; border-radius:18px; padding:14px 16px; background:#f8fbff; }
+.pi-profile-name { color:#0f172a; font-size:1.45rem; font-weight:950; line-height:1.1; }
+.pi-profile-meta { color:#475569; font-size:.84rem; margin-top:4px; }
+.pi-profile-kpis { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:9px; margin-top: 12px; }
+.pi-specialisation-line { margin-top:10px; color:#334155; font-size:.83rem; font-weight:850; display:flex; align-items:center; gap:6px; }
+.pi-role-summary { border:1px solid #e5eaf1; border-radius:14px; background:#ffffff; padding:12px 13px; margin-bottom:10px; }
+.pi-role-summary span { display:block; color:#64748b; font-size:.68rem; font-weight:950; text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+.pi-role-summary b { color:#0f172a; font-size:1rem; font-weight:950; line-height:1.1; }
+.pi-role-summary small { display:block; color:#64748b; font-size:.72rem; margin-top:4px; }
+.pi-pitch-layout { display:grid; grid-template-columns: minmax(0, 1fr) minmax(380px, .68fr); gap: 18px; align-items:stretch; margin-top:16px; }
+.pi-real-pitch, .exec-pitch.pi-real-pitch {
+    aspect-ratio: 105 / 68 !important;
+    min-height: 245px !important;
+    max-height: 340px !important;
+    height: auto !important;
+    width: 100% !important;
+}
+.pi-position-distribution { border:1px solid #e5eaf1; border-radius:18px; padding:18px 20px; background:#ffffff; display:flex; flex-direction:column; justify-content:center; gap:14px; }
+.pi-market-bottom-grid { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }
+.exec-click-info { display:inline-flex; position:relative; vertical-align:middle; }
+.exec-click-info summary {
+    list-style:none;
+    width:18px;
+    height:18px;
+    border-radius:999px;
+    background:#3b82f6;
+    color:white;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:950;
+    cursor:pointer;
+    user-select:none;
+}
+.exec-click-info summary::-webkit-details-marker { display:none; }
+.exec-click-info div {
+    position:absolute;
+    z-index:9999;
+    left: 0;
+    top: 24px;
+    min-width: 260px;
+    max-width: 340px;
+    background:#ffffff;
+    border:1px solid #bfdbfe;
+    border-radius:12px;
+    box-shadow:0 20px 44px rgba(15,23,42,.22);
+    padding:10px 12px;
+    color:#334155;
+    font-size:.76rem;
+    line-height:1.38;
+    font-weight:750;
+}
+.pi-card .exec-dna-grid, .pi-pitch-card .exec-dna-grid { margin-top: 8px; }
+.player-intelligence-report-gap { height: 0 !important; margin:0 !important; }
+/* Hide legacy hover-title info dots in the refactored Player Intelligence content; click details are used instead. */
+.pi-pitch-card .exec-info, .pi-exec-shell .exec-info, .pi-card .exec-info { display:none !important; }
+@media (max-width: 1450px) {
+    .pi-exec-secondary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .pi-kpi-grid-6 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 1150px) {
+    .pi-exec-main, .pi-profile-grid, .pi-pitch-layout, .pi-market-bottom-grid { grid-template-columns: 1fr; }
+    .pi-kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .pi-exec-secondary-grid { grid-template-columns: 1fr; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# Player Intelligence final navigation refactor: canonical executive card + tabs
+# =============================================================================
+def _tm69_click_info(text: str) -> str:
+    """Clickable product info disclosure. No hover-only behaviour."""
+    return (
+        "<details class='exec-click-info'>"
+        "<summary aria-label='Info'>i</summary>"
+        f"<div>{html.escape(str(text))}</div>"
+        "</details>"
+    )
+
+
+def _tm69_collect_player_context(row: pd.Series, name_col: str | None = None) -> dict:
+    """Centralised context used by the new Player Intelligence tabs."""
+    ctx = _tm69_merge_context(row)
+    is_en = globals().get("LANG") == "EN"
+    raw_name = _tm69_first(ctx, [name_col or "", "player_name_tm", "player_name", "player_name_fbref", "Player"], "Player")
+    player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
+    club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "club_actual", "club"], "N/A"))
+    league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
+    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship"], "N/A"))
+    foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
+    height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
+    height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
+    age = _tm69_age_from_birth(_tm69_first(ctx, ["date_of_birth", "tm69_date_of_birth"], np.nan), _tm69_first(ctx, ["current_age", "current_age_snapshot", "tm69_current_age", "age"], np.nan))
+    age_txt = "N/A" if pd.isna(age) else f"{age:.1f} " + ("years" if is_en else "años")
+    birth_txt = _tm69_format_date(_tm69_first(ctx, ["date_of_birth", "tm69_date_of_birth"], np.nan))
+    primary_pos, secondary_pos = _tm69_position_set(ctx)
+    role = clean_role_display(_tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup"], np.nan), "Role pending" if is_en else "Rol pendiente")
+    secondary_role = clean_role_display(_tm69_first(ctx, ["secondary_role", "tm69_secondary_role"], np.nan), "Secondary trend" if is_en else "Tendencia secundaria")
+    role_conf = _tm69_numeric(ctx, ["role_purity", "tm69_role_purity", "primary_role_similarity", "tm69_primary_role_similarity", "role_confidence", "confidence_score", "tm69_confidence_score"])
+    _, role_quality = _tm69_role_quality_label(ctx, role_conf)
+    opportunity = _tm69_numeric(ctx, ["opportunity_score", "tm69_opportunity_score"])
+    growth = _tm69_numeric(ctx, ["growth_score", "tm69_growth_score"])
+    risk = _tm69_numeric(ctx, ["risk_score", "tm69_risk_score"])
+    contract = _tm69_numeric(ctx, ["contract_opportunity_score", "recruitment_contract_score", "tm69_contract_opportunity_score"])
+    confidence = _tm69_numeric(ctx, ["confidence_score", "tm69_confidence_score"])
+    market_value = _tm69_numeric(ctx, ["current_market_value_eur", "current_market_value_eur_snapshot", "current_market_value_eur_snapshot.1", "current_market_value_eur_snapshot.2", "tm69_current_market_value_eur", "market_value_eur"])
+    expected_value = _tm69_expected_market_value(ctx)
+    gap_abs, gap_pct = _tm69_market_gap(ctx, market_value)
+    gap_txt = "N/A"
+    if pd.notna(gap_pct):
+        gap_txt = f"{gap_pct*100:+.0f}%" if abs(gap_pct) <= 5 else f"{gap_pct:+.0f}%"
+    elif pd.notna(gap_abs):
+        gap_txt = format_signed_money_short(gap_abs)
+    growth_1y = _tm69_numeric(ctx, ["market_value_growth_1y", "market_value_growth_prev", "tm69_market_value_growth_1y"])
+    last_update = _tm69_format_date(_tm69_first(ctx, ["current_valuation_date", "tm69_current_valuation_date"], np.nan))
+    contract_status = _tm69_localize_contract_status(_tm69_first(ctx, ["contract_status", "tm69_contract_status"], "N/A"))
+    contract_years = _tm69_numeric(ctx, ["contract_years_remaining", "tm69_contract_years_remaining"])
+    contract_years_txt = "N/A" if pd.isna(contract_years) else f"{contract_years:.1f}"
+    if pd.notna(contract) and contract >= 75:
+        accessibility = "High" if is_en else "Alta"
+    elif pd.notna(contract) and contract >= 55:
+        accessibility = "Medium" if is_en else "Media"
+    elif pd.notna(market_value) and market_value <= 15_000_000:
+        accessibility = "Medium" if is_en else "Media"
+    else:
+        accessibility = "Low" if is_en else "Baja"
+    status, reco_text, drivers = _tm69_recommendation(ctx, opportunity, growth, risk, contract)
+    priority = _tm69_target_priority_score(opportunity, growth, risk, contract)
+    if pd.notna(gap_pct) and pd.notna(priority):
+        if gap_pct < -0.30:
+            priority = max(0.0, priority - 24.0)
+        elif gap_pct < -0.10:
+            priority = max(0.0, priority - 14.0)
+        elif gap_pct > 0.20:
+            priority = min(100.0, priority + 4.0)
+    tactical_fit = _tm69_tactical_fit_score(ctx, primary_pos, role, risk, confidence)
+    transfer_band, overpay_risk, window_txt = _tm69_transfer_estimate(market_value, expected_value, contract, contract_years)
+    market_txt = format_money_short(market_value)
+    expected_txt = format_money_short(expected_value)
+    gap_abs_txt = format_signed_money_short(gap_abs) if pd.notna(gap_abs) else "N/A"
+    action_text = (
+        f"Recommended action: keep on watchlist, define maximum fee and compare U23 {primary_pos} alternatives."
+        if is_en else f"Acción recomendada: mantener en watchlist, validar fee máximo y comparar alternativas {primary_pos} U23."
+    ) if ("price" in str(status).lower() or "precio" in str(status).lower() or (pd.notna(gap_pct) and gap_pct < -0.10)) else (
+        "Recommended action: validate tactical fit, monitor fee band and prepare recruitment shortlist."
+        if is_en else "Acción recomendada: validar encaje táctico, monitorizar banda de fee y preparar shortlist de captación."
+    )
+    return {
+        "ctx": ctx, "is_en": is_en, "player_name": player_name, "club": club, "league": league,
+        "country": country, "foot": foot, "height_txt": height_txt, "age_txt": age_txt, "birth_txt": birth_txt,
+        "primary_pos": primary_pos, "secondary_pos": secondary_pos, "role": role, "secondary_role": secondary_role,
+        "role_quality": role_quality, "role_conf": role_conf, "opportunity": opportunity, "growth": growth, "risk": risk,
+        "contract": contract, "confidence": confidence, "market_value": market_value, "expected_value": expected_value,
+        "market_txt": market_txt, "expected_txt": expected_txt, "gap_abs": gap_abs, "gap_abs_txt": gap_abs_txt,
+        "gap_pct": gap_pct, "gap_txt": gap_txt, "growth_1y": growth_1y, "last_update": last_update,
+        "contract_status": contract_status, "contract_years": contract_years, "contract_years_txt": contract_years_txt,
+        "accessibility": accessibility, "status": status, "reco_text": reco_text, "drivers": drivers,
+        "priority": priority, "priority_txt": "—" if pd.isna(priority) else f"{priority:.0f}",
+        "priority_grade": _tm69_target_priority_grade(priority), "tactical_fit": tactical_fit,
+        "transfer_band": transfer_band, "window_txt": window_txt, "overpay_risk": overpay_risk, "action_text": action_text,
+    }
+
+
+def _tm69_context_kpi(label: str, value: str, caption: str = "") -> str:
+    return f"<div class='pi-kpi'><span>{html.escape(str(label))}</span><b>{html.escape(str(value))}</b><small>{html.escape(str(caption))}</small></div>"
+
+
+
+
+
+# =============================================================================
+# TM.6.9 final product polish: assets, 4-3-3 pitch and compact evidence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Player photo / crest / flag architecture */
+.pi-player-photo, .pi-avatar-premium {
+    width: 76px !important;
+    height: 76px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg,#0f2f5f 0%, #2f5bff 100%) !important;
+    color: #ffffff !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-direction:column !important;
+    box-shadow: 0 14px 28px rgba(37,99,235,.20) !important;
+    border: 2px solid #ffffff !important;
+}
+.pi-player-photo img { width:100% !important; height:100% !important; object-fit:cover !important; display:block !important; }
+.pi-avatar-premium span { font-size:1.35rem !important; font-weight:950 !important; line-height:1 !important; }
+.pi-avatar-premium small { font-size:.55rem !important; font-weight:850 !important; opacity:.88 !important; margin-top:5px !important; }
+.pi-club-mark {
+    width:22px !important; height:22px !important; border-radius:999px !important;
+    display:inline-flex !important; align-items:center !important; justify-content:center !important;
+    background:#ffffff !important; border:1px solid #dbeafe !important; overflow:hidden !important;
+    color:#1e3a8a !important; font-size:.58rem !important; font-weight:950 !important; flex:0 0 22px !important;
+}
+.pi-club-mark img { width:100% !important; height:100% !important; object-fit:contain !important; }
+.pi-chip-with-asset { gap:6px !important; align-items:center !important; }
+.pi-chip-with-asset b { font-weight:900 !important; }
+.pi-visual-stack { display:flex; flex-direction:column; align-items:center; gap:9px; min-width:96px; }
+.pi-visual-clubline, .pi-visual-nationality { display:flex; align-items:center; gap:6px; color:#334155; font-size:.74rem; font-weight:900; text-align:center; }
+.pi-profile-identity-composed { display:grid !important; grid-template-columns: 116px minmax(0,1fr) !important; gap:16px !important; align-items:start !important; }
+.pi-profile-overline { color:#1d4ed8; font-size:.70rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px; }
+.pi-profile-meta-strong { display:flex; flex-wrap:wrap; gap:7px; margin-bottom: 9px; }
+.pi-profile-meta-strong > span, .pi-profile-meta-strong .pi-chip-with-asset {
+    display:inline-flex; border-radius:999px; padding:5px 9px; background:#ffffff; border:1px solid #dbeafe; color:#1e3a8a; font-size:.72rem; font-weight:900;
+}
+
+/* Real 105x68 pitch, 4-3-3 labels and less decorative noise */
+.exec-pitch, .exec-pitch-compact, .pi-real-pitch {
+    aspect-ratio: 105 / 68 !important;
+    min-height: 260px !important;
+    max-height: 370px !important;
+    width: 100% !important;
+    border-radius: 18px !important;
+    position: relative !important;
+    background:
+        radial-gradient(circle at 50% 50%, transparent 0 41px, rgba(255,255,255,.70) 42px 44px, transparent 45px),
+        linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.78) 49.9%, rgba(255,255,255,.78) 50.1%, transparent 50.45%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 10.0%, rgba(255,255,255,0) 10.0% 20.0%),
+        linear-gradient(135deg,#2f8b57 0%, #26764c 48%, #1f6541 100%) !important;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.42), 0 14px 28px rgba(15,23,42,.10) !important;
+}
+.exec-pitch::before, .exec-pitch::after {
+    content:"" !important;
+    position:absolute !important;
+    top:31.5% !important;
+    bottom:31.5% !important;
+    width:13.5% !important;
+    height:auto !important;
+    border:2px solid rgba(255,255,255,.66) !important;
+    background: transparent !important;
+}
+.exec-pitch::before { left:0 !important; border-left:0 !important; border-radius:0 12px 12px 0 !important; }
+.exec-pitch::after { right:0 !important; border-right:0 !important; border-radius:12px 0 0 12px !important; }
+.exec-pos-marker {
+    min-width:31px !important; height:31px !important; padding:0 6px !important;
+    border-radius:999px !important; background:rgba(255,255,255,.08) !important;
+    border:1px solid rgba(255,255,255,.12) !important; color:rgba(255,255,255,.38) !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    font-size:.70rem !important; font-weight:950 !important; letter-spacing:-.02em !important;
+    transform: translate(-50%, -50%) !important;
+    backdrop-filter: blur(1px) !important;
+}
+.exec-pos-marker.primary {
+    background:#2f5bff !important; color:#ffffff !important; border:3px solid #ffffff !important;
+    box-shadow:0 0 0 4px rgba(47,91,255,.28), 0 10px 22px rgba(15,23,42,.22) !important;
+    z-index:5 !important;
+}
+.exec-pos-marker.secondary {
+    background:rgba(147,197,253,.92) !important; color:#0f2f5f !important; border:2px solid rgba(255,255,255,.82) !important;
+    box-shadow:0 0 0 3px rgba(147,197,253,.18) !important;
+}
+.pi-pitch-layout { grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr) !important; gap:18px !important; align-items:stretch !important; }
+.pi-position-distribution { min-height:260px !important; }
+.exec-visible-pitch-grid { grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr) !important; }
+
+/* Remove repeated/long evidence feel */
+.pi-evidence-intro { margin-bottom: 10px !important; }
+.pi-evidence-card { margin-bottom: 12px !important; box-shadow: none !important; border-left: 4px solid #2563eb !important; }
+.pi-evidence-intro + div[data-testid="stTabs"] { margin-top: 0 !important; }
+.pi-evidence-intro + div[data-testid="stTabs"] [role="tablist"] { margin-bottom: 12px !important; }
+
+@media (max-width: 1250px) {
+    .pi-profile-identity-composed, .pi-pitch-layout, .exec-visible-pitch-grid { grid-template-columns: 1fr !important; }
+    .pi-visual-stack { align-items:flex-start !important; flex-direction:row !important; }
+    .exec-pitch, .exec-pitch-compact, .pi-real-pitch { min-height: 220px !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+def _tm69_country_flag(country: object) -> str:
+    """Return a compact emoji flag for the nationality field when known."""
+    raw = str(country or "").strip()
+    if not raw or raw.lower() in {"nan", "none", "n/a", "na", "n.d.", "n/d"}:
+        return ""
+    key = normalize_search_text(raw)
+    mapping = {
+        "spain": "🇪🇸", "espana": "🇪🇸", "españa": "🇪🇸",
+        "france": "🇫🇷", "francia": "🇫🇷",
+        "germany": "🇩🇪", "alemania": "🇩🇪",
+        "italy": "🇮🇹", "italia": "🇮🇹",
+        "england": "🏴", "inglaterra": "🏴", "united kingdom": "🇬🇧", "reino unido": "🇬🇧",
+        "portugal": "🇵🇹", "netherlands": "🇳🇱", "paises bajos": "🇳🇱", "países bajos": "🇳🇱", "holanda": "🇳🇱",
+        "belgium": "🇧🇪", "belgica": "🇧🇪", "bélgica": "🇧🇪",
+        "austria": "🇦🇹", "denmark": "🇩🇰", "dinamarca": "🇩🇰",
+        "norway": "🇳🇴", "noruega": "🇳🇴", "sweden": "🇸🇪", "suecia": "🇸🇪",
+        "switzerland": "🇨🇭", "suiza": "🇨🇭", "poland": "🇵🇱", "polonia": "🇵🇱",
+        "croatia": "🇭🇷", "croacia": "🇭🇷", "serbia": "🇷🇸", "morocco": "🇲🇦", "marruecos": "🇲🇦",
+        "argentina": "🇦🇷", "brazil": "🇧🇷", "brasil": "🇧🇷", "uruguay": "🇺🇾", "colombia": "🇨🇴",
+        "mexico": "🇲🇽", "méxico": "🇲🇽", "united states": "🇺🇸", "estados unidos": "🇺🇸", "usa": "🇺🇸",
+        "nigeria": "🇳🇬", "ghana": "🇬🇭", "senegal": "🇸🇳", "mali": "🇲🇱", "ivory coast": "🇨🇮", "cote d ivoire": "🇨🇮", "cote divoire": "🇨🇮", "costa de marfil": "🇨🇮",
+        "japan": "🇯🇵", "japon": "🇯🇵", "japón": "🇯🇵", "south korea": "🇰🇷", "corea del sur": "🇰🇷",
+    }
+    return mapping.get(key, "")
+
+
+def _tm69_slug(value: object) -> str:
+    txt = normalize_search_text(value)
+    txt = re.sub(r"[^a-z0-9]+", "-", txt).strip("-")
+    return txt or "asset"
+
+
+def _tm69_asset_uri(asset_type: str, *names: object) -> str | None:
+    """Find optional local visual assets without introducing new data sources.
+
+    Supported folders are intentionally broad so future screenshots/club crest exports can
+    be dropped into the project without code changes.
+    """
+    roots = [
+        ROOT / "app" / "assets", ROOT / "app" / "static", ROOT / "assets", ROOT / "static",
+        ROOT / "data" / "assets", ROOT / "data" / "processed" / "assets",
+    ]
+    subdirs = {
+        "player": ["players", "player_photos", "photos", "images/players"],
+        "club": ["clubs", "club_crests", "crests", "logos/clubs", "images/clubs"],
+        "league": ["leagues", "competitions", "logos/leagues", "images/leagues"],
+    }.get(asset_type, [asset_type])
+    candidates = []
+    for name in names:
+        if name is None:
+            continue
+        raw = str(name).strip()
+        if not raw or raw.lower() in {"nan", "none", "n/a"}:
+            continue
+        candidates.extend([_tm69_slug(raw), raw.replace(" ", "_"), raw.replace(" ", "-")])
+    for root in roots:
+        for sub in subdirs:
+            folder = root / sub
+            for stem in candidates:
+                for ext in (".png", ".jpg", ".jpeg", ".webp", ".svg"):
+                    path = folder / f"{stem}{ext}"
+                    if path.exists():
+                        try:
+                            return path.resolve().as_uri()
+                        except Exception:
+                            return str(path)
+    return None
+
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    pid = _tm69_first(ctx, ["player_id_tm", "tm69_player_id_tm", "player_id", "id"], "")
+    uri = _tm69_asset_uri("player", pid, player_name)
+    initials = html.escape(_tm69_initials(player_name))
+    if uri:
+        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(player_name)}'></div>"
+    return f"<div class='pi-avatar pi-avatar-premium'><span>{initials}</span><small>{html.escape('Foto pendiente' if globals().get('LANG') != 'EN' else 'Photo pending')}</small></div>"
+
+
+def _tm69_club_mark_html(ctx: dict, club: str) -> str:
+    club_id = _tm69_first(ctx, ["current_club_id", "current_club_id_tm", "tm69_current_club_id", "club_id"], "")
+    uri = _tm69_asset_uri("club", club_id, club)
+    initials = html.escape(_tm69_initials(club))
+    if uri:
+        return f"<span class='pi-club-mark'><img src='{html.escape(uri)}' alt='{html.escape(club)}'></span>"
+    return f"<span class='pi-club-mark pi-club-mark-fallback'>{initials}</span>"
+
+
+def _tm69_club_chip_html(ctx: dict, club: str) -> str:
+    return f"<span class='pi-chip-with-asset'>{_tm69_club_mark_html(ctx, club)}<b>{html.escape(club)}</b></span>"
+
+
+def _tm69_nationality_html(country: object) -> str:
+    country_txt = str(country or "N/A")
+    flag = _tm69_country_flag(country_txt)
+    return f"{html.escape(flag + ' ' if flag else '')}{html.escape(country_txt)}"
+
+
+def _tm69_visual_identity_block(ctx: dict, player_name: str, club: str, country: str) -> str:
+    return f"<div class='pi-visual-stack'>{_tm69_player_avatar_html(ctx, player_name)}<div class='pi-visual-clubline'>{_tm69_club_mark_html(ctx, club)}<span>{html.escape(club)}</span></div><div class='pi-visual-nationality'>{_tm69_nationality_html(country)}</div></div>"
+def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
+    """Canonical first screen: identity + decision + key acquisition metrics, without repeated profile blocks."""
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    status = str(d["status"])
+    status_l = status.lower()
+    badge_cls = "price" if ("precio" in status_l or "price" in status_l) else ("buy" if pd.notna(d["priority"]) and d["priority"] >= 75 else "monitor")
+    score_cards = "".join([
+        _tm69_context_kpi("Transfermarkt", d["market_txt"], "valor actual" if not is_en else "current value"),
+        _tm69_context_kpi("Scouting IQ", d["expected_txt"], "fair value"),
+        _tm69_context_kpi("Gap", d["gap_txt"], "IQ vs TM"),
+        _tm69_context_kpi("Fee", d["transfer_band"], "banda indicativa" if not is_en else "indicative band"),
+        _tm69_context_kpi("Opportunity", _tm69_format_score(d["opportunity"]), _tm69_score_label("opportunity", d["opportunity"])),
+        _tm69_context_kpi("Growth", _tm69_format_score(d["growth"]), _tm69_score_label("growth", d["growth"])),
+        _tm69_context_kpi("Risk", _tm69_format_score(d["risk"]), _tm69_score_label("risk", d["risk"])),
+        _tm69_context_kpi("Fit", _tm69_format_score(d["tactical_fit"]), _tm69_score_to_label(d["tactical_fit"])),
+    ])
+    identity_chips = "".join([
+        _tm69_club_chip_html(d["ctx"], d["club"]),
+        f"<span>{html.escape(str(d['league']))}</span>",
+        f"<span>{_tm69_nationality_html(d['country'])}</span>",
+        f"<span>{html.escape(d['age_txt'])}</span>",
+        f"<span>{html.escape(d['primary_pos'])}</span>",
+        f"<span>{html.escape(d['role'])}</span>",
+    ])
+    drivers_html = "".join([f"<span>✓ {html.escape(x)}</span>" for x in d["drivers"][:4]])
+    why_him = _tm69_why_him_html(d["opportunity"], d["growth"], d["risk"], d["tactical_fit"])
+    readiness = _tm69_acquisition_readiness_html(d["tactical_fit"], d["contract"], d["risk"], d["gap_pct"], d["accessibility"])
+    watchlist = _tm69_watchlist_status_html(d["status"], d["gap_pct"], d["risk"], d["contract"])
+    opp_context = _tm69_opportunity_context_html(d["ctx"], d["player_name"], d["primary_pos"], d["opportunity"], d["growth"])
+    html_block = f"""
+    <div class="pi-exec-shell">
+        <div class="pi-exec-main">
+            {_tm69_player_avatar_html(d["ctx"], d["player_name"])}
+            <div class="pi-exec-copy">
+                <div class="pi-eyebrow">{html.escape('Acquisition decision' if is_en else 'Decisión de adquisición')}</div>
+                <div class="pi-status pi-status-{badge_cls}">{html.escape(status)}</div>
+                <h2>{html.escape(d['player_name'])}</h2>
+                <div class="pi-identity-chips">{identity_chips}</div>
+                <p>{_tm69_escape_rich_text(d['reco_text'])}</p>
+                <div class="pi-driver-row">{drivers_html}</div>
+                <div class="pi-action-line">{html.escape(d['action_text'])}</div>
+            </div>
+            <div class="pi-grade-card"><span>Target Grade</span><b>{html.escape(d['priority_txt'])}</b><small>{html.escape(d['priority_grade'])}</small></div>
+        </div>
+        <div class="pi-kpi-grid">{score_cards}</div>
+    </div>
+    <div class="pi-exec-secondary-grid">
+        <div>{why_him}</div>
+        <div>{readiness}</div>
+        <div>{watchlist}</div>
+        <div>{opp_context}</div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+
+
+def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
+    """Identity, role and pitch. Single home for physical/context fields and Role DNA."""
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    info = _tm69_click_info("Indica si el jugador responde a un arquetipo táctico puro o híbrido según el Role Engine." if not is_en else "Indicates whether the player maps to a pure or hybrid tactical archetype according to the Role Engine.")
+    secondary_html = "".join([f"<span class='exec-position-pill'>{html.escape(x)}</span>" for x in d["secondary_pos"]]) or f"<span class='exec-position-pill'>{html.escape('No secondary' if is_en else 'Sin secundaria')}</span>"
+    profile_items = "".join([
+        _tm69_context_kpi("Nacionalidad" if not is_en else "Nationality", (_tm69_country_flag(d["country"]) + " " if _tm69_country_flag(d["country"]) else "") + str(d["country"])),
+        _tm69_context_kpi("Edad" if not is_en else "Age", d["age_txt"]),
+        _tm69_context_kpi("Altura" if not is_en else "Height", d["height_txt"]),
+        _tm69_context_kpi("Pie" if not is_en else "Foot", d["foot"]),
+        _tm69_context_kpi("Nacimiento" if not is_en else "Born", d["birth_txt"]),
+        _tm69_context_kpi("Especialización" if not is_en else "Specialisation", d["role_quality"]),
+    ])
+    pitch = f"""
+    <div class='pi-pitch-card'>
+        <div class='pi-section-head'><h3>{html.escape('Perfil & Rol' if not is_en else 'Profile & Role')}</h3><p>{html.escape('Identidad física, contexto del jugador y lectura táctica del Role Engine.' if not is_en else 'Physical identity, player context and tactical Role Engine readout.')}</p></div>
+        <div class='pi-profile-grid'>
+            <div class='pi-profile-left pi-profile-identity-composed'>
+                {_tm69_visual_identity_block(d['ctx'], d['player_name'], d['club'], d['country'])}
+                <div class='pi-profile-main-context'>
+                    <div class='pi-profile-overline'>{html.escape('Identidad del jugador' if not is_en else 'Player identity')}</div>
+                    <div class='pi-profile-meta pi-profile-meta-strong'>{_tm69_club_chip_html(d['ctx'], d['club'])}<span>{html.escape(str(d['league']))}</span><span>{html.escape(d['primary_pos'])}</span><span>{html.escape(d['role'])}</span></div>
+                    <div class='pi-profile-kpis'>{profile_items}</div>
+                    <div class='pi-specialisation-line'><b>{html.escape('Especialización' if not is_en else 'Specialisation')}:</b> {html.escape(d['role_quality'])} {info}</div>
+                </div>
+            </div>
+            <div class='pi-profile-right'>
+                <div class='pi-role-summary'><span>{html.escape('Rol primario' if not is_en else 'Primary role')}</span><b>{html.escape(d['role'])}</b><small>{html.escape('Arquetipo principal detectado' if not is_en else 'Main detected archetype')}</small></div>
+                <div class='pi-role-summary'><span>{html.escape('Rol secundario' if not is_en else 'Secondary role')}</span><b>{html.escape(d['secondary_role'])}</b><small>{html.escape('Tendencia secundaria' if not is_en else 'Secondary trend')}</small></div>
+            </div>
+        </div>
+        <div class='pi-pitch-layout'>
+            <div class='exec-pitch pi-real-pitch'>{_tm69_position_markers(d['primary_pos'], d['secondary_pos'])}</div>
+            <div class='pi-position-distribution'>
+                <div class='exec-flex-line'><span class='exec-position-pill'><strong>{html.escape('Dominante' if not is_en else 'Dominant')}:</strong>&nbsp;{html.escape(d['primary_pos'])}</span>{secondary_html}</div>
+                {_tm69_position_share_rows(d['primary_pos'], d['secondary_pos'], d['role_conf'])}
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in pitch.splitlines()), unsafe_allow_html=True)
+    st.markdown(f"<div class='pi-card'><div class='pi-section-head'><h3>{html.escape('ADN de rol' if not is_en else 'Role DNA')}</h3><p>{html.escape('Perfil de estilo interpretado por el Role Engine.' if not is_en else 'Style profile interpreted by the Role Engine.')}</p></div>{_tm69_dna_bars(d['ctx'])}<div class='exec-role-interpretation'><b>{html.escape(d['role'])}</b><br>{html.escape(_tm69_role_interpretation(d['ctx'], d['role']))}</div>{_tm69_tactical_fit(d['ctx'], d['primary_pos'])}</div>", unsafe_allow_html=True)
+
+
+def render_tm69_market_contract_tab(row: pd.Series, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    market_cards = "".join([
+        _tm69_context_kpi("Valor actual TM" if not is_en else "Current TM Value", d["market_txt"], "Transfermarkt"),
+        _tm69_context_kpi("Fair Value IQ" if not is_en else "IQ Fair Value", d["expected_txt"], "modelo" if not is_en else "model"),
+        _tm69_context_kpi("Gap actual" if not is_en else "Current Gap", d["gap_txt"], d["gap_abs_txt"]),
+        _tm69_context_kpi("Última valoración" if not is_en else "Last update", d["last_update"]),
+        _tm69_context_kpi("Contrato" if not is_en else "Contract", d["contract_status"], f"{d['contract_years_txt']} años" if not is_en else f"{d['contract_years_txt']} years"),
+        _tm69_context_kpi("Accesibilidad" if not is_en else "Feasibility", d["accessibility"], _tm69_format_score(d["contract"])),
+    ])
+    market_html = f"""
+    <div class='pi-card'>
+        <div class='pi-section-head'><h3>{html.escape('Mercado & Contrato' if not is_en else 'Market & Contract')}</h3><p>{html.escape('Contexto de valor actual, fair value Scouting IQ, trayectoria y fichabilidad.' if not is_en else 'Current value, Scouting IQ fair value, trajectory and feasibility context.')}</p></div>
+        <div class='pi-kpi-grid pi-kpi-grid-6'>{market_cards}</div>
+    </div>
+    {_tm69_market_benchmark_html(d['ctx'], d['player_name'], d['market_value'], d['expected_value'], d['primary_pos'])}
+    {_tm69_career_trajectory_html(d['ctx'], d['market_value'], d['expected_value'], d['growth_1y'])}
+    <div class='pi-market-bottom-grid'>
+        {_tm69_watchlist_status_html(d['status'], d['gap_pct'], d['risk'], d['contract'])}
+        {_tm69_opportunity_context_html(d['ctx'], d['player_name'], d['primary_pos'], d['opportunity'], d['growth'])}
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in market_html.splitlines()), unsafe_allow_html=True)
+
+
 def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Player Intelligence", "Player Profile Intelligence Platform", "Player snapshot, benchmark and market value drivers." if LANG == "EN" else "Player Snapshot, benchmark y drivers de valor.")
     table = add_role_display_columns(build_ranked_table_df(source_df))
+    if table.empty:
+        st.info("No players available with the active filters." if LANG == "EN" else "No hay jugadores disponibles con los filtros activos.")
+        return
 
-    # TM.4.1 final UX: the Player Snapshot is the first analytical block.
-    # The scout should understand who the player is, where he plays, market value,
-    # opportunity and risk before entering the radar/benchmark layer.
-    if not table.empty:
-        name_col = get_player_name_column(table) or ("player_name_tm" if "player_name_tm" in table.columns else "player_name_fbref")
-        if name_col in table.columns:
-            player_names = table[name_col].fillna("Jugador").astype(str).tolist()
-            selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
-            if str(selected_player) not in set(map(str, player_names)):
-                selected_player = player_names[0] if player_names else "Jugador"
-            try:
-                snapshot_row = table[table[name_col].astype(str) == str(selected_player)].iloc[0]
-            except Exception:
-                snapshot_row = table.iloc[0]
-            render_tm69_executive_scouting_card(snapshot_row, name_col)
-            st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
-            render_player_radar_benchmarking(table, show_snapshot=False)
-            with st.expander("Technical role analysis and comparables" if LANG == "EN" else "Ver análisis técnico de rol y comparables", expanded=False):
-                st.markdown(
-                    f"<div class='role-section-card'><div class='role-section-title'>{html.escape('TECHNICAL ROLE ANALYSIS' if LANG == 'EN' else 'ANÁLISIS TÉCNICO DE ROL')}</div><div class='role-section-subtitle'>{html.escape('Detailed taxonomy, role purity, hybridisation and nearest role-based comparables. The executive identity card above remains the canonical player summary.' if LANG == 'EN' else 'Taxonomía detallada, pureza de rol, hibridación y comparables por rol. La Executive Scouting Card superior queda como resumen canónico del jugador.')}</div></div>",
-                    unsafe_allow_html=True,
-                )
-                render_role_profile_block(snapshot_row)
-                render_role_dna_block(snapshot_row)
-                render_role_similar_players_block(snapshot_row, table)
+    name_col = get_player_name_column(table) or ("player_name_tm" if "player_name_tm" in table.columns else "player_name_fbref")
+    player_names = table[name_col].fillna("Jugador").astype(str).tolist() if name_col in table.columns else []
+    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+    if str(selected_player) not in set(map(str, player_names)):
+        selected_player = player_names[0] if player_names else "Jugador"
+    try:
+        snapshot_row = table[table[name_col].astype(str) == str(selected_player)].iloc[0]
+    except Exception:
+        snapshot_row = table.iloc[0]
 
-    st.markdown("<div class='player-intelligence-report-gap'></div>", unsafe_allow_html=True)
-    render_individual_player_report(table)
-
+    tab_labels = (
+        ["Executive Summary", "Profile & Role", "Market & Contract", "Performance", "Technical Evidence"]
+        if LANG == "EN" else
+        ["Resumen Ejecutivo", "Perfil & Rol", "Mercado & Contrato", "Rendimiento", "Evidencia Técnica"]
+    )
+    tabs = st.tabs(tab_labels)
+    with tabs[0]:
+        render_tm69_executive_summary_tab(snapshot_row, name_col)
+    with tabs[1]:
+        render_tm69_profile_role_tab(snapshot_row, table, name_col)
+    with tabs[2]:
+        render_tm69_market_contract_tab(snapshot_row, name_col)
+    with tabs[3]:
+        render_player_radar_benchmarking(table, show_snapshot=False)
+    with tabs[4]:
+        st.markdown(
+            f"<div class='pi-card pi-evidence-intro'><div class='pi-section-head'><h3>{html.escape('Scouting Evidence' if LANG == 'EN' else 'Evidencia técnica')}</h3><p>{html.escape('Compact traceability layer: tactical role, comparables and model drivers without duplicating the executive decision.' if LANG == 'EN' else 'Capa compacta de trazabilidad: rol táctico, comparables y drivers del modelo sin duplicar la decisión ejecutiva.')}</p></div></div>",
+            unsafe_allow_html=True,
+        )
+        evidence_labels = (["Role DNA", "Comparables", "Fair Value Drivers"] if LANG == "EN" else ["Role DNA", "Comparables", "Drivers Fair Value"])
+        ev_tabs = st.tabs(evidence_labels)
+        with ev_tabs[0]:
+            st.markdown(
+                f"<div class='pi-card pi-evidence-card'><div class='pi-section-head'><h3>{html.escape('Tactical Role Evidence' if LANG == 'EN' else 'Evidencia táctica de rol')}</h3><p>{html.escape('Only the role evidence needed to understand why the Role Engine assigns this archetype.' if LANG == 'EN' else 'Sólo la evidencia necesaria para entender por qué el Role Engine asigna este arquetipo.')}</p></div></div>",
+                unsafe_allow_html=True,
+            )
+            render_role_profile_block(snapshot_row)
+            render_role_dna_block(snapshot_row)
+        with ev_tabs[1]:
+            render_role_similar_players_block(snapshot_row, table)
+        with ev_tabs[2]:
+            render_individual_player_report(table)
 
 def render_recruitment_board_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Recruitment Intelligence", "Player Recruitment Intelligence Platform", "Operational scouting workspace: target validation, similar players, replacement analysis, investment view and model drivers." if LANG == "EN" else "Validación de targets, comparables, assessment y soporte a la decisión.")
@@ -27085,16 +30094,26 @@ def _tm69_market_benchmark_html(ctx: dict, player_name: str, market_value: float
     if not comps:
         base = market_value if pd.notna(market_value) else expected_value
         if pd.isna(base): base = 10_000_000
-        comps = [("Peer valuation band · upper", base * 1.35, np.nan, np.nan), ("Peer valuation band · median", base * 1.18, np.nan, np.nan), ("Peer valuation band · lower", base * 0.95, np.nan, np.nan)]
+        if is_en:
+            comps = [("Peer valuation band · upper", base * 1.35, np.nan, np.nan), ("Peer valuation band · median", base * 1.18, np.nan, np.nan), ("Peer valuation band · lower", base * 0.95, np.nan, np.nan)]
+        else:
+            comps = [("Banda peer · alta", base * 1.35, np.nan, np.nan), ("Banda peer · media", base * 1.18, np.nan, np.nan), ("Banda peer · baja", base * 0.95, np.nan, np.nan)]
     valid_values = [v for _, v, _, _ in comps if pd.notna(v)]
     avg_comp = np.nanmean(valid_values) if valid_values else np.nan
     discount = np.nan
     if pd.notna(avg_comp) and pd.notna(market_value) and avg_comp:
         discount = (avg_comp - market_value) / avg_comp
-    rows = "".join(
-        f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape('Age' if is_en else 'Edad')}: {html.escape('N/A' if pd.isna(age) else f'{age:.0f}')} · {html.escape('Sim' if is_en else 'Sim')}: {html.escape('N/A' if pd.isna(s) else f'{s:.0f}')}</span><strong>{html.escape(format_money_short(v))}</strong></div>"
-        for n, v, s, age in comps[:3]
-    )
+    row_parts = []
+    for n, v, s, age in comps[:3]:
+        band_only = (pd.isna(s) and pd.isna(age) and ("band" in str(n).lower() or "banda" in str(n).lower()))
+        if band_only:
+            meta = "Valuation band" if is_en else "Banda de valoración"
+        else:
+            age_txt = "N/A" if pd.isna(age) else f"{age:.0f}"
+            sim_txt = "N/A" if pd.isna(s) else f"{s:.0f}"
+            meta = f"{('Age' if is_en else 'Edad')}: {age_txt} · {('Sim' if is_en else 'Sim')}: {sim_txt}"
+        row_parts.append(f"<div class='exec-benchmark-row exec-benchmark-row-rich'><b>{html.escape(n)}</b><span>{html.escape(meta)}</span><strong>{html.escape(format_money_short(v))}</strong></div>")
+    rows = "".join(row_parts)
     return f"""
     <div class="exec-benchmark-market">
         <div class="exec-section-header-row"><div><div class="exec-panel-title">{html.escape('Market Comparables' if is_en else 'Comparables de mercado')}</div><div class="exec-panel-subtitle">{html.escape('Economic context against similar player profiles.' if is_en else 'Contexto económico contra perfiles similares.')}</div></div></div>
@@ -27112,7 +30131,7 @@ def _tm69_career_trajectory_html(ctx: dict, market_value: float, expected_value:
     is_en = globals().get("LANG") == "EN"
     current = market_value if pd.notna(market_value) else expected_value
     if pd.isna(current): current = 0
-    prev = _tm69_numeric(ctx, ["market_value_prev_eur", "tm69_market_value_prev_eur"])
+    prev = _tm69_numeric(ctx, ["season_context_market_value_eur", "market_value_eur", "tm69_season_context_market_value_eur", "market_value_prev_eur", "tm69_market_value_prev_eur"])
     if pd.isna(prev) and current:
         rate = 0.0 if pd.isna(growth_1y) else float(growth_1y)
         prev = current / max(0.25, 1 + (rate if abs(rate) <= 3 else rate / 100))
@@ -27235,6 +30254,766 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+
+# =============================================================================
+# TM.6.9 final layout closure: compact executive card, real pitch proportions,
+# non-duplicated executive signals and actionable watchlist.
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Executive Scouting Card: use the available width and remove dead vertical space. */
+.exec-card-shell{
+    padding:14px 16px!important;
+}
+.exec-card-top{
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr)!important;
+    gap:14px!important;
+    align-items:stretch!important;
+}
+.exec-identity-panel,.exec-signals-panel{
+    min-height:0!important;
+    height:auto!important;
+    align-self:stretch!important;
+}
+.exec-identity-grid{
+    grid-template-columns:72px minmax(0,1fr)!important;
+    gap:14px!important;
+}
+.exec-player-avatar{
+    width:70px!important;
+    height:70px!important;
+    font-size:1.35rem!important;
+}
+.exec-player-title{
+    font-size:1.58rem!important;
+    margin-bottom:5px!important;
+}
+.exec-player-clubline{
+    margin-bottom:8px!important;
+}
+.exec-meta-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:7px!important;
+}
+.exec-meta-item{
+    min-height:48px!important;
+    padding:7px 8px!important;
+}
+.exec-flex-line{
+    margin-top:7px!important;
+    gap:6px!important;
+}
+.exec-identity-bottom-grid{
+    margin-top:9px!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:7px!important;
+}
+.exec-identity-bottom-grid div{
+    min-height:50px!important;
+    padding:7px 8px!important;
+}
+.exec-identity-bottom-grid b{
+    font-size:.82rem!important;
+}
+/* Specialisation chip: label first, value + info icon at the end. */
+.exec-specialisation-pill{
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:6px!important;
+}
+.exec-specialisation-pill>span{
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:0!important;
+}
+.exec-specialisation-pill>b{
+    display:inline-flex!important;
+    align-items:center!important;
+    gap:4px!important;
+    color:#0f172a!important;
+}
+.exec-specialisation-pill .exec-info,
+.exec-info{
+    background:#2563eb!important;
+    color:#ffffff!important;
+    border-color:#1d4ed8!important;
+}
+/* Executive Signals: cards + one-line reading only; no duplicated drivers/list below. */
+.exec-signals-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:7px!important;
+}
+.exec-signal-card{
+    min-height:84px!important;
+    padding:8px!important;
+}
+.exec-signal-value{
+    font-size:1.55rem!important;
+    margin:7px 0 3px 0!important;
+}
+.exec-signal-label{
+    font-size:.62rem!important;
+}
+.exec-assessment-strip{
+    margin-top:8px!important;
+    padding:8px 10px!important;
+    font-size:.76rem!important;
+}
+.exec-signals-panel .exec-decision-drivers,
+.exec-signals-panel .exec-driver-list,
+.exec-signals-panel .exec-chip-row{
+    display:none!important;
+}
+/* Positional identity: real football-ratio field, true 50/50 module and no duplicated chips over the pitch. */
+.exec-visible-pitch-panel{
+    padding:14px 16px!important;
+}
+.exec-visible-pitch-grid{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    gap:18px!important;
+    align-items:stretch!important;
+}
+.exec-visible-pitch-side{
+    min-height:0!important;
+    justify-content:center!important;
+    padding:16px 18px!important;
+}
+.exec-pitch,.exec-pitch-compact{
+    width:100%!important;
+    aspect-ratio:1.544/1!important; /* 105 x 68 */
+    height:auto!important;
+    min-height:218px!important;
+    max-height:300px!important;
+    border-radius:20px!important;
+    background:
+        radial-gradient(circle at 50% 50%, transparent 0 34px, rgba(255,255,255,.78) 35px 36px, transparent 37px),
+        linear-gradient(90deg, transparent 49.55%, rgba(255,255,255,.82) 49.85%, rgba(255,255,255,.82) 50.15%, transparent 50.45%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.070) 0 10%, rgba(255,255,255,0) 10% 20%),
+        linear-gradient(135deg,#317f4f 0%,#266f48 49%,#20633f 100%)!important;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.42),0 12px 26px rgba(15,23,42,.10)!important;
+}
+.exec-pitch::before,.exec-pitch::after{
+    top:29%!important;
+    bottom:29%!important;
+    width:12.5%!important;
+    border:1.6px solid rgba(255,255,255,.72)!important;
+}
+.exec-pitch::before{left:0!important;border-left:0!important;border-radius:0 13px 13px 0!important;}
+.exec-pitch::after{right:0!important;border-right:0!important;border-radius:13px 0 0 13px!important;}
+.exec-pitch-overlay{display:none!important;}
+.exec-position-bars{margin-top:12px!important;display:grid!important;gap:11px!important;}
+.exec-position-bar-row{grid-template-columns:52px minmax(0,1fr) 52px!important;font-size:.78rem!important;}
+.exec-position-bar-track{height:10px!important;}
+/* Watchlist and support cards: denser, actionable, no blank panels. */
+.exec-decision-support-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+}
+.exec-readiness-card,.exec-watchlist-card,.exec-rank-context-card{
+    min-height:0!important;
+    height:auto!important;
+    padding:14px 16px!important;
+}
+.exec-watchlist-details{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+    margin-top:10px!important;
+}
+.exec-watchlist-details div{
+    min-height:48px!important;
+}
+/* Market trajectory: bridge, not misleading spark bars. */
+.exec-trajectory-bridge{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:9px!important;
+    margin-top:10px!important;
+}
+.exec-trajectory-bridge-step{
+    min-height:62px!important;
+}
+/* Peer valuation bands: they are bands, not fake comparables. */
+.exec-benchmark-row-rich span{
+    text-align:right!important;
+    color:#64748b!important;
+}
+/* Remove remaining role-purity wording from visible technical descriptions. */
+.role-section-subtitle{
+    font-size:.82rem!important;
+}
+@media(max-width:1500px){
+    .exec-card-top,.exec-visible-pitch-grid,.exec-decision-support-grid{grid-template-columns:1fr!important;}
+    .exec-visible-pitch-side{min-height:0!important;}
+}
+@media(max-width:900px){
+    .exec-meta-grid,.exec-identity-bottom-grid,.exec-signals-grid,.exec-watchlist-details{grid-template-columns:1fr!important;}
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.9 final commercial product refactor: Director Deportivo Player Intelligence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Final Player Intelligence product-grade hierarchy */
+.pi-product-shell { display:grid; gap:16px; }
+.pi-director-hero {
+    background:#ffffff; border:1px solid #dbe3ee; border-left:6px solid #2563eb; border-radius:22px;
+    box-shadow:0 18px 44px rgba(15,23,42,.075); padding:18px 20px; margin:8px 0 16px 0;
+}
+.pi-director-grid { display:grid; grid-template-columns:minmax(420px,1.22fr) 230px minmax(380px,.95fr); gap:18px; align-items:stretch; }
+.pi-director-main { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.pi-director-eyebrow { color:#1d4ed8; font-size:.72rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:7px; }
+.pi-director-name { color:#0f172a; font-size:2.05rem; font-weight:950; line-height:1.03; letter-spacing:-.035em; margin:2px 0 9px 0; }
+.pi-director-meta { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+.pi-director-chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:6px 10px; background:#f8fbff; border:1px solid #dbeafe; color:#1e3a8a; font-size:.76rem; font-weight:950; }
+.pi-director-chip-neutral { color:#334155; border-color:#e2e8f0; background:#ffffff; }
+.pi-director-status { width:fit-content; border-radius:999px; padding:7px 12px; font-size:.72rem; font-weight:950; letter-spacing:.04em; text-transform:uppercase; margin-bottom:8px; }
+.pi-director-status-price { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+.pi-director-status-buy { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+.pi-director-status-monitor { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.pi-director-bullets { display:grid; gap:6px; margin-top:4px; }
+.pi-director-bullet { display:flex; align-items:flex-start; gap:8px; color:#334155; font-size:.83rem; line-height:1.32; font-weight:800; }
+.pi-director-bullet i { width:18px; height:18px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#dcfce7; color:#166534; font-style:normal; font-size:.68rem; font-weight:950; flex:0 0 18px; margin-top:1px; }
+.pi-director-score { background:linear-gradient(180deg,#0b1f3a 0%,#0f2f5f 100%); color:#ffffff; border-radius:20px; padding:18px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; box-shadow:0 16px 34px rgba(15,23,42,.18); }
+.pi-director-score span { font-size:.68rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; color:#bfdbfe; }
+.pi-director-score b { font-size:3.35rem; line-height:.98; font-weight:950; margin:9px 0 4px 0; }
+.pi-director-score small { font-size:.88rem; font-weight:950; color:#ffffff; }
+.pi-director-market { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.pi-director-market .pi-kpi { min-height:83px!important; box-shadow:none!important; }
+.pi-decision-line { margin-top:14px; padding:11px 13px; border-radius:15px; background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; font-size:.83rem; font-weight:950; line-height:1.32; }
+.pi-director-bottom { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:16px; }
+.pi-mini-panel { background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:14px 16px; box-shadow:0 10px 24px rgba(15,23,42,.045); }
+.pi-mini-panel h4 { margin:0 0 8px 0; color:#0f172a; font-size:.93rem; font-weight:950; }
+.pi-mini-list { display:grid; gap:7px; }
+.pi-mini-row { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#334155; font-size:.78rem; font-weight:850; border-bottom:1px solid #edf2f7; padding-bottom:6px; }
+.pi-mini-row:last-child { border-bottom:0; padding-bottom:0; }
+.pi-mini-row b { color:#0f172a; font-weight:950; }
+.pi-technical-card { background:#ffffff; border:1px solid #dbe3ee; border-radius:22px; padding:18px 20px; box-shadow:0 14px 34px rgba(15,23,42,.055); margin:8px 0 16px 0; }
+.pi-technical-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:14px; }
+.pi-technical-head h3 { margin:0; color:#0f172a; font-size:1.22rem; font-weight:950; letter-spacing:-.02em; }
+.pi-technical-head p { margin:4px 0 0 0; color:#64748b; font-size:.82rem; }
+.pi-technical-grid { display:grid; grid-template-columns:minmax(420px,.86fr) minmax(500px,1.14fr); gap:18px; align-items:stretch; }
+.pi-ficha-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.pi-ficha-item { background:#f8fbff; border:1px solid #e2e8f0; border-radius:15px; padding:11px 12px; min-height:62px; }
+.pi-ficha-item span { display:block; color:#64748b; font-size:.66rem; font-weight:950; letter-spacing:.065em; text-transform:uppercase; margin-bottom:4px; }
+.pi-ficha-item b { color:#0f172a; font-size:.94rem; font-weight:950; line-height:1.12; }
+.pi-role-strip { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.pi-role-strip div { background:#ffffff; border:1px solid #dbeafe; border-radius:15px; padding:11px 12px; }
+.pi-role-strip span { display:block; color:#1d4ed8; font-size:.66rem; font-weight:950; letter-spacing:.07em; text-transform:uppercase; margin-bottom:4px; }
+.pi-role-strip b { color:#0f172a; font-size:.92rem; font-weight:950; }
+.pi-pitch-pro-card { display:grid; grid-template-rows:auto 1fr auto; background:#f8fafc; border:1px solid #e2e8f0; border-radius:18px; padding:12px; min-height:0; }
+.pi-pitch-caption { display:flex; justify-content:space-between; align-items:center; color:#64748b; font-size:.72rem; font-weight:850; margin:0 2px 8px 2px; }
+.pi-pitch-caption b { color:#0f172a; }
+.exec-pitch.pi-real-pitch, .pi-real-pitch, .exec-pitch, .exec-pitch-compact {
+    aspect-ratio:105/68!important; min-height:340px!important; max-height:none!important; height:auto!important; border-radius:18px!important;
+    background: radial-gradient(circle at 50% 50%, transparent 0 40px, rgba(255,255,255,.72) 41px 43px, transparent 44px),
+                linear-gradient(90deg, transparent 49.65%, rgba(255,255,255,.82) 49.9%, rgba(255,255,255,.82) 50.1%, transparent 50.35%),
+                repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 10%, rgba(255,255,255,0) 10% 20%),
+                linear-gradient(135deg,#348f5f 0%,#267a4e 48%,#1f6541 100%)!important;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.50),0 14px 28px rgba(15,23,42,.10)!important;
+}
+.exec-pitch::before,.exec-pitch::after,.pi-real-pitch::before,.pi-real-pitch::after{top:28%!important;bottom:28%!important;width:13.8%!important;border:2px solid rgba(255,255,255,.72)!important;background:rgba(255,255,255,.025)!important;}
+.exec-pos-marker { min-width:34px!important; height:34px!important; font-size:.70rem!important; }
+.exec-pos-marker.primary { transform:translate(-50%,-50%) scale(1.07)!important; }
+.pi-position-distribution { min-height:0!important; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:12px; margin-top:10px; }
+.pi-section-tabs-note { color:#64748b; font-size:.78rem; margin-bottom:10px; }
+.pi-card, .pi-pitch-card { box-shadow:0 10px 24px rgba(15,23,42,.045)!important; }
+.pi-evidence-compact { display:grid; grid-template-columns:minmax(0,1fr) minmax(330px,.55fr); gap:14px; align-items:start; }
+.pi-evidence-bullets { display:grid; gap:8px; }
+.pi-evidence-bullet { background:#f8fbff; border:1px solid #e2e8f0; border-radius:14px; padding:10px 12px; color:#334155; font-size:.80rem; font-weight:850; line-height:1.32; }
+.pi-evidence-bullet b { color:#0f172a; }
+.pi-no-longcopy .role-profile-card p, .pi-no-longcopy .role-section-subtitle { display:none!important; }
+.pi-player-photo, .pi-avatar-premium { display:none!important; }
+.pi-visual-stack { min-width:0!important; }
+.pi-visual-stack > .pi-visual-clubline, .pi-visual-stack > .pi-visual-nationality { display:none!important; }
+.tm4-section-title { font-size:1.08rem!important; }
+.tm4-section-title::first-letter { text-transform:uppercase; }
+@media(max-width:1450px){ .pi-director-grid,.pi-technical-grid,.pi-director-bottom{grid-template-columns:1fr!important;} .pi-director-market{grid-template-columns:repeat(4,minmax(0,1fr));} .exec-pitch.pi-real-pitch,.pi-real-pitch,.exec-pitch{min-height:280px!important;} }
+@media(max-width:900px){ .pi-director-market,.pi-ficha-grid,.pi-role-strip,.pi-evidence-compact{grid-template-columns:1fr!important;} }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    """No visual placeholder when player photos are not guaranteed."""
+    pid = _tm69_first(ctx, ["player_id_tm", "tm69_player_id_tm", "player_id", "id"], "")
+    uri = _tm69_asset_uri("player", pid, player_name)
+    if uri:
+        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(player_name)}'></div>"
+    return ""
+
+
+def _tm69_strength_weakness_html(ctx: dict) -> str:
+    is_en = globals().get("LANG") == "EN"
+    vals = [(label, val) for label, val in _tm69_dna_values(ctx) if pd.notna(val)]
+    if not vals:
+        return ""
+    ordered = sorted(vals, key=lambda x: x[1], reverse=True)
+    strengths = ordered[:3]
+    weaknesses = ordered[-2:]
+    s_rows = "".join(f"<div class='pi-mini-row'><span>{html.escape(str(k))}</span><b>{float(v):.0f}</b></div>" for k, v in strengths)
+    w_rows = "".join(f"<div class='pi-mini-row'><span>{html.escape(str(k))}</span><b>{float(v):.0f}</b></div>" for k, v in weaknesses)
+    return (
+        f"<div class='pi-mini-panel'><h4>{html.escape('Fortalezas' if not is_en else 'Strengths')}</h4><div class='pi-mini-list'>{s_rows}</div></div>"
+        f"<div class='pi-mini-panel'><h4>{html.escape('Alertas técnicas' if not is_en else 'Technical flags')}</h4><div class='pi-mini-list'>{w_rows}</div></div>"
+    )
+
+
+def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
+    """Commercial-grade executive player card: decision first, minimum prose."""
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    status_l = str(d["status"]).lower()
+    badge_cls = "price" if ("precio" in status_l or "price" in status_l) else ("buy" if pd.notna(d["priority"]) and d["priority"] >= 75 else "monitor")
+    market_cards = "".join([
+        _tm69_context_kpi("Transfermarkt", d["market_txt"], "valor actual" if not is_en else "current value"),
+        _tm69_context_kpi("Scouting IQ", d["expected_txt"], "fair value"),
+        _tm69_context_kpi("Gap", d["gap_txt"], d["gap_abs_txt"]),
+        _tm69_context_kpi("Fee", d["transfer_band"], "banda indicativa" if not is_en else "indicative band"),
+        _tm69_context_kpi("Opportunity", _tm69_format_score(d["opportunity"]), _tm69_score_label("opportunity", d["opportunity"])),
+        _tm69_context_kpi("Risk", _tm69_format_score(d["risk"]), _tm69_score_label("risk", d["risk"])),
+    ])
+    chips = "".join([
+        _tm69_club_chip_html(d["ctx"], d["club"]),
+        f"<span class='pi-director-chip'>{html.escape(str(d['league']))}</span>",
+        f"<span class='pi-director-chip'>{_tm69_nationality_html(d['country'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['age_txt'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['primary_pos'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['role'])}</span>",
+    ])
+    bullets = []
+    bullets.append(("✓", f"{'Precio a validar' if not is_en else 'Price validation'}: Transfermarkt {d['market_txt']} vs Scouting IQ {d['expected_txt']} ({d['gap_txt']})."))
+    bullets.append(("✓", f"{'Encaje táctico' if not is_en else 'Tactical fit'}: {d['role']} · Fit {_tm69_format_score(d['tactical_fit'])}/100."))
+    bullets.append(("✓", f"{'Riesgo' if not is_en else 'Risk'}: {_tm69_score_label('risk', d['risk'])} · {'accesibilidad' if not is_en else 'feasibility'} {d['accessibility']}."))
+    bullet_html = "".join(f"<div class='pi-director-bullet'><i>{html.escape(icon)}</i><span>{html.escape(txt)}</span></div>" for icon, txt in bullets)
+    why = _tm69_why_him_html(d["opportunity"], d["growth"], d["risk"], d["tactical_fit"])
+    readiness = _tm69_acquisition_readiness_html(d["tactical_fit"], d["contract"], d["risk"], d["gap_pct"], d["accessibility"])
+    watchlist = _tm69_watchlist_status_html(d["status"], d["gap_pct"], d["risk"], d["contract"])
+    html_block = f"""
+    <div class='pi-product-shell'>
+      <div class='pi-director-hero'>
+        <div class='pi-director-grid'>
+          <div class='pi-director-main'>
+            <div class='pi-director-eyebrow'>{html.escape('Decisión de adquisición' if not is_en else 'Acquisition decision')}</div>
+            <div class='pi-director-status pi-director-status-{badge_cls}'>{html.escape(str(d['status']))}</div>
+            <div class='pi-director-name'>{html.escape(d['player_name'])}</div>
+            <div class='pi-director-meta'>{chips}</div>
+            <div class='pi-director-bullets'>{bullet_html}</div>
+            <div class='pi-decision-line'>{html.escape(d['action_text'])}</div>
+          </div>
+          <div class='pi-director-score'><span>Scouting IQ</span><b>{html.escape(d['priority_txt'])}</b><small>{html.escape(d['priority_grade'])}</small></div>
+          <div class='pi-director-market'>{market_cards}</div>
+        </div>
+      </div>
+      <div class='pi-director-bottom'><div>{why}</div><div>{readiness}</div><div>{watchlist}</div></div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+
+
+def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
+    """Professional scouting technical file + real 105x68 pitch + Role DNA."""
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    secondary_html = "".join([f"<span class='exec-position-pill'>{html.escape(x)}</span>" for x in d["secondary_pos"]]) or f"<span class='exec-position-pill'>{html.escape('Sin secundaria' if not is_en else 'No secondary')}</span>"
+    ficha = "".join([
+        f"<div class='pi-ficha-item'><span>{html.escape('Nacionalidad' if not is_en else 'Nationality')}</span><b>{_tm69_nationality_html(d['country'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Club')}</span><b>{_tm69_club_mark_html(d['ctx'], d['club'])} {html.escape(d['club'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{html.escape(str(d['league']))}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Edad' if not is_en else 'Age')}</span><b>{html.escape(d['age_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Nacimiento' if not is_en else 'Born')}</span><b>{html.escape(d['birth_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Contrato' if not is_en else 'Contract')}</span><b>{html.escape(d['contract_status'])}</b></div>",
+    ])
+    pitch_html = f"""
+    <div class='pi-technical-card'>
+      <div class='pi-technical-head'><div><h3>{html.escape('Ficha técnica & rol' if not is_en else 'Technical file & role')}</h3><p>{html.escape('Datos de identidad accionables, sin duplicar la decisión ejecutiva.' if not is_en else 'Actionable identity data, without duplicating the executive decision.')}</p></div></div>
+      <div class='pi-technical-grid'>
+        <div>
+          <div class='pi-ficha-grid'>{ficha}</div>
+          <div class='pi-role-strip'>
+            <div><span>{html.escape('Rol primario' if not is_en else 'Primary role')}</span><b>{html.escape(d['role'])}</b></div>
+            <div><span>{html.escape('Rol secundario' if not is_en else 'Secondary role')}</span><b>{html.escape(d['secondary_role'])}</b></div>
+          </div>
+        </div>
+        <div class='pi-pitch-pro-card'>
+          <div class='pi-pitch-caption'><span>{html.escape('Campo 105 × 68 · 4-3-3 de referencia' if not is_en else '105 × 68 pitch · 4-3-3 reference')}</span><b>{html.escape('Dominante' if not is_en else 'Dominant')}: {html.escape(d['primary_pos'])}</b></div>
+          <div class='exec-pitch pi-real-pitch'>{_tm69_position_markers(d['primary_pos'], d['secondary_pos'])}</div>
+          <div class='pi-position-distribution'><div class='exec-flex-line'><span class='exec-position-pill'><strong>{html.escape('Dominante' if not is_en else 'Dominant')}:</strong>&nbsp;{html.escape(d['primary_pos'])}</span>{secondary_html}</div>{_tm69_position_share_rows(d['primary_pos'], d['secondary_pos'], d['role_conf'])}</div>
+        </div>
+      </div>
+    </div>
+    <div class='pi-director-bottom'>{_tm69_strength_weakness_html(d['ctx'])}<div class='pi-mini-panel'><h4>{html.escape('Role DNA' if is_en else 'ADN de rol')}</h4>{_tm69_dna_bars(d['ctx'])}</div></div>
+    """
+    st.markdown("".join(line.strip() for line in pitch_html.splitlines()), unsafe_allow_html=True)
+
+
+def render_tm69_evidence_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
+    """Compact evidence layer: visuals first, long narratives removed."""
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    intro = "Evidencia visual mínima para auditar rol, comparables y drivers sin convertir la ficha en memoria metodológica." if not is_en else "Minimal visual evidence to audit role, comparables and drivers without turning the card into methodology notes."
+    st.markdown(f"<div class='pi-card'><div class='pi-section-head'><h3>{html.escape('Scouting Evidence' if is_en else 'Evidencia scouting')}</h3><p>{html.escape(intro)}</p></div></div>", unsafe_allow_html=True)
+    ev_tabs = st.tabs(["Role DNA", "Comparables", "Drivers"] if is_en else ["Role DNA", "Comparables", "Drivers"])
+    with ev_tabs[0]:
+        dna_text = _tm69_role_interpretation(d["ctx"], d["role"])
+        st.markdown(f"<div class='pi-card pi-evidence-compact'><div><div class='pi-section-head'><h3>{html.escape(d['role'])}</h3><p>{html.escape('Resumen visual de identidad táctica.' if not is_en else 'Visual tactical identity summary.')}</p></div>{_tm69_dna_bars(d['ctx'])}</div><div class='pi-evidence-bullets'><div class='pi-evidence-bullet'><b>{html.escape('Lectura' if not is_en else 'Readout')}:</b> {html.escape(dna_text)}</div><div class='pi-evidence-bullet'><b>{html.escape('Uso' if not is_en else 'Use')}:</b> {html.escape('Validar si encaja como alternativa like-for-like.' if not is_en else 'Validate whether he fits as a like-for-like alternative.')}</div></div></div>", unsafe_allow_html=True)
+    with ev_tabs[1]:
+        render_role_similar_players_block(row, table)
+    with ev_tabs[2]:
+        st.markdown(f"<div class='pi-card'><div class='pi-section-head'><h3>{html.escape('Drivers Fair Value' if is_en else 'Drivers Fair Value')}</h3><p>{html.escape('Vista resumida. El detalle completo queda en Methodology/model drivers.' if not is_en else 'Summary view. Full detail remains in Methodology/model drivers.')}</p></div><div class='pi-evidence-bullets'><div class='pi-evidence-bullet'><b>Market:</b> TM {html.escape(d['market_txt'])} · IQ {html.escape(d['expected_txt'])} · Gap {html.escape(d['gap_txt'])}</div><div class='pi-evidence-bullet'><b>Sport:</b> Opportunity {_tm69_format_score(d['opportunity'])} · Growth {_tm69_format_score(d['growth'])} · Fit {_tm69_format_score(d['tactical_fit'])}</div><div class='pi-evidence-bullet'><b>Risk:</b> Risk {_tm69_format_score(d['risk'])} · Contract {_tm69_format_score(d['contract'])}</div></div></div>", unsafe_allow_html=True)
+
+
+def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
+    render_product_page_header("Player Intelligence", "Player Profile Intelligence Platform", "Player snapshot, benchmark and market value drivers." if LANG == "EN" else "Player Snapshot, benchmark y drivers de valor.")
+    table = add_role_display_columns(build_ranked_table_df(source_df))
+    if table.empty:
+        st.info("No players available with the active filters." if LANG == "EN" else "No hay jugadores disponibles con los filtros activos.")
+        return
+    name_col = get_player_name_column(table) or ("player_name_tm" if "player_name_tm" in table.columns else "player_name_fbref")
+    player_names = table[name_col].fillna("Jugador").astype(str).tolist() if name_col in table.columns else []
+    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+    if str(selected_player) not in set(map(str, player_names)):
+        selected_player = player_names[0] if player_names else "Jugador"
+    try:
+        snapshot_row = table[table[name_col].astype(str) == str(selected_player)].iloc[0]
+    except Exception:
+        snapshot_row = table.iloc[0]
+    tab_labels = (["Executive Summary", "Technical File", "Market", "Performance", "Evidence"] if LANG == "EN" else ["Resumen Ejecutivo", "Ficha técnica", "Mercado", "Rendimiento", "Evidencia"])
+    tabs = st.tabs(tab_labels)
+    with tabs[0]:
+        render_tm69_executive_summary_tab(snapshot_row, name_col)
+    with tabs[1]:
+        render_tm69_profile_role_tab(snapshot_row, table, name_col)
+    with tabs[2]:
+        render_tm69_market_contract_tab(snapshot_row, name_col)
+    with tabs[3]:
+        render_player_radar_benchmarking(table, show_snapshot=False)
+    with tabs[4]:
+        render_tm69_evidence_tab(snapshot_row, table, name_col)
+
+
+
+# =============================================================================
+# Final director-product UX closure: compact global chrome + professional Player Intelligence
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Global chrome: let each section own the viewport. */
+.scouting-topbar-compact-vfinal {
+    min-height: 46px !important;
+    padding: 9px 15px !important;
+    margin: 0 0 10px 0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.12) !important;
+}
+.scouting-topbar-compact-vfinal .scouting-brand { font-size: .98rem !important; gap: 9px !important; }
+.scouting-topbar-compact-vfinal .scouting-brand-mark { width: 30px !important; height: 30px !important; font-size: .82rem !important; }
+.scouting-topbar-section { color:#ffffff; font-weight:950; font-size:.92rem; letter-spacing:.01em; margin-left:14px; }
+.scouting-topbar-breadcrumb { margin-left:auto; color:#cbd5e1; font-size:.76rem; font-weight:800; }
+.scouting-topbar-right { display:none !important; }
+.dss-compact-bar { display:none !important; }
+.product-page-hero-compact-vfinal {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 4px 0 8px 0 !important;
+    margin: 0 0 8px 0 !important;
+    border-radius: 0 !important;
+}
+.product-page-hero-compact-vfinal .product-page-eyebrow { color:#2563eb !important; font-size:.70rem !important; font-weight:950 !important; letter-spacing:.09em !important; text-transform:uppercase !important; margin-bottom:3px !important; }
+.product-page-hero-compact-vfinal .product-page-title { color:#0f172a !important; font-size:1.55rem !important; font-weight:950 !important; line-height:1.08 !important; }
+.product-page-hero-compact-vfinal .product-page-subtitle { color:#64748b !important; font-size:.86rem !important; margin-top:3px !important; }
+/* Search/context row: compact command layer instead of two dominant cards. */
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+.final-search-shell {
+    padding: 10px 12px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 16px rgba(15,23,42,.045) !important;
+    margin-bottom: 10px !important;
+    border-left-width: 3px !important;
+}
+.final-search-title, [data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) .final-search-title { font-size:.72rem !important; margin-bottom:0 !important; }
+.final-search-caption { display:none !important; }
+.final-search-examples { margin:0 0 8px 0 !important; padding:4px 8px !important; font-size:.66rem !important; }
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div { min-height:42px !important; border-radius:13px !important; border-width:1px !important; box-shadow:none !important; }
+.context-strip-v2.compact-context-panel, .context-strip-v2, .compact-context-panel {
+    padding: 10px 12px !important;
+    margin: 0 0 10px 0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 16px rgba(15,23,42,.035) !important;
+}
+.context-current-value { font-size:1.35rem !important; }
+.context-current-label { font-size:.64rem !important; margin-top:1px !important; }
+.context-current-kpi { min-width: 112px !important; }
+.context-chip { padding:4px 8px !important; font-size:.66rem !important; margin-right:3px !important; margin-bottom:3px !important; }
+.context-strip-main { gap:10px !important; margin-bottom:4px !important; }
+/* Player Intelligence professional layout. */
+.pi-product-shell, .pi-technical-card, .pi-card, .exec-benchmark-market, .exec-trajectory-card {
+    border-radius:20px !important;
+    box-shadow:0 12px 28px rgba(15,23,42,.052) !important;
+}
+.pi-director-hero { padding:18px 20px !important; }
+.pi-director-grid { display:grid !important; grid-template-columns:minmax(0,1.15fr) 150px minmax(460px,.95fr) !important; gap:16px !important; align-items:stretch !important; }
+.pi-director-main { display:grid !important; grid-template-columns:72px minmax(0,1fr) !important; column-gap:14px !important; align-items:center !important; }
+.pi-director-main-text { min-width:0 !important; }
+.pi-director-name { font-size:1.72rem !important; line-height:1.05 !important; margin:3px 0 7px 0 !important; }
+.pi-director-eyebrow { font-size:.66rem !important; margin-bottom:5px !important; }
+.pi-director-status { padding:5px 9px !important; font-size:.66rem !important; margin-bottom:4px !important; }
+.pi-director-bullets { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:7px !important; margin-top:9px !important; }
+.pi-director-bullet { background:#f8fbff !important; border:1px solid #e2e8f0 !important; border-radius:12px !important; padding:7px 8px !important; min-height:44px !important; }
+.pi-director-bullet span { font-size:.70rem !important; line-height:1.23 !important; }
+.pi-decision-line { margin-top:9px !important; padding:8px 10px !important; font-size:.74rem !important; }
+.pi-director-market { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:8px !important; }
+.pi-director-market .pi-kpi { min-height:64px !important; padding:8px 10px !important; }
+.pi-director-market .pi-kpi b { font-size:1.02rem !important; }
+.pi-director-score { border-radius:18px !important; }
+.pi-director-score b { font-size:2.75rem !important; }
+.pi-director-bottom { grid-template-columns:1fr 1fr 1fr !important; gap:14px !important; margin-top:14px !important; }
+/* Technical file: real 105x68 field and standard position labels. */
+.pi-technical-grid { display:grid !important; grid-template-columns:minmax(360px,.82fr) minmax(0,1.18fr) !important; gap:18px !important; align-items:start !important; }
+.pi-ficha-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:8px !important; }
+.pi-ficha-item { min-height:58px !important; padding:9px 10px !important; }
+.pi-pitch-pro-card { padding:12px !important; }
+.exec-pitch.pi-real-pitch, .pi-real-pitch, .exec-pitch, .exec-pitch-compact {
+    aspect-ratio: 105 / 68 !important;
+    min-height: 350px !important;
+    max-height: none !important;
+    height:auto !important;
+    background: radial-gradient(circle at 50% 50%, transparent 0 42px, rgba(255,255,255,.72) 43px 45px, transparent 46px), linear-gradient(90deg, transparent 49.6%, rgba(255,255,255,.82) 49.85%, rgba(255,255,255,.82) 50.15%, transparent 50.4%), repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 9.09%, rgba(255,255,255,0) 9.09% 18.18%), linear-gradient(135deg,#2f8f58 0%,#24764b 48%,#1e6a43 100%) !important;
+    box-shadow: inset 0 0 0 5px rgba(255,255,255,.14), 0 14px 30px rgba(15,23,42,.12) !important;
+}
+.exec-pitch::before,.exec-pitch::after,.pi-real-pitch::before,.pi-real-pitch::after{ top:25% !important; bottom:25% !important; width:15.7% !important; }
+.exec-pos-marker { width:38px !important; height:28px !important; border-radius:999px !important; font-size:.67rem !important; font-weight:950 !important; }
+.exec-pos-marker.primary { transform: translate(-50%, -50%) scale(1.08) !important; }
+.pi-position-distribution { margin-top:10px !important; padding:12px 14px !important; }
+/* Evidence: no paragraphs, only visual signals. */
+.pi-evidence-compact { display:grid !important; grid-template-columns:1.2fr .8fr !important; gap:14px !important; align-items:center !important; }
+.pi-evidence-bullets { display:grid !important; gap:8px !important; }
+.pi-evidence-bullet { font-size:.76rem !important; padding:8px 10px !important; }
+.pi-section-head p { font-size:.78rem !important; }
+/* Performance benchmark: remove legacy numbering/duplicate header noise. */
+.tm4-section-kicker, .tm4-section-title:contains('2.') { display:none !important; }
+@media(max-width:1400px){ .pi-director-grid,.pi-technical-grid,.pi-director-bottom,.pi-evidence-compact{grid-template-columns:1fr!important;} .pi-director-main{grid-template-columns:72px minmax(0,1fr)!important;} .pi-director-bullets{grid-template-columns:1fr!important;} }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# Override final position labels to use standard 4-3-3 terminology.
+def _tm69_position_markers(primary: str, secondary: list[str]) -> str:
+    """Render a professional 4-3-3 tactical board on a 105x68 pitch."""
+    is_en = globals().get("LANG") == "EN"
+    slots = [
+        ("GK", 7, 50, "GK" if is_en else "POR"),
+        ("LB", 22, 17, "LB" if is_en else "LI"),
+        ("LCB", 22, 36, "LCB" if is_en else "DFC-I"),
+        ("RCB", 22, 64, "RCB" if is_en else "DFC-D"),
+        ("RB", 22, 83, "RB" if is_en else "LD"),
+        ("LCM", 51, 34, "LCM" if is_en else "MC"),
+        ("AM", 60, 50, "CAM" if is_en else "MCO"),
+        ("RCM", 51, 66, "RCM" if is_en else "MC"),
+        ("LW", 80, 20, "LW" if is_en else "EI"),
+        ("CF", 91, 50, "ST"),
+        ("RW", 80, 80, "RW" if is_en else "ED"),
+    ]
+    primary_keys = _tm69_position_marker_keys(primary)
+    secondary_keys: set[str] = set()
+    for sec in secondary or []:
+        secondary_keys |= _tm69_position_marker_keys(sec)
+    secondary_keys -= primary_keys
+    rows = []
+    for key, x, y, label in slots:
+        css = "primary" if key in primary_keys else ("secondary" if key in secondary_keys else "")
+        title = "Dominant" if (is_en and key in primary_keys) else ("Dominante" if key in primary_keys else ("Secondary" if is_en else "Secundaria"))
+        rows.append(f"<div class='exec-pos-marker {css}' data-slot='{html.escape(key)}' title='{html.escape(title)}' style='left:{x}%;top:{y}%;'>{html.escape(label)}</div>")
+    return "".join(rows)
+
+# Canonical executive screen: one player header, visual identity, flags/crest, minimal prose.
+def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    status = str(d["status"])
+    status_l = status.lower()
+    badge_cls = "price" if ("precio" in status_l or "price" in status_l) else ("buy" if pd.notna(d["priority"]) and d["priority"] >= 75 else "monitor")
+    visual = _tm69_player_avatar_html(d["ctx"], d["player_name"]) or f"<div class='pi-avatar pi-avatar-premium'><span>{html.escape(_tm69_initials(d['player_name']))}</span></div>"
+    identity_chips = "".join([
+        _tm69_club_chip_html(d["ctx"], d["club"]),
+        f"<span class='pi-director-chip'>{html.escape(str(d['league']))}</span>",
+        f"<span class='pi-director-chip'>{_tm69_nationality_html(d['country'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['age_txt'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['primary_pos'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['role'])}</span>",
+    ])
+    market_cards = "".join([
+        _tm69_context_kpi("TM Value", d["market_txt"], "Transfermarkt"),
+        _tm69_context_kpi("Fair Value", d["expected_txt"], "Scouting IQ"),
+        _tm69_context_kpi("Gap", d["gap_txt"], d["gap_abs_txt"]),
+        _tm69_context_kpi("Fee", d["transfer_band"], "banda" if not is_en else "band"),
+        _tm69_context_kpi("Opportunity", _tm69_format_score(d["opportunity"]), _tm69_score_label("opportunity", d["opportunity"])),
+        _tm69_context_kpi("Risk", _tm69_format_score(d["risk"]), _tm69_score_label("risk", d["risk"])),
+    ])
+    bullet_items = [
+        ("Future asset", f"Growth {_tm69_format_score(d['growth'])}/100"),
+        ("Tactical fit", f"Fit {_tm69_format_score(d['tactical_fit'])}/100"),
+        ("Market check", f"TM {d['market_txt']} vs IQ {d['expected_txt']}"),
+    ] if is_en else [
+        ("Future asset", f"Growth {_tm69_format_score(d['growth'])}/100"),
+        ("Encaje táctico", f"Fit {_tm69_format_score(d['tactical_fit'])}/100"),
+        ("Validación precio", f"TM {d['market_txt']} vs IQ {d['expected_txt']}"),
+    ]
+    bullets = "".join(f"<div class='pi-director-bullet'><i>✓</i><span><b>{html.escape(k)}</b><br>{html.escape(v)}</span></div>" for k, v in bullet_items)
+    html_block = f"""
+    <div class='pi-product-shell'>
+      <div class='pi-director-hero'>
+        <div class='pi-director-grid'>
+          <div class='pi-director-main'>
+            <div class='pi-visual-stack'>{visual}<div class='pi-visual-clubline'>{_tm69_club_mark_html(d['ctx'], d['club'])}<span>{html.escape(d['club'])}</span></div></div>
+            <div class='pi-director-main-text'>
+              <div class='pi-director-eyebrow'>{html.escape('Decisión de adquisición' if not is_en else 'Acquisition decision')}</div>
+              <div class='pi-director-status pi-director-status-{badge_cls}'>{html.escape(status)}</div>
+              <div class='pi-director-name'>{html.escape(d['player_name'])}</div>
+              <div class='pi-director-meta'>{identity_chips}</div>
+              <div class='pi-director-bullets'>{bullets}</div>
+              <div class='pi-decision-line'>{html.escape(d['action_text'])}</div>
+            </div>
+          </div>
+          <div class='pi-director-score'><span>Scouting IQ</span><b>{html.escape(d['priority_txt'])}</b><small>{html.escape(d['priority_grade'])}</small></div>
+          <div class='pi-director-market'>{market_cards}</div>
+        </div>
+      </div>
+      <div class='pi-director-bottom'><div>{_tm69_why_him_html(d['opportunity'], d['growth'], d['risk'], d['tactical_fit'])}</div><div>{_tm69_acquisition_readiness_html(d['tactical_fit'], d['contract'], d['risk'], d['gap_pct'], d['accessibility'])}</div><div>{_tm69_watchlist_status_html(d['status'], d['gap_pct'], d['risk'], d['contract'])}</div></div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+
+# Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
+def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    secondary_html = "".join([f"<span class='exec-position-pill'>{html.escape(x)}</span>" for x in d["secondary_pos"]]) or f"<span class='exec-position-pill'>{html.escape('Sin secundaria' if not is_en else 'No secondary')}</span>"
+    ficha = "".join([
+        f"<div class='pi-ficha-item'><span>{html.escape('Nacionalidad' if not is_en else 'Nationality')}</span><b>{_tm69_nationality_html(d['country'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Club')}</span><b>{_tm69_club_mark_html(d['ctx'], d['club'])} {html.escape(d['club'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{html.escape(str(d['league']))}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Edad' if not is_en else 'Age')}</span><b>{html.escape(d['age_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Nacimiento' if not is_en else 'Born')}</span><b>{html.escape(d['birth_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Contrato' if not is_en else 'Contract')}</span><b>{html.escape(d['contract_status'])}</b></div>",
+    ])
+    pitch_html = f"""
+    <div class='pi-technical-card'>
+      <div class='pi-technical-head'><div><h3>{html.escape('Ficha técnica' if not is_en else 'Technical file')}</h3><p>{html.escape('Identidad, rol, perfil físico y posición en una vista profesional de scouting.' if not is_en else 'Identity, role, physical profile and position in one professional scouting view.')}</p></div></div>
+      <div class='pi-technical-grid'>
+        <div>
+          <div class='pi-ficha-grid'>{ficha}</div>
+          <div class='pi-role-strip'>
+            <div><span>{html.escape('Rol primario' if not is_en else 'Primary role')}</span><b>{html.escape(d['role'])}</b></div>
+            <div><span>{html.escape('Rol secundario' if not is_en else 'Secondary role')}</span><b>{html.escape(d['secondary_role'])}</b></div>
+          </div>
+          <div class='pi-director-bottom'>{_tm69_strength_weakness_html(d['ctx'])}</div>
+        </div>
+        <div class='pi-pitch-pro-card'>
+          <div class='pi-pitch-caption'><span>{html.escape('Campo 105 × 68 · 4-3-3 de referencia' if not is_en else '105 × 68 pitch · 4-3-3 reference')}</span><b>{html.escape('Dominante' if not is_en else 'Dominant')}: {html.escape(d['primary_pos'])}</b></div>
+          <div class='exec-pitch pi-real-pitch'>{_tm69_position_markers(d['primary_pos'], d['secondary_pos'])}</div>
+          <div class='pi-position-distribution'><div class='exec-flex-line'><span class='exec-position-pill'><strong>{html.escape('Dominante' if not is_en else 'Dominant')}:</strong>&nbsp;{html.escape(d['primary_pos'])}</span>{secondary_html}</div>{_tm69_position_share_rows(d['primary_pos'], d['secondary_pos'], d['role_conf'])}</div>
+        </div>
+      </div>
+    </div>
+    <div class='pi-card'><div class='pi-section-head'><h3>{html.escape('ADN de rol' if not is_en else 'Role DNA')}</h3></div>{_tm69_dna_bars(d['ctx'])}</div>
+    """
+    st.markdown("".join(line.strip() for line in pitch_html.splitlines()), unsafe_allow_html=True)
+
+# Evidence: compact tactical evidence, no methodology prose.
+def render_tm69_evidence_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    role_title = d.get("role", "Role")
+    driver_items = [
+        ("+", "Edad / proyección" if not is_en else "Age / upside", f"{d['age_txt']} · Growth {_tm69_format_score(d['growth'])}"),
+        ("+", "Encaje táctico" if not is_en else "Tactical fit", f"Fit {_tm69_format_score(d['tactical_fit'])}/100 · {role_title}"),
+        ("+", "Oportunidad" if not is_en else "Opportunity", f"Opportunity {_tm69_format_score(d['opportunity'])}/100"),
+        ("−", "Precio actual" if not is_en else "Current price", f"TM {d['market_txt']} vs IQ {d['expected_txt']} · Gap {d['gap_txt']}"),
+        ("−", "Señal contractual" if not is_en else "Contract signal", f"Contract {_tm69_format_score(d['contract'])}/100"),
+    ]
+    driver_html = "".join(
+        f"<div class='pi-driver-row pi-driver-{'plus' if sign == '+' else 'minus'}'><i>{html.escape(sign)}</i><div><b>{html.escape(label)}</b><span>{html.escape(value)}</span></div></div>"
+        for sign, label, value in driver_items
+    )
+    st.markdown(
+        f"""
+<div class='pi-evidence-header-pro'>
+  <div>
+    <span>{html.escape('EVIDENCIA' if not is_en else 'EVIDENCE')}</span>
+    <b>{html.escape('Evidencia táctica' if not is_en else 'Tactical evidence')}</b>
+    <small>{html.escape('Role DNA, comparables y drivers sin narrativa redundante.' if not is_en else 'Role DNA, comparables and drivers without redundant prose.')}</small>
+  </div>
+  <div class='pi-evidence-summary-grid'>
+    <div><span>Role</span><b>{html.escape(role_title)}</b></div>
+    <div><span>Fit</span><b>{_tm69_format_score(d['tactical_fit'])}/100</b></div>
+    <div><span>Gap</span><b>{html.escape(d['gap_txt'])}</b></div>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+    ev_tabs = st.tabs(["Role DNA", "Comparables", "Drivers"])
+    with ev_tabs[0]:
+        st.markdown(
+            f"<div class='pi-card pi-evidence-compact'><div><div class='pi-section-head'><h3>{html.escape(role_title)}</h3></div>{_tm69_dna_bars(d['ctx'])}</div><div class='pi-evidence-bullets'><div class='pi-evidence-bullet'><b>Primary:</b> {html.escape(role_title)}</div><div class='pi-evidence-bullet'><b>Secondary:</b> {html.escape(d['secondary_role'])}</div><div class='pi-evidence-bullet'><b>Fit:</b> {_tm69_format_score(d['tactical_fit'])}/100</div></div></div>",
+            unsafe_allow_html=True,
+        )
+    with ev_tabs[1]:
+        render_role_similar_players_block(row, table)
+    with ev_tabs[2]:
+        st.markdown(
+            f"<div class='pi-card pi-drivers-card'><div class='pi-section-head'><h3>{html.escape('Drivers de fair value' if not is_en else 'Fair Value Drivers')}</h3><p>{html.escape('Factores que justifican la lectura del modelo y las alertas de validación.' if not is_en else 'Factors supporting the model readout and validation alerts.')}</p></div><div class='pi-driver-grid'>{driver_html}</div></div>",
+            unsafe_allow_html=True,
+        )
+
+# Player page title is now simple and section-led.
+def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
+    render_product_page_header("Player Intelligence", "Player Intelligence", "Ficha profesional: decisión, identidad, mercado, rendimiento y evidencia." if LANG != "EN" else "Professional profile: decision, identity, market, performance and evidence.")
+    table = add_role_display_columns(build_ranked_table_df(source_df))
+    if table.empty:
+        st.info("No players available with the active filters." if LANG == "EN" else "No hay jugadores disponibles con los filtros activos.")
+        return
+    name_col = get_player_name_column(table) or ("player_name_tm" if "player_name_tm" in table.columns else "player_name_fbref")
+    player_names = table[name_col].fillna("Jugador").astype(str).tolist() if name_col in table.columns else []
+    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+    if str(selected_player) not in set(map(str, player_names)):
+        selected_player = player_names[0] if player_names else "Jugador"
+    try:
+        snapshot_row = table[table[name_col].astype(str) == str(selected_player)].iloc[0]
+    except Exception:
+        snapshot_row = table.iloc[0]
+    tab_labels = (["Executive Summary", "Technical File", "Market", "Position Benchmark", "Evidence"] if LANG == "EN" else ["Resumen Ejecutivo", "Ficha técnica", "Mercado", "Benchmark posicional", "Evidencia"])
+    tabs = st.tabs(tab_labels)
+    with tabs[0]:
+        render_tm69_executive_summary_tab(snapshot_row, name_col)
+    with tabs[1]:
+        render_tm69_profile_role_tab(snapshot_row, table, name_col)
+    with tabs[2]:
+        render_tm69_market_contract_tab(snapshot_row, name_col)
+    with tabs[3]:
+        render_player_radar_benchmarking(table, show_snapshot=False)
+    with tabs[4]:
+        render_tm69_evidence_tab(snapshot_row, table, name_col)
 
 if filtered_df.empty:
     st.warning("No players match the current filters." if LANG == "EN" else "No hay jugadores que cumplan los filtros actuales.")
@@ -31135,6 +34914,1916 @@ st.markdown(
   .exec-signals-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
 }
 @media(max-width:900px){ .exec-signals-grid, .exec-meta-grid { grid-template-columns: 1fr !important; } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 final closure: 50/50 page command header + compact active context
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Reduce top chrome so each product module starts earlier. */
+.scouting-topbar-compact-vfinal {
+    min-height: 42px !important;
+    padding: 9px 14px !important;
+    margin-bottom: 8px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.12) !important;
+}
+.scouting-topbar-compact-vfinal .scouting-brand-mark { width: 28px !important; height: 28px !important; font-size: .76rem !important; }
+.scouting-topbar-compact-vfinal .scouting-brand { font-size: .82rem !important; gap: 8px !important; }
+.scouting-topbar-section { font-size: .78rem !important; font-weight: 900 !important; color: #eaf2ff !important; }
+.scouting-topbar-breadcrumb { font-size: .72rem !important; color:#cbd5e1 !important; }
+/* Keep DSS workflow as a thin orientation strip, not a competing header. */
+.dss-compact-bar {
+    min-height: 30px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 10px !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+}
+.dss-compact-left { font-size: .66rem !important; }
+.dss-compact-step { padding: 3px 8px !important; font-size: .70rem !important; }
+.dss-compact-right { font-size: .68rem !important; }
+/* New section command header: 50% title / 50% search + context. */
+.section-command-title-card {
+    height: 100%;
+    min-height: 146px;
+    background: #ffffff;
+    border: 1px solid #dbe3ee;
+    border-left: 5px solid #0f2f5f;
+    border-radius: 18px;
+    padding: 18px 20px;
+    box-shadow: 0 12px 28px rgba(15,23,42,.055);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.section-command-eyebrow {
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    margin-bottom: 7px;
+}
+.section-command-title {
+    color:#0f172a;
+    font-size: 2.05rem;
+    line-height: 1.02;
+    font-weight: 950;
+    letter-spacing: -0.035em;
+    margin-bottom: 7px;
+}
+.section-command-subtitle {
+    color:#475569;
+    font-size: .94rem;
+    line-height: 1.35;
+    max-width: 640px;
+}
+/* Right search/context card: same height, no oversized context KPI. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) {
+    min-height: 146px !important;
+    padding: 12px 14px !important;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    box-shadow: 0 12px 28px rgba(15,23,42,.055) !important;
+}
+.tm69-command-search-card .final-search-title-row { margin-bottom: 7px !important; }
+.tm69-command-search-card .final-search-title { font-size: .78rem !important; letter-spacing: .08em !important; }
+.tm69-command-search-card .final-search-examples-top { font-size: .68rem !important; padding: 4px 8px !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] > div {
+    min-height: 43px !important;
+    border: 1.5px solid #2563eb !important;
+    border-radius: 999px !important;
+    box-shadow: 0 6px 16px rgba(37,99,235,.08) !important;
+}
+.tm69-context-line.context-strip-v2.compact-context-panel {
+    margin: 8px 0 0 0 !important;
+    padding: 8px 0 0 0 !important;
+    border: 0 !important;
+    border-top: 1px solid #edf2f7 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.tm69-context-summary {
+    color:#475569;
+    font-size:.76rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tm69-context-summary b { color:#0f172a; font-weight:950; }
+.tm69-context-line .context-chip-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    max-height: 30px !important;
+    overflow: hidden !important;
+}
+.tm69-context-line .context-chip {
+    padding: 4px 8px !important;
+    font-size: .68rem !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+/* Prevent the old standalone hero from reappearing in command-header pages. */
+body:has(.section-command-title-card) .product-page-hero-unified:not(.product-page-hero-minimal-v69) { display: none !important; }
+.product-page-hero-minimal-v69 {
+    padding: 13px 16px !important;
+    margin: 0 0 14px 0 !important;
+    border-radius: 16px !important;
+}
+.product-page-hero-minimal-v69 .product-page-title { font-size: 1.35rem !important; }
+.product-page-hero-minimal-v69 .product-page-subtitle { font-size: .84rem !important; }
+@media (max-width: 1100px) {
+    .section-command-title-card { min-height: 0; }
+    .section-command-title { font-size: 1.55rem; }
+    .tm69-context-summary { white-space: normal; }
+    .tm69-context-line .context-chip-row { flex-wrap: wrap !important; max-height: none !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 final correction patch: compact command header, evidence density and realistic pitch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* 1) Command header: real 50/50 row, less height, no oversized search/context card. */
+div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-search-card) {
+    align-items: stretch !important;
+    gap: 16px !important;
+    margin: 0 0 12px 0 !important;
+}
+.section-command-title-card {
+    min-height: 112px !important;
+    height: 112px !important;
+    padding: 16px 20px !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+}
+.section-command-eyebrow { font-size: .72rem !important; margin-bottom: 6px !important; }
+.section-command-title { font-size: 1.65rem !important; line-height: 1.02 !important; margin-bottom: 5px !important; }
+.section-command-subtitle { font-size: .84rem !important; line-height: 1.30 !important; max-width: 92% !important; }
+/* Right command card */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card),
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) {
+    min-height: 112px !important;
+    height: 112px !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+}
+.tm69-command-search-card { margin: 0 !important; padding: 0 !important; }
+.tm69-command-search-card .final-search-title-row { min-height: 20px !important; margin: 0 0 6px 0 !important; }
+.tm69-command-search-card .final-search-title { font-size: .68rem !important; line-height: 1 !important; letter-spacing: .11em !important; }
+.tm69-command-search-card .final-search-examples-top {
+    padding: 4px 8px !important;
+    font-size: .64rem !important;
+    line-height: 1 !important;
+    max-width: 55% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-testid="stSelectbox"],
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-testid="stSelectbox"] { margin: 0 !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] > div {
+    min-height: 39px !important;
+    height: 39px !important;
+    border-radius: 999px !important;
+    border-width: 1.5px !important;
+    box-shadow: none !important;
+    padding-left: 12px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] span,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] input,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] span,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] input {
+    min-height: 38px !important;
+    font-size: .86rem !important;
+}
+.tm69-context-line.context-strip-v2.compact-context-panel,
+.context-strip-v2.compact-context-panel {
+    margin: 7px 0 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+}
+.tm69-context-summary {
+    font-size: .68rem !important;
+    line-height: 1.15 !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 4px !important;
+}
+.compact-context-panel .context-chip-row {
+    display: flex !important;
+    gap: 4px !important;
+    max-height: 22px !important;
+    overflow: hidden !important;
+    flex-wrap: nowrap !important;
+}
+.compact-context-panel .context-chip {
+    padding: 3px 7px !important;
+    font-size: .60rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+}
+/* 2) Evidence: remove empty title-card feeling and make the header informative but compact. */
+.pi-evidence-intro { display: none !important; }
+.pi-evidence-header-compact {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 16px !important;
+    padding: 12px 15px !important;
+    margin: 0 0 10px 0 !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.035) !important;
+}
+.pi-evidence-header-compact span { display:block; color:#1d4ed8; font-size:.66rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:2px; }
+.pi-evidence-header-compact b { display:block; color:#0f172a; font-size:1.02rem; font-weight:950; line-height:1.05; }
+.pi-evidence-header-chips { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.pi-evidence-header-chips i { font-style:normal; border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; border-radius:999px; padding:5px 8px; font-size:.68rem; font-weight:900; }
+.pi-evidence-compact { margin-top: 10px !important; }
+/* 3) Benchmark: no inherited Player Intelligence eyebrow / numbered feeling. */
+.tm4-performance-header .tm4-section-eyebrow { display:none !important; }
+.tm4-performance-header .tm4-section-title { font-size: 1.12rem !important; margin-bottom: 4px !important; }
+/* 4) Technical file pitch: maintain real 105x68 ratio and avoid overly flat/panoramic field. */
+.pi-pitch-pro-card { align-self: start !important; }
+.exec-pitch.pi-real-pitch,
+.pi-real-pitch {
+    aspect-ratio: 105 / 68 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    border-radius: 18px !important;
+}
+.pi-technical-grid { grid-template-columns: minmax(390px,.82fr) minmax(620px,1.18fr) !important; align-items:start !important; }
+.exec-pos-marker { min-width: 34px !important; height: 27px !important; padding: 0 6px !important; font-size: .62rem !important; }
+.exec-pos-marker.primary { transform: translate(-50%, -50%) scale(1.05) !important; }
+.pi-position-distribution { margin-top: 10px !important; }
+@media(max-width: 1350px) {
+    .section-command-title-card,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card),
+    div[data-testid="stElementContainer"]:has(.tm69-command-search-card) { height: auto !important; min-height: 0 !important; }
+    .pi-technical-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 final closure hotfix: command header/search priority, pitch labels,
+# market spacing, evidence density and blue info icons.
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Header + search: one compact 50/50 command row. */
+div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-search-card) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    margin: 0 0 14px 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-search-card) > div[data-testid="column"] {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+.section-command-title-card {
+    height: 104px !important;
+    min-height: 104px !important;
+    padding: 15px 18px !important;
+    justify-content: center !important;
+    border-radius: 17px !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.04) !important;
+}
+.section-command-eyebrow { font-size: .66rem !important; margin-bottom: 5px !important; }
+.section-command-title { font-size: 1.58rem !important; line-height: 1.02 !important; margin-bottom: 4px !important; }
+.section-command-subtitle { font-size: .80rem !important; line-height: 1.25 !important; max-width: 96% !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card),
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) {
+    height: 104px !important;
+    min-height: 104px !important;
+    padding: 10px 12px !important;
+    overflow: hidden !important;
+    border-radius: 17px !important;
+    border: 1px solid #dbe3ee !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.04) !important;
+}
+.tm69-command-search-card .final-search-title-row { min-height: 18px !important; margin: 0 0 5px 0 !important; }
+.tm69-command-search-card .final-search-title { font-size: .65rem !important; letter-spacing: .10em !important; }
+.tm69-command-search-card .final-search-examples-top { display: none !important; }
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] > div,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] > div {
+    min-height: 38px !important;
+    height: 38px !important;
+    border: 1.5px solid #2563eb !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    padding-left: 10px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] span,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card) div[data-baseweb="select"] input,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] span,
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) div[data-baseweb="select"] input {
+    min-height: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: .84rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+.tm69-context-line.context-strip-v2.compact-context-panel,
+.context-strip-v2.compact-context-panel {
+    margin: 6px 0 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-top: 1px solid #edf2f7 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+}
+.tm69-context-summary { font-size: .66rem !important; line-height: 1.15 !important; margin: 4px 0 3px 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+.compact-context-panel .context-chip-row { display: flex !important; flex-wrap: nowrap !important; gap: 4px !important; max-height: 20px !important; overflow: hidden !important; margin: 0 !important; }
+.compact-context-panel .context-chip { padding: 3px 6px !important; font-size: .58rem !important; line-height: 1 !important; margin: 0 !important; white-space: nowrap !important; }
+
+/* Executive card: reduce dead space and keep market block visible. */
+.pi-director-hero { padding: 16px 18px !important; margin-top: 4px !important; }
+.pi-director-grid { grid-template-columns: minmax(0, 1.45fr) 150px minmax(360px, .85fr) !important; gap: 14px !important; }
+.pi-director-score { min-height: 0 !important; padding: 14px 12px !important; border-radius: 18px !important; }
+.pi-director-score b { font-size: 2.55rem !important; }
+.pi-director-market { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 8px !important; }
+.pi-director-market .pi-kpi { min-height: 58px !important; padding: 8px 9px !important; }
+.pi-director-market .pi-kpi b { font-size: .95rem !important; }
+.pi-director-bullets { grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+
+/* Pitch: 105x68, labels do not wrap. */
+.exec-pitch.pi-real-pitch, .pi-real-pitch {
+    aspect-ratio: 105 / 68 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-radius: 18px !important;
+}
+.exec-pos-marker {
+    min-width: 46px !important;
+    width: auto !important;
+    height: 30px !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    line-height: 30px !important;
+    font-size: .60rem !important;
+    letter-spacing: -.01em !important;
+}
+.exec-pos-marker.primary { transform: translate(-50%, -50%) scale(1.08) !important; }
+
+/* Market: add separation between modules and make trajectory breathe. */
+.exec-benchmark-market, .exec-trajectory-card, .exec-recruitment-engine,
+.pi-card, .pi-technical-card { margin-bottom: 16px !important; }
+.exec-trajectory-card { margin-top: 18px !important; }
+.pi-market-panel, .market-drivers-card, .market-context-card { margin-bottom: 16px !important; }
+
+/* Benchmark info icon and module info: blue and clickable-looking. */
+.module-info-details summary,
+.metric-info-details summary,
+.strategy-info-details summary,
+.info-icon {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    font-weight: 950 !important;
+    cursor: pointer !important;
+}
+.module-info-details summary::-webkit-details-marker { display: none !important; }
+
+/* Evidence: no empty title block; the first view contains information. */
+.pi-evidence-header-compact { display: none !important; }
+.pi-evidence-header-pro {
+    display: grid !important;
+    grid-template-columns: minmax(0, .9fr) minmax(360px, 1.1fr) !important;
+    gap: 16px !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 5px solid #2563eb !important;
+    border-radius: 18px !important;
+    padding: 14px 16px !important;
+    margin: 0 0 12px 0 !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+}
+.pi-evidence-header-pro span { display:block; color:#1d4ed8; font-size:.68rem; font-weight:950; letter-spacing:.09em; text-transform:uppercase; margin-bottom:3px; }
+.pi-evidence-header-pro b { display:block; color:#0f172a; font-size:1.08rem; font-weight:950; line-height:1.05; }
+.pi-evidence-header-pro small { display:block; color:#64748b; font-size:.76rem; margin-top:4px; }
+.pi-evidence-summary-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:8px; }
+.pi-evidence-summary-grid div { background:#f8fbff; border:1px solid #e2e8f0; border-radius:13px; padding:8px 10px; }
+.pi-evidence-summary-grid div span { color:#64748b; font-size:.60rem; letter-spacing:.055em; margin-bottom:3px; }
+.pi-evidence-summary-grid div b { color:#0f172a; font-size:.86rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pi-drivers-card { padding: 18px 20px !important; }
+.pi-driver-grid { display:grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap:10px; }
+.pi-driver-row { background:#f8fbff; border:1px solid #e2e8f0; border-radius:14px; padding:10px 11px; min-height:90px; display:flex; gap:8px; align-items:flex-start; }
+.pi-driver-row i { width:22px; height:22px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:950; flex:0 0 22px; }
+.pi-driver-plus i { background:#dcfce7; color:#166534; }
+.pi-driver-minus i { background:#ffedd5; color:#9a3412; }
+.pi-driver-row b { display:block; color:#0f172a; font-size:.80rem; line-height:1.1; margin-bottom:5px; }
+.pi-driver-row span { display:block; color:#64748b; font-size:.70rem; line-height:1.25; }
+@media (max-width: 1450px) {
+    .pi-director-grid, .pi-evidence-header-pro, .pi-driver-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 definitive UX closure: compact command header, search integration,
+# tactical pitch labels, evidence enrichment and profile blueprint helpers.
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* P0: Header + buscador. Kill all previous oversized search/card behaviour. */
+div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-right) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+    margin: 0 0 12px 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-right) > div[data-testid="column"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+}
+.section-command-title-card.tm69-command-left {
+    height: 92px !important;
+    min-height: 92px !important;
+    padding: 13px 17px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe3ee !important;
+    border-left: 5px solid #2563eb !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.04) !important;
+}
+.section-command-title-card.tm69-command-left .section-command-eyebrow { font-size: .64rem !important; margin-bottom: 4px !important; }
+.section-command-title-card.tm69-command-left .section-command-title { font-size: 1.42rem !important; line-height: 1.02 !important; margin-bottom: 3px !important; }
+.section-command-title-card.tm69-command-left .section-command-subtitle { font-size: .78rem !important; line-height: 1.22 !important; color:#64748b !important; }
+.tm69-command-right {
+    height: 24px !important;
+    min-height: 24px !important;
+    margin: 0 0 5px 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+.tm69-command-right .final-search-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    height: 22px !important;
+    margin: 0 !important;
+}
+.tm69-command-right .final-search-title {
+    color:#0b2f5f !important;
+    font-size:.66rem !important;
+    font-weight:950 !important;
+    letter-spacing:.10em !important;
+    text-transform:uppercase !important;
+}
+.tm69-command-right .final-search-examples-top {
+    display:inline-flex !important;
+    color:#64748b !important;
+    font-size:.66rem !important;
+    font-weight:850 !important;
+    white-space:nowrap !important;
+}
+/* Search select directly under the search label, same height as a command input, not a card. */
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    height: 42px !important;
+    min-height: 42px !important;
+    border-radius: 999px !important;
+    border: 1.5px solid #2563eb !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(37,99,235,.08) !important;
+    padding-left: 12px !important;
+    overflow: hidden !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:hover,
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color:#1d4ed8 !important;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12), 0 8px 18px rgba(37,99,235,.10) !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] input,
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-right) div[data-testid="stSelectbox"] span {
+    font-size:.88rem !important;
+    line-height: 40px !important;
+    color:#0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+}
+/* Context active becomes a small line below the input. */
+.tm69-context-line.context-strip-v2.compact-context-panel,
+.context-strip-v2.compact-context-panel {
+    margin: 5px 0 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.tm69-context-summary {
+    font-size: .66rem !important;
+    line-height: 1.08 !important;
+    color:#64748b !important;
+    margin: 2px 0 3px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.compact-context-panel .context-chip-row {
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    gap:4px !important;
+    max-height:19px !important;
+    overflow:hidden !important;
+    margin:0 !important;
+}
+.compact-context-panel .context-chip {
+    padding:3px 6px !important;
+    font-size:.57rem !important;
+    line-height:1 !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+}
+/* Prevent legacy search wrappers from producing the tall empty card shown in v67-v69. */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-right),
+div[data-testid="stElementContainer"]:has(.tm69-command-right),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-search-card),
+div[data-testid="stElementContainer"]:has(.tm69-command-search-card) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+/* P1: tactical pitch markers: standard labels and no wrapping. */
+.exec-pos-marker {
+    min-width: 42px !important;
+    width: auto !important;
+    height: 28px !important;
+    padding: 0 8px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow: visible !important;
+    line-height: 28px !important;
+    font-size: .62rem !important;
+    letter-spacing: 0 !important;
+}
+.exec-pos-marker.primary {
+    min-width: 48px !important;
+    transform: translate(-50%, -50%) scale(1.06) !important;
+}
+.exec-pitch.pi-real-pitch, .pi-real-pitch {
+    aspect-ratio: 105 / 68 !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+}
+/* P1: market spacing. */
+.exec-benchmark-market, .exec-trajectory-card, .exec-recruitment-engine, .pi-card, .pi-technical-card, .pi-market-panel {
+    margin-bottom: 18px !important;
+}
+.exec-trajectory-card { margin-top: 20px !important; }
+/* P1: blue info icons. */
+.module-info-details summary, .metric-info-details summary, .strategy-info-details summary, .info-icon {
+    background:#2563eb !important; color:#fff !important; border:1px solid #1d4ed8 !important;
+}
+/* Evidence: make the section feel complete and professional. */
+.pi-evidence-header-pro {
+    margin-bottom: 10px !important;
+    min-height: 72px !important;
+}
+.pi-evidence-summary-grid div { min-height: 50px !important; }
+.pi-driver-grid { grid-template-columns: repeat(5, minmax(0,1fr)) !important; gap: 12px !important; }
+.pi-driver-row { min-height: 92px !important; }
+@media (max-width: 1450px) {
+    div[data-testid="stHorizontalBlock"]:has(.section-command-title-card):has(.tm69-command-right) { grid-template-columns: 1fr !important; }
+    .section-command-title-card.tm69-command-left { height:auto !important; min-height:0 !important; }
+    .pi-driver-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9 header-only rollback/fix: compact mockup-inspired command header
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Header-only fix: undo accumulated oversized command/search rules. */
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
+    margin: 0 0 18px 0 !important;
+    padding: 0 !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+    padding: 0 !important;
+}
+.tm69-page-header-left {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 2px 0 0 0 !important;
+    min-height: 98px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+}
+.tm69-page-eyebrow {
+    color: #1d4ed8 !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    margin: 0 0 6px 0 !important;
+}
+.tm69-page-title {
+    color: #071426 !important;
+    font-size: 1.95rem !important;
+    line-height: 1.04 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.035em !important;
+    margin: 0 0 6px 0 !important;
+}
+.tm69-page-subtitle {
+    max-width: 560px !important;
+    color: #475569 !important;
+    font-size: .90rem !important;
+    line-height: 1.35 !important;
+    font-weight: 500 !important;
+}
+.tm69-page-search-label-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    height: 24px !important;
+    margin: 0 0 8px 0 !important;
+    padding: 0 !important;
+}
+.tm69-page-search-label {
+    color: #0b2f5f !important;
+    font-size: .70rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase !important;
+}
+.tm69-page-search-help {
+    color: #64748b !important;
+    font-size: .72rem !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+}
+/* This exact selectbox is the right-half search, not a standalone card. */
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-testid="stSelectbox"] label {
+    display: none !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-baseweb="select"] > div {
+    width: 100% !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15,23,42,.045) !important;
+    padding: 0 10px 0 12px !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-baseweb="select"] > div:hover,
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.12), 0 10px 24px rgba(15,23,42,.055) !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-baseweb="select"] input,
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] div[data-baseweb="select"] span {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: .92rem !important;
+    line-height: 1.2 !important;
+    font-weight: 600 !important;
+}
+/* Context active: one compact line below search, never a card, never centered lower on the page. */
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .context-strip-v2.compact-context-panel,
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .compact-context-panel,
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .tm69-context-line {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 7px 0 0 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .tm69-context-summary {
+    color: #64748b !important;
+    font-size: .74rem !important;
+    line-height: 1.25 !important;
+    margin: 0 0 6px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .context-chip-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    max-height: 24px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"] .context-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 5px 9px !important;
+    font-size: .66rem !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    font-weight: 850 !important;
+}
+/* Legacy cards/classes that created the broken empty whitespace must not affect this header. */
+.tm69-command-search-card,
+.tm69-command-right,
+.section-command-title-card.tm69-command-left,
+.final-search-card,
+.final-search-shell {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+}
+/* Topbar slightly lighter so section header leads the page. */
+.scouting-topbar {
+    min-height: 48px !important;
+    padding: 10px 16px !important;
+    border-radius: 14px !important;
+    margin-bottom: 22px !important;
+}
+.scouting-brand-mark { width: 32px !important; height: 32px !important; }
+.scouting-brand { font-size: 1.02rem !important; }
+@media (max-width: 1100px) {
+    .tm69-header-anchor + div[data-testid="stHorizontalBlock"] {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    .tm69-page-header-left { min-height: 0 !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9A Command Palette final patch: full-width DSS search + live ranked typeahead
+# =============================================================================
+st.markdown(
+    """
+<style>
+.tm69-page-search-label-row{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin-bottom:8px!important;}
+.tm69-page-search-label{color:#0b2f5f!important;font-size:.74rem!important;font-weight:950!important;letter-spacing:.10em!important;text-transform:uppercase!important;}
+.tm69-page-search-help{color:#64748b!important;font-size:.74rem!important;font-weight:850!important;}
+[data-testid="stAppViewContainer"] .main div[data-testid="stTextInput"] input{width:100%!important;min-height:48px!important;border-radius:999px!important;border:2px solid #2563eb!important;background:#ffffff!important;color:#0f172a!important;-webkit-text-fill-color:#0f172a!important;font-size:.96rem!important;font-weight:750!important;padding-left:18px!important;box-shadow:0 8px 22px rgba(37,99,235,.10)!important;}
+[data-testid="stAppViewContainer"] .main div[data-testid="stTextInput"] input:focus{border-color:#1d4ed8!important;box-shadow:0 0 0 4px rgba(37,99,235,.13),0 12px 28px rgba(37,99,235,.12)!important;}
+.tm69-typeahead-grid{margin-top:10px!important;}
+.tm69-typeahead-card{background:#ffffff;border:1px solid #dbeafe;border-radius:14px;padding:10px 11px;min-height:116px;box-shadow:0 8px 20px rgba(15,23,42,.045);}
+.tm69-typeahead-rank{display:inline-flex;width:26px;height:24px;align-items:center;justify-content:center;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:.70rem;font-weight:950;margin-bottom:6px;}
+.tm69-typeahead-name{color:#0f172a;font-size:.88rem;font-weight:950;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tm69-typeahead-meta{color:#64748b;font-size:.70rem;line-height:1.25;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tm69-typeahead-kpis{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.tm69-typeahead-kpis span{display:inline-flex;gap:4px;border:1px solid #e2e8f0;border-radius:999px;padding:3px 7px;color:#475569;background:#f8fafc;font-size:.64rem;font-weight:850;}
+.tm69-typeahead-kpis b{color:#0f172a;font-weight:950;}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+st.markdown("""
+<style>
+.secondary-filter-row {
+    max-width: 260px;
+    margin-top: 8px;
+    margin-bottom: 14px;
+}
+.similar-final-controls div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    min-height: 44px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# =============================================================================
+# TM.6.9b final professional command palette CSS override
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Compact professional command bar: title/search 50-50, no washed-out opacity. */
+.tm69-page-header-left, .tm69-page-header-left *,
+.tm69-page-search-label-row, .tm69-page-search-label-row * {
+    opacity: 1 !important;
+    filter: none !important;
+}
+.tm69-page-header-left {
+    min-height: 118px !important;
+    padding: 16px 18px !important;
+    background: #ffffff !important;
+    border: 1px solid #dbe7f5 !important;
+    border-left: 5px solid #2563eb !important;
+    border-radius: 18px !important;
+    box-shadow: 0 12px 30px rgba(15,23,42,.055) !important;
+}
+.tm69-page-title {
+    color: #0f172a !important;
+    font-size: 1.72rem !important;
+    font-weight: 950 !important;
+    line-height: 1.05 !important;
+}
+.tm69-page-subtitle { color:#475569 !important; font-size:.92rem !important; line-height:1.35 !important; }
+.tm69-page-eyebrow { color:#1d4ed8 !important; font-size:.76rem !important; font-weight:950 !important; letter-spacing:.10em !important; text-transform:uppercase !important; }
+.tm69-page-search-label-row {
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    margin: 0 0 7px 0 !important;
+}
+.tm69-page-search-label { color:#0f2f5f !important; font-size:.78rem !important; font-weight:950 !important; letter-spacing:.10em !important; text-transform:uppercase !important; }
+.tm69-page-search-help { color:#64748b !important; font-size:.74rem !important; font-weight:850 !important; }
+/* Text input is the real command palette input. */
+[data-testid="stAppViewContainer"] .main div[data-testid="stTextInput"] input {
+    min-height: 50px !important;
+    border: 2px solid #2563eb !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color:#0f172a !important;
+    font-size: 1.02rem !important;
+    font-weight: 750 !important;
+    box-shadow: 0 10px 26px rgba(37,99,235,.10) !important;
+}
+[data-testid="stAppViewContainer"] .main div[data-testid="stTextInput"] input:focus {
+    border-color:#1d4ed8 !important;
+    box-shadow: 0 0 0 4px rgba(37,99,235,.14), 0 14px 32px rgba(37,99,235,.13) !important;
+}
+.tm69-intent-chip-title {
+    color:#64748b;
+    font-size:.70rem;
+    font-weight:950;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin:8px 0 4px 0;
+}
+/* Search result overlay/list: compact rows, not large cards pushing the page too far down. */
+.tm69-ai-insight-pro {
+    display:grid !important;
+    grid-template-columns:minmax(220px,.42fr) minmax(300px,.42fr) minmax(220px,.16fr) !important;
+    gap:10px !important;
+    align-items:center !important;
+    margin:8px 0 8px 0 !important;
+    padding:9px 11px !important;
+    border-radius:14px !important;
+    border:1px solid #bfdbfe !important;
+    border-left:4px solid #2563eb !important;
+    background:#ffffff !important;
+    box-shadow:0 8px 20px rgba(15,23,42,.045) !important;
+}
+.tm69-ai-insight-pro span { display:block; color:#1d4ed8; font-size:.66rem; font-weight:950; letter-spacing:.08em; text-transform:uppercase; }
+.tm69-ai-insight-pro b { display:block; color:#0f172a; font-size:.88rem; font-weight:950; }
+.tm69-ai-insight-pro small { color:#334155; font-size:.74rem; font-weight:850; }
+.tm69-ai-insight-pro em { color:#475569; font-size:.72rem; font-style:normal; line-height:1.25; }
+.tm69-command-list-pro { display:grid !important; gap:7px !important; margin:7px 0 12px 0 !important; }
+.tm69-command-row-pro {
+    display:grid !important;
+    grid-template-columns:42px minmax(230px,1.35fr) minmax(430px,1.2fr) 58px !important;
+    gap:10px !important;
+    align-items:center !important;
+    background:#ffffff !important;
+    border:1px solid #e2e8f0 !important;
+    border-radius:14px !important;
+    padding:8px 10px !important;
+    box-shadow:0 7px 18px rgba(15,23,42,.035) !important;
+}
+.tm69-command-row-pro:hover { border-color:#bfdbfe !important; box-shadow:0 10px 24px rgba(37,99,235,.08) !important; }
+.tm69-command-rank { width:30px !important; height:28px !important; border-radius:9px !important; display:flex !important; align-items:center !important; justify-content:center !important; background:#eff6ff !important; color:#1d4ed8 !important; font-weight:950 !important; font-size:.72rem !important; }
+.tm69-command-name { color:#0f172a !important; font-size:.88rem !important; font-weight:950 !important; line-height:1.12 !important; }
+.tm69-command-meta { color:#64748b !important; font-size:.70rem !important; line-height:1.18 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-command-why { color:#475569 !important; font-size:.66rem !important; line-height:1.18 !important; margin-top:2px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-command-signals-pro { display:grid !important; grid-template-columns:repeat(6,minmax(0,1fr)) !important; gap:5px !important; }
+.tm69-command-signals-pro span { background:#f8fbff !important; border:1px solid #e5edf7 !important; border-radius:10px !important; padding:5px 6px !important; min-height:38px !important; }
+.tm69-command-signals-pro small { display:block; color:#64748b !important; font-size:.55rem !important; font-weight:950 !important; letter-spacing:.06em !important; text-transform:uppercase !important; }
+.tm69-command-signals-pro b { display:block; color:#0f172a !important; font-size:.74rem !important; font-weight:950 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+.tm69-command-score { text-align:right !important; color:#166534 !important; }
+.tm69-command-score small { display:block; color:#64748b !important; font-size:.54rem !important; font-weight:950 !important; text-transform:uppercase !important; }
+.tm69-command-score b { color:#166534 !important; font-size:.95rem !important; font-weight:950 !important; }
+/* Buttons below command rows: compact action strip. */
+.tm69-command-row-pro + div[data-testid="stHorizontalBlock"] {
+    margin: -4px 0 4px 52px !important;
+    max-width: 620px !important;
+    gap: 5px !important;
+}
+.tm69-command-row-pro + div[data-testid="stHorizontalBlock"] button,
+[data-testid="stAppViewContainer"] .main button[kind="secondary"] {
+    min-height: 28px !important;
+    padding: 0.18rem 0.48rem !important;
+    border-radius: 999px !important;
+    border:1px solid #dbeafe !important;
+    background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color:#1e3a8a !important;
+    font-size:.70rem !important;
+    font-weight:900 !important;
+    box-shadow:none !important;
+}
+.tm69-command-empty {
+    background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; color:#64748b; font-weight:850; margin:8px 0 12px 0;
+}
+/* Replacement finder hierarchy: full-width primary search, secondary top_n below. */
+.secondary-filter-row { margin-top:4px !important; max-width:260px !important; }
+@media (max-width: 1300px) {
+    .tm69-ai-insight-pro { grid-template-columns:1fr !important; }
+    .tm69-command-row-pro { grid-template-columns:34px minmax(0,1fr) !important; }
+    .tm69-command-signals-pro { grid-column:1 / -1; grid-template-columns:repeat(3,minmax(0,1fr)) !important; }
+    .tm69-command-score { grid-column:1 / -1; text-align:left !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9 FINAL HEADER REFERENCE MATCH PATCH
+# Compact 3-column command row: title + native typeahead + active context
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Bring horizontal command row closer to topbar without touching the main content rhythm. */
+header[data-testid="stHeader"] {
+    height: 0.65rem !important;
+    min-height: 0.65rem !important;
+    background: transparent !important;
+}
+.block-container {
+    padding-top: 0.42rem !important;
+}
+.scouting-topbar {
+    min-height: 54px !important;
+    padding: 12px 18px !important;
+    margin-bottom: 10px !important;
+    border-radius: 16px !important;
+}
+
+/* Command row geometry: 22 / 43 / 35, compact, aligned, no heavy wrapper. */
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-center-css-anchor),
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    gap: 12px !important;
+    align-items: stretch !important;
+    margin-top: 0 !important;
+    margin-bottom: 18px !important;
+}
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tm69-command-panel),
+div[data-testid="stElementContainer"]:has(.tm69-command-panel) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+}
+.tm69-command-panel {
+    height: 170px !important;
+    min-height: 170px !important;
+    max-height: 170px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    padding: 14px 16px !important;
+    overflow: visible !important;
+}
+.tm69-command-left {
+    border-left: 4px solid #2F5BFF !important;
+    justify-content: center !important;
+}
+.tm69-command-eyebrow,
+.tm69-command-search-label,
+.tm69-command-context-title {
+    color: #0052FF !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    font-weight: 900 !important;
+    letter-spacing: .03em !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.tm69-command-title {
+    color: #0f172a !important;
+    font-size: 19px !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.025em !important;
+    margin: 12px 0 8px 0 !important;
+}
+.tm69-command-subtitle {
+    color: #0f2745 !important;
+    font-size: 12.5px !important;
+    line-height: 1.38 !important;
+    max-width: 96% !important;
+}
+
+/* Middle search column: visually unboxed, vertically centered, Google-like input. */
+.tm69-command-search-panel {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 12px 4px 10px 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.tm69-command-search-label-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 0 6px 0 !important;
+}
+.tm69-command-search-help {
+    color: #0f2745 !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 650 !important;
+    white-space: nowrap !important;
+}
+.tm69-search-input-anchor {
+    position: relative !important;
+    margin: 0 !important;
+}
+.tm69-search-input-anchor::before {
+    content: "⌕";
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    color: #8a99ad;
+    font-size: 23px;
+    line-height: 1;
+    pointer-events: none;
+}
+.tm69-search-input-anchor div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+}
+.tm69-search-input-anchor div[data-baseweb="select"] > div {
+    min-height: 52px !important;
+    height: 52px !important;
+    border-radius: 999px !important;
+    border: 1px solid #d7dee9 !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(15,23,42,.060) !important;
+    padding-left: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.tm69-search-input-anchor div[data-baseweb="select"] > div:hover,
+.tm69-search-input-anchor div[data-baseweb="select"] > div:focus-within {
+    border-color: #b7c6da !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08), 0 8px 20px rgba(15,23,42,.070) !important;
+}
+.tm69-search-input-anchor div[data-baseweb="select"] input,
+.tm69-search-input-anchor div[data-baseweb="select"] span,
+.tm69-search-input-anchor div[data-baseweb="select"] div {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+}
+.tm69-search-input-anchor div[data-baseweb="select"] svg {
+    color: #94a3b8 !important;
+    fill: #94a3b8 !important;
+}
+.tm69-search-example {
+    margin: 11px 0 0 2px !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+}
+.tm69-search-example b {
+    color: #0f172a !important;
+    font-weight: 900 !important;
+}
+.tm69-search-example span {
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    margin-left: 5px !important;
+    background: #eaf2ff !important;
+    color: #0052FF !important;
+    border: 1px solid #dbeafe !important;
+    font-weight: 850 !important;
+}
+
+/* Right context card: compact, two-line chips, clear button only when explicitly rendered. */
+.tm69-command-context-panel {
+    justify-content: flex-start !important;
+    padding: 14px 16px !important;
+}
+.tm69-command-context-head {
+    margin: 0 0 9px 0 !important;
+}
+.tm69-command-context-summary {
+    color: #0f172a !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    font-weight: 700 !important;
+    margin: 0 0 12px 0 !important;
+}
+.tm69-command-context-summary b {
+    font-weight: 950 !important;
+}
+.tm69-command-chip-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px 8px !important;
+    max-height: 58px !important;
+    overflow: hidden !important;
+}
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    height: 25px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 0 10px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #eef2f7 !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 750 !important;
+    white-space: nowrap !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    margin-top: -38px !important;
+    margin-left: auto !important;
+    margin-right: 14px !important;
+    width: fit-content !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    min-height: 27px !important;
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color: #0052FF !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 10px rgba(37,99,235,.08) !important;
+}
+
+@media (max-width: 1200px) {
+    .tm69-command-panel {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+    }
+    .tm69-command-search-help { display:none !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9 FINAL FIX v2: reference-match command row without broken split HTML
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Top rhythm: compact gap below the navy topbar, matching the reference mockup. */
+.block-container { padding-top: 0.55rem !important; }
+.scouting-topbar {
+    min-height: 56px !important;
+    padding: 12px 18px !important;
+    margin-bottom: 18px !important;
+    border-radius: 16px !important;
+}
+
+/* Three-column command row: 22 / 43 / 35, fixed visual height, aligned top. */
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    gap: 12px !important;
+    align-items: stretch !important;
+    margin: 0 0 18px 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) > div[data-testid="column"] {
+    padding: 0 !important;
+    min-width: 0 !important;
+}
+
+/* Left and right cards. */
+.tm69-command-panel {
+    height: 168px !important;
+    min-height: 168px !important;
+    max-height: 168px !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    padding: 14px 16px !important;
+    overflow: hidden !important;
+}
+.tm69-command-left {
+    border-left: 4px solid #2F5BFF !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.tm69-command-eyebrow,
+.tm69-command-search-label,
+.tm69-command-context-title {
+    color: #0052FF !important;
+    font-size: 11px !important;
+    line-height: 1.05 !important;
+    font-weight: 900 !important;
+    letter-spacing: .03em !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+}
+.tm69-command-title {
+    color: #0f172a !important;
+    font-size: 19px !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.025em !important;
+    margin: 13px 0 8px 0 !important;
+}
+.tm69-command-subtitle {
+    color: #0f2745 !important;
+    font-size: 12.5px !important;
+    line-height: 1.38 !important;
+    max-width: 96% !important;
+    margin: 0 !important;
+}
+
+/* Middle search card: the whole Streamlit column becomes the card. No split/open HTML. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) {
+    height: 168px !important;
+    min-height: 168px !important;
+    max-height: 168px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.045) !important;
+    padding: 14px 16px !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.tm69-search-card-anchor { display: none !important; }
+.tm69-search-label-row-final,
+.tm69-command-search-label-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 12px !important;
+    height: 15px !important;
+    margin: 0 0 8px 0 !important;
+    padding: 0 !important;
+}
+.tm69-command-search-help {
+    color: #0f2745 !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 650 !important;
+    white-space: nowrap !important;
+}
+
+/* Typeahead/selectbox: Google-like, rounded and attached to the title. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"] label {
+    display: none !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div {
+    min-height: 52px !important;
+    height: 52px !important;
+    border-radius: 999px !important;
+    border: 1px solid #d7dee9 !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(15,23,42,.060) !important;
+    padding-left: 42px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:hover,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:focus-within {
+    border-color: #b7c6da !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.08), 0 8px 20px rgba(15,23,42,.070) !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] input,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] span,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] div {
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+    font-size: 13.5px !important;
+    font-weight: 650 !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] svg {
+    color: #94a3b8 !important;
+    fill: #94a3b8 !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"]::before {
+    content: "⌕";
+    position: absolute;
+    left: 34px;
+    top: 61px;
+    z-index: 6;
+    color: #8a99ad;
+    font-size: 23px;
+    line-height: 1;
+    pointer-events: none;
+}
+.tm69-search-example-final,
+.tm69-search-example {
+    margin: 11px 0 0 2px !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-search-example-final b,
+.tm69-search-example b { color: #0f172a !important; font-weight: 900 !important; }
+.tm69-search-example-final span,
+.tm69-search-example span {
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    margin-left: 5px !important;
+    background: #eaf2ff !important;
+    color: #0052FF !important;
+    border: 1px solid #dbeafe !important;
+    font-weight: 850 !important;
+}
+
+/* Active universe card. */
+.tm69-command-context-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 14px 16px !important;
+}
+.tm69-command-context-head { margin: 0 0 9px 0 !important; }
+.tm69-command-context-summary {
+    color: #0f172a !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    font-weight: 700 !important;
+    margin: 0 0 12px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-command-context-summary b { color: #0f172a !important; font-weight: 950 !important; }
+.tm69-command-chip-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px 8px !important;
+    max-height: 58px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    height: 25px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    border-radius: 999px !important;
+    padding: 0 10px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #eef2f7 !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    font-weight: 750 !important;
+    white-space: nowrap !important;
+}
+
+/* Clear filters: hidden unless Python renders the button; small product pill. */
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    position: relative !important;
+    margin-top: -38px !important;
+    margin-left: auto !important;
+    margin-right: 14px !important;
+    width: fit-content !important;
+    z-index: 5 !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    min-height: 27px !important;
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(180deg,#ffffff 0%,#eff6ff 100%) !important;
+    color: #0052FF !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 10px rgba(37,99,235,.08) !important;
+}
+
+/* Prevent older text-input command palette styles from touching this header. */
+.tm69-command-search-panel div[data-testid="stTextInput"] { display: none !important; }
+
+@media (max-width: 1200px) {
+    .tm69-command-panel,
+    div[data-testid="column"]:has(.tm69-search-card-anchor) {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+    }
+    .tm69-command-search-help { display: none !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 FINAL MICRO-POLISH v3: tighter top rhythm + centered Google search
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* 1) Bring the horizontal command row ~15px closer to the navy topbar. */
+.scouting-topbar {
+    margin-bottom: 3px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+}
+
+/* 2) Make the horizontal module slightly shorter and remove dead white space. */
+.tm69-command-panel {
+    height: 152px !important;
+    min-height: 152px !important;
+    max-height: 152px !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+}
+.tm69-command-left {
+    justify-content: center !important;
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+}
+.tm69-command-title {
+    font-size: 19px !important;
+    line-height: 1.10 !important;
+    margin: 10px 0 6px 0 !important;
+}
+.tm69-command-subtitle {
+    font-size: 12.3px !important;
+    line-height: 1.30 !important;
+    margin: 0 !important;
+}
+
+/* 3) Search column: same visual height as cards, but input centered vertically. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) {
+    height: 152px !important;
+    min-height: 152px !important;
+    max-height: 152px !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+}
+.tm69-search-label-row-final,
+.tm69-command-search-label-row {
+    height: 14px !important;
+    min-height: 14px !important;
+    margin: 0 0 7px 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+.tm69-command-search-label,
+.tm69-command-context-title,
+.tm69-command-eyebrow {
+    font-size: 11px !important;
+    line-height: 1 !important;
+}
+.tm69-command-search-help {
+    font-size: 11px !important;
+    line-height: 1 !important;
+}
+
+/* 4) Google-like selectbox: more pill-shaped, cleaner shadow, input vertically centered. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div {
+    height: 54px !important;
+    min-height: 54px !important;
+    border-radius: 9999px !important;
+    border: 1px solid #d7dee9 !important;
+    background: #ffffff !important;
+    box-shadow: 0 6px 17px rgba(15, 23, 42, 0.052) !important;
+    padding-left: 44px !important;
+    padding-right: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:hover,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:focus-within {
+    border-color: #b7c6da !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.075), 0 8px 20px rgba(15,23,42,.065) !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"]::before {
+    content: "⌕";
+    position: absolute;
+    left: 34px;
+    top: 57px;
+    z-index: 6;
+    color: #8a99ad;
+    font-size: 23px;
+    line-height: 1;
+    pointer-events: none;
+}
+.tm69-search-example-final,
+.tm69-search-example {
+    margin: 9px 0 0 2px !important;
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+}
+.tm69-search-example-final span,
+.tm69-search-example span {
+    padding: 4px 10px !important;
+}
+
+/* 5) Active context: less bottom whitespace, chips remain within two compact rows. */
+.tm69-command-context-panel {
+    height: 152px !important;
+    min-height: 152px !important;
+    max-height: 152px !important;
+    padding: 12px 14px !important;
+    justify-content: center !important;
+}
+.tm69-command-context-head {
+    margin: 0 0 8px 0 !important;
+}
+.tm69-command-context-summary {
+    font-size: 12px !important;
+    line-height: 1.28 !important;
+    margin: 0 0 10px 0 !important;
+}
+.tm69-command-chip-row {
+    gap: 6px 7px !important;
+    max-height: 54px !important;
+}
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    height: 23px !important;
+    padding: 0 9px !important;
+    font-size: 10.8px !important;
+}
+
+/* 6) Clear filters keeps conditional rendering, but follows the new shorter card height. */
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    margin-top: -34px !important;
+    margin-right: 12px !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    min-height: 25px !important;
+    padding: 0 10px !important;
+    font-size: 10.8px !important;
+}
+
+@media (max-width: 1200px) {
+    .tm69-command-panel,
+    div[data-testid="column"]:has(.tm69-search-card-anchor),
+    .tm69-command-context-panel {
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 FINAL MICRO-POLISH v4: reference-match correction
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Force the command row closer to the navy topbar. Previous patches were being
+   neutralised by older Streamlit wrappers, so this targets the concrete anchor. */
+.scouting-topbar {
+    margin-bottom: 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-center-css-anchor) {
+    margin-top: -15px !important;
+    margin-bottom: 14px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    margin-top: -15px !important;
+    margin-bottom: 14px !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+}
+
+/* Shorter horizontal module: less empty white space under section/context text. */
+.tm69-command-panel,
+.tm69-command-left,
+.tm69-command-context-panel {
+    height: 140px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
+    border-radius: 16px !important;
+    padding: 12px 14px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.tm69-command-left {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.tm69-command-eyebrow,
+.tm69-command-search-label,
+.tm69-command-context-title {
+    font-size: 10.8px !important;
+    line-height: 1 !important;
+    letter-spacing: .065em !important;
+}
+.tm69-command-title {
+    font-size: 18px !important;
+    line-height: 1.08 !important;
+    margin: 9px 0 6px 0 !important;
+}
+.tm69-command-subtitle {
+    font-size: 12px !important;
+    line-height: 1.28 !important;
+    margin: 0 !important;
+}
+
+/* Search column: no outer card, but stable 140px visual lane and input centered. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) {
+    height: 140px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
+    padding: 4px 14px 0 14px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    overflow: visible !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+    justify-content: center !important;
+}
+.tm69-command-search-label-row,
+.tm69-search-label-row-final {
+    height: 14px !important;
+    min-height: 14px !important;
+    margin: 0 0 6px 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+.tm69-command-search-help {
+    font-size: 10.8px !important;
+    line-height: 1 !important;
+}
+.tm69-search-vertical-spacer {
+    height: 10px !important;
+    min-height: 10px !important;
+    display: block !important;
+}
+
+/* Google-like search pill: more rounded, less squared, vertically clean. */
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div {
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    border-radius: 9999px !important;
+    border: 1px solid #d7dee9 !important;
+    background: #ffffff !important;
+    box-shadow: 0 5px 16px rgba(15, 23, 42, .050) !important;
+    padding-left: 46px !important;
+    padding-right: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:hover,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] > div:focus-within {
+    border-color: #b9c7d9 !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.07), 0 7px 18px rgba(15,23,42,.060) !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] input,
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-baseweb="select"] span {
+    font-size: 13.5px !important;
+    line-height: 1.15 !important;
+    color: #0f172a !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelectbox"]::before {
+    content: "⌕";
+    position: absolute !important;
+    left: 18px !important;
+    top: 13px !important;
+    z-index: 20 !important;
+    color: #8a99ad !important;
+    font-size: 22px !important;
+    line-height: 1 !important;
+    pointer-events: none !important;
+}
+.tm69-search-example,
+.tm69-search-example-final {
+    margin: 9px 0 0 2px !important;
+    font-size: 10.8px !important;
+    line-height: 1.1 !important;
+}
+.tm69-search-example span,
+.tm69-search-example-final span {
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+}
+
+/* Context card: same height as title card, content centered, two compact chip rows. */
+.tm69-command-context-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+.tm69-command-context-head {
+    margin: 0 0 8px 0 !important;
+}
+.tm69-command-context-summary {
+    font-size: 11.8px !important;
+    line-height: 1.25 !important;
+    margin: 0 0 9px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.tm69-command-chip-row {
+    gap: 6px 7px !important;
+    max-height: 50px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+.tm69-command-chip,
+.tm69-command-chip-row span {
+    height: 22px !important;
+    padding: 0 9px !important;
+    font-size: 10.6px !important;
+    line-height: 1 !important;
+}
+
+/* Clear filters remains conditional; when shown it fits the compact card. */
+.tm69-clear-button-anchor + div[data-testid="stButton"] {
+    margin-top: -31px !important;
+    margin-right: 10px !important;
+}
+.tm69-clear-button-anchor + div[data-testid="stButton"] button {
+    min-height: 24px !important;
+    padding: 0 10px !important;
+    font-size: 10.5px !important;
+    border-radius: 999px !important;
+}
+
+@media (max-width: 1200px) {
+    .tm69-command-panel,
+    .tm69-command-left,
+    .tm69-command-context-panel,
+    div[data-testid="column"]:has(.tm69-search-card-anchor) {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.tm69-command-center-css-anchor),
+    div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+        margin-top: 0 !important;
+    }
+}
 </style>
 """,
     unsafe_allow_html=True,
