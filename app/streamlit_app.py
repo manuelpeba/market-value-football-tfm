@@ -25413,6 +25413,26 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         overflow: visible;
         text-overflow: initial;
     }
+    .visual-mvp-nationality-line {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 3px;
+        margin-bottom: 4px;
+        font-size: .62rem;
+        font-weight: 900;
+        color: #334155;
+        max-width: 112px;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .visual-mvp-nationality-line img {
+        width: 16px !important;
+        height: 12px !important;
+        min-width: 16px !important;
+        display: inline-block !important;
+        object-fit: cover !important;
+    }
     .visual-mvp-value {
         text-align: right;
         color: #0f172a;
@@ -25548,7 +25568,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                     <div>
                         <div class="visual-mvp-rank">Visual MVP #{rank}</div>
                         <div class="visual-mvp-name">{html.escape(player)}</div>
-                        <div class="visual-mvp-meta"><div class="visual-mvp-identity">{meta_identity}</div></div>
+                        <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
+                        <div class="visual-mvp-meta"><div class="visual-mvp-identity">{''.join([x for x in [club_identity, league_identity, position_identity] if x])}</div></div>
                     </div>
                     <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(_visual_mvp_row_market_value(row, player))}</div>
                 </div>
