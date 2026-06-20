@@ -32198,6 +32198,17 @@ def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = Non
 def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
     d = _tm69_collect_player_context(row, name_col)
     is_en = d["is_en"]
+
+    identity_payload = _tm69_identity_asset_lookup().get(normalize_search_text(d["player_name"]), {})
+    if identity_payload:
+        d["ctx"].update(identity_payload)
+        height_val = pd.to_numeric(pd.Series([identity_payload.get("height_in_cm")]), errors="coerce").iloc[0]
+        if pd.notna(height_val):
+            d["height_txt"] = f"{height_val:.0f} cm"
+        if _tm69_is_valid(identity_payload.get("foot")):
+            d["foot"] = _tm69_localize_foot(identity_payload.get("foot"))
+        if _tm69_is_valid(identity_payload.get("date_of_birth")):
+            d["birth_txt"] = _tm69_format_date(identity_payload.get("date_of_birth"))
     secondary_html = "".join([f"<span class='exec-position-pill'>{html.escape(x)}</span>" for x in d["secondary_pos"]]) or f"<span class='exec-position-pill'>{html.escape('Sin secundaria' if not is_en else 'No secondary')}</span>"
     ficha = "".join([
         f"<div class='pi-ficha-item'><span>{html.escape('Nacionalidad' if not is_en else 'Nationality')}</span><b>{_tm69_nationality_html(d['country'])}</b></div>",
@@ -32207,7 +32218,6 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
         f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Nacimiento' if not is_en else 'Born')}</span><b>{html.escape(d['birth_txt'])}</b></div>",
-        f"<div class='pi-ficha-item'><span>DEBUG ID</span><b>{html.escape(str(d['ctx'].get('height_in_cm', 'NO_HEIGHT')))} · {html.escape(str(d['ctx'].get('foot', 'NO_FOOT')))} · {html.escape(str(d['ctx'].get('date_of_birth', 'NO_BIRTH')))}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Contrato' if not is_en else 'Contract')}</span><b>{html.escape(d['contract_status'])}</b></div>",
     ])
     pitch_html = f"""
