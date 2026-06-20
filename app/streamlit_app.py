@@ -24969,6 +24969,39 @@ def render_info_kpi_card(label: str, value: str, caption: str, info_text: str) -
     )
 
 
+VISUAL_MVP_COUNTRY_OVERRIDE = {
+    "javi rodriguez": "Spain",
+    "christantus uche": "Nigeria",
+    "yassin belkhdim": "Morocco",
+    "kevin danois": "France",
+    "erick nunes": "Brazil",
+    "mario martin": "Spain",
+    "saba goglichidze": "Georgia",
+    "luca marianucci": "Italy",
+    "rabby nzingoula": "France",
+    "jeremy sarmiento": "Ecuador",
+    "mark o'mahony": "Ireland",
+    "jamie lawrence": "Germany",
+    "ilias akhomach": "Morocco",
+    "matteo prati": "Italy",
+    "gerard martin": "Spain",
+    "lasse rosenboom": "Germany",
+    "mikel jauregizar": "Spain",
+    "lukas ullrich": "Germany",
+    "nicolo savona": "Italy",
+    "carlos romero": "Spain",
+    "jesus rodriguez": "Spain",
+    "reda belahyane": "Morocco",
+    "roberto fernandez": "Spain",
+    "bas van den eynden": "Belgium",
+    "alex padilla": "Mexico",
+    "joel silva": "Portugal",
+    "jakob breum": "Denmark",
+    "antoine hainaut": "France",
+    "emmanuel biumla": "France",
+    "clement akpa": "Cote d'Ivoire"
+}
+
 def _visual_mvp_safe_text(value, fallback="N/A"):
     if value is None:
         return fallback
@@ -25481,8 +25514,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
-        country_lookup = _visual_mvp_current_country_lookup()
-        country = str(country_lookup)[:120]
+        country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player), "")
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
@@ -25515,7 +25547,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                     <div class="visual-mvp-avatar">{_tm69_club_mark_html(dict(row), club) if club else html.escape(_visual_mvp_initials(player))}</div>
                     <div>
                         <div class="visual-mvp-rank">Visual MVP #{rank}</div>
-                        <div class="visual-mvp-name">{html.escape(player)} <span style="font-size:.55rem;color:#dc2626;">[{html.escape(str(country))}]</span> <span style="color:#1d4ed8;font-size:.62rem;font-weight:950;">[{html.escape(str(country))}]</span></div>
+                        <div class="visual-mvp-name">{html.escape(player)}</div>
+                        <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
                         <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
                         <div class="visual-mvp-meta"><div class="visual-mvp-identity">{''.join([x for x in [club_identity, league_identity, position_identity] if x])}</div></div>
                     </div>
