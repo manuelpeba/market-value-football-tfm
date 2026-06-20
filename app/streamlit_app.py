@@ -393,7 +393,7 @@ div[data-testid="stVerticalBlock"] {
 .executive-recommendation-player {
     color: #0f172a;
     font-size: 1.85rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1.05;
 }
 
@@ -606,7 +606,7 @@ html, body, [data-testid="stAppViewContainer"] {
 
 .scouting-score-value {
     font-size: 3.0rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 0.98;
     color: #0f172a;
 }
@@ -747,7 +747,7 @@ div[data-testid="stTabs"] button[aria-selected="true"] {
 
 .exec-player-name {
     font-size: 1.65rem;
-    font-weight: 950;
+    font-weight: 850;
     color: #0f172a;
     margin-bottom: 6px;
 }
@@ -760,7 +760,7 @@ div[data-testid="stTabs"] button[aria-selected="true"] {
 
 .exec-score-main {
     font-size: 3.2rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 0.98;
     color: #0f172a;
 }
@@ -2729,7 +2729,7 @@ st.markdown(
     content: "⌄";
     margin-left: auto;
     color: #2563eb;
-    font-weight: 950;
+    font-weight: 850;
 }
 .quick-guide-inline[open] summary::after { content: "⌃"; }
 .quick-guide-inline-body {
@@ -2850,7 +2850,7 @@ st.markdown(
     display: block;
     color: #0f172a;
     font-size: 1.05rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1.05;
 }
 .outside-scouting-metrics small {
@@ -3388,7 +3388,7 @@ div[data-testid="stExpander"]:has(.strategy-glossary-grid) {
     content: "›";
     color: #0f172a;
     font-size: 1.1rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1;
     margin-right: 4px;
 }
@@ -3427,7 +3427,7 @@ st.markdown(
 }
 .similarity-rank-title {
     font-size: 0.76rem;
-    font-weight: 950;
+    font-weight: 850;
     letter-spacing: .08em;
     color: #0f2f5f;
     text-transform: uppercase;
@@ -3456,13 +3456,13 @@ st.markdown(
     justify-content: center;
     background: #eff6ff;
     color: #1d4ed8;
-    font-weight: 950;
+    font-weight: 850;
     font-size: .74rem;
 }
 .similarity-rank-name {
     color: #0f172a;
     font-size: .80rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1.08;
     white-space: nowrap;
     overflow: hidden;
@@ -3530,13 +3530,13 @@ st.markdown(
     color: #0f172a;
     font-size: .80rem;
     line-height: 1.0;
-    font-weight: 950;
+    font-weight: 850;
 }
 .similarity-rank-kpis span {
     color: #94a3b8;
     font-size: .54rem;
     line-height: 1.0;
-    font-weight: 950;
+    font-weight: 850;
     letter-spacing: .04em;
     margin-bottom: 2px;
 }
@@ -3725,7 +3725,7 @@ st.markdown(
     color: #1d4ed8;
     background: #f8fbff;
     font-size: .72rem;
-    font-weight: 950;
+    font-weight: 850;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -3883,7 +3883,7 @@ st.markdown(
     display: block;
     color: #64748b;
     font-size: .62rem;
-    font-weight: 950;
+    font-weight: 850;
     letter-spacing: .055em;
     text-transform: uppercase;
     margin-bottom: 2px;
@@ -3892,7 +3892,7 @@ st.markdown(
     display: block;
     color: #0f172a;
     font-size: .88rem;
-    font-weight: 950;
+    font-weight: 850;
     white-space: nowrap;
 }
 .similarity-rank-card-compact {
@@ -4642,7 +4642,7 @@ div:has(> .contract-card) {
 .contract-executive-insight-label {
     color: #1d4ed8;
     font-size: .70rem;
-    font-weight: 950;
+    font-weight: 850;
     letter-spacing: .085em;
     text-transform: uppercase;
     margin-bottom: 5px;
@@ -4788,7 +4788,7 @@ st.markdown(
 .native-action-lane-title {
     color: #0f172a;
     font-size: .90rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1.15;
 }
 .native-action-lane-count {
@@ -4803,7 +4803,7 @@ st.markdown(
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     font-size: .70rem;
-    font-weight: 950;
+    font-weight: 850;
 }
 .native-action-player-card {
     background: #ffffff;
@@ -4828,13 +4828,13 @@ st.markdown(
     background: #eff6ff;
     color: #1d4ed8;
     font-size: .68rem;
-    font-weight: 950;
+    font-weight: 850;
     margin-bottom: 5px;
 }
 .native-action-player-name {
     color: #0f172a;
     font-size: .86rem;
-    font-weight: 950;
+    font-weight: 850;
     line-height: 1.15;
     white-space: nowrap;
     overflow: hidden;
@@ -11506,7 +11506,7 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "tm69_current_club_name_tm", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
-    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A"))
+    country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_name), "") or _tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A")
     foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
     height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
     height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
@@ -16255,7 +16255,7 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
         player = html.escape(player_raw)
         club_raw = str(safe_get(row, "club", "")).strip()
         league_raw = league_display_name(safe_get(row, "league", ""))
-        country_raw = _tm69_row_nationality(row, player_raw)
+        country_raw = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_raw), "") or _tm69_row_nationality(row, player_raw)
 
         club_line = ""
         if club_raw:
@@ -25208,7 +25208,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-grid {
         display: grid;
-        grid-template-columns: repeat(8, minmax(132px, 1fr));
+        grid-template-columns: repeat(4, minmax(155px, 1fr));
         gap: 10px;
         padding: 4px 4px 8px 4px;
         box-sizing: border-box;
@@ -25569,7 +25569,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     html_block = css + "\n".join(cards)
 
     # 8 cards => compact horizontal shelf for the Market Intelligence executive view.
-    components.html(html_block, height=280, scrolling=False)
+    components.html(html_block, height=430, scrolling=False)
 
 
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
@@ -25662,7 +25662,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
             for _, row in contract_preview.iterrows():
                 club_raw = str(safe_get(row, 'club_display', safe_get(row, 'club', 'N/A')))
                 club_identity = f"{_tm69_club_mark_html(dict(row), club_raw)} {html.escape(club_raw)}"
-                country_raw = _tm69_row_nationality(row, safe_get(row, 'player_name_display', ''))
+                country_raw = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(safe_get(row, 'player_name_display', '')), '') or _tm69_row_nationality(row, safe_get(row, 'player_name_display', ''))
                 nationality = _tm69_nationality_html(country_raw) if str(country_raw).strip() else ""
                 contract_meta_parts = [x for x in [nationality, club_identity, html.escape(str(safe_get(row, 'position_display', 'N/A'))), html.escape(str(safe_get(row, 'age_display', 'N/A'))) + ' ' + ('years' if LANG == 'EN' else 'años')] if x]
                 preview_rows.append(
@@ -26969,7 +26969,7 @@ def _tm69_collect_player_context(row: pd.Series, name_col: str | None = None) ->
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
-    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A"))
+    country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_name), "") or _tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A")
     foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
     height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
     height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
