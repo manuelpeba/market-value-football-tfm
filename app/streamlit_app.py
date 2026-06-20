@@ -25051,9 +25051,35 @@ def load_visual_mvp_manifest() -> pd.DataFrame:
     if not path.exists():
         return pd.DataFrame()
     try:
-        return pd.read_csv(path)
+        df = pd.read_csv(path)
+
+        snap_path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
+        snap = pd.read_parquet(
+            snap_path,
+            columns=["player_id_tm", "country_of_citizenship", "current_market_value_eur"]
+        ).copy()
+
+        df["player_id_tm_key"] = pd.to_numeric(df.get("player_id_tm"), errors="coerce").astype("Int64")
+        snap["player_id_tm_key"] = pd.to_numeric(snap["player_id_tm"], errors="coerce").astype("Int64")
+
+        snap = snap.dropna(subset=["player_id_tm_key"]).drop_duplicates("player_id_tm_key", keep="last")
+
+        df = df.merge(
+            snap[["player_id_tm_key", "country_of_citizenship", "current_market_value_eur"]],
+            on="player_id_tm_key",
+            how="left",
+            suffixes=("", "_snap_direct"),
+        )
+
+        if "country_of_citizenship_snap_direct" in df.columns:
+            df["country_of_citizenship"] = df["country_of_citizenship"].fillna(df["country_of_citizenship_snap_direct"])
+
+        if "current_market_value_eur_snap_direct" in df.columns:
+            df["current_market_value_eur"] = df["current_market_value_eur"].fillna(df["current_market_value_eur_snap_direct"])
+
+        return df
     except Exception:
-        return pd.DataFrame()
+        return pd.read_csv(path)
 
 
 
@@ -25488,7 +25514,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
-        country = _visual_mvp_row_country(row, player)
+        country = _visual_mvp_first(row, ["country_of_citizenship", "country_of_citizenship_snap_direct"], "") or _visual_mvp_row_country(row, player)
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
