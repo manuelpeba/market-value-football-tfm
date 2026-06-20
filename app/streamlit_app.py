@@ -25056,8 +25056,8 @@ def _visual_mvp_current_market_value_lookup() -> dict:
         path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
         df = pd.read_parquet(path)
 
-        name_col = next((c for c in ["player_name", "player_name_display", "name", "player"] if c in df.columns), None)
-        value_col = next((c for c in ["market_value_eur", "current_market_value_eur", "market_value", "tm_market_value_eur"] if c in df.columns), None)
+        name_col = next((c for c in ["player_name_tm", "player_name", "player_name_display", "name", "player"] if c in df.columns), None)
+        value_col = next((c for c in ["current_market_value_eur", "market_value_eur", "market_value", "tm_market_value_eur"] if c in df.columns), None)
 
         if not name_col or not value_col:
             return {}
@@ -27403,16 +27403,33 @@ def _tm69_nationality_html(country: object) -> str:
 
 @st.cache_data(show_spinner=False)
 def _tm69_player_nationality_lookup() -> dict:
-    """Build player -> nationality lookup from the modeling panel."""
+    """Build player -> nationality lookup from current snapshot, with modeling fallback."""
+    lookup = {}
+
     try:
-        path = ROOT / "data" / "processed" / "player_season_modeling_v13a.parquet"
-        df = pd.read_parquet(path, columns=["player_name_fbref", "nationality"])
-        df = df.dropna(subset=["player_name_fbref", "nationality"])
-        df["player_key"] = df["player_name_fbref"].astype(str).map(normalize_search_text)
-        df = df.drop_duplicates("player_key", keep="last")
-        return dict(zip(df["player_key"], df["nationality"].astype(str)))
+        snap_path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
+        snap = pd.read_parquet(
+            snap_path,
+            columns=["player_name_tm", "country_of_citizenship"]
+        )
+        snap = snap.dropna(subset=["player_name_tm", "country_of_citizenship"])
+        snap["player_key"] = snap["player_name_tm"].astype(str).map(normalize_search_text)
+        snap = snap.drop_duplicates("player_key", keep="last")
+        lookup.update(dict(zip(snap["player_key"], snap["country_of_citizenship"].astype(str))))
     except Exception:
-        return {}
+        pass
+
+    try:
+        panel_path = ROOT / "data" / "processed" / "player_season_modeling_v13a.parquet"
+        panel = pd.read_parquet(panel_path, columns=["player_name_fbref", "nationality"])
+        panel = panel.dropna(subset=["player_name_fbref", "nationality"])
+        panel["player_key"] = panel["player_name_fbref"].astype(str).map(normalize_search_text)
+        panel = panel.drop_duplicates("player_key", keep="last")
+        fallback = dict(zip(panel["player_key"], panel["nationality"].astype(str)))
+        fallback.update(lookup)
+        return fallback
+    except Exception:
+        return lookup
 
 def _tm69_row_nationality(row: object, player_name: object = "") -> str:
     """Return nationality from row columns; fallback to player-name lookup."""
