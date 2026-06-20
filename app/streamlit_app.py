@@ -10429,36 +10429,8 @@ def _tm69_find_matching_row(df: pd.DataFrame, base_row: pd.Series) -> dict:
     return {}
 
 
-@st.cache_data(show_spinner=False)
-def _tm69_current_snapshot_identity_lookup() -> dict:
-    """Player-name keyed identity attributes from current Transfermarkt snapshot."""
-    try:
-        path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
-        cols = [
-            "player_name_tm",
-            "height_in_cm",
-            "foot",
-            "date_of_birth",
-            "current_age",
-            "country_of_citizenship",
-            "current_market_value_eur",
-            "current_valuation_date",
-            "current_club",
-            "current_league",
-        ]
-        df = pd.read_parquet(path, columns=cols)
-        df = df.dropna(subset=["player_name_tm"]).copy()
-        df["player_key"] = df["player_name_tm"].astype(str).map(normalize_search_text)
-        df = df.drop_duplicates("player_key", keep="last")
-        return df.set_index("player_key").to_dict(orient="index")
-    except Exception:
-        return {}
-
-
 def _tm69_merge_context(row: pd.Series) -> dict:
     ctx = dict(row.to_dict())
-
-    # First merge generic TM.6.9 context tables.
     for _, df in _tm69_load_context_tables().items():
         matched = _tm69_find_matching_row(df, row)
         for key, value in matched.items():
@@ -10466,42 +10438,6 @@ def _tm69_merge_context(row: pd.Series) -> dict:
                 ctx[key] = value
             else:
                 ctx[f"tm69_{key}"] = value
-
-    # Then enforce current Transfermarkt snapshot identity fields by player name.
-    name_candidates = [
-        ctx.get("player_name_tm"),
-        ctx.get("player_name_tm_snapshot"),
-        ctx.get("player_name_fbref"),
-        ctx.get("player_name"),
-        ctx.get("player"),
-        ctx.get("name"),
-    ]
-    snap_lookup = _tm69_current_snapshot_identity_lookup()
-    snap = {}
-    for name in name_candidates:
-        key = normalize_search_text(name or "")
-        if key in snap_lookup:
-            snap = snap_lookup[key]
-            break
-
-    field_map = {
-        "height_in_cm": "height_in_cm",
-        "foot": "foot",
-        "date_of_birth": "date_of_birth",
-        "current_age": "current_age",
-        "country_of_citizenship": "country_of_citizenship",
-        "current_market_value_eur": "current_market_value_eur",
-        "current_valuation_date": "current_valuation_date",
-        "current_club": "current_club",
-        "current_league": "current_league",
-    }
-
-    for target, source in field_map.items():
-        value = snap.get(source)
-        if _tm69_is_valid(value):
-            ctx[target] = value
-            ctx[f"tm69_{target}"] = value
-
     return ctx
 
 
