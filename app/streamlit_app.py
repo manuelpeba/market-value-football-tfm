@@ -10785,8 +10785,8 @@ def _tm69_dna_values(ctx: dict) -> list[tuple[str, float]]:
         ("Creation" if is_en else "Creación", _tm69_numeric(ctx, ["creation_index_role", "chance_creation_index", "tm69_creation_index_role", "tm69_chance_creation_index"])),
         ("Progression" if is_en else "Progresión", _tm69_numeric(ctx, ["progression_index_role", "ball_progression_index", "tm69_progression_index_role", "tm69_ball_progression_index"])),
         ("Finishing" if is_en else "Finalización", _tm69_numeric(ctx, ["finishing_index_role", "tm69_finishing_index_role"])),
-        ("Defending" if is_en else "Defensa", _tm69_numeric(ctx, ["defending_index_role", "defensive_activity_index", "tm69_defending_index_role"])),
-        ("Duels" if is_en else "Duelos", _tm69_numeric(ctx, ["duel_index_role", "aerial_duels_won_pct", "tm69_duel_index_role"])),
+        ("Defending" if is_en else "Defensa", _tm69_numeric(ctx, ["defending_index_role", "defensive_activity_index", "tm69_defensive_activity_index", "interceptions_position_pct", "tm69_interceptions_position_pct", "tm69_defending_index_role"])),
+        ("Duels" if is_en else "Duelos", _tm69_numeric(ctx, ["duel_index_role", "tackles_won_position_pct", "tm69_tackles_won_position_pct", "aerial_duels_won_pct", "tm69_aerial_duels_won_pct", "tm69_duel_index_role"])),
     ]
     cleaned = []
     for label, value in items:
@@ -11603,6 +11603,13 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
 
     raw_name = _tm69_first(ctx, [name_col or "", "player_name_tm", "player_name", "player_name_fbref", "Player"], "Player")
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
+
+    # TM.6.9.1 deterministic identity restore from generated asset.
+    identity_payload = _tm69_identity_asset_lookup().get(normalize_search_text(player_name), {})
+    for _k, _v in identity_payload.items():
+        if _tm69_is_valid(_v):
+            ctx[_k] = _v
+            ctx[f"tm69_{_k}"] = _v
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "tm69_current_club_name_tm", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
     country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_name), "") or _tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A")
@@ -27060,6 +27067,17 @@ def _tm69_click_info(text: str) -> str:
         f"<div>{html.escape(str(text))}</div>"
         "</details>"
     )
+
+
+
+@st.cache_data(show_spinner=False)
+def _tm69_identity_asset_lookup() -> dict:
+    try:
+        import json
+        path = ROOT / "app" / "assets" / "player_identity_tm69.json"
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 def _tm69_collect_player_context(row: pd.Series, name_col: str | None = None) -> dict:
