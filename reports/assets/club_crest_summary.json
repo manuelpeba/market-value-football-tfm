@@ -1,0 +1,12 @@
+{
+  "clubs_total": 845,
+  "clubs_with_asset": 99,
+  "clubs_missing_asset": 746,
+  "coverage_pct": 11.72,
+  "asset_dir": "app\\assets\\clubs",
+  "outputs": {
+    "coverage": "reports\\assets\\club_crest_coverage.csv",
+    "missing": "reports\\assets\\missing_club_crests.csv",
+    "manual_url_template": "reports\\assets\\missing_club_crests_urls_template.csv"
+  }
+}

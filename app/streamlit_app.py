@@ -1329,7 +1329,7 @@ span[data-baseweb="tag"] {
 .top5-horizontal-meta { color:#64748b;font-size:.74rem;line-height:1.28;margin-top:4px; }
 .top5-horizontal-score { color:#166534;font-size:1.05rem;font-weight:950;margin-top:8px; }
 @media (max-width: 1200px) {
-    .top5-horizontal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .top5-horizontal-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 
@@ -1697,6 +1697,36 @@ div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
     object-fit: contain !important;
     display: inline-block !important;
     vertical-align: middle !important;
+}
+
+
+/* TM.6.9B nationality identity layer */
+.tm69-nationality-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+}
+.tm69-flag-img {
+    width: 16px !important;
+    height: 11px !important;
+    object-fit: cover !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 0 1px rgba(15,23,42,.10) !important;
+}
+.top5-horizontal-meta {
+    line-height: 1.65 !important;
+}
+.top5-horizontal-meta .pi-club-mark {
+    margin-right: 6px !important;
+}
+.top5-horizontal-item {
+    min-height: 136px !important;
+    padding: 16px 16px !important;
+}
+.visual-mvp-position-chip .tm69-nationality-chip,
+.visual-mvp-identity-chip .tm69-nationality-chip {
+    gap: 4px !important;
 }
 
 </style>
@@ -10430,6 +10460,10 @@ def _tm69_localize_country(value: object) -> str:
         "Cote d'Ivoire": "Costa de Marfil", "Ivory Coast": "Costa de Marfil", "Brazil": "Brasil",
         "Argentina": "Argentina", "Uruguay": "Uruguay", "Morocco": "Marruecos", "Croatia": "Croacia",
         "United States": "Estados Unidos", "USA": "Estados Unidos",
+        "Nigeria": "Nigeria", "Georgia": "Georgia", "Mali": "Mali", "Senegal": "Senegal",
+        "Ghana": "Ghana", "Serbia": "Serbia", "Poland": "Polonia", "Switzerland": "Suiza",
+        "Japan": "Japón", "South Korea": "Corea del Sur", "Mexico": "México",
+        "Colombia": "Colombia", "Cote d Ivoire": "Costa de Marfil",
     }
     return mapping.get(country, country)
 
@@ -11472,7 +11506,7 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "tm69_current_club_name_tm", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
-    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship"], "N/A"))
+    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A"))
     foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
     height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
     height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
@@ -11601,7 +11635,7 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
                         <span class="exec-role-pill">{html.escape(role)}</span>
                     </div>
                     <div class="exec-meta-grid">
-                        <div class="exec-meta-item"><span>{html.escape('Nationality' if is_en else 'Nacionalidad')}</span><b>{html.escape(country)}</b></div>
+                        <div class="exec-meta-item"><span>{html.escape('Nationality' if is_en else 'Nacionalidad')}</span><b>{_tm69_nationality_html(country)}</b></div>
                         <div class="exec-meta-item"><span>{html.escape('Age' if is_en else 'Edad')}</span><b>{html.escape(age_txt)}</b></div>
                         <div class="exec-meta-item"><span>{html.escape('Height' if is_en else 'Altura')}</span><b>{html.escape(height_txt)}</b></div>
                         <div class="exec-meta-item"><span>{html.escape('Foot' if is_en else 'Pie')}</span><b>{html.escape(foot)}</b></div>
@@ -16204,7 +16238,7 @@ def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
 
 
 def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str = "Top 5 oportunidades ajustadas por riesgo", caption: str = "Prioridad inicial para revisión") -> None:
-    """Render a clean horizontal Top 5 card for the Opportunity vs Risk matrix."""
+    """Render a compact Top 5 executive strip for the Opportunity vs Risk matrix."""
     if chart_source.empty or "risk_adjusted_opportunity_score" not in chart_source.columns:
         return
 
@@ -16216,32 +16250,56 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
 
     items = []
     for idx, (_, row) in enumerate(top.iterrows(), start=1):
-        player = html.escape(str(get_player_name(row)))
-        club_raw = str(safe_get(row, "club", ""))
+        row_dict = dict(row)
+        player_raw = str(get_player_name(row))
+        player = html.escape(player_raw)
+        club_raw = str(safe_get(row, "club", "")).strip()
         league_raw = league_display_name(safe_get(row, "league", ""))
-        club = f"{_tm69_club_mark_html(dict(row), club_raw)} <span>{html.escape(club_raw)}</span>"
-        league = _tm69_league_chip_html(league_raw)
+        country_raw = _tm69_row_nationality(row, player_raw)
+
+        club_line = ""
+        if club_raw:
+            club_line = "<div class='top5-id-line top5-club-line'>" + _tm69_club_mark_html(row_dict, club_raw) + f"<span>{html.escape(club_raw)}</span></div>"
+
+        nationality_line = ""
+        if str(country_raw).strip():
+            nationality_line = "<div class='top5-id-line top5-nationality-line'>" + _tm69_nationality_html(country_raw) + "</div>"
+
+        league_line = ""
+        if str(league_raw).strip():
+            league_line = "<div class='top5-league-line'>" + _tm69_league_chip_html(league_raw) + "</div>"
+
         score = get_numeric_value(row, "risk_adjusted_opportunity_score", 0)
-        action = html.escape(action_display_name(safe_get(row, "recommended_action", "Review" if globals().get("LANG") == "EN" else "Revisión")))
-        items.append(
-            f"<div class='top5-horizontal-item'>"
+        action_raw = action_display_name(safe_get(row, "recommended_action", "Review" if globals().get("LANG") == "EN" else "Revisión"))
+        action = html.escape(str(action_raw))
+
+        # Important: build each card as a single non-indented HTML string.
+        # Indented multi-line fragments can be interpreted by Markdown as code blocks,
+        # which causes raw <div> text to appear in Streamlit.
+        item = (
+            "<div class='top5-horizontal-item top5-exec-card'>"
+            "<div class='top5-card-head'>"
             f"<div class='top5-horizontal-rank'>{idx}</div>"
-            f"<div class='top5-horizontal-name'>{player}</div>"
-            f"<div class='top5-horizontal-meta'>{club}<br>{league}<br>{action}</div>"
             f"<div class='top5-horizontal-score'>{score:.1f}</div>"
-            f"</div>"
+            "</div>"
+            f"<div class='top5-horizontal-name'>{player}</div>"
+            "<div class='top5-identity-stack'>"
+            f"{club_line}{nationality_line}{league_line}"
+            "</div>"
+            f"<div class='top5-action-row'>{action}</div>"
+            "</div>"
         )
+        items.append(item)
 
     html_block = (
-        "<div class='top5-horizontal-card'>"
+        "<div class='top5-horizontal-card top5-exec-strip'>"
         f"<div class='panel-title'>{html.escape(TXT(str(title)))}</div>"
         f"<div class='panel-subtitle'>{html.escape(UI(caption))}</div>"
-        "<div class='top5-horizontal-grid'>"
+        "<div class='top5-horizontal-grid top5-exec-grid'>"
         + "".join(items)
         + "</div></div>"
     )
     st.markdown(html_block, unsafe_allow_html=True)
-
 
 def opportunity_tier_badge(value) -> str:
     score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
@@ -18309,6 +18367,34 @@ else:
 
 if st.session_state.dashboard_navigation_page not in PAGE_OPTIONS:
     st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
+
+# TM.6.9B/C: lightweight URL deep-link handler used by Visual MVP profile CTAs.
+# Example: ?tm69_nav=Player%20Intelligence&tm69_player=Javi%20Rodr%C3%ADguez
+try:
+    _tm69_qp = st.query_params
+    _tm69_nav = _tm69_qp.get("tm69_nav", None)
+    _tm69_player = _tm69_qp.get("tm69_player", None)
+    if _tm69_player:
+        _tm69_player = str(_tm69_player).strip()
+        st.session_state["selected_player"] = _tm69_player
+        st.session_state["contract_selected_player"] = _tm69_player
+        st.session_state["contract_focus_player"] = _tm69_player
+        st.session_state["player_intelligence_report_selector"] = _tm69_player
+        st.session_state["radar_selected_player"] = _tm69_player
+        st.session_state["sprint11_similarity_target"] = _tm69_player
+        st.session_state["sprint11_replacement_target"] = _tm69_player
+        st.session_state["driver_analysis_player"] = _tm69_player
+        if _tm69_nav and str(_tm69_nav) in PAGE_OPTIONS:
+            st.session_state.dashboard_navigation_page = str(_tm69_nav)
+        else:
+            st.session_state.dashboard_navigation_page = "Player Intelligence"
+        try:
+            st.query_params.clear()
+        except Exception:
+            pass
+        st.rerun()
+except Exception:
+    pass
 
 
 def _nav_label(page_name: str) -> str:
@@ -23125,7 +23211,7 @@ div[data-testid="stElementContainer"]:has(.tm69-command-panel) {
     left: 16px;
     top: 40px;
     z-index: 50;
-    font-size: .98rem;
+    font-size: .82rem;
     pointer-events: none;
 }
 .tm69-search-example {
@@ -24980,9 +25066,9 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-        padding: 2px 4px 22px 4px;
+        grid-template-columns: repeat(8, minmax(132px, 1fr));
+        gap: 10px;
+        padding: 4px 4px 8px 4px;
         box-sizing: border-box;
     }
     .visual-mvp-identity {
@@ -25018,7 +25104,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     .visual-mvp-identity-chip {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 7px;
         border: 1px solid #dbeafe;
         background: #f8fbff;
         color: #0f172a;
@@ -25032,6 +25118,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     .visual-mvp-position-chip {
         display: inline-flex;
         align-items: center;
+        gap: 7px;
         border: 1px solid #e2e8f0;
         background: #ffffff;
         color: #334155;
@@ -25048,9 +25135,9 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         border: 1px solid #dbe3ee;
         border-left: 5px solid #3b82f6;
         border-radius: 18px;
-        padding: 16px 17px 14px 17px;
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055);
-        min-height: 196px;
+        padding: 10px 10px 9px 10px;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.050);
+        min-height: 156px;
         box-sizing: border-box;
         overflow: hidden;
         isolation: isolate;
@@ -25058,18 +25145,18 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-top {
         display: grid;
-        grid-template-columns: 58px minmax(0, 1fr) 76px;
-        gap: 12px;
+        grid-template-columns: 32px minmax(0, 1fr);
+        gap: 7px;
         align-items: start;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
     .visual-mvp-avatar {
-        width: 58px;
-        height: 58px;
-        min-width: 58px;
-        max-width: 58px;
-        min-height: 58px;
-        max-height: 58px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        max-width: 32px;
+        min-height: 32px;
+        max-height: 32px;
         border-radius: 14px;
         display: flex;
         align-items: center;
@@ -25086,13 +25173,13 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         contain: strict;
     }
     .visual-mvp-avatar .pi-club-mark {
-        width: 46px !important;
-        height: 46px !important;
-        min-width: 46px !important;
-        max-width: 46px !important;
-        min-height: 46px !important;
-        max-height: 46px !important;
-        flex: 0 0 46px !important;
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        max-width: 26px !important;
+        min-height: 26px !important;
+        max-height: 26px !important;
+        flex: 0 0 26px !important;
         border: 0 !important;
         background: transparent !important;
         border-radius: 0 !important;
@@ -25115,6 +25202,28 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         object-fit: contain !important;
         object-position: center !important;
     }
+    .visual-mvp-identity .pi-director-chip,
+    .visual-mvp-identity .pi-chip-with-asset,
+    .visual-mvp-identity .tm69-nationality-chip {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 7px !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+    }
+    .visual-mvp-identity .tm69-flag-img {
+        width: 16px !important;
+        height: 11px !important;
+        object-fit: cover !important;
+        border-radius: 2px !important;
+        flex: 0 0 auto !important;
+    }
+    .visual-mvp-identity .pi-director-chip b,
+    .visual-mvp-identity .visual-mvp-identity-chip span,
+    .visual-mvp-identity .visual-mvp-position-chip span {
+        display: inline-block !important;
+        padding-left: 1px !important;
+    }
     .visual-mvp-rank {
         color: #2563eb;
         font-size: .68rem;
@@ -25126,7 +25235,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-name {
         color: #0f172a;
-        font-size: .98rem;
+        font-size: .78rem;
         font-weight: 950;
         line-height: 1.08;
         white-space: nowrap;
@@ -25145,7 +25254,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     .visual-mvp-value {
         text-align: right;
         color: #0f172a;
-        font-size: .98rem;
+        font-size: .76rem;
         font-weight: 950;
         line-height: 1.05;
     }
@@ -25161,15 +25270,15 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     .visual-mvp-kpis {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        margin-top: 8px;
+        gap: 6px;
+        margin-top: 7px;
     }
     .visual-mvp-kpi {
         background: #f8fafc;
         border: 1px solid #dbe3ee;
         border-radius: 12px;
-        padding: 8px 9px;
-        min-height: 48px;
+        padding: 6px 7px;
+        min-height: 34px;
     }
     .visual-mvp-kpi span {
         display: block;
@@ -25220,8 +25329,19 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         font-weight: 950;
         white-space: nowrap;
     }
-    @media (max-width: 1150px) {
-        .visual-mvp-grid { grid-template-columns: 1fr; }
+    .visual-mvp-value {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: .68rem;
+        max-width: 42px;
+    }
+    .visual-mvp-value span { font-size: .48rem; margin-bottom: 2px; }
+    @media (max-width: 1450px) {
+        .visual-mvp-grid { grid-template-columns: repeat(4, minmax(132px, 1fr)); }
+    }
+    @media (max-width: 900px) {
+        .visual-mvp-grid { grid-template-columns: repeat(2, minmax(132px, 1fr)); }
     }
     </style>
     """
@@ -25232,6 +25352,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
+        country = _tm69_row_nationality(row, player)
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
@@ -25241,11 +25362,21 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
             f"<span class='visual-mvp-identity-chip'>{_tm69_league_chip_html(league)}</span>"
             if league else ""
         )
+        nationality_identity = (
+            f"<span class='visual-mvp-position-chip'>{_tm69_nationality_html(country)}</span>"
+            if country else ""
+        )
         position_identity = (
             f"<span class='visual-mvp-position-chip'>{html.escape(position)}</span>"
             if position else ""
         )
-        meta_identity = "".join([x for x in [club_identity, league_identity, position_identity] if x])
+        meta_identity = "".join([x for x in [club_identity, league_identity, nationality_identity, position_identity] if x])
+        try:
+            from urllib.parse import quote_plus
+            profile_href = f"?tm69_nav=Player%20Intelligence&tm69_player={quote_plus(str(player))}"
+        except Exception:
+            profile_href = "?tm69_nav=Player%20Intelligence"
+        profile_label = "Open profile" if globals().get("LANG") == "EN" else "Ver perfil"
 
         cards.append(
             f"""
@@ -25265,8 +25396,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                     <div class="visual-mvp-kpi"><span>Recruitment</span><b>{_visual_mvp_fmt_score(row.get("recruitment_contract_score"))}</b></div>
                 </div>
                 <div class="visual-mvp-footer">
-                    <div class="visual-mvp-priority">High Priority</div>
-                    <div class="visual-mvp-profile">Open profile →</div>
+                    <div class="visual-mvp-priority">{html.escape('High Priority' if globals().get('LANG') == 'EN' else 'Alta prioridad')}</div>
+                    <a class="visual-mvp-profile" href="{html.escape(profile_href)}" target="_parent">{html.escape(profile_label)} →</a>
                 </div>
             </div>
             """
@@ -25274,8 +25405,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     cards.append("</div>")
     html_block = css + "\n".join(cards)
 
-    # 8 cards => two columns x four rows; use generous height to avoid clipping priority labels.
-    components.html(html_block, height=980, scrolling=False)
+    # 8 cards => compact horizontal shelf for the Market Intelligence executive view.
+    components.html(html_block, height=220, scrolling=False)
 
 
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
@@ -25329,16 +25460,17 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     st.markdown("<div class='overview-row-gap overview-row-gap-small'></div>", unsafe_allow_html=True)
     st.markdown(
         f"""
-<div class="quick-action-grid">
-    <div class="quick-action-card"><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Global Scouting Universe</div><div class="quick-action-text">{html.escape('Explore, filter and prioritize the actionable prospect universe.' if LANG == 'EN' else 'Explorar, filtrar y priorizar el universo accionable de prospects.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Recruitment Intelligence</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div>
-    <div class="quick-action-card"><div class="quick-action-title">Contract Intelligence</div><div class="quick-action-text">{html.escape('Prioritize targets by contract timing and negotiation leverage.' if LANG == 'EN' else 'Priorizar targets por timing contractual y poder negociador.')}</div></div>
+<div class="quick-action-grid mi-strategy-grid">
+    <div class="quick-action-card mi-strategy-card"><div class="mi-strategy-card-icon">📈</div><div><div class="quick-action-title">Transfer Strategy</div><div class="quick-action-text">{html.escape('Portfolio optimization layer.' if LANG == 'EN' else 'Capa de optimización de carteras.')}</div></div></div>
+    <div class="quick-action-card mi-strategy-card"><div class="mi-strategy-card-icon">🌐</div><div><div class="quick-action-title">Global Scouting Universe</div><div class="quick-action-text">{html.escape('Explore, filter and prioritize the actionable prospect universe.' if LANG == 'EN' else 'Explorar, filtrar y priorizar el universo accionable de prospects.')}</div></div></div>
+    <div class="quick-action-card mi-strategy-card"><div class="mi-strategy-card-icon">🎯</div><div><div class="quick-action-title">Recruitment Intelligence</div><div class="quick-action-text">{html.escape('Compare, replace and prioritize candidates.' if LANG == 'EN' else 'Comparar, reemplazar y priorizar candidatos.')}</div></div></div>
+    <div class="quick-action-card mi-strategy-card"><div class="mi-strategy-card-icon">📄</div><div><div class="quick-action-title">Contract Intelligence</div><div class="quick-action-text">{html.escape('Prioritize targets by contract timing and negotiation leverage.' if LANG == 'EN' else 'Priorizar targets por timing contractual y poder negociador.')}</div></div></div>
 </div>
 """,
         unsafe_allow_html=True,
     )
     # Executive Overview navigation CTAs: make the landing page an entry point to the DSS workflow.
+    st.markdown("<div class='mi-exec-nav-anchor'></div>", unsafe_allow_html=True)
     cta_1, cta_2, cta_3, cta_4 = st.columns(4, gap="small")
     with cta_1:
         if st.button("👤 " + ("View Player Profile" if LANG == "EN" else "Ver Player Profile"), key="overview_cta_player_profile", use_container_width=True):
@@ -25367,8 +25499,11 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
             for _, row in contract_preview.iterrows():
                 club_raw = str(safe_get(row, 'club_display', safe_get(row, 'club', 'N/A')))
                 club_identity = f"{_tm69_club_mark_html(dict(row), club_raw)} {html.escape(club_raw)}"
+                country_raw = _tm69_row_nationality(row, safe_get(row, 'player_name_display', ''))
+                nationality = _tm69_nationality_html(country_raw) if str(country_raw).strip() else ""
+                contract_meta_parts = [x for x in [nationality, club_identity, html.escape(str(safe_get(row, 'position_display', 'N/A'))), html.escape(str(safe_get(row, 'age_display', 'N/A'))) + ' ' + ('years' if LANG == 'EN' else 'años')] if x]
                 preview_rows.append(
-                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{club_identity} · {html.escape(str(safe_get(row, 'position_display', 'N/A')))} · {html.escape(str(safe_get(row, 'age_display', 'N/A')))} {'years' if LANG == 'EN' else 'años'}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
+                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{' · '.join(contract_meta_parts)}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
                 )
             st.markdown(
                 f"""
@@ -26671,7 +26806,7 @@ def _tm69_collect_player_context(row: pd.Series, name_col: str | None = None) ->
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
-    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship"], "N/A"))
+    country = _tm69_localize_country(_tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A"))
     foot = _tm69_localize_foot(_tm69_first(ctx, ["foot", "tm69_foot"], "N/A"))
     height = _tm69_numeric(ctx, ["height_in_cm", "tm69_height_in_cm"])
     height_txt = "N/A" if pd.isna(height) else f"{height:.0f} cm"
@@ -27153,10 +27288,91 @@ def _tm69_league_chip_html(league: object) -> str:
     return f"<span class='pi-director-chip'>{safe_label}</span>"
 
 
+def _tm69_country_iso2(country: object) -> str:
+    raw = str(country or "").strip()
+    key = normalize_search_text(raw)
+    mapping = {
+        "spain": "es", "espana": "es", "españa": "es",
+        "france": "fr", "francia": "fr",
+        "germany": "de", "alemania": "de",
+        "italy": "it", "italia": "it",
+        "england": "gb-eng", "united kingdom": "gb", "reino unido": "gb",
+        "portugal": "pt",
+        "netherlands": "nl", "paises bajos": "nl", "países bajos": "nl", "holanda": "nl",
+        "belgium": "be", "belgica": "be", "bélgica": "be",
+        "austria": "at",
+        "denmark": "dk", "dinamarca": "dk",
+        "norway": "no", "noruega": "no",
+        "sweden": "se", "suecia": "se",
+        "switzerland": "ch", "suiza": "ch",
+        "poland": "pl", "polonia": "pl",
+        "croatia": "hr", "croacia": "hr",
+        "serbia": "rs",
+        "morocco": "ma", "marruecos": "ma",
+        "argentina": "ar",
+        "brazil": "br", "brasil": "br",
+        "uruguay": "uy",
+        "colombia": "co",
+        "mexico": "mx", "méxico": "mx",
+        "united states": "us", "estados unidos": "us", "usa": "us",
+        "nigeria": "ng",
+        "ghana": "gh",
+        "senegal": "sn",
+        "mali": "ml",
+        "ivory coast": "ci", "cote d ivoire": "ci", "costa de marfil": "ci",
+        "japan": "jp", "japon": "jp", "japón": "jp",
+        "south korea": "kr", "corea del sur": "kr",
+        "georgia": "ge",
+    }
+    return mapping.get(key, "")
+
+
 def _tm69_nationality_html(country: object) -> str:
-    country_txt = str(country or "N/A")
-    flag = _tm69_country_flag(country_txt)
-    return f"{html.escape(flag + ' ' if flag else '')}{html.escape(country_txt)}"
+    country_raw = str(country or "N/A").strip()
+    country_txt = _tm69_localize_country(country_raw)
+    iso2 = _tm69_country_iso2(country_raw)
+    if iso2:
+        return (
+            f"<span class='tm69-nationality-chip'>"
+            f"<img class='tm69-flag-img' src='https://flagcdn.com/w20/{html.escape(iso2)}.png' "
+            f"alt='{html.escape(country_txt)} flag'/>"
+            f"<span>{html.escape(country_txt)}</span>"
+            f"</span>"
+        )
+    return f"<span class='tm69-nationality-chip'><span>{html.escape(country_txt)}</span></span>"
+
+
+@st.cache_data(show_spinner=False)
+def _tm69_player_nationality_lookup() -> dict:
+    """Build player -> nationality lookup from the modeling panel."""
+    try:
+        path = ROOT / "data" / "processed" / "player_season_modeling_v13a.parquet"
+        df = pd.read_parquet(path, columns=["player_name_fbref", "nationality"])
+        df = df.dropna(subset=["player_name_fbref", "nationality"])
+        df["player_key"] = df["player_name_fbref"].astype(str).map(normalize_search_text)
+        df = df.drop_duplicates("player_key", keep="last")
+        return dict(zip(df["player_key"], df["nationality"].astype(str)))
+    except Exception:
+        return {}
+
+def _tm69_row_nationality(row: object, player_name: object = "") -> str:
+    """Return nationality from row columns; fallback to player-name lookup."""
+    try:
+        row_dict = dict(row)
+    except Exception:
+        row_dict = {}
+
+    for col in [
+        "nationality", "country_of_citizenship", "citizenship", "country",
+        "tm69_country_of_citizenship", "player_country", "birth_country",
+        "nation", "nationality_display", "country_display"
+    ]:
+        val = row_dict.get(col, "")
+        if str(val).strip() and str(val).strip().lower() not in {"nan", "none", "n/a", "na"}:
+            return str(val).strip()
+
+    key = normalize_search_text(player_name or row_dict.get("player_name_fbref", "") or row_dict.get("player_name_display", ""))
+    return _tm69_player_nationality_lookup().get(key, "")
 
 
 def _tm69_visual_identity_block(ctx: dict, player_name: str, club: str, country: str) -> str:
@@ -37657,6 +37873,788 @@ st.markdown(
     display: inline-block !important;
     vertical-align: middle !important;
     flex-shrink: 0 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 Market Intelligence Executive Cards Refactor — final visual patch
+# Preserves TM.6.9A/B club crests, league logos and nationality flags.
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Header row: Market Intelligence + Global Search + Active Universe */
+.tm69-header-anchor + div[data-testid="stHorizontalBlock"],
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-left):has(.tm69-command-search-card),
+div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) {
+    align-items: stretch !important;
+    gap: 16px !important;
+    margin-bottom: 14px !important;
+}
+.tm69-command-left,
+.tm69-command-card,
+.product-page-card,
+.final-search-shell,
+.tm69-command-search-card,
+.context-strip-v2.compact-context-panel,
+.tm69-context-line.context-strip-v2.compact-context-panel {
+    height: 118px !important;
+    min-height: 118px !important;
+    border-radius: 18px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .055) !important;
+}
+.tm69-command-search-card,
+.final-search-shell {
+    justify-content: flex-start !important;
+}
+.tm69-command-search-card .final-search-title-row,
+.final-search-title-row {
+    margin-bottom: 8px !important;
+}
+.tm69-command-search-card .final-search-title,
+.final-search-title {
+    font-size: .74rem !important;
+    letter-spacing: .095em !important;
+    line-height: 1 !important;
+}
+.tm69-command-search-card div[data-baseweb="select"] > div,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+    min-height: 46px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+.context-strip-v2.compact-context-panel .context-strip-main,
+.tm69-context-line .context-strip-main {
+    margin-bottom: 8px !important;
+}
+.context-strip-v2.compact-context-panel .context-current-value,
+.compact-context-panel .context-current-value {
+    font-size: 1.48rem !important;
+    line-height: 1 !important;
+}
+.compact-context-panel .context-chip-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    max-height: 46px !important;
+    overflow: hidden !important;
+}
+.compact-context-panel .context-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    min-height: 24px !important;
+    padding: 4px 8px !important;
+    font-size: .66rem !important;
+    line-height: 1 !important;
+}
+
+/* Executive hero: lower height, aligned circular KPIs */
+.home-hero {
+    min-height: 88px !important;
+    padding: 18px 20px !important;
+    margin: 12px 0 14px 0 !important;
+    border-radius: 16px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 18px !important;
+}
+.home-hero-title {
+    font-size: 1.16rem !important;
+    line-height: 1.08 !important;
+    margin-bottom: 4px !important;
+}
+.home-hero-subtitle {
+    font-size: .78rem !important;
+    line-height: 1.28 !important;
+    max-width: 860px !important;
+}
+.home-hero-kpis {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+}
+.home-hero-kpi {
+    width: 82px !important;
+    height: 82px !important;
+    min-width: 82px !important;
+    border-radius: 999px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0 !important;
+}
+.home-hero-kpi span { font-size: .56rem !important; line-height: 1.08 !important; margin-bottom: 3px !important; }
+.home-hero-kpi b { font-size: 1.30rem !important; line-height: 1 !important; }
+
+/* KPI cards: same height and aligned info icons */
+.metric-card,
+.metric-card-info {
+    height: 86px !important;
+    min-height: 86px !important;
+    padding: 13px 15px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+.metric-label,
+.metric-label-with-info {
+    min-height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-bottom: 4px !important;
+}
+.metric-value { font-size: 1.36rem !important; line-height: 1.05 !important; }
+.helper-caption { font-size: .72rem !important; line-height: 1.16 !important; margin-top: 3px !important; }
+.metric-info-details summary { width: 17px !important; height: 17px !important; flex: 0 0 17px !important; }
+
+/* Strategic blocks: 2x2 responsive cards like the reference */
+.quick-action-grid.mi-strategy-grid,
+.quick-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    margin: 16px 0 12px 0 !important;
+}
+.quick-action-card.mi-strategy-card,
+.quick-action-card {
+    min-height: 86px !important;
+    height: 86px !important;
+    padding: 15px 16px !important;
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #2563eb !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .045) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+    box-sizing: border-box !important;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease !important;
+}
+.quick-action-card:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 13px 28px rgba(15, 23, 42, .070) !important;
+    border-color: #bfdbfe !important;
+}
+.mi-strategy-card-icon {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1d4ed8 !important;
+    font-size: 1.32rem !important;
+    line-height: 1 !important;
+}
+.quick-action-title {
+    color: #0f172a !important;
+    font-size: .86rem !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    margin-bottom: 4px !important;
+}
+.quick-action-text {
+    color: #475569 !important;
+    font-size: .72rem !important;
+    line-height: 1.24 !important;
+}
+
+/* Executive navigation buttons: same width/height, aligned icons */
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] {
+    gap: 12px !important;
+    margin: 0 0 18px 0 !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    display: flex !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] button {
+    height: 42px !important;
+    min-height: 42px !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+    border: 1px solid #dbe3ee !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    color: #0f2f5f !important;
+    box-shadow: 0 7px 18px rgba(15,23,42,.045) !important;
+    font-weight: 900 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 14px !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] button:hover {
+    border-color: #93c5fd !important;
+    background: #eff6ff !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Identity consistency: club marks, league logos and flags vertically aligned */
+.pi-chip-with-asset,
+.tm69-nationality-chip,
+.tm69-command-chip-identity,
+.visual-mvp-identity-chip,
+.visual-mvp-position-chip,
+.top5-meta,
+.top5-horizontal-meta {
+    align-items: center !important;
+    vertical-align: middle !important;
+}
+.pi-club-mark,
+.pi-league-logo-chip,
+.tm69-league-logo-chip,
+.tm69-flag-img {
+    display: inline-flex !important;
+    vertical-align: middle !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.top5-horizontal-meta {
+    display: grid !important;
+    gap: 7px !important;
+    line-height: 1.25 !important;
+    margin-top: 9px !important;
+}
+.top5-horizontal-item {
+    min-height: 126px !important;
+    padding: 15px 15px !important;
+}
+.top5-horizontal-name { margin-bottom: 2px !important; }
+.top5-horizontal-score { margin-top: 10px !important; }
+
+/* Visual MVP section spacing */
+div[data-testid="stExpander"]:has(.visual-mvp-grid) {
+    margin-top: 18px !important;
+}
+div[data-testid="stExpander"] summary {
+    align-items: center !important;
+}
+
+@media (max-width: 1400px) {
+    .quick-action-grid.mi-strategy-grid, .quick-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .home-hero { grid-template-columns: 1fr !important; }
+    .home-hero-kpis { justify-content: flex-start !important; }
+}
+@media (max-width: 900px) {
+    .quick-action-grid.mi-strategy-grid, .quick-action-grid { grid-template-columns: 1fr !important; }
+    .home-hero-kpis { flex-wrap: wrap !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9 closure polish: Market Intelligence executive cards, identity chips and CTA buttons
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Market Intelligence command row: keep the three header panels balanced and compact. */
+.final-search-shell,
+.context-strip-v2.compact-context-panel,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title-row),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) {
+    border-radius: 18px !important;
+    box-shadow: 0 10px 26px rgba(15,23,42,.050) !important;
+}
+.final-search-title,
+.final-search-title-row .final-search-title {
+    font-size: .78rem !important;
+    letter-spacing: .075em !important;
+    line-height: 1.05 !important;
+}
+.final-search-caption { font-size: .79rem !important; line-height: 1.28 !important; }
+.compact-context-panel .context-chip,
+.context-strip-v2 .context-chip {
+    min-height: 28px !important;
+    padding: 5px 9px !important;
+    line-height: 1 !important;
+    align-items: center !important;
+}
+
+/* Executive hero: slightly lower block height and perfectly centered circular KPIs. */
+.home-hero {
+    min-height: 118px !important;
+    padding: 18px 20px !important;
+    border-radius: 18px !important;
+    margin-bottom: 18px !important;
+}
+.home-hero-title { font-size: 1.20rem !important; line-height: 1.08 !important; }
+.home-hero-subtitle { font-size: .82rem !important; line-height: 1.28 !important; max-width: 820px !important; }
+.home-hero-kpis { gap: 12px !important; align-items: center !important; }
+.home-hero-kpi {
+    width: 78px !important;
+    height: 78px !important;
+    min-width: 78px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0 !important;
+}
+.home-hero-kpi span { font-size: .55rem !important; line-height: 1.05 !important; margin-bottom: 3px !important; }
+.home-hero-kpi b { font-size: 1.28rem !important; line-height: 1 !important; }
+
+/* KPI cards: homogeneous height and vertical rhythm. */
+.metric-card,
+.metric-card-info {
+    min-height: 82px !important;
+    height: 82px !important;
+    padding: 12px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    border-radius: 14px !important;
+}
+.metric-label,
+.metric-label-with-info {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 18px !important;
+    gap: 8px !important;
+    margin-bottom: 4px !important;
+}
+.metric-value { font-size: 1.34rem !important; line-height: 1.04 !important; }
+.helper-caption { font-size: .72rem !important; line-height: 1.15 !important; }
+.metric-info-details summary { width: 17px !important; height: 17px !important; flex: 0 0 17px !important; }
+
+/* Strategic blocks: same visual language as the reference image. */
+.quick-action-grid.mi-strategy-grid,
+.quick-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin: 14px 0 12px 0 !important;
+}
+.quick-action-card.mi-strategy-card,
+.quick-action-card {
+    min-height: 78px !important;
+    height: 78px !important;
+    padding: 13px 15px !important;
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 4px solid #2563eb !important;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.042) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 13px !important;
+    overflow: hidden !important;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease !important;
+}
+.quick-action-card:hover {
+    transform: translateY(-1px) !important;
+    border-color: #bfdbfe !important;
+    box-shadow: 0 13px 28px rgba(15,23,42,.070) !important;
+}
+.mi-strategy-card-icon {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    color: #1d4ed8 !important;
+    font-size: 1.26rem !important;
+    line-height: 1 !important;
+}
+.quick-action-title { font-size: .83rem !important; line-height: 1.08 !important; margin-bottom: 4px !important; font-weight: 950 !important; color:#0f172a !important; }
+.quick-action-text { font-size: .70rem !important; line-height: 1.22 !important; color:#475569 !important; }
+
+/* Navigation buttons: equal SaaS buttons matching the visual reference. */
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] {
+    gap: 12px !important;
+    margin: 0 0 18px 0 !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] div[data-testid="column"] {
+    display: flex !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] button {
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    border-radius: 12px !important;
+    border: 1px solid #dbe3ee !important;
+    background: linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+    box-shadow: 0 7px 18px rgba(15,23,42,.045) !important;
+    color: #0f2f5f !important;
+    font-size: .82rem !important;
+    font-weight: 950 !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 0 14px !important;
+}
+div[data-testid="stElementContainer"]:has(.mi-exec-nav-anchor) + div[data-testid="stHorizontalBlock"] button:hover {
+    background:#eff6ff !important;
+    border-color:#93c5fd !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Identity chips: strict vertical centering for flags, logos and club marks. */
+.tm69-nationality-chip,
+.pi-chip-with-asset,
+.tm69-command-chip-identity,
+.visual-mvp-identity-chip,
+.visual-mvp-position-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    min-height: 20px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+.tm69-flag-img {
+    width: 16px !important;
+    height: 11px !important;
+    min-width: 16px !important;
+    object-fit: cover !important;
+    border-radius: 2px !important;
+    vertical-align: middle !important;
+}
+.pi-club-mark,
+.pi-league-logo-chip,
+.tm69-league-logo-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+}
+
+/* Contract and Top 5 rows: dense but readable; identity comes first. */
+.top5-row { min-height: 48px !important; padding: 8px 0 !important; }
+.top5-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    flex-wrap: wrap !important;
+    line-height: 1.15 !important;
+    margin-top: 3px !important;
+}
+.top5-meta .tm69-nationality-chip,
+.top5-meta .pi-club-mark { margin-right: 2px !important; }
+
+.top5-horizontal-item {
+    min-height: 132px !important;
+    padding: 14px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.top5-horizontal-rank { margin-bottom: 7px !important; }
+.top5-horizontal-name { margin-bottom: 4px !important; }
+.top5-horizontal-meta {
+    display: grid !important;
+    gap: 8px !important;
+    line-height: 1.18 !important;
+    margin-top: 2px !important;
+}
+.top5-horizontal-meta .tm69-nationality-chip,
+.top5-horizontal-meta .pi-chip-with-asset,
+.top5-horizontal-meta .pi-club-mark {
+    align-items:center !important;
+}
+.top5-horizontal-score {
+    margin-top: auto !important;
+    padding-top: 8px !important;
+}
+
+/* Visual MVP shelf: compact, aligned and without large blank lower area. */
+div[data-testid="stExpander"]:has(.visual-mvp-grid) { margin-top: 18px !important; }
+.visual-mvp-identity-chip,
+.visual-mvp-position-chip { min-height: 20px !important; }
+@media (max-width: 1400px) {
+    .quick-action-grid.mi-strategy-grid, .quick-action-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+    .home-hero { grid-template-columns: 1fr !important; }
+    .home-hero-kpis { justify-content: flex-start !important; }
+}
+@media (max-width: 900px) {
+    .quick-action-grid.mi-strategy-grid, .quick-action-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+
+# =============================================================================
+# TM.6.9C final UX closure: compact Top5, identity spacing and MVP profile links
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Universal identity spacing: never glue icon/flag/logo to label. */
+.pi-chip-with-asset,
+.pi-director-chip,
+.tm69-nationality-chip,
+.tm69-command-chip-identity,
+.visual-mvp-identity-chip,
+.visual-mvp-position-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    white-space: nowrap !important;
+}
+.pi-chip-with-asset > b,
+.pi-director-chip > b,
+.tm69-nationality-chip > span,
+.tm69-command-chip-identity > span {
+    margin-left: 1px !important;
+}
+
+/* Top 5 opportunities: compact executive cards, no vertical dead space. */
+.top5-exec-strip {
+    padding: 18px 20px !important;
+    margin: 18px 0 18px 0 !important;
+}
+.top5-exec-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+    margin-top: 14px !important;
+}
+.top5-exec-card,
+.top5-horizontal-item.top5-exec-card {
+    min-height: 184px !important;
+    height: auto !important;
+    padding: 14px 14px 13px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    border: 1px solid #dfe7f2 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.035) !important;
+}
+.top5-exec-card:hover {
+    transform: translateY(-1px);
+    border-color: #bfdbfe !important;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.075) !important;
+    transition: all .15s ease;
+}
+.top5-card-head {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    min-height: 28px !important;
+}
+.top5-exec-card .top5-horizontal-rank {
+    width: 28px !important;
+    height: 28px !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: .78rem !important;
+    font-weight: 950 !important;
+}
+.top5-exec-card .top5-horizontal-score {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #166534 !important;
+    font-size: 1.10rem !important;
+    font-weight: 950 !important;
+    line-height: 1 !important;
+}
+.top5-exec-card .top5-horizontal-name {
+    margin: 0 !important;
+    color: #0f172a !important;
+    font-size: .94rem !important;
+    line-height: 1.10 !important;
+    font-weight: 950 !important;
+    min-height: 2.15em !important;
+    display: flex !important;
+    align-items: flex-start !important;
+}
+.top5-identity-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    margin-top: 0 !important;
+    flex: 1 1 auto !important;
+}
+.top5-id-line,
+.top5-league-line {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 22px !important;
+    color: #475569 !important;
+    font-size: .76rem !important;
+    font-weight: 760 !important;
+    line-height: 1.18 !important;
+}
+.top5-id-line .pi-club-mark {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    margin-right: 7px !important;
+    flex: 0 0 18px !important;
+}
+.top5-nationality-line .tm69-nationality-chip {
+    gap: 7px !important;
+    color: #475569 !important;
+    font-weight: 760 !important;
+}
+.top5-league-line .pi-director-chip,
+.top5-league-line .pi-chip-with-asset {
+    min-height: 24px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    padding: 5px 8px !important;
+    font-size: .73rem !important;
+    line-height: 1 !important;
+}
+.top5-action-row {
+    margin-top: auto !important;
+    padding-top: 4px !important;
+    color: #64748b !important;
+    font-size: .74rem !important;
+    font-weight: 780 !important;
+    line-height: 1.15 !important;
+}
+@media (max-width: 1350px) {
+    .top5-exec-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 900px) {
+    .top5-exec-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Visual MVP: profile CTA behaves like a product link and labels use Spanish in ES. */
+.visual-mvp-profile {
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+.visual-mvp-profile:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9B final hotfix: safe Top 5 HTML rendering + compact identity spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+.top5-exec-strip {
+    padding: 18px 20px !important;
+    margin: 18px 0 18px 0 !important;
+}
+.top5-exec-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+}
+.top5-exec-card,
+.top5-horizontal-item.top5-exec-card {
+    min-height: 154px !important;
+    padding: 13px 13px 12px 13px !important;
+    gap: 7px !important;
+}
+.top5-card-head { min-height: 26px !important; }
+.top5-exec-card .top5-horizontal-rank {
+    width: 27px !important;
+    height: 27px !important;
+    border-radius: 9px !important;
+}
+.top5-exec-card .top5-horizontal-score {
+    font-size: 1.04rem !important;
+}
+.top5-exec-card .top5-horizontal-name {
+    min-height: 1.2em !important;
+    font-size: .94rem !important;
+    margin-top: 1px !important;
+}
+.top5-identity-stack {
+    gap: 5px !important;
+    flex: 0 0 auto !important;
+}
+.top5-id-line,
+.top5-league-line {
+    min-height: 21px !important;
+    font-size: .76rem !important;
+    font-weight: 820 !important;
+}
+.top5-id-line .pi-club-mark {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    margin-right: 8px !important;
+}
+.top5-nationality-line .tm69-nationality-chip,
+.visual-mvp-identity .tm69-nationality-chip,
+.visual-mvp-identity-chip,
+.visual-mvp-position-chip,
+.pi-chip-with-asset,
+.pi-director-chip {
+    gap: 8px !important;
+}
+.tm69-flag-img {
+    margin-right: 2px !important;
+}
+.top5-league-line .pi-director-chip,
+.top5-league-line .pi-chip-with-asset {
+    min-height: 24px !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+.top5-action-row {
+    margin-top: 2px !important;
+    padding-top: 2px !important;
+}
+.visual-mvp-profile {
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+.visual-mvp-profile:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
 }
 </style>
 """,
