@@ -25140,73 +25140,20 @@ def _visual_mvp_row_market_value(row: object, player_name: object):
 
 @st.cache_data(show_spinner=False)
 def _visual_mvp_current_country_lookup() -> dict:
-    """Return country lookup from current snapshot by TM id and normalized player name."""
     try:
-        path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
         df = pd.read_parquet(
-            path,
-            columns=["player_id_tm", "player_name_tm", "country_of_citizenship"]
+            ROOT / "data" / "processed" / "current_player_snapshot.parquet",
+            columns=["player_name_tm", "country_of_citizenship"],
         )
-        df = df.dropna(subset=["country_of_citizenship"]).copy()
-
-        lookup = {}
-
-        if "player_id_tm" in df.columns:
-            by_id = df.dropna(subset=["player_id_tm"]).drop_duplicates("player_id_tm", keep="last")
-            lookup.update({
-                f"id::{str(k).strip()}": str(v).strip()
-                for k, v in zip(by_id["player_id_tm"], by_id["country_of_citizenship"])
-                if str(k).strip() and str(v).strip()
-            })
-
-        by_name = df.dropna(subset=["player_name_tm"]).copy()
-        by_name["player_key"] = by_name["player_name_tm"].astype(str).map(normalize_search_text)
-        by_name = by_name.drop_duplicates("player_key", keep="last")
-        lookup.update({
-            f"name::{str(k).strip()}": str(v).strip()
-            for k, v in zip(by_name["player_key"], by_name["country_of_citizenship"])
-            if str(k).strip() and str(v).strip()
-        })
-
-        return lookup
+        df = df.dropna(subset=["player_name_tm", "country_of_citizenship"]).copy()
+        df["player_key"] = df["player_name_tm"].astype(str).map(normalize_search_text)
+        return dict(zip(df["player_key"], df["country_of_citizenship"].astype(str)))
     except Exception:
         return {}
 
 
 def _visual_mvp_row_country(row: object, player_name: object) -> str:
-    lookup = _visual_mvp_current_country_lookup()
-
-    try:
-        player_id = row.get("player_id_tm")
-        if player_id is not None and pd.notna(player_id):
-            key = f"id::{str(int(float(player_id))) if str(player_id).replace('.', '', 1).isdigit() else str(player_id).strip()}"
-            country = lookup.get(key, "")
-            if str(country).strip():
-                return str(country).strip()
-    except Exception:
-        pass
-
-    key = f"name::{normalize_search_text(player_name or '')}"
-    country = lookup.get(key, "")
-    if str(country).strip():
-        return str(country).strip()
-
-    for col in [
-        "country_of_citizenship",
-        "nationality",
-        "country",
-        "citizenship",
-        "nationality_display",
-        "country_display",
-    ]:
-        try:
-            value = row.get(col)
-            if value is not None and pd.notna(value) and str(value).strip():
-                return str(value).strip()
-        except Exception:
-            pass
-
-    return ""
+    return _visual_mvp_current_country_lookup().get(normalize_search_text(player_name or ""), "")
 
 
 
