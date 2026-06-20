@@ -25416,7 +25416,19 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
-        country = _tm69_player_nationality_lookup().get(normalize_search_text(player), "") or _tm69_row_nationality(row, player)
+        country = (
+            _tm69_player_nationality_lookup().get(normalize_search_text(player), "")
+            or _visual_mvp_first(row, [
+                "country_of_citizenship",
+                "nationality",
+                "country",
+                "citizenship",
+                "tm69_country_of_citizenship",
+                "nationality_display",
+                "country_display",
+            ], "")
+            or _tm69_row_nationality(row, player)
+        )
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
