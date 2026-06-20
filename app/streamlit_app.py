@@ -25514,7 +25514,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                     <div class="visual-mvp-avatar">{_tm69_club_mark_html(dict(row), club) if club else html.escape(_visual_mvp_initials(player))}</div>
                     <div>
                         <div class="visual-mvp-rank">Visual MVP #{rank}</div>
-                        <div class="visual-mvp-name">{html.escape(player)} <span style="color:#1d4ed8;font-size:.62rem;font-weight:950;">[{html.escape(str(country))}]</span></div>
+                        <div class="visual-mvp-name">{html.escape(player)} <span style="font-size:.55rem;color:#dc2626;">[{normalize_search_text(player)}]</span> <span style="color:#1d4ed8;font-size:.62rem;font-weight:950;">[{html.escape(str(country))}]</span></div>
                         <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
                         <div class="visual-mvp-meta"><div class="visual-mvp-identity">{''.join([x for x in [club_identity, league_identity, position_identity] if x])}</div></div>
                     </div>
