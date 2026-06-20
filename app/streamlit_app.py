@@ -25048,6 +25048,43 @@ def load_visual_mvp_manifest() -> pd.DataFrame:
         return pd.DataFrame()
 
 
+
+@st.cache_data(show_spinner=False)
+def _visual_mvp_current_market_value_lookup() -> dict:
+    """Return player_name -> latest Transfermarkt market value from current snapshot."""
+    try:
+        path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
+        df = pd.read_parquet(path)
+
+        name_col = next((c for c in ["player_name", "player_name_display", "name", "player"] if c in df.columns), None)
+        value_col = next((c for c in ["market_value_eur", "current_market_value_eur", "market_value", "tm_market_value_eur"] if c in df.columns), None)
+
+        if not name_col or not value_col:
+            return {}
+
+        df = df.dropna(subset=[name_col, value_col]).copy()
+        df["player_key"] = df[name_col].astype(str).map(normalize_search_text)
+
+        if "valuation_date" in df.columns:
+            df = df.sort_values("valuation_date")
+
+        df = df.drop_duplicates("player_key", keep="last")
+        return dict(zip(df["player_key"], pd.to_numeric(df[value_col], errors="coerce")))
+    except Exception:
+        return {}
+
+
+def _visual_mvp_current_market_value(player_name: object, fallback_value: object = None):
+    key = normalize_search_text(player_name or "")
+    value = _visual_mvp_current_market_value_lookup().get(key)
+    try:
+        if value is not None and pd.notna(value):
+            return value
+    except Exception:
+        pass
+    return fallback_value
+
+
 def render_visual_mvp_cards(limit: int = 8) -> None:
     """Render compact visual MVP cards for the Executive Overview demo layer."""
     df = load_visual_mvp_manifest()
@@ -25388,7 +25425,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                         <div class="visual-mvp-name">{html.escape(player)}</div>
                         <div class="visual-mvp-meta"><div class="visual-mvp-identity">{meta_identity}</div></div>
                     </div>
-                    <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(row.get("market_value_eur"))}</div>
+                    <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(_visual_mvp_current_market_value(player, row.get("market_value_eur")))}</div>
                 </div>
                 <div class="visual-mvp-kpis">
                     <div class="visual-mvp-kpi"><span>Opportunity</span><b>{_visual_mvp_fmt_score(row.get("opportunity_score"))}</b></div>
