@@ -27430,14 +27430,19 @@ def _tm69_nationality_html(country: object) -> str:
 
     if uri:
         return (
-            f"<span class='tm69-nationality-chip'>"
-            f"<img class='tm69-flag-img' src='{uri}' "
-            f"alt='{html.escape(country_txt)} flag'/>"
+            f"<span style='display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-weight:900;'>"
+            f"<img src='{uri}' alt='{html.escape(country_txt)} flag' "
+            f"style='display:inline-block;width:18px;height:13px;min-width:18px;object-fit:cover;border-radius:2px;"
+            f"box-shadow:0 0 0 1px rgba(15,23,42,.16);vertical-align:-2px;'/>"
             f"<span>{html.escape(country_txt)}</span>"
             f"</span>"
         )
 
-    return f"<span class='tm69-nationality-chip'><span>{html.escape(country_txt)}</span></span>"
+    return (
+        f"<span style='display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-weight:900;'>"
+        f"<span>{html.escape(country_txt)}</span>"
+        f"</span>"
+    )
 
 
 @st.cache_data(show_spinner=False)
