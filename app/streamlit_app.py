@@ -11,6 +11,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from utils.assets import (
+    get_club_logo,
+    get_league_logo
+)
+import streamlit.components.v1 as components
 
 # =========================================================
 # TM6.9 HEADER EXTRACTION LAYER (GENERATED)
@@ -1677,6 +1682,21 @@ div[data-testid="stTextInput"] + div[data-testid="stSelectbox"] {
 /* Native selectbox is now the search box; its dropdown is attached to the input. */
 div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
     z-index: 10000 !important;
+}
+
+
+.tm69-command-chip-identity {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.tm69-league-logo-chip {
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
 }
 
 </style>
@@ -9074,6 +9094,39 @@ CLUB_DISPLAY_MAP = {
     "borussia m gladbach": "Borussia M'gladbach",
     "borussia mg": "Borussia M'gladbach",
     "girona futbol club": "Girona",
+    # TM.6.9 final UI aliases: concise, product-safe club names for search/dropdowns.
+    "olympique gymnaste club nice cote d azur": "OGC Niza",
+    "olympique gymnaste club nice côte d'azur": "OGC Niza",
+    "olympique gymnaste club nice côte d azur": "OGC Niza",
+    "ogc nice": "OGC Niza",
+    "nice": "OGC Niza",
+    "olympique lyonnais": "Olympique Lyon",
+    "olympique lyonnais lyon": "Olympique Lyon",
+    "fc st pauli": "FC St. Pauli",
+    "fc st. pauli": "FC St. Pauli",
+    "fussball club st pauli von 1910": "FC St. Pauli",
+    "fußball club st pauli von 1910": "FC St. Pauli",
+    "fussball club st. pauli von 1910": "FC St. Pauli",
+    "fußball club st. pauli von 1910": "FC St. Pauli",
+    "fc sankt pauli": "FC St. Pauli",
+    "sankt pauli": "FC St. Pauli",
+    "st pauli": "FC St. Pauli",
+    "st. pauli": "FC St. Pauli",
+    "clube desportivo santa clara": "CD Santa Clara",
+    "clube desportivo santa clara açores": "CD Santa Clara",
+    "clube desportivo santa clara acores": "CD Santa Clara",
+    "cd santa clara": "CD Santa Clara",
+    "santa clara": "CD Santa Clara",
+    "football club de metz": "FC Metz",
+    "fc metz": "FC Metz",
+    "metz": "FC Metz",
+    "royal union saint gilloise": "Union SG",
+    "royale union saint gilloise": "Union SG",
+    "union saint gilloise": "Union SG",
+    "union sg": "Union SG",
+    "sporting clube de portugal": "Sporting CP",
+    "sporting clube de portugal futebol sad": "Sporting CP",
+    "sporting cp": "Sporting CP",
     "newcastle united football club": "Newcastle",
     "newcastle united fc": "Newcastle",
     "newcastle united": "Newcastle",
@@ -16164,15 +16217,17 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
     items = []
     for idx, (_, row) in enumerate(top.iterrows(), start=1):
         player = html.escape(str(get_player_name(row)))
-        club = html.escape(str(safe_get(row, "club", "")))
-        league = html.escape(league_display_name(safe_get(row, "league", "")))
+        club_raw = str(safe_get(row, "club", ""))
+        league_raw = league_display_name(safe_get(row, "league", ""))
+        club = f"{_tm69_club_mark_html(dict(row), club_raw)} <span>{html.escape(club_raw)}</span>"
+        league = _tm69_league_chip_html(league_raw)
         score = get_numeric_value(row, "risk_adjusted_opportunity_score", 0)
         action = html.escape(action_display_name(safe_get(row, "recommended_action", "Review" if globals().get("LANG") == "EN" else "Revisión")))
         items.append(
             f"<div class='top5-horizontal-item'>"
             f"<div class='top5-horizontal-rank'>{idx}</div>"
             f"<div class='top5-horizontal-name'>{player}</div>"
-            f"<div class='top5-horizontal-meta'>{club} · {league}<br>{action}</div>"
+            f"<div class='top5-horizontal-meta'>{club}<br>{league}<br>{action}</div>"
             f"<div class='top5-horizontal-score'>{score:.1f}</div>"
             f"</div>"
         )
@@ -16270,8 +16325,14 @@ def build_html_table(page_df: pd.DataFrame):
                     val = f"{float(val):.1f}"
                 except Exception:
                     val = "N/A"
+            elif col == "club":
+                val = f"{_tm69_club_mark_html(dict(r), str(val))} {html.escape(str(val))}"
+                cells.append(f"<td>{val}</td>")
+                continue
             elif col == "league":
-                val = league_display_name(val)
+                val = _tm69_league_chip_html(league_display_name(val))
+                cells.append(f"<td>{val}</td>")
+                continue
             elif col == "recommended_action":
                 cells.append(f"<td>{recommendation_badge(str(val))}</td>")
                 continue
@@ -19969,145 +20030,205 @@ La barra lateral define el universo activo de scouting. Los filtros operativos m
             )
 
 
-def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
-    """Build CRM-like search labels while preserving raw values for filtering."""
-    labels: list[str] = []
-    label_to_raw: dict[str, str] = {}
 
-    def add(label: str, raw: str, include_unaccented_alias: bool = True) -> None:
-        if raw is None or str(raw).strip() == "":
-            return
-        if label not in label_to_raw:
-            labels.append(label)
-            label_to_raw[label] = str(raw)
-        if include_unaccented_alias:
-            alias = strip_accents_for_display(label)
-            if alias and alias != label and alias not in label_to_raw:
-                labels.append(alias)
-                label_to_raw[alias] = str(raw)
-
-    if "league" in df.columns:
-        for league in sorted(df["league"].dropna().astype(str).unique().tolist(), key=str.lower):
-            add(f"League · {league_display_name(league)}", league)
-    if "club" in df.columns:
-        for club in sorted(df["club"].dropna().astype(str).unique().tolist(), key=str.lower):
-            add(f"Club · {club}", club)
-    name_col = get_player_name_column(df)
-    if name_col is not None:
-        tmp = df.dropna(subset=[name_col]).copy()
-        if "executive_decision_score_v2" in tmp.columns:
-            tmp = tmp.sort_values("executive_decision_score_v2", ascending=False)
-        elif "opportunity_score" in tmp.columns:
-            tmp = tmp.sort_values("opportunity_score", ascending=False)
-        for _, row in tmp.drop_duplicates(subset=[name_col]).iterrows():
-            name = str(row[name_col])
-            meta = " · ".join(str(x) for x in [safe_get(row, "club", ""), safe_get(row, "position_group", "")] if str(x).strip())
-            add(f"Player · {name}" + (f" ({meta})" if meta else ""), name)
-    if "position_group" in df.columns:
-        for pos in sorted(df["position_group"].dropna().astype(str).unique().tolist(), key=str.lower):
-            add(f"Position · {pos}", pos)
-    return labels, label_to_raw
-
-
-def _command_entity_type(label: object) -> str:
-    label_str = str(label or "")
-    if label_str.startswith("Player ·"):
-        return "player"
-    if label_str.startswith("Club ·"):
-        return "club"
-    if label_str.startswith("League ·"):
-        return "league"
-    if label_str.startswith("Position ·"):
-        return "position"
-    return "entity"
-
-
-
-def _first_valid_command_value(row: pd.Series, candidates: list[str], default=np.nan):
-    """Return the first non-empty value from a row for the command palette."""
-    for col in candidates:
-        if col in row.index:
-            value = row.get(col)
-            try:
-                if pd.isna(value):
-                    continue
-            except Exception:
-                pass
-            if str(value).strip() not in {"", "nan", "None", "N/A"}:
-                return value
+# =============================================================================
+# TM.6.9 command search helpers — current identity, club normalisation and context
+# =============================================================================
+def _first_valid_command_value(row, cols, default=""):
+    """Return first non-empty value across candidate row columns."""
+    try:
+        idx = row.index
+    except Exception:
+        return default
+    for col in cols:
+        if not col or col not in idx:
+            continue
+        value = row.get(col)
+        try:
+            if pd.isna(value):
+                continue
+        except Exception:
+            pass
+        value = str(value).strip()
+        if value and value.lower() not in {"nan", "none", "null", "n/a", "n/d", "-"}:
+            return value
     return default
 
 
-def _command_row_context(scoring_df: pd.DataFrame, raw_value: str) -> dict:
-    """Enrich one player search result with DSS signals for a scouting-grade preview."""
-    out = {
-        "club": "",
-        "league": "",
-        "position": "",
-        "age": np.nan,
-        "opportunity": np.nan,
-        "risk": np.nan,
-        "contract": np.nan,
-        "growth": np.nan,
-        "market_value": np.nan,
-        "fair_value": np.nan,
-        "gap_pct": np.nan,
-        "gap_eur": np.nan,
-        "rank": np.nan,
-        "action": "",
-    }
-    if scoring_df is None or scoring_df.empty or not raw_value:
-        return out
-    name_col = get_player_name_column(scoring_df)
-    if name_col is None or name_col not in scoring_df.columns:
-        return out
-    raw_norm = normalize_search_text(raw_value)
-    tmp = scoring_df[scoring_df[name_col].fillna("").astype(str).map(normalize_search_text) == raw_norm].copy()
-    if tmp.empty:
-        return out
-    if "opportunity_score" in tmp.columns:
-        tmp = tmp.sort_values("opportunity_score", ascending=False)
-    elif "executive_decision_score_v2" in tmp.columns:
-        tmp = tmp.sort_values("executive_decision_score_v2", ascending=False)
-    row = tmp.iloc[0]
-    out["club"] = str(_first_valid_command_value(row, ["display_club", "current_club", "club", "club_actual"], ""))
-    out["league"] = league_display_name(_first_valid_command_value(row, ["display_league", "current_league", "league"], ""))
-    out["position"] = str(_first_valid_command_value(row, ["position_group", "position", "role_subgroup"], ""))
-    out["age"] = _first_valid_command_value(row, ["current_age", "age", "season_context_age"], np.nan)
-    out["opportunity"] = _first_valid_command_value(row, ["opportunity_score", "opportunity_score_raw", "portfolio_value_score"], np.nan)
-    out["risk"] = _first_valid_command_value(row, ["risk_score", "risk_score_v2", "risk_proxy"], np.nan)
-    out["contract"] = _first_valid_command_value(row, ["contract_opportunity_score", "recruitment_contract_score", "negotiation_leverage_score"], np.nan)
-    out["growth"] = _first_valid_command_value(row, ["growth_score", "growth_index", "growth_score_raw"], np.nan)
-    out["market_value"] = _first_valid_command_value(row, ["current_market_value_eur", "market_value_eur", "market_value_in_eur"], np.nan)
-    out["fair_value"] = _first_valid_command_value(row, ["predicted_market_value_ml_eur", "predicted_market_value_eur", "expected_market_value_eur"], np.nan)
-    out["gap_pct"] = _first_valid_command_value(row, ["market_value_gap_pct", "market_value_gap_pct_winsorized"], np.nan)
-    out["gap_eur"] = _first_valid_command_value(row, ["market_value_gap_eur"], np.nan)
-    out["rank"] = _first_valid_command_value(row, ["opportunity_rank", "rank"], np.nan)
-    out["action"] = str(_first_valid_command_value(row, ["recommended_action", "action", "scouting_action"], ""))
-    return out
-
-
-def _format_command_pct(value: object) -> str:
+def _command_row_context(df, raw):
+    """Resolve product-safe current context for command search and ranking."""
     try:
-        x = float(value)
-        if pd.isna(x):
-            return "N/A"
-        # market_value_gap_pct in this project can be ratio-like (2.2) or percent-like (-35).
-        if abs(x) <= 5:
-            x = x * 100
-        return f"{x:+.0f}%"
+        if df is None or getattr(df, "empty", True):
+            return {}
+        q = str(raw).strip()
+        if not q:
+            return {}
+        name_col = get_player_name_column(df) if "get_player_name_column" in globals() else None
+        mask = pd.Series(False, index=df.index)
+        if "player_id_tm" in df.columns and q.replace(".0", "").isdigit():
+            mask = mask | df["player_id_tm"].astype(str).str.replace(".0", "", regex=False).eq(q.replace(".0", ""))
+        if name_col is not None and name_col in df.columns:
+            mask = mask | df[name_col].astype(str).str.casefold().eq(q.casefold())
+        if not mask.any() and name_col is not None and name_col in df.columns:
+            mask = df[name_col].astype(str).str.casefold().str.contains(q.casefold(), na=False, regex=False)
+        hit = df.loc[mask].copy()
+        if hit.empty:
+            return {}
+        for sort_col in ["current_valuation_date", "valuation_date", "current_season", "season", "opportunity_score"]:
+            if sort_col in hit.columns:
+                hit = hit.sort_values(sort_col, ascending=False, na_position="last")
+                break
+        row = hit.iloc[0]
+        club_raw = _first_valid_command_value(row, ["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"], "")
+        league_raw = _first_valid_command_value(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+        return {
+            "name": _first_valid_command_value(row, ["player_name_tm", "player_name_tm_snapshot", "player_name_fbref", name_col], q),
+            "club": format_club_name(club_raw, "") if "format_club_name" in globals() else club_raw,
+            "league": league_display_name(league_raw) if "league_display_name" in globals() else league_raw,
+            "position": _first_valid_command_value(row, ["position_group", "position", "role_subgroup"], ""),
+            "age": pd.to_numeric(row.get("age", row.get("current_age", np.nan)), errors="coerce"),
+            "opportunity": pd.to_numeric(row.get("opportunity_score", np.nan), errors="coerce"),
+            "risk": pd.to_numeric(row.get("risk_score", row.get("risk_adjusted_opportunity_score", np.nan)), errors="coerce"),
+            "contract": pd.to_numeric(row.get("contract_opportunity_score", row.get("recruitment_contract_score", np.nan)), errors="coerce"),
+            "growth": pd.to_numeric(row.get("growth_score", row.get("growth_index", np.nan)), errors="coerce"),
+            "market_value": pd.to_numeric(row.get("market_value_eur", row.get("current_market_value_eur", np.nan)), errors="coerce"),
+            "fair_value": pd.to_numeric(row.get("predicted_market_value_ml_eur", row.get("predicted_market_value_eur", np.nan)), errors="coerce"),
+            "gap_pct": pd.to_numeric(row.get("market_value_gap_pct", np.nan), errors="coerce"),
+            "gap_eur": pd.to_numeric(row.get("market_value_gap_eur", np.nan), errors="coerce"),
+            "rank": pd.to_numeric(row.get("opportunity_rank", row.get("visual_rank", np.nan)), errors="coerce"),
+            "action": str(row.get("recommended_action", row.get("action", "")) or ""),
+        }
     except Exception:
-        return "N/A"
+        return {}
+
+def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
+    """Build global search options with clean product labels.
+
+    Product rules:
+    - one visible option per current player identity;
+    - one visible command per league / position / role / club;
+    - player labels always use product-normalised club names;
+    - raw value for players remains the player name, preserving existing filters.
+    """
+    labels: list[str] = []
+    label_to_raw: dict[str, str] = {}
+    seen_labels: set[str] = set()
+    seen_players: set[str] = set()
+    seen_entities: set[tuple[str, str]] = set()
+
+    def clean_key(value: object) -> str:
+        return strip_accents_for_display(str(value)).lower().strip()
+
+    def valid(value: object) -> bool:
+        return str(value).strip().lower() not in {"", "nan", "none", "null", "n/a", "n/d", "-"}
+
+    def add(label: str, raw: object, entity: str = "other") -> None:
+        label = str(label).strip()
+        raw = str(raw).strip()
+        if not label or not valid(raw):
+            return
+        if entity in {"league", "club", "position", "role"}:
+            entity_key = (entity, clean_key(raw))
+            if entity_key in seen_entities:
+                return
+            seen_entities.add(entity_key)
+        label_key = clean_key(label)
+        if label_key in seen_labels:
+            return
+        seen_labels.add(label_key)
+        labels.append(label)
+        label_to_raw[label] = raw
+
+    def first_existing(cols: list[str]) -> str | None:
+        for c in cols:
+            if c in df.columns:
+                return c
+        return None
+
+    work = df.copy()
+
+    if "player_id_tm" in work.columns:
+        sort_cols = [c for c in ["current_valuation_date", "valuation_date", "current_season", "season", "opportunity_score"] if c in work.columns]
+        if sort_cols:
+            work = work.sort_values(sort_cols, ascending=[False] * len(sort_cols), na_position="last")
+        work = work.drop_duplicates(subset=["player_id_tm"], keep="first").copy()
+
+    # 1) Players first: label carries current, product-safe context.
+    name_col = get_player_name_column(work)
+    if name_col is not None:
+        tmp = work.dropna(subset=[name_col]).copy()
+        if "opportunity_score" in tmp.columns:
+            tmp = tmp.sort_values("opportunity_score", ascending=False, na_position="last")
+        elif "executive_decision_score_v2" in tmp.columns:
+            tmp = tmp.sort_values("executive_decision_score_v2", ascending=False, na_position="last")
+
+        for _, row in tmp.iterrows():
+            name = _first_valid_command_value(row, ["player_name_tm", "player_name_tm_snapshot", "player_name_fbref", name_col], "")
+            if not valid(name):
+                continue
+            player_key = (
+                str(row.get("player_id_tm")).replace(".0", "")
+                if "player_id_tm" in row.index and pd.notna(row.get("player_id_tm"))
+                else clean_key(name)
+            )
+            if player_key in seen_players:
+                continue
+            seen_players.add(player_key)
+
+            position = _first_valid_command_value(row, ["position_group", "position", "role_subgroup"], "")
+            club_raw = _first_valid_command_value(row, ["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"], "")
+            club = format_club_name(club_raw, "") if valid(club_raw) else ""
+            league_raw = _first_valid_command_value(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+            league = league_display_name(league_raw) if valid(league_raw) else ""
+
+            meta = " · ".join([str(x) for x in [position, club, league] if valid(x)])
+            add(f"Player · {name}" + (f" · {meta}" if meta else ""), name, "player")
+
+    # 2) League commands: one visible option per league.
+    league_col = first_existing(["display_league", "current_league", "current_league_snapshot", "league"])
+    if league_col is not None:
+        league_values = sorted(work[league_col].dropna().astype(str).unique().tolist(), key=str.lower)
+        for league in league_values:
+            display = league_display_name(league)
+            add(f"Liga · {display}" if LANG != "EN" else f"League · {display}", league, "league")
+
+    # 3) Position commands.
+    if "position_group" in work.columns:
+        for pos in sorted(work["position_group"].dropna().astype(str).unique().tolist(), key=str.lower):
+            add(f"Posición · {pos}" if LANG != "EN" else f"Position · {pos}", pos, "position")
+
+    # 4) Role commands.
+    role_cols = ["taxonomy_role_context", "role_context", "role_display", "role_subgroup", "position_role", "tactical_role"]
+    for role_col in role_cols:
+        if role_col in work.columns:
+            for role in sorted(work[role_col].dropna().astype(str).unique().tolist(), key=str.lower):
+                if valid(role):
+                    add(f"Rol · {role}" if LANG != "EN" else f"Role · {role}", role, "role")
+
+    # 5) Club commands: one visible option per product-normalised club.
+    club_col = first_existing(["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"])
+    if club_col is not None:
+        normalised_clubs = sorted({format_club_name(c, "") for c in work[club_col].dropna().astype(str).tolist() if valid(c)}, key=str.lower)
+        for club in normalised_clubs:
+            add(f"Club · {club}", club, "club")
+
+    return labels, label_to_raw
 
 
-def _format_command_score(value: object, default: str = "N/A") -> str:
-    try:
-        x = float(value)
-        if pd.isna(x):
-            return default
-        return f"{x:.0f}"
-    except Exception:
-        return default
+def _command_entity_type(label: str) -> str:
+    clean = str(label).strip()
+    low = clean.lower()
+    if low.startswith(("player ·", "jugador ·")) or " · player" in low or " · jugador" in low:
+        return "player"
+    if low.startswith(("league ·", "liga ·")) or " · league" in low or " · liga" in low:
+        return "league"
+    if low.startswith(("club ·",)) or " · club" in low:
+        return "club"
+    if low.startswith(("position ·", "posición ·", "posicion ·")) or " · position" in low or " · posición" in low or " · posicion" in low:
+        return "position"
+    if low.startswith(("role ·", "rol ·")) or " · role" in low or " · rol" in low:
+        return "role"
+    return "other"
 
 
 def rank_global_command_search(
@@ -20160,7 +20281,7 @@ def rank_global_command_search(
         opportunity = float(ctx.get("opportunity", np.nan)) if pd.notna(ctx.get("opportunity", np.nan)) else (55.0 if entity_type == "player" else 42.0)
         risk = float(ctx.get("risk", np.nan)) if pd.notna(ctx.get("risk", np.nan)) else (50.0 if entity_type == "player" else 55.0)
         contract = float(ctx.get("contract", np.nan)) if pd.notna(ctx.get("contract", np.nan)) else 50.0
-        entity_boost = 5.0 if entity_type == "player" else (2.0 if entity_type in {"club", "league"} else 0.0)
+        entity_boost = 5.0 if entity_type == "player" else (2.0 if entity_type in {"club", "league", "position", "role"} else 0.0)
         # Ranking de búsqueda: texto + señal deportiva/económica. Risk bajo suma.
         typeahead_score = (0.45 * text_similarity) + (0.35 * opportunity) + (0.20 * (100.0 - risk)) + entity_boost
         rows.append({
@@ -20249,7 +20370,7 @@ def render_command_palette_results(results: pd.DataFrame) -> None:
         label = str(row.get("label", ""))
         raw = str(row.get("raw", ""))
         entity = str(row.get("entity_type", "entity"))
-        entity_label = {"player": "Jugador", "club": "Club", "league": "Liga", "position": "Posición"}.get(entity, "Entidad") if LANG != "EN" else entity.title()
+        entity_label = {"player": "Jugador", "club": "Club", "league": "Liga", "position": "Posición", "role": "Rol"}.get(entity, "Entidad") if LANG != "EN" else entity.title()
         club = str(row.get("club", "") or "")
         league = str(row.get("league", "") or "")
         position = str(row.get("position", "") or "")
@@ -21538,18 +21659,35 @@ header[data-testid="stHeader"] {
     unsafe_allow_html=True,
 )
 
+
+
+# =============================================================================
+# TM.6.9 closure: remove redundant topbar section title and DSS workflow bar
+# =============================================================================
+st.markdown(
+    """
+<style>
+.scouting-topbar-section { display: none !important; }
+.scouting-topbar-compact-vfinal { justify-content: space-between !important; }
+.scouting-topbar-breadcrumb { margin-left: auto !important; }
+.dss-compact-flow, .dss-flow, .dss-workflow, .dss-workflow-bar { display: none !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 st.markdown(
     f"""
     <div class="scouting-topbar scouting-topbar-compact-vfinal">
         <div class="scouting-brand"><span class="scouting-brand-mark">IQ</span><span>SCOUTING IQ</span></div>
-        <div class="scouting-topbar-section">{html.escape(dashboard_page)}</div>
         <div class="scouting-topbar-breadcrumb">{html.escape('Market › Player › Recruitment › Strategy › Decision' if LANG == 'EN' else 'Market › Player › Recruitment › Strategy › Decisión')}</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-render_dss_workflow(dashboard_page)
+# TM.6.9 closure: DSS workflow bar removed from first viewport to reduce load/visual noise.
+# render_dss_workflow(dashboard_page)
 
 base_df = add_executive_decision_features(scouting_df.copy())
 
@@ -22374,7 +22512,27 @@ def _tm69_typeahead_html(results: pd.DataFrame, query: str) -> str:
 
 
 def _tm69_command_chip_html(items: list[str], limit: int = 7) -> str:
-    return "".join(f"<span class='tm69-command-chip'>{html.escape(str(item))}</span>" for item in items[:limit])
+    """Render compact Active Context chips. Adds league logo when the chip matches a productive league."""
+    def _chip_with_optional_league_logo(item: object) -> str:
+        label = str(item)
+        safe_label = html.escape(label)
+
+        try:
+            logo_path = get_league_logo(label)
+            if logo_path and Path(logo_path).exists() and "placeholder" not in str(logo_path):
+                import base64
+                encoded = base64.b64encode(Path(logo_path).read_bytes()).decode("utf-8")
+                return (
+                    "<span class='tm69-command-chip tm69-command-chip-identity'>"
+                    f"<img src='data:image/png;base64,{encoded}' class='tm69-league-logo-chip'/>"
+                    f"{safe_label}</span>"
+                )
+        except Exception:
+            pass
+
+        return f"<span class='tm69-command-chip'>{safe_label}</span>"
+
+    return "".join(_chip_with_optional_league_logo(item) for item in items[:limit])
 
 
 
@@ -22490,9 +22648,9 @@ def render_player_intelligence_command_center(
     search_help = "Example: league · position · player · role" if LANG == "EN" else "Ejemplo: liga · posición · jugador · rol"
     placeholder = "Search player, club, league, role or team..." if LANG == "EN" else "Buscar jugador, club, liga, rol o equipo..."
     example = (
-        "Yan Diomandé · Winger · CD Leganés · LaLiga"
+        "Yan Diomandé · MID · RB Leipzig · Bundesliga"
         if LANG == "EN"
-        else "Yan Diomandé · Winger · CD Leganés · LaLiga"
+        else "Yan Diomandé · MID · RB Leipzig · Bundesliga"
     )
     context_title = "ACTIVE RECRUITMENT UNIVERSE" if LANG == "EN" else "UNIVERSO ACTIVO DE SCOUTING"
     reset_label = "Clear filters" if LANG == "EN" else "Limpiar filtros"
@@ -22547,21 +22705,16 @@ def render_player_intelligence_command_center(
             raw = str(search_label_to_raw.get(label, label))
             entity = _command_entity_type(label)
             if entity == "player":
-                ctx = _command_row_context(base_df if "base_df" in globals() else pd.DataFrame(), raw)
-                parts = [
-                    raw,
-                    str(ctx.get("position", "") or ""),
-                    str(ctx.get("club", "") or ""),
-                    str(ctx.get("league", "") or ""),
-                ]
-                clean = " · ".join([x for x in parts if str(x).strip() and str(x).strip().lower() != "nan"])
-                return clean or raw
+                return label.replace("Player · ", "").replace("Jugador · ", "").strip()
             if entity == "league":
-                return f"Liga · {raw}" if LANG != "EN" else f"League · {raw}"
+                return f"Liga · {league_display_name(raw)}" if LANG != "EN" else f"League · {league_display_name(raw)}"
             if entity == "club":
-                return f"Club · {raw}"
+                club = format_club_name(raw, raw) if "format_club_name" in globals() else raw
+                return f"Club · {club}"
             if entity == "position":
                 return f"Posición · {raw}" if LANG != "EN" else f"Position · {raw}"
+            if entity == "role":
+                return f"Rol · {raw}" if LANG != "EN" else f"Role · {raw}"
             return raw
 
         selected_label = st.selectbox(
@@ -22596,7 +22749,7 @@ def render_player_intelligence_command_center(
     <div class="tm69-command-context-head">
         <div class="tm69-command-context-title">{html.escape(context_title)}</div>
     </div>
-    <div class="tm69-command-context-summary"><b>{filtered_universe:,}</b> candidatos · <b>{base_universe:,}</b> universo · <b>{shortlist_universe:,}</b> vista ejecutiva · <b>{coverage_text}</b> cobertura</div>
+    <div class="tm69-command-context-summary"><b>{filtered_universe:,}</b> candidatos · <b>{shortlist_universe:,}</b> universo elegible · <b>{coverage_text}</b> cobertura</div>
     <div class="tm69-command-chip-row">{context_chips_html}</div>
 </div>
 """,
@@ -23250,14 +23403,7 @@ global_search_display = "" if global_search_label is None else str(global_search
 # Search can target the wider football dataset, but only Scouting Universe results
 # are allowed to drive ranking, shortlist, Opportunity/Risk matrix and executive cards.
 search_entity_type = ""
-if global_search_display.startswith("Player ·"):
-    search_entity_type = "player"
-elif global_search_display.startswith("League ·"):
-    search_entity_type = "league"
-elif global_search_display.startswith("Club ·"):
-    search_entity_type = "club"
-elif global_search_display.startswith("Position ·"):
-    search_entity_type = "position"
+search_entity_type = _command_entity_type(global_search_display)
 
 search_norm = normalize_search_text(global_search_query)
 scouting_name_col = get_player_name_column(scouting_df)
@@ -24736,6 +24882,402 @@ def render_info_kpi_card(label: str, value: str, caption: str, info_text: str) -
         unsafe_allow_html=True,
     )
 
+
+def _visual_mvp_safe_text(value, fallback="N/A"):
+    if value is None:
+        return fallback
+    try:
+        if pd.isna(value):
+            return fallback
+    except Exception:
+        pass
+    value = str(value).strip()
+    return value if value else fallback
+
+
+def _visual_mvp_fmt_score(value):
+    try:
+        if pd.isna(value):
+            return "—"
+        return f"{float(value):.1f}"
+    except Exception:
+        return "—"
+
+
+def _visual_mvp_fmt_money(value):
+    try:
+        if pd.isna(value):
+            return "—"
+        value = float(value)
+        if value >= 1_000_000:
+            return f"€{value / 1_000_000:.1f}M"
+        if value >= 1_000:
+            return f"€{value / 1_000:.0f}K"
+        return f"€{value:,.0f}"
+    except Exception:
+        return "—"
+
+
+def _visual_mvp_initials(name: str) -> str:
+    parts = [p for p in str(name).split() if p]
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
+
+
+def _visual_mvp_player_name(row) -> str:
+    return _visual_mvp_safe_text(
+        row.get("player")
+        or row.get("player_name_tm")
+        or row.get("player_name_tm_snapshot")
+        or row.get("player_name_fbref")
+        or row.get("name"),
+        "Unknown player",
+    )
+
+
+def _visual_mvp_first(row, cols, fallback="N/A"):
+    for c in cols:
+        if c in row.index:
+            v = row.get(c)
+            try:
+                if pd.isna(v):
+                    continue
+            except Exception:
+                pass
+            if str(v).strip() and str(v).strip().lower() not in {"nan", "none", "n/a", "n/d"}:
+                return str(v).strip()
+    return fallback
+
+
+def load_visual_mvp_manifest() -> pd.DataFrame:
+    path = ROOT / "reports" / "visual_identity" / "tm6_9a_top30_visual_mvp_manifest.csv"
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def render_visual_mvp_cards(limit: int = 8) -> None:
+    """Render compact visual MVP cards for the Executive Overview demo layer."""
+    df = load_visual_mvp_manifest()
+    if df.empty:
+        st.info("Visual MVP manifest pendiente de generar.")
+        return
+
+    df = df.head(limit).copy()
+
+    css = """
+    <style>
+    body {
+        margin: 0;
+        background: transparent;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .visual-mvp-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        padding: 2px 4px 22px 4px;
+        box-sizing: border-box;
+    }
+    .visual-mvp-identity {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        max-width: 100%;
+    }
+    .visual-mvp-identity .pi-club-mark,
+    .visual-mvp-identity .pi-league-logo-chip {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        max-width: 16px !important;
+        min-height: 16px !important;
+        max-height: 16px !important;
+        flex: 0 0 16px !important;
+        overflow: hidden !important;
+        object-fit: contain !important;
+    }
+    .visual-mvp-identity .pi-club-mark img,
+    .visual-mvp-identity .pi-league-logo-chip img {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+        object-position: center !important;
+    }
+    .visual-mvp-identity-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid #dbeafe;
+        background: #f8fbff;
+        color: #0f172a;
+        border-radius: 999px;
+        padding: 4px 7px;
+        font-size: .66rem;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+    }
+    .visual-mvp-position-chip {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 999px;
+        padding: 4px 7px;
+        font-size: .66rem;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+    }
+    .visual-mvp-card {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #dbe3ee;
+        border-left: 5px solid #3b82f6;
+        border-radius: 18px;
+        padding: 16px 17px 14px 17px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.055);
+        min-height: 196px;
+        box-sizing: border-box;
+        overflow: hidden;
+        isolation: isolate;
+        contain: paint;
+    }
+    .visual-mvp-top {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) 76px;
+        gap: 12px;
+        align-items: start;
+        margin-bottom: 10px;
+    }
+    .visual-mvp-avatar {
+        width: 58px;
+        height: 58px;
+        min-width: 58px;
+        max-width: 58px;
+        min-height: 58px;
+        max-height: 58px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        color: #1e3a8a;
+        font-size: 1.02rem;
+        font-weight: 950;
+        box-shadow: 0 8px 18px rgba(15,23,42,.08);
+        border: 1px solid #dbeafe;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+        contain: strict;
+    }
+    .visual-mvp-avatar .pi-club-mark {
+        width: 46px !important;
+        height: 46px !important;
+        min-width: 46px !important;
+        max-width: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        flex: 0 0 46px !important;
+        border: 0 !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        font-size: .88rem !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        contain: strict !important;
+    }
+    .visual-mvp-avatar .pi-club-mark img,
+    .visual-mvp-avatar img {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        object-fit: contain !important;
+        object-position: center !important;
+    }
+    .visual-mvp-card img {
+        object-fit: contain !important;
+        object-position: center !important;
+    }
+    .visual-mvp-rank {
+        color: #2563eb;
+        font-size: .68rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        line-height: 1.05;
+        margin-bottom: 3px;
+    }
+    .visual-mvp-name {
+        color: #0f172a;
+        font-size: .98rem;
+        font-weight: 950;
+        line-height: 1.08;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .visual-mvp-meta {
+        color: #64748b;
+        font-size: .73rem;
+        line-height: 1.24;
+        margin-top: 3px;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: initial;
+    }
+    .visual-mvp-value {
+        text-align: right;
+        color: #0f172a;
+        font-size: .98rem;
+        font-weight: 950;
+        line-height: 1.05;
+    }
+    .visual-mvp-value span {
+        display: block;
+        color: #64748b;
+        font-size: .60rem;
+        font-weight: 950;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .visual-mvp-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .visual-mvp-kpi {
+        background: #f8fafc;
+        border: 1px solid #dbe3ee;
+        border-radius: 12px;
+        padding: 8px 9px;
+        min-height: 48px;
+    }
+    .visual-mvp-kpi span {
+        display: block;
+        color: #475569;
+        font-size: .60rem;
+        font-weight: 950;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+    .visual-mvp-kpi b {
+        color: #0f172a;
+        font-size: .96rem;
+        font-weight: 950;
+        line-height: 1.0;
+    }
+    .visual-mvp-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        min-height: 24px;
+    }
+    .visual-mvp-priority {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        border-radius: 999px;
+        padding: 4px 9px;
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+        font-size: .68rem;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+    .visual-mvp-profile {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        border-radius: 999px;
+        padding: 4px 9px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e3a8a;
+        font-size: .66rem;
+        font-weight: 950;
+        white-space: nowrap;
+    }
+    @media (max-width: 1150px) {
+        .visual-mvp-grid { grid-template-columns: 1fr; }
+    }
+    </style>
+    """
+
+    cards = ["<div class='visual-mvp-grid'>"]
+    for _, row in df.iterrows():
+        player = _visual_mvp_player_name(row)
+        club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
+        league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+        position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
+        rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
+        club_identity = (
+            f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
+            if club else ""
+        )
+        league_identity = (
+            f"<span class='visual-mvp-identity-chip'>{_tm69_league_chip_html(league)}</span>"
+            if league else ""
+        )
+        position_identity = (
+            f"<span class='visual-mvp-position-chip'>{html.escape(position)}</span>"
+            if position else ""
+        )
+        meta_identity = "".join([x for x in [club_identity, league_identity, position_identity] if x])
+
+        cards.append(
+            f"""
+            <div class="visual-mvp-card">
+                <div class="visual-mvp-top">
+                    <div class="visual-mvp-avatar">{_tm69_club_mark_html(dict(row), club) if club else html.escape(_visual_mvp_initials(player))}</div>
+                    <div>
+                        <div class="visual-mvp-rank">Visual MVP #{rank}</div>
+                        <div class="visual-mvp-name">{html.escape(player)}</div>
+                        <div class="visual-mvp-meta"><div class="visual-mvp-identity">{meta_identity}</div></div>
+                    </div>
+                    <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(row.get("market_value_eur"))}</div>
+                </div>
+                <div class="visual-mvp-kpis">
+                    <div class="visual-mvp-kpi"><span>Opportunity</span><b>{_visual_mvp_fmt_score(row.get("opportunity_score"))}</b></div>
+                    <div class="visual-mvp-kpi"><span>Contract</span><b>{_visual_mvp_fmt_score(row.get("contract_opportunity_score"))}</b></div>
+                    <div class="visual-mvp-kpi"><span>Recruitment</span><b>{_visual_mvp_fmt_score(row.get("recruitment_contract_score"))}</b></div>
+                </div>
+                <div class="visual-mvp-footer">
+                    <div class="visual-mvp-priority">High Priority</div>
+                    <div class="visual-mvp-profile">Open profile →</div>
+                </div>
+            </div>
+            """
+        )
+    cards.append("</div>")
+    html_block = css + "\n".join(cards)
+
+    # 8 cards => two columns x four rows; use generous height to avoid clipping priority labels.
+    components.html(html_block, height=980, scrolling=False)
+
+
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     precision_value = "N/A"
     if not precision.empty and "precision_at_k" in precision.columns:
@@ -24823,8 +25365,10 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
             contract_preview = contract_preview.sort_values("recruitment_contract_score", ascending=False, na_position="last").head(5)
             preview_rows = []
             for _, row in contract_preview.iterrows():
+                club_raw = str(safe_get(row, 'club_display', safe_get(row, 'club', 'N/A')))
+                club_identity = f"{_tm69_club_mark_html(dict(row), club_raw)} {html.escape(club_raw)}"
                 preview_rows.append(
-                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{html.escape(str(safe_get(row, 'club_display', 'N/A')))} · {html.escape(str(safe_get(row, 'position_display', 'N/A')))} · {html.escape(str(safe_get(row, 'age_display', 'N/A')))} {'years' if LANG == 'EN' else 'años'}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
+                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{club_identity} · {html.escape(str(safe_get(row, 'position_display', 'N/A')))} · {html.escape(str(safe_get(row, 'age_display', 'N/A')))} {'years' if LANG == 'EN' else 'años'}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
                 )
             st.markdown(
                 f"""
@@ -24841,6 +25385,14 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
         pass
 
     render_opportunity_risk_top5_vertical(source_df, "Top 5 opportunities" if LANG == "EN" else "Top 5 oportunidades", "Initial executive review priority" if LANG == "EN" else "Prioridad inicial para revisión ejecutiva")
+
+    with st.expander("🎯 Visual MVP Targets", expanded=False):
+        st.caption(
+            "Top opportunities generated from Opportunity Score, Contract Intelligence and Recruitment Intelligence."
+            if LANG == "EN"
+            else "Top oportunidades generadas desde Opportunity Score, Contract Intelligence y Recruitment Intelligence."
+        )
+        render_visual_mvp_cards(limit=8)
 
 
 def render_transfer_strategy_placeholder() -> None:
@@ -26340,11 +26892,64 @@ def _tm69_slug(value: object) -> str:
     return txt or "asset"
 
 
+
+# =============================================================================
+# TM.6.9A closure hotfix: club marks containment + card spacing
+# =============================================================================
+st.markdown(
+    """
+<style>
+.top5-horizontal-item {
+    padding: 14px 14px !important;
+    min-height: 116px !important;
+}
+.top5-horizontal-meta,
+.top5-meta {
+    display: block !important;
+    color: #64748b !important;
+    line-height: 1.42 !important;
+}
+.top5-horizontal-meta .pi-club-mark,
+.top5-meta .pi-club-mark {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    margin-right: 5px !important;
+    vertical-align: -4px !important;
+    overflow: hidden !important;
+}
+.top5-horizontal-meta .pi-club-mark img,
+.top5-meta .pi-club-mark img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+}
+.top5-row {
+    grid-template-columns: 32px minmax(0,1fr) 64px !important;
+    gap: 12px !important;
+    padding: 12px 0 !important;
+}
+.top5-name { margin-bottom: 3px !important; }
+.top5-score { align-self: center !important; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 def _tm69_asset_uri(asset_type: str, *names: object) -> str | None:
     """Find optional local visual assets without introducing new data sources.
 
-    Supported folders are intentionally broad so future screenshots/club crest exports can
-    be dropped into the project without code changes.
+    Robust club crest resolution:
+    - normalizes common display-name variants;
+    - supports explicit club-to-filename aliases;
+    - falls back to case-insensitive filename lookup inside asset folders.
     """
     roots = [
         ROOT / "app" / "assets", ROOT / "app" / "static", ROOT / "assets", ROOT / "static",
@@ -26355,17 +26960,87 @@ def _tm69_asset_uri(asset_type: str, *names: object) -> str | None:
         "club": ["clubs", "club_crests", "crests", "logos/clubs", "images/clubs"],
         "league": ["leagues", "competitions", "logos/leagues", "images/leagues"],
     }.get(asset_type, [asset_type])
-    candidates = []
+
+    club_asset_aliases = {
+        "celta vigo": "celta-de-vigo",
+        "celta de vigo": "celta-de-vigo",
+        "real club celta de vigo": "celta-de-vigo",
+        "getafe": "getafe-cf",
+        "getafe cf": "getafe-cf",
+        "montpellier": "montpellier-hsc",
+        "montpellier hsc": "montpellier-hsc",
+        "angers": "angers-sco",
+        "angers sco": "angers-sco",
+        "holstein kiel": "holstein-kiel",
+        "crystal palace": "crystal-palace",
+        "crystal palace fc": "crystal-palace",
+        "athletic bilbao": "athletic-bilbao",
+        "athletic club": "athletic-bilbao",
+        "watford": "watford",
+        "watford fc": "watford",
+        "torino": "torino",
+        "torino calcio": "torino",
+        "aj auxerre": "aj-auxerre",
+        "auxerre": "aj-auxerre",
+        "cercle brugge": "cercle-brugge",
+        "udinese": "udinese-calcio",
+        "udinese calcio": "udinese-calcio",
+        "ssc napoli": "ssc-napoli",
+        "napoli": "ssc-napoli",
+        "real madrid": "real-madrid",
+        "Club Brugge KV": "club-brugge",
+        "KVC Westerlo": "westerlo",
+        "Ajax Amsterdam": "ajax",
+        "Monaco": "as-monaco",
+        "Brighton": "brighton-hove-albion",
+        "Groningen": "fc-groningen",
+        "Sturm Graz": "sk-sturm-graz",
+        "Genk": "krc-genk",
+        "Parma": "parma-calcio-1913",
+        "Red Bull Salzburg": "rb-salzburg",
+        "Barcelona": "fc-barcelona",
+        "Utrecht": "fc-utrecht",
+        "Rapid Wien": "rapid-vienna",
+    }
+
+    def _asset_key(value: object) -> str:
+        txt = str(value or "").strip().lower()
+        txt = unicodedata.normalize("NFKD", txt)
+        txt = "".join(ch for ch in txt if not unicodedata.combining(ch))
+        txt = re.sub(r"[^a-z0-9]+", " ", txt)
+        return re.sub(r"\s+", " ", txt).strip()
+
+    candidates: list[str] = []
     for name in names:
         if name is None:
             continue
         raw = str(name).strip()
         if not raw or raw.lower() in {"nan", "none", "n/a"}:
             continue
-        candidates.extend([_tm69_slug(raw), raw.replace(" ", "_"), raw.replace(" ", "-")])
+
+        key = _asset_key(raw)
+        if asset_type == "club":
+            alias = club_asset_aliases.get(key)
+            if alias:
+                candidates.append(alias)
+
+        candidates.extend([
+            _tm69_slug(raw),
+            raw.replace(" ", "_"),
+            raw.replace(" ", "-"),
+            key.replace(" ", "-"),
+        ])
+
+    # Preserve order while removing duplicates/empty values.
+    candidates = [c for c in dict.fromkeys([str(c).strip() for c in candidates if str(c).strip()])]
+
     for root in roots:
         for sub in subdirs:
             folder = root / sub
+            if not folder.exists():
+                continue
+
+            # Direct deterministic lookup.
             for stem in candidates:
                 for ext in (".png", ".jpg", ".jpeg", ".webp", ".svg"):
                     path = folder / f"{stem}{ext}"
@@ -26373,9 +27048,22 @@ def _tm69_asset_uri(asset_type: str, *names: object) -> str | None:
                         try:
                             return path.resolve().as_uri()
                         except Exception:
-                            return str(path)
-    return None
+                            return str(path.resolve())
 
+            # Case-insensitive fallback against actual filenames.
+            try:
+                available = {child.stem.lower(): child for child in folder.iterdir() if child.is_file()}
+                for stem in candidates:
+                    match = available.get(stem.lower())
+                    if match and match.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg"}:
+                        try:
+                            return match.resolve().as_uri()
+                        except Exception:
+                            return str(match.resolve())
+            except Exception:
+                pass
+
+    return None
 
 def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
     pid = _tm69_first(ctx, ["player_id_tm", "tm69_player_id_tm", "player_id", "id"], "")
@@ -26388,15 +27076,81 @@ def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
 
 def _tm69_club_mark_html(ctx: dict, club: str) -> str:
     club_id = _tm69_first(ctx, ["current_club_id", "current_club_id_tm", "tm69_current_club_id", "club_id"], "")
-    uri = _tm69_asset_uri("club", club_id, club)
-    initials = html.escape(_tm69_initials(club))
-    if uri:
-        return f"<span class='pi-club-mark'><img src='{html.escape(uri)}' alt='{html.escape(club)}'></span>"
-    return f"<span class='pi-club-mark pi-club-mark-fallback'>{initials}</span>"
+    display_club = format_club_name(club) if "format_club_name" in globals() else str(club or "").strip()
+    uri = _tm69_asset_uri("club", display_club, club, club_id)
+    initials = html.escape(_tm69_initials(display_club or club))
 
+    if uri:
+        try:
+            import base64
+            from pathlib import Path
+            from urllib.parse import urlparse, unquote
+
+            raw_path = uri
+            if str(raw_path).startswith("file:"):
+                parsed = urlparse(str(raw_path))
+                raw_path = unquote(parsed.path)
+                # Windows URI path arrives as /C:/...
+                if re.match(r"^/[A-Za-z]:/", raw_path):
+                    raw_path = raw_path[1:]
+            path = Path(raw_path)
+
+            if path.exists():
+                ext = path.suffix.lower()
+                mime = {
+                    ".svg": "image/svg+xml",
+                    ".png": "image/png",
+                    ".jpg": "image/jpeg",
+                    ".jpeg": "image/jpeg",
+                    ".webp": "image/webp",
+                }.get(ext, "image/png")
+                encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+                safe_alt = html.escape(display_club or str(club or "Club"))
+                return (
+                    "<span class='pi-club-mark' "
+                    "style='display:inline-flex;align-items:center;justify-content:center;"
+                    "width:22px;height:22px;min-width:22px;max-width:22px;min-height:22px;max-height:22px;"
+                    "border-radius:999px;overflow:hidden;background:#ffffff;border:1px solid #dbeafe;vertical-align:middle;"
+                    "line-height:1;box-sizing:border-box;flex:0 0 22px;'>"
+                    f"<img src='data:{mime};base64,{encoded}' alt='{safe_alt}' "
+                    "style='display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;'>"
+                    "</span>"
+                )
+        except Exception:
+            pass
+
+    return (
+        "<span class='pi-club-mark pi-club-mark-fallback' "
+        "style='display:inline-flex;align-items:center;justify-content:center;"
+        "width:22px;height:22px;min-width:22px;max-width:22px;min-height:22px;max-height:22px;"
+        "border-radius:999px;overflow:hidden;background:#eff6ff;border:1px solid #dbeafe;color:#1e3a8a;"
+        "font-size:.58rem;font-weight:950;vertical-align:middle;line-height:1;box-sizing:border-box;flex:0 0 22px;'>"
+        f"{initials}</span>"
+    )
 
 def _tm69_club_chip_html(ctx: dict, club: str) -> str:
     return f"<span class='pi-chip-with-asset'>{_tm69_club_mark_html(ctx, club)}<b>{html.escape(club)}</b></span>"
+
+
+def _tm69_league_chip_html(league: object) -> str:
+    """Render league chip with local competition logo when available."""
+    label = str(league or "").strip()
+    safe_label = html.escape(label)
+
+    try:
+        import base64
+        logo_path = get_league_logo(label)
+        if logo_path and Path(logo_path).exists() and "placeholder" not in str(logo_path):
+            encoded = base64.b64encode(Path(logo_path).read_bytes()).decode("utf-8")
+            return (
+                "<span class='pi-director-chip pi-chip-with-asset pi-league-chip-with-asset'>"
+                f"<img src='data:image/png;base64,{encoded}' class='pi-league-logo-chip'/>"
+                f"<b>{safe_label}</b></span>"
+            )
+    except Exception:
+        pass
+
+    return f"<span class='pi-director-chip'>{safe_label}</span>"
 
 
 def _tm69_nationality_html(country: object) -> str:
@@ -30587,7 +31341,7 @@ def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = Non
     ])
     chips = "".join([
         _tm69_club_chip_html(d["ctx"], d["club"]),
-        f"<span class='pi-director-chip'>{html.escape(str(d['league']))}</span>",
+        _tm69_league_chip_html(d["league"]),
         f"<span class='pi-director-chip'>{_tm69_nationality_html(d['country'])}</span>",
         f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['age_txt'])}</span>",
         f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['primary_pos'])}</span>",
@@ -30631,7 +31385,7 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
     ficha = "".join([
         f"<div class='pi-ficha-item'><span>{html.escape('Nacionalidad' if not is_en else 'Nationality')}</span><b>{_tm69_nationality_html(d['country'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Club')}</span><b>{_tm69_club_mark_html(d['ctx'], d['club'])} {html.escape(d['club'])}</b></div>",
-        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{html.escape(str(d['league']))}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{_tm69_league_chip_html(d['league'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Edad' if not is_en else 'Age')}</span><b>{html.escape(d['age_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
@@ -30853,7 +31607,7 @@ def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = Non
     visual = _tm69_player_avatar_html(d["ctx"], d["player_name"]) or f"<div class='pi-avatar pi-avatar-premium'><span>{html.escape(_tm69_initials(d['player_name']))}</span></div>"
     identity_chips = "".join([
         _tm69_club_chip_html(d["ctx"], d["club"]),
-        f"<span class='pi-director-chip'>{html.escape(str(d['league']))}</span>",
+        _tm69_league_chip_html(d["league"]),
         f"<span class='pi-director-chip'>{_tm69_nationality_html(d['country'])}</span>",
         f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['age_txt'])}</span>",
         f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['primary_pos'])}</span>",
@@ -30909,7 +31663,7 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
     ficha = "".join([
         f"<div class='pi-ficha-item'><span>{html.escape('Nacionalidad' if not is_en else 'Nationality')}</span><b>{_tm69_nationality_html(d['country'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Club')}</span><b>{_tm69_club_mark_html(d['ctx'], d['club'])} {html.escape(d['club'])}</b></div>",
-        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{html.escape(str(d['league']))}</b></div>",
+        f"<div class='pi-ficha-item'><span>{html.escape('Liga' if not is_en else 'League')}</span><b>{_tm69_league_chip_html(d['league'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Edad' if not is_en else 'Age')}</span><b>{html.escape(d['age_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
@@ -36823,6 +37577,86 @@ div[data-testid="column"]:has(.tm69-search-card-anchor) div[data-testid="stSelec
     div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
         margin-top: 0 !important;
     }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.9 final polish — search labels, active context and executive KPI alignment
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Command center spacing after topbar. */
+.tm69-command-center-css-anchor {
+    display: block !important;
+    height: 16px !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-center-css-anchor),
+div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
+    margin-top: 16px !important;
+    margin-bottom: 24px !important;
+}
+
+/* Active context should read as one concise operating summary. */
+.tm69-command-context-summary {
+    line-height: 1.35 !important;
+    white-space: normal !important;
+}
+
+/* Executive hero KPI pills: centered like professional dashboard capsules. */
+.home-hero-kpis {
+    align-items: stretch !important;
+}
+.home-hero-kpi {
+    min-height: 104px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 16px 18px !important;
+    border-radius: 999px !important;
+}
+.home-hero-kpi span,
+.home-hero-kpi b {
+    text-align: center !important;
+    width: 100% !important;
+}
+.home-hero-kpi span {
+    margin-bottom: 8px !important;
+}
+.home-hero-kpi b {
+    line-height: 1.05 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+# =============================================================================
+# TM.6.9A.1 hotfix: constrain league logo size in identity chips
+# =============================================================================
+st.markdown(
+    """
+<style>
+.pi-league-chip-with-asset {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.pi-league-logo-chip {
+    width: 14px !important;
+    height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
 }
 </style>
 """,
