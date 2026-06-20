@@ -10429,8 +10429,54 @@ def _tm69_find_matching_row(df: pd.DataFrame, base_row: pd.Series) -> dict:
     return {}
 
 
+@st.cache_data(show_spinner=False)
+def _tm69_v13b_identity_performance_lookup() -> dict:
+    """Recover TM identity + advanced defensive fields for Player Intelligence."""
+    try:
+        path = ROOT / "data" / "processed" / "player_season_modeling_v13b_advanced.parquet"
+        df = pd.read_parquet(path)
+        keep = [
+            "player_id_tm", "player_name_fbref", "player_name_tm",
+            "date_of_birth", "foot", "height_in_cm",
+            "adv_interceptions", "adv_tackles_won",
+            "interceptions_position_pct", "tackles_won_position_pct",
+            "defensive_activity_index",
+            "position_tm", "sub_position_tm", "position_group", "position"
+        ]
+        keep = [c for c in keep if c in df.columns]
+        df = df[keep].copy()
+
+        if "player_id_tm" in df.columns:
+            df["player_id_tm_key"] = pd.to_numeric(df["player_id_tm"], errors="coerce").astype("Int64")
+
+        # Prefer latest/best row by defensive_activity_index and minutes proxy if available
+        sort_cols = [c for c in ["defensive_activity_index", "interceptions_position_pct", "tackles_won_position_pct"] if c in df.columns]
+        if sort_cols:
+            df = df.sort_values(sort_cols, ascending=[False] * len(sort_cols))
+
+        lookup = {}
+
+        if "player_id_tm_key" in df.columns:
+            by_id = df.dropna(subset=["player_id_tm_key"]).drop_duplicates("player_id_tm_key", keep="first")
+            for _, r in by_id.iterrows():
+                lookup[f"id::{int(r['player_id_tm_key'])}"] = r.to_dict()
+
+        for name_col in ["player_name_fbref", "player_name_tm"]:
+            if name_col in df.columns:
+                tmp = df.dropna(subset=[name_col]).copy()
+                tmp["player_key"] = tmp[name_col].astype(str).map(normalize_search_text)
+                tmp = tmp.drop_duplicates("player_key", keep="first")
+                for _, r in tmp.iterrows():
+                    lookup[f"name::{r['player_key']}"] = r.to_dict()
+
+        return lookup
+    except Exception:
+        return {}
+
+
 def _tm69_merge_context(row: pd.Series) -> dict:
     ctx = dict(row.to_dict())
+
     for _, df in _tm69_load_context_tables().items():
         matched = _tm69_find_matching_row(df, row)
         for key, value in matched.items():
@@ -10438,6 +10484,36 @@ def _tm69_merge_context(row: pd.Series) -> dict:
                 ctx[key] = value
             else:
                 ctx[f"tm69_{key}"] = value
+
+    lookup = _tm69_v13b_identity_performance_lookup()
+    enriched = {}
+
+    try:
+        player_id = ctx.get("player_id_tm")
+        if player_id is not None and pd.notna(player_id):
+            enriched = lookup.get(f"id::{int(float(player_id))}", {})
+    except Exception:
+        enriched = {}
+
+    if not enriched:
+        for name in [
+            ctx.get("player_name_fbref"),
+            ctx.get("player_name_tm"),
+            ctx.get("player_name"),
+            ctx.get("player"),
+            ctx.get("name"),
+        ]:
+            key = normalize_search_text(name or "")
+            if key:
+                enriched = lookup.get(f"name::{key}", {})
+                if enriched:
+                    break
+
+    for key, value in enriched.items():
+        if _tm69_is_valid(value):
+            ctx[key] = value
+            ctx[f"tm69_{key}"] = value
+
     return ctx
 
 
