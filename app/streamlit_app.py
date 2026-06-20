@@ -25015,11 +25015,19 @@ def _visual_mvp_initials(name: str) -> str:
 
 def _visual_mvp_player_name(row) -> str:
     return _visual_mvp_safe_text(
-        row.get("player")
-        or row.get("player_name_tm")
-        or row.get("player_name_tm_snapshot")
-        or row.get("player_name_fbref")
-        or row.get("name"),
+        _visual_mvp_first(
+            row,
+            [
+                "player_name_fbref",
+                "player_name_tm",
+                "player_name_tm_snapshot",
+                "player_name_tm_snapshot.1",
+                "player_name_tm_snapshot.2",
+                "player",
+                "name",
+            ],
+            "Unknown player",
+        ),
         "Unknown player",
     )
 
@@ -25083,6 +25091,25 @@ def _visual_mvp_current_market_value(player_name: object, fallback_value: object
     except Exception:
         pass
     return fallback_value
+
+
+def _visual_mvp_row_market_value(row: object, player_name: object):
+    """Prefer current snapshot value already merged into manifest; fallback to snapshot lookup."""
+    for col in [
+        "current_market_value_eur",
+        "current_market_value_eur_snapshot",
+        "current_market_value_eur_snapshot.1",
+        "current_market_value_eur_snapshot.2",
+    ]:
+        try:
+            value = row.get(col)
+            if value is not None and pd.notna(value):
+                return value
+        except Exception:
+            pass
+
+    return _visual_mvp_current_market_value(player_name, row.get("market_value_eur"))
+
 
 
 def render_visual_mvp_cards(limit: int = 8) -> None:
@@ -25389,7 +25416,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
-        country = _tm69_row_nationality(row, player)
+        country = _tm69_player_nationality_lookup().get(normalize_search_text(player), "") or _tm69_row_nationality(row, player)
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
@@ -25425,7 +25452,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                         <div class="visual-mvp-name">{html.escape(player)}</div>
                         <div class="visual-mvp-meta"><div class="visual-mvp-identity">{meta_identity}</div></div>
                     </div>
-                    <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(_visual_mvp_current_market_value(player, row.get("market_value_eur")))}</div>
+                    <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(_visual_mvp_row_market_value(row, player))}</div>
                 </div>
                 <div class="visual-mvp-kpis">
                     <div class="visual-mvp-kpi"><span>Opportunity</span><b>{_visual_mvp_fmt_score(row.get("opportunity_score"))}</b></div>
