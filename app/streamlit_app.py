@@ -25112,6 +25112,45 @@ def _visual_mvp_row_market_value(row: object, player_name: object):
 
 
 
+@st.cache_data(show_spinner=False)
+def _visual_mvp_current_country_lookup() -> dict:
+    """Return player_name -> country from current snapshot."""
+    try:
+        path = ROOT / "data" / "processed" / "current_player_snapshot.parquet"
+        df = pd.read_parquet(path, columns=["player_name_tm", "country_of_citizenship"])
+        df = df.dropna(subset=["player_name_tm", "country_of_citizenship"]).copy()
+        df["player_key"] = df["player_name_tm"].astype(str).map(normalize_search_text)
+        df = df.drop_duplicates("player_key", keep="last")
+        return dict(zip(df["player_key"], df["country_of_citizenship"].astype(str)))
+    except Exception:
+        return {}
+
+
+def _visual_mvp_row_country(row: object, player_name: object) -> str:
+    key = normalize_search_text(player_name or "")
+    country = _visual_mvp_current_country_lookup().get(key, "")
+    if str(country).strip():
+        return str(country).strip()
+
+    for col in [
+        "country_of_citizenship",
+        "nationality",
+        "country",
+        "citizenship",
+        "nationality_display",
+        "country_display",
+    ]:
+        try:
+            value = row.get(col)
+            if value is not None and pd.notna(value) and str(value).strip():
+                return str(value).strip()
+        except Exception:
+            pass
+
+    return ""
+
+
+
 def render_visual_mvp_cards(limit: int = 8) -> None:
     """Render compact visual MVP cards for the Executive Overview demo layer."""
     df = load_visual_mvp_manifest()
@@ -25416,19 +25455,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
         league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
-        country = (
-            _tm69_player_nationality_lookup().get(normalize_search_text(player), "")
-            or _visual_mvp_first(row, [
-                "country_of_citizenship",
-                "nationality",
-                "country",
-                "citizenship",
-                "tm69_country_of_citizenship",
-                "nationality_display",
-                "country_display",
-            ], "")
-            or _tm69_row_nationality(row, player)
-        )
+        country = _visual_mvp_row_country(row, player)
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
         club_identity = (
             f"<span class='visual-mvp-identity-chip'>{_tm69_club_mark_html(dict(row), club)}<span>{html.escape(club)}</span></span>"
