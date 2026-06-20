@@ -27794,11 +27794,7 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
         </div>
         <div class='pi-pitch-layout'>
             <div class='exec-pitch pi-real-pitch'>{_tm69_position_markers(d['primary_pos'], d['secondary_pos'])}</div>
-            <div class='pi-position-distribution'>
-                <div class='exec-flex-line'><span class='exec-position-pill'><strong>{html.escape('Dominante' if not is_en else 'Dominant')}:</strong>&nbsp;{html.escape(d['primary_pos'])}</span>{secondary_html}</div>
-                {_tm69_position_share_rows(d['primary_pos'], d['secondary_pos'], d['role_conf'])}
             </div>
-        </div>
     </div>
     """
     st.markdown("".join(line.strip() for line in pitch.splitlines()), unsafe_allow_html=True)
@@ -32211,6 +32207,7 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
         f"<div class='pi-ficha-item'><span>{html.escape('Altura' if not is_en else 'Height')}</span><b>{html.escape(d['height_txt'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Pie' if not is_en else 'Foot')}</span><b>{html.escape(d['foot'])}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Nacimiento' if not is_en else 'Born')}</span><b>{html.escape(d['birth_txt'])}</b></div>",
+        f"<div class='pi-ficha-item'><span>DEBUG ID</span><b>{html.escape(str(d['ctx'].get('height_in_cm', 'NO_HEIGHT')))} · {html.escape(str(d['ctx'].get('foot', 'NO_FOOT')))} · {html.escape(str(d['ctx'].get('date_of_birth', 'NO_BIRTH')))}</b></div>",
         f"<div class='pi-ficha-item'><span>{html.escape('Contrato' if not is_en else 'Contract')}</span><b>{html.escape(d['contract_status'])}</b></div>",
     ])
     pitch_html = f"""
@@ -32226,9 +32223,8 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
           <div class='pi-director-bottom'>{_tm69_strength_weakness_html(d['ctx'])}</div>
         </div>
         <div class='pi-pitch-pro-card'>
-          <div class='pi-pitch-caption'><span>{html.escape('' if not is_en else '105 × 68 pitch · 4-3-3 reference')}</span><b>{html.escape('Dominante' if not is_en else 'Dominant')}: {html.escape(d['primary_pos'])}</b></div>
+          <div class='pi-pitch-caption'><span>{html.escape('Mapa posicional' if not is_en else 'Position map')}</span><b>{html.escape(d['primary_pos'])}</b></div>
           <div class='exec-pitch pi-real-pitch'>{_tm69_position_markers(d['primary_pos'], d['secondary_pos'])}</div>
-          <div class='pi-position-distribution'><div class='exec-flex-line'><span class='exec-position-pill'><strong>{html.escape('Dominante' if not is_en else 'Dominant')}:</strong>&nbsp;{html.escape(d['primary_pos'])}</span>{secondary_html}</div>{_tm69_position_share_rows(d['primary_pos'], d['secondary_pos'], d['role_conf'])}</div>
         </div>
       </div>
     </div>
