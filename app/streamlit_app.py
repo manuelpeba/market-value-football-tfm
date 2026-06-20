@@ -25549,7 +25549,6 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                         <div class="visual-mvp-rank">Visual MVP #{rank}</div>
                         <div class="visual-mvp-name">{html.escape(player)}</div>
                         <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
-                        <div class="visual-mvp-nationality-line">{_tm69_nationality_html(country) if str(country).strip() else ""}</div>
                         <div class="visual-mvp-meta"><div class="visual-mvp-identity">{''.join([x for x in [club_identity, league_identity, position_identity] if x])}</div></div>
                     </div>
                     <div class="visual-mvp-value"><span>Value</span>{_visual_mvp_fmt_money(_visual_mvp_row_market_value(row, player))}</div>
@@ -25570,7 +25569,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     html_block = css + "\n".join(cards)
 
     # 8 cards => compact horizontal shelf for the Market Intelligence executive view.
-    components.html(html_block, height=220, scrolling=False)
+    components.html(html_block, height=280, scrolling=False)
 
 
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
