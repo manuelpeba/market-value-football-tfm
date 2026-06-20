@@ -27327,18 +27327,40 @@ def _tm69_country_iso2(country: object) -> str:
     return mapping.get(key, "")
 
 
+def _tm69_flag_uri(country: object) -> str:
+    try:
+        country_raw = str(country or "").strip()
+        iso2 = _tm69_country_iso2(country_raw)
+        if not iso2:
+            return ""
+
+        flag_file = "en.svg" if iso2 in {"gb-eng", "eng"} else f"{iso2}.svg"
+        path = ROOT / "app" / "assets" / "flags" / flag_file
+
+        if not path.exists():
+            return ""
+
+        import base64
+        encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+        return f"data:image/svg+xml;base64,{encoded}"
+    except Exception:
+        return ""
+
+
 def _tm69_nationality_html(country: object) -> str:
     country_raw = str(country or "N/A").strip()
     country_txt = _tm69_localize_country(country_raw)
-    iso2 = _tm69_country_iso2(country_raw)
-    if iso2:
+    uri = _tm69_flag_uri(country_raw)
+
+    if uri:
         return (
             f"<span class='tm69-nationality-chip'>"
-            f"<img class='tm69-flag-img' src='https://flagcdn.com/w20/{html.escape(iso2)}.png' "
+            f"<img class='tm69-flag-img' src='{uri}' "
             f"alt='{html.escape(country_txt)} flag'/>"
             f"<span>{html.escape(country_txt)}</span>"
             f"</span>"
         )
+
     return f"<span class='tm69-nationality-chip'><span>{html.escape(country_txt)}</span></span>"
 
 
