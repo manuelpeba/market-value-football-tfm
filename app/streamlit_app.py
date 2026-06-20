@@ -1729,6 +1729,29 @@ div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
     gap: 4px !important;
 }
 
+
+.visual-mvp-card * {
+    font-weight: 800 !important;
+}
+.visual-mvp-name {
+    font-weight: 900 !important;
+}
+.visual-mvp-rank {
+    font-weight: 850 !important;
+}
+.visual-mvp-kpi span {
+    font-size: .58rem !important;
+    letter-spacing: .02em !important;
+}
+.visual-mvp-kpi b {
+    font-size: .92rem !important;
+}
+.visual-mvp-profile {
+    pointer-events: none !important;
+    opacity: .55 !important;
+    text-decoration: none !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2742,7 +2765,7 @@ st.markdown(
 .quick-guide-tabs span { padding: 4px 8px !important; font-size: .70rem !important; }
 .quick-guide-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap: 8px;
 }
 .quick-guide-grid div {
@@ -3326,7 +3349,7 @@ st.markdown(
 }
 .strategy-glossary-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap: 12px;
     padding: 14px 14px 16px 14px;
     margin: 0;
@@ -3671,7 +3694,7 @@ st.markdown(
 .similarity-rank-kpis span { font-size:.51rem !important; }
 .similarity-rank-footer { font-size:.70rem !important; padding:8px 10px !important; }
 @media (max-width: 1350px) {
-    .similarity-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .similarity-kpi-grid { grid-template-columns: repeat(3, minmax(58px, 1fr)); }
     .similarity-professional-layout { grid-template-columns: 1fr; }
     .similarity-reco-band { grid-template-columns:1fr; }
 }
@@ -3869,7 +3892,7 @@ st.markdown(
 }
 .similarity-recommended-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap: 8px;
 }
 .similarity-recommended-kpi-grid div {
@@ -6876,7 +6899,7 @@ st.markdown(
 .exec-next-actions {
     margin-top: 10px;
     display:grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap:7px;
 }
 .exec-next-action {
@@ -6956,7 +6979,7 @@ st.markdown(
 }
 .exec-comparable-grid {
     display:grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap:9px;
     margin-top:10px;
 }
@@ -24215,7 +24238,7 @@ st.markdown(
 }
 .methodology-grid-3 {
     display:grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap:12px;
     margin-bottom:14px;
 }
@@ -25208,7 +25231,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(155px, 1fr));
+        grid-template-columns: repeat(4, minmax(180px, 1fr));
         gap: 10px;
         padding: 4px 4px 8px 4px;
         box-sizing: border-box;
@@ -25272,6 +25295,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         white-space: nowrap;
     }
     .visual-mvp-card {
+        min-height: 210px;
+        overflow: hidden;
         position: relative;
         background: #ffffff;
         border: 1px solid #dbe3ee;
@@ -25431,7 +25456,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     }
     .visual-mvp-kpis {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(58px, 1fr));
         gap: 6px;
         margin-top: 7px;
     }
@@ -25569,7 +25594,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     html_block = css + "\n".join(cards)
 
     # 8 cards => compact horizontal shelf for the Market Intelligence executive view.
-    components.html(html_block, height=430, scrolling=False)
+    components.html(html_block, height=520, scrolling=False)
 
 
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
@@ -29439,7 +29464,7 @@ st.markdown(
 }
 .snapshot-source-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap: 10px;
     margin: 8px 0 14px 0;
 }
@@ -30471,8 +30496,8 @@ def _render_methodology_closure_css() -> None:
             margin-bottom: 8px !important;
         }
         @media (max-width: 1450px) {
-            .crisp-flow-grid, .score-architecture-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-            .dss-master-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .crisp-flow-grid, .score-architecture-grid { grid-template-columns: repeat(3, minmax(58px, 1fr)); }
+            .dss-master-flow { grid-template-columns: repeat(3, minmax(58px, 1fr)); }
             .crisp-flow-card:not(:last-child)::after, .dss-master-node:not(:last-child)::after { display: none; }
         }
         @media (max-width: 900px) {
@@ -30667,7 +30692,7 @@ st.markdown(
     line-height: 1.15;
 }
 @media (max-width: 1350px) {
-    .scoring-architecture-chain { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .scoring-architecture-chain { grid-template-columns: repeat(3, minmax(58px, 1fr)); }
     .recruitment-workflow-toolbar { border-radius: 16px; align-items: flex-start; flex-direction: column; }
 }
 </style>
@@ -31387,7 +31412,7 @@ st.markdown(
 .exec-trajectory-bridge-card { padding-bottom: 14px !important; }
 .exec-trajectory-bridge {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(58px, 1fr));
     gap: 8px;
     align-items: stretch;
     margin-top: 10px;
