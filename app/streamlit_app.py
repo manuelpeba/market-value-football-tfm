@@ -31690,6 +31690,90 @@ def _tm69_strength_weakness_html(ctx: dict) -> str:
 
 
 # Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
+def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    status = str(d["status"])
+    status_l = status.lower()
+    badge_cls = "price" if ("precio" in status_l or "price" in status_l) else ("buy" if pd.notna(d["priority"]) and d["priority"] >= 75 else "monitor")
+    visual = _tm69_player_avatar_html(d["ctx"], d["player_name"]) or f"<div class='pi-avatar pi-avatar-premium'><span>{html.escape(_tm69_initials(d['player_name']))}</span></div>"
+    identity_chips = "".join([
+        _tm69_club_chip_html(d["ctx"], d["club"]),
+        _tm69_league_chip_html(d["league"]),
+        f"<span class='pi-director-chip'>{_tm69_nationality_html(d['country'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['age_txt'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['primary_pos'])}</span>",
+        f"<span class='pi-director-chip pi-director-chip-neutral'>{html.escape(d['role'])}</span>",
+    ])
+    market_cards = "".join([
+        _tm69_context_kpi("TM Value", d["market_txt"], "Transfermarkt"),
+        _tm69_context_kpi("Fair Value", d["expected_txt"], "Scouting IQ"),
+        _tm69_context_kpi("Gap", d["gap_txt"], d["gap_abs_txt"]),
+        _tm69_context_kpi("Fee", d["transfer_band"], "banda" if not is_en else "band"),
+        _tm69_context_kpi("Opportunity", _tm69_format_score(d["opportunity"]), _tm69_score_label("opportunity", d["opportunity"])),
+        _tm69_context_kpi("Risk", _tm69_format_score(d["risk"]), _tm69_score_label("risk", d["risk"])),
+    ])
+    bullet_items = [
+        ("Future asset", f"Growth {_tm69_format_score(d['growth'])}/100"),
+        ("Tactical fit", f"Fit {_tm69_format_score(d['tactical_fit'])}/100"),
+        ("Market check", f"TM {d['market_txt']} vs IQ {d['expected_txt']}"),
+    ] if is_en else [
+        ("Future asset", f"Growth {_tm69_format_score(d['growth'])}/100"),
+        ("Encaje táctico", f"Fit {_tm69_format_score(d['tactical_fit'])}/100"),
+        ("Validación precio", f"TM {d['market_txt']} vs IQ {d['expected_txt']}"),
+    ]
+    bullets = "".join(f"<div class='pi-director-bullet'><i>✓</i><span><b>{html.escape(k)}</b><br>{html.escape(v)}</span></div>" for k, v in bullet_items)
+    html_block = f"""
+    <div class='pi-product-shell'>
+      <div class='pi-director-hero'>
+        <div class='pi-director-grid'>
+          <div class='pi-director-main'>
+            <div class='pi-visual-stack'>{visual}<div class='pi-visual-clubline'>{_tm69_club_mark_html(d['ctx'], d['club'])}<span>{html.escape(d['club'])}</span></div></div>
+            <div class='pi-director-main-text'>
+              <div class='pi-director-eyebrow'>{html.escape('Decisión de adquisición' if not is_en else 'Acquisition decision')}</div>
+              <div class='pi-director-status pi-director-status-{badge_cls}'>{html.escape(status)}</div>
+              <div class='pi-director-name'>{html.escape(d['player_name'])}</div>
+              <div class='pi-director-meta'>{identity_chips}</div>
+              <div class='pi-director-bullets'>{bullets}</div>
+              <div class='pi-decision-line'>{html.escape(d['action_text'])}</div>
+            </div>
+          </div>
+          <div class='pi-director-score'><span>Scouting IQ</span><b>{html.escape(d['priority_txt'])}</b><small>{html.escape(d['priority_grade'])}</small></div>
+          <div class='pi-director-market'>{market_cards}</div>
+        </div>
+      </div>
+      <div class='pi-director-bottom'><div>{_tm69_why_him_html(d['opportunity'], d['growth'], d['risk'], d['tactical_fit'])}</div><div>{_tm69_acquisition_readiness_html(d['tactical_fit'], d['contract'], d['risk'], d['gap_pct'], d['accessibility'])}</div><div>{_tm69_watchlist_status_html(d['status'], d['gap_pct'], d['risk'], d['contract'])}</div></div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+
+# Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
+
+def render_tm69_market_contract_tab(row: pd.Series, name_col: str | None = None) -> None:
+    d = _tm69_collect_player_context(row, name_col)
+    is_en = d["is_en"]
+    market_cards = "".join([
+        _tm69_context_kpi("Valor actual TM" if not is_en else "Current TM Value", d["market_txt"], "Transfermarkt"),
+        _tm69_context_kpi("Fair Value IQ" if not is_en else "IQ Fair Value", d["expected_txt"], "modelo" if not is_en else "model"),
+        _tm69_context_kpi("Gap actual" if not is_en else "Current Gap", d["gap_txt"], d["gap_abs_txt"]),
+        _tm69_context_kpi("Última valoración" if not is_en else "Last update", d["last_update"]),
+        _tm69_context_kpi("Contrato" if not is_en else "Contract", d["contract_status"], f"{d['contract_years_txt']} años" if not is_en else f"{d['contract_years_txt']} years"),
+        _tm69_context_kpi("Accesibilidad" if not is_en else "Feasibility", d["accessibility"], _tm69_format_score(d["contract"])),
+    ])
+    market_html = f"""
+    <div class='pi-card'>
+        <div class='pi-section-head'><h3>{html.escape('Mercado & Contrato' if not is_en else 'Market & Contract')}</h3><p>{html.escape('Contexto de valor actual, fair value Scouting IQ, trayectoria y fichabilidad.' if not is_en else 'Current value, Scouting IQ fair value, trajectory and feasibility context.')}</p></div>
+        <div class='pi-kpi-grid pi-kpi-grid-6'>{market_cards}</div>
+    </div>
+    {_tm69_market_benchmark_html(d['ctx'], d['player_name'], d['market_value'], d['expected_value'], d['primary_pos'])}
+    {_tm69_career_trajectory_html(d['ctx'], d['market_value'], d['expected_value'], d['growth_1y'])}
+    <div class='pi-market-bottom-grid'>
+        {_tm69_watchlist_status_html(d['status'], d['gap_pct'], d['risk'], d['contract'])}
+        {_tm69_opportunity_context_html(d['ctx'], d['player_name'], d['primary_pos'], d['opportunity'], d['growth'])}
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in market_html.splitlines()), unsafe_allow_html=True)
+
 def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: str | None = None) -> None:
     d = _tm69_collect_player_context(row, name_col)
     is_en = d["is_en"]
