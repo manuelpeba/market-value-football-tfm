@@ -1,0 +1,31 @@
+﻿asset_rank,player_name,club,league,position,age,market_value_eur,slug,image_file,visual_asset_priority_score,appearances,sources
+1,Yassin Belkhdim,Angers SCO,Ligue 1,MID,24.11,7000000.0,yassin_belkhdim,yassin_belkhdim.webp,538.5416006666214,3,opportunity | portfolio | recruitment_contract
+2,Lasse Rosenboom,Holstein Kiel,Bundesliga,MID,23.91,1200000.0,lasse_rosenboom,lasse_rosenboom.webp,532.6438031228633,2,opportunity | portfolio
+3,Mario Martín,Getafe CF,LaLiga,MID,22.03,10000000.0,mario_martin,mario_martin.webp,453.3093450093743,3,opportunity | portfolio | recruitment_contract
+4,Jamie Lawrence,WSG Tirol,Austrian Bundesliga,DEF,23.12,600000.0,jamie_lawrence,jamie_lawrence.webp,388.6,3,contract | opportunity | recruitment_contract
+5,Jesús Rodríguez,Como 1907,Serie A,MID,20.09,30000000.0,jesus_rodriguez,jesus_rodriguez.webp,303.39067719130065,2,opportunity | portfolio
+6,Christantus Uche,Crystal Palace,Premier League,MID,22.56,15000000.0,christantus_uche,christantus_uche.webp,288.56473180720167,2,opportunity | recruitment_contract
+7,Mikel Jauregizar,Athletic Bilbao,LaLiga,MID,22.34,35000000.0,mikel_jauregizar,mikel_jauregizar.webp,286.37977476714855,2,opportunity | portfolio
+8,Javi Rodríguez,Celta de Vigo,LaLiga,DEF,22.46,15000000.0,javi_rodriguez,javi_rodriguez.webp,283.90438697126103,2,opportunity | recruitment_contract
+9,Saba Goglichidze,Udinese Calcio,Serie A,DEF,21.49,4500000.0,saba_goglichidze,saba_goglichidze.webp,280.57186048797456,2,opportunity | recruitment_contract
+10,Luca Marianucci,SSC Napoli,Serie A,DEF,21.42,7500000.0,luca_marianucci,luca_marianucci.webp,277.364359571866,2,opportunity | recruitment_contract
+11,Rabby Nzingoula,RC Strasbourg Alsace,Ligue 1,MID,20.05,2000000.0,rabby_nzingoula,rabby_nzingoula.webp,273.208683844458,2,opportunity | recruitment_contract
+12,Carlos Romero,RCD Espanyol Barcelona,LaLiga,DEF,24.38,25000000.0,carlos_romero,carlos_romero.webp,268.9759149615943,2,opportunity | recruitment_contract
+13,Andrés García,Aston Villa,Premier League,DEF,22.84,7000000.0,andres_garcia,andres_garcia.webp,268.33156104493315,1,portfolio
+14,Kévin Danois,AJ Auxerre,Ligue 1,MID,21.74,12000000.0,kevin_danois,kevin_danois.webp,264.03755951662856,2,opportunity | recruitment_contract
+15,Mark O'Mahony,Reading FC,Premier League,ATT,20.87,450000.0,mark_o_mahony,mark_o_mahony.webp,262.717,2,contract | recruitment_contract
+16,Gerard Martín,FC Barcelona,LaLiga,DEF,24.05,25000000.0,gerard_martin,gerard_martin.webp,260.5208351189657,2,opportunity | recruitment_contract
+17,Erick Nunes,Cercle Brugge,Belgian Pro League,MID,22.03,850000.0,erick_nunes,erick_nunes.webp,257.64817198083017,2,opportunity | recruitment_contract
+18,Junior Kadile,Almere City FC,Eredivisie,MID,23.0,600000.0,junior_kadile,junior_kadile.webp,256.6,2,contract | recruitment_contract
+19,Hugo Rincón,Girona FC,LaLiga,DEF,23.13,3500000.0,hugo_rincon,hugo_rincon.webp,248.6,2,contract | recruitment_contract
+20,Jakob Breum,Go Ahead Eagles,Eredivisie,MID,22.04,4500000.0,jakob_breum,jakob_breum.webp,241.64254690426472,2,opportunity | recruitment_contract
+21,James Abankwah,Watford FC,Premier League,DEF,21.88,1500000.0,james_abankwah,james_abankwah.webp,241.6,2,contract | recruitment_contract
+22,Óscar Aranda,FC Famalicão,Liga Portugal,MID,23.64,4000000.0,oscar_aranda,oscar_aranda.webp,241.6,2,contract | recruitment_contract
+23,Bas Van den Eynden,Beerschot VA,Belgian Pro League,DEF,23.95,700000.0,bas_van_den_eynden,bas_van_den_eynden.webp,239.853619535223,2,opportunity | recruitment_contract
+24,Emilio Kehrer,Willem II Tilburg,Eredivisie,MID,23.74,400000.0,emilio_kehrer,emilio_kehrer.webp,232.24468237717093,2,portfolio | recruitment_contract
+25,David López,RCD Mallorca,LaLiga,DEF,23.11,1200000.0,david_lopez,david_lopez.webp,227.3449405425398,2,opportunity | recruitment_contract
+26,Jeremy Sarmiento,US Cremonese,Serie A,MID,23.52,5000000.0,jeremy_sarmiento,jeremy_sarmiento.webp,147.717,1,contract
+27,Ilias Akhomach,Villarreal CF,LaLiga,MID,21.66,12000000.0,ilias_akhomach,ilias_akhomach.webp,145.6,1,contract
+28,Matteo Prati,Cagliari Calcio,Serie A,MID,21.99,6000000.0,matteo_prati,matteo_prati.webp,143.6,1,contract
+29,Aster Vranckx,US Sassuolo,Serie A,MID,23.22,7000000.0,aster_vranckx,aster_vranckx.webp,142.6,1,contract
+30,Endrick,Olympique Lyon,Ligue 1,ATT,19.68,35000000.0,endrick,endrick.webp,141.6,1,contract
