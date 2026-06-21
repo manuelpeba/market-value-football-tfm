@@ -25616,6 +25616,83 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
         max-width: 42px;
     }
     .visual-mvp-value span { font-size: .48rem; margin-bottom: 2px; }
+
+    /* TM.6.9.2 -> TM.6.9.3 MVP design hotfix */
+    .visual-mvp-identity-chip,
+    .visual-mvp-position-chip,
+    .visual-mvp-identity .pi-director-chip,
+    .visual-mvp-identity .pi-chip-with-asset,
+    .visual-mvp-identity .tm69-nationality-chip,
+    .visual-mvp-identity .pi-league-logo-chip {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        width: auto !important;
+        height: 24px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 4px 7px !important;
+        box-sizing: border-box !important;
+        line-height: 1 !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+        vertical-align: middle !important;
+        font-weight: 500 !important;
+    }
+
+    .visual-mvp-identity .pi-club-mark {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        flex: 0 0 16px !important;
+    }
+
+    .visual-mvp-identity .pi-league-logo-chip img,
+    .visual-mvp-identity .pi-club-mark img,
+    .visual-mvp-identity .tm69-flag-img {
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        max-width: 16px !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        margin-right: 2px !important;
+    }
+
+    .visual-mvp-identity .pi-league-logo-chip span,
+    .visual-mvp-identity .pi-league-logo-chip b,
+    .visual-mvp-identity-chip span,
+    .visual-mvp-position-chip span,
+    .visual-mvp-identity .tm69-nationality-chip span,
+    .visual-mvp-identity .tm69-nationality-chip b {
+        min-width: 0 !important;
+        max-width: 92px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-weight: 500 !important;
+        line-height: 1 !important;
+    }
+
+    .visual-mvp-name {
+        font-weight: 900 !important;
+    }
+
+    .visual-mvp-rank,
+    .visual-mvp-value,
+    .visual-mvp-value span,
+    .visual-mvp-kpi span,
+    .visual-mvp-kpi b,
+    .visual-mvp-priority,
+    .visual-mvp-profile {
+        font-weight: 500 !important;
+    }
+
+    .visual-mvp-profile {
+        text-decoration: none !important;
+        cursor: pointer !important;
+    }
     @media (max-width: 1450px) {
         .visual-mvp-grid { grid-template-columns: repeat(4, minmax(132px, 1fr)); }
     }
@@ -25677,7 +25754,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
                 </div>
                 <div class="visual-mvp-footer">
                     <div class="visual-mvp-priority">{html.escape('High Priority' if globals().get('LANG') == 'EN' else 'Alta prioridad')}</div>
-                    <a class="visual-mvp-profile" href="{html.escape(profile_href)}" target="_parent">{html.escape(profile_label)} →</a>
+                    <a class="visual-mvp-profile" href="{html.escape(profile_href)}" target="_top">{html.escape(profile_label)} →</a>
                 </div>
             </div>
             """
@@ -25801,7 +25878,7 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
 
     render_opportunity_risk_top5_vertical(source_df, "Top 5 opportunities" if LANG == "EN" else "Top 5 oportunidades", "Initial executive review priority" if LANG == "EN" else "Prioridad inicial para revisión ejecutiva")
 
-    with st.expander("🎯 Visual MVP Targets", expanded=False):
+    with st.expander("Visual MVP", expanded=False):
         st.caption(
             "Top opportunities generated from Opportunity Score, Contract Intelligence and Recruitment Intelligence."
             if LANG == "EN"
