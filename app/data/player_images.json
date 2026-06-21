@@ -1,6 +1,35 @@
 {
-  "version": 1,
+  "version": 2,
   "last_updated": "2026-06-21",
   "default_image": "defaults/default_player.webp",
-  "players": {}
+  "players": {
+    "yassin_belkhdim": "players/yassin_belkhdim.webp",
+    "lasse_rosenboom": "players/lasse_rosenboom.webp",
+    "andres_garcia": "players/andres_garcia.webp",
+    "jesus_rodriguez": "players/jesus_rodriguez.webp",
+    "bilal_nadir": "players/bilal_nadir.webp",
+    "mikel_jauregizar": "players/mikel_jauregizar.webp",
+    "kevin_danois": "players/kevin_danois.webp",
+    "dominik_javorcek": "players/dominik_javorcek.webp",
+    "james_abankwah": "players/james_abankwah.webp",
+    "abu_kamara": "players/abu_kamara.webp",
+    "myles_peart_harris": "players/myles_peart_harris.webp",
+    "alessandro_bianco": "players/alessandro_bianco.webp",
+    "javi_rodriguez": "players/javi_rodriguez.webp",
+    "saba_goglichidze": "players/saba_goglichidze.webp",
+    "rabby_nzingoula": "players/rabby_nzingoula.webp",
+    "gerard_martin": "players/gerard_martin.webp",
+    "williot_swedberg": "players/williot_swedberg.webp",
+    "louis_mouton": "players/louis_mouton.webp",
+    "jakob_breum": "players/jakob_breum.webp",
+    "david_lopez": "players/david_lopez.webp",
+    "clement_akpa": "players/clement_akpa.webp",
+    "alex_padilla": "players/alex_padilla.webp",
+    "yago_santiago": "players/yago_santiago.webp",
+    "nikolas_polster": "players/nikolas_polster.webp",
+    "alberto_costa": "players/alberto_costa.webp",
+    "wouter_prins": "players/wouter_prins.webp",
+    "pablo_marin": "players/pablo_marin.webp",
+    "justin_omoregie": "players/justin_omoregie.webp"
+  }
 }

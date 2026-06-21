@@ -1,0 +1,61 @@
+﻿asset_rank,player_name,club,league,position,age,market_value_eur,slug,image_file,visual_asset_priority_score,appearances,sources
+1,Yassin Belkhdim,Angers SCO,Ligue 1,MID,24.11,7000000.0,yassin_belkhdim,yassin_belkhdim.webp,1138.5416006666214,3,opportunity | portfolio | recruitment_contract
+2,Lasse Rosenboom,Holstein Kiel,Bundesliga,MID,23.91,1200000.0,lasse_rosenboom,lasse_rosenboom.webp,1072.6438031228633,2,opportunity | portfolio
+3,Mario Martín,Getafe CF,LaLiga,MID,22.03,10000000.0,mario_martin,mario_martin.webp,1052.3093450093743,3,opportunity | portfolio | recruitment_contract
+4,Andrés García,Aston Villa,Premier League,DEF,22.84,7000000.0,andres_garcia,andres_garcia.webp,894.3315610449331,2,opportunity | portfolio
+5,Jesús Rodríguez,Como 1907,Serie A,MID,20.09,30000000.0,jesus_rodriguez,jesus_rodriguez.webp,758.3906771913007,2,opportunity | portfolio
+6,Adrian Blake,FC Utrecht,Eredivisie,MID,20.65,2000000.0,adrian_blake,adrian_blake.webp,723.1994388863208,3,opportunity | portfolio | recruitment_contract
+7,Bilal Nadir,Olympique Marseille,Ligue 1,MID,22.05,9000000.0,bilal_nadir,bilal_nadir.webp,693.2244296112247,4,contract | opportunity | portfolio | recruitment_contract
+8,Yan Diomande,RB Leipzig,Bundesliga,MID,19.35,75000000.0,yan_diomande,yan_diomande.webp,632.230173752924,2,opportunity | portfolio
+9,Emilio Kehrer,Willem II Tilburg,Eredivisie,MID,23.74,400000.0,emilio_kehrer,emilio_kehrer.webp,595.244682377171,4,contract | opportunity | portfolio | recruitment_contract
+10,Mikel Jauregizar,Athletic Bilbao,LaLiga,MID,22.34,35000000.0,mikel_jauregizar,mikel_jauregizar.webp,579.3797747671485,3,opportunity | portfolio | recruitment_contract
+11,Jamie Lawrence,WSG Tirol,Austrian Bundesliga,DEF,23.12,600000.0,jamie_lawrence,jamie_lawrence.webp,568.6,3,contract | opportunity | recruitment_contract
+12,Kévin Danois,AJ Auxerre,Ligue 1,MID,21.74,12000000.0,kevin_danois,kevin_danois.webp,557.1136642713998,3,opportunity | portfolio | recruitment_contract
+13,Dominik Javorček,Holstein Kiel,Bundesliga,DEF,22.132785763175907,550000.0,dominik_javorcek,dominik_javorcek.webp,546.2895769807272,2,opportunity | portfolio
+14,Junior Kadile,Almere City FC,Eredivisie,MID,23.0,600000.0,junior_kadile,junior_kadile.webp,526.6,3,contract | opportunity | recruitment_contract
+15,Hugo Rincón,Girona FC,LaLiga,DEF,23.13,3500000.0,hugo_rincon,hugo_rincon.webp,523.6,3,contract | opportunity | recruitment_contract
+16,Luca Marianucci,SSC Napoli,Serie A,DEF,21.42,7500000.0,luca_marianucci,luca_marianucci.webp,523.1197825942996,3,opportunity | portfolio | recruitment_contract
+17,Carlos Romero,RCD Espanyol Barcelona,LaLiga,DEF,24.38,25000000.0,carlos_romero,carlos_romero.webp,521.1234422354256,3,opportunity | portfolio | recruitment_contract
+18,James Abankwah,Watford FC,Premier League,DEF,21.88,1500000.0,james_abankwah,james_abankwah.webp,503.6,3,contract | opportunity | recruitment_contract
+19,Óscar Aranda,FC Famalicão,Liga Portugal,MID,23.64,4000000.0,oscar_aranda,oscar_aranda.webp,494.6,3,contract | opportunity | recruitment_contract
+20,Abu Kamara,Getafe CF,LaLiga,MID,22.65,3000000.0,abu_kamara,abu_kamara.webp,465.6,3,contract | opportunity | recruitment_contract
+21,Myles Peart-Harris,Brentford FC,Premier League,MID,23.23,900000.0,myles_peart_harris,myles_peart_harris.webp,463.6,3,contract | opportunity | recruitment_contract
+22,Marwan Al-Sahafi,Royal Antwerp FC,Belgian Pro League,MID,21.81,1000000.0,marwan_al_sahafi,marwan_al_sahafi.webp,461.6,3,contract | opportunity | recruitment_contract
+23,Léandre Kuavita,Standard Liège,Belgian Pro League,MID,21.78,1000000.0,leandre_kuavita,leandre_kuavita.webp,458.6,3,contract | opportunity | recruitment_contract
+24,Antoine Hainaut,Venezia FC,Serie A,DEF,23.81,1700000.0,antoine_hainaut,antoine_hainaut.webp,457.01741933541837,3,opportunity | portfolio | recruitment_contract
+25,Pau Navarro,Villarreal CF,LaLiga,DEF,20.89,10000000.0,pau_navarro,pau_navarro.webp,430.1853573044826,2,opportunity | portfolio
+26,Alexander Briedl,FC Blau-Weiss Linz,Austrian Bundesliga,MID,23.89,600000.0,alexander_briedl,alexander_briedl.webp,426.6,3,contract | opportunity | recruitment_contract
+27,Alessandro Bianco,Monza,Serie A,MID,22.21492128678987,5000000.0,alessandro_bianco,alessandro_bianco.webp,421.6,3,contract | opportunity | recruitment_contract
+28,Johan Manzambi,SC Freiburg,Bundesliga,MID,20.43,35000000.0,johan_manzambi,johan_manzambi.webp,415.2098551199639,2,opportunity | portfolio
+29,Christantus Uche,Crystal Palace,Premier League,MID,22.56,15000000.0,christantus_uche,christantus_uche.webp,408.56473180720167,2,opportunity | recruitment_contract
+30,Javi Rodríguez,Celta de Vigo,LaLiga,DEF,22.46,15000000.0,javi_rodriguez,javi_rodriguez.webp,403.90438697126103,2,opportunity | recruitment_contract
+31,Saba Goglichidze,Udinese Calcio,Serie A,DEF,21.49,4500000.0,saba_goglichidze,saba_goglichidze.webp,400.57186048797456,2,opportunity | recruitment_contract
+32,Rabby Nzingoula,RC Strasbourg Alsace,Ligue 1,MID,20.05,2000000.0,rabby_nzingoula,rabby_nzingoula.webp,393.208683844458,2,opportunity | recruitment_contract
+33,Mark O'Mahony,Reading FC,Premier League,ATT,20.87,450000.0,mark_o_mahony,mark_o_mahony.webp,382.717,2,contract | recruitment_contract
+34,Gerard Martín,FC Barcelona,LaLiga,DEF,24.05,25000000.0,gerard_martin,gerard_martin.webp,380.5208351189657,2,opportunity | recruitment_contract
+35,Erick Nunes,Cercle Brugge,Belgian Pro League,MID,22.03,850000.0,erick_nunes,erick_nunes.webp,377.64817198083017,2,opportunity | recruitment_contract
+36,Williot Swedberg,Celta de Vigo,LaLiga,MID,22.12,15000000.0,williot_swedberg,williot_swedberg.webp,372.2304249111799,2,opportunity | portfolio
+37,Louis Mouton,Angers SCO,Ligue 1,MID,23.81,4500000.0,louis_mouton,louis_mouton.webp,371.00134049696396,3,opportunity | portfolio | recruitment_contract
+38,Jakob Breum,Go Ahead Eagles,Eredivisie,MID,22.04,4500000.0,jakob_breum,jakob_breum.webp,361.6425469042647,2,opportunity | recruitment_contract
+39,Bas Van den Eynden,Beerschot VA,Belgian Pro League,DEF,23.95,700000.0,bas_van_den_eynden,bas_van_den_eynden.webp,359.853619535223,2,opportunity | recruitment_contract
+40,Lukas Ullrich,Borussia Mönchengladbach,Bundesliga,DEF,21.76,7000000.0,lukas_ullrich,lukas_ullrich.webp,353.19213791768743,2,opportunity | recruitment_contract
+41,David López,RCD Mallorca,LaLiga,DEF,23.11,1200000.0,david_lopez,david_lopez.webp,347.3449405425398,2,opportunity | recruitment_contract
+42,Emmanuel Biumla,Angers SCO,Ligue 1,DEF,20.61,3000000.0,emmanuel_biumla,emmanuel_biumla.webp,342.599822355575,2,opportunity | recruitment_contract
+43,Clément Akpa,AJ Auxerre,Ligue 1,DEF,24.34,9000000.0,clement_akpa,clement_akpa.webp,338.57494575160365,2,opportunity | recruitment_contract
+44,Tika de Jonge,FC Groningen,Eredivisie,MID,22.73,1300000.0,tika_de_jonge,tika_de_jonge.webp,336.5695328127441,2,opportunity | recruitment_contract
+45,Kévin Boma,GD Estoril Praia,Liga Portugal,DEF,23.33,6000000.0,kevin_boma,kevin_boma.webp,333.56201671056243,2,opportunity | recruitment_contract
+46,Reda Belahyane,SS Lazio,Serie A,MID,21.56,8500000.0,reda_belahyane,reda_belahyane.webp,329.9467192171091,2,opportunity | recruitment_contract
+47,Hugo Álvarez,Celta de Vigo,LaLiga,MID,22.45,8000000.0,hugo_alvarez,hugo_alvarez.webp,309.3052946269897,2,opportunity | recruitment_contract
+48,Álex Padilla,Athletic Bilbao,LaLiga,GK,22.28,3000000.0,alex_padilla,alex_padilla.webp,302.68759245194013,2,opportunity | recruitment_contract
+49,Joel Silva,CD Nacional,Liga Portugal,MID,22.85,400000.0,joel_silva,joel_silva.webp,299.6562621290526,2,opportunity | recruitment_contract
+50,Mohamed Berte,FCV Dender EH,Belgian Pro League,ATT,23.71,800000.0,mohamed_berte,mohamed_berte.webp,297.87943162717994,2,opportunity | recruitment_contract
+51,Arthur Atta,Udinese Calcio,Serie A,MID,22.94,15000000.0,arthur_atta,arthur_atta.webp,296.1387490424334,2,opportunity | portfolio
+52,Cezary Miszta,Rio Ave FC,Liga Portugal,GK,24.13,3000000.0,cezary_miszta,cezary_miszta.webp,291.8571444669009,2,opportunity | recruitment_contract
+53,Yago Santiago,Elche CF,LaLiga,MID,22.92,1000000.0,yago_santiago,yago_santiago.webp,288.8485591020173,2,opportunity | recruitment_contract
+54,Nikolas Polster,Wolfsberger AC,Austrian Bundesliga,GK,23.67,2000000.0,nikolas_polster,nikolas_polster.webp,286.8397380193529,2,opportunity | recruitment_contract
+55,Alberto Costa,FC Porto,Liga Portugal,DEF,22.22,15000000.0,alberto_costa,alberto_costa.webp,280.1306991372405,2,opportunity | portfolio
+56,Wouter Prins,FC Groningen,Eredivisie,DEF,21.82,600000.0,wouter_prins,wouter_prins.webp,280.09033439470704,2,opportunity | recruitment_contract
+57,Melayro Bogarde,LASK,Austrian Bundesliga,DEF,23.78,1500000.0,melayro_bogarde,melayro_bogarde.webp,269.95465731348014,2,opportunity | recruitment_contract
+58,Brayann Pereira,NEC Nijmegen,Eredivisie,DEF,22.54,1000000.0,brayann_pereira,brayann_pereira.webp,267.71888163929935,2,opportunity | recruitment_contract
+59,Pablo Marín,Real Sociedad,LaLiga,MID,22.44,8000000.0,pablo_marin,pablo_marin.webp,262.9893263006236,2,opportunity | portfolio
+60,Justin Omoregie,Red Bull Salzburg,Austrian Bundesliga,DEF,22.25,500000.0,justin_omoregie,justin_omoregie.webp,249.6037102194828,2,opportunity | recruitment_contract
