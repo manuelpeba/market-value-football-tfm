@@ -8636,14 +8636,23 @@ def render_role_similar_players_block(player_row: pd.Series, universe_df: pd.Dat
         subtitle = 'Role-compatible fallback: same primary role and, when possible, same position taxonomy.' if LANG == 'EN' else 'Fallback táctico: mismo rol primario y, cuando es posible, misma taxonomía posicional.'
 
     if not similar_items:
-        primary_role = safe_get(player_row, "primary_role", "N/A")
-        taxonomy = safe_get(player_row, "position_taxonomy", "N/A")
+        primary_role = safe_get(player_row, "primary_role", "")
+        taxonomy = safe_get(player_row, "position_taxonomy", "")
+        context_parts = [
+            str(x).strip()
+            for x in [primary_role, taxonomy]
+            if str(x).strip() and str(x).strip().lower() not in {"nan", "none", "n/a", "na"}
+        ]
+        context_txt = " · ".join(context_parts)
+        context_html = (
+            f"<b>{html.escape('Role context' if LANG == 'EN' else 'Contexto de rol')}</b><br>{html.escape(context_txt)}<br>"
+            if context_txt else ""
+        )
         st.markdown(
             f"<div class='top5-horizontal-card role-similar-empty-card'><div class='panel-title'>{html.escape(title)}</div>"
             f"<div class='panel-subtitle'>{html.escape('No role-compatible players are available under the active filters.' if LANG == 'EN' else 'No hay comparables tácticamente compatibles bajo los filtros activos.')}</div>"
             f"<div class='role-similar-empty'>"
-            f"<b>{html.escape('Role context' if LANG == 'EN' else 'Contexto de rol')}</b><br>"
-            f"{html.escape(str(primary_role))} · {html.escape(str(taxonomy))}<br>"
+            f"{context_html}"
             f"<span>{html.escape('Relax the role, age or minutes filters to recover comparables.' if LANG == 'EN' else 'Relaja filtros de rol, edad o minutos para recuperar comparables.')}</span>"
             f"</div></div>",
             unsafe_allow_html=True,
@@ -38561,6 +38570,80 @@ st.markdown(
     padding-top: 2px !important;
 }
 .visual-mvp-profile {
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+.visual-mvp-profile:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9.2 visual polish: MVP intensity + negative evidence chips
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Visual MVP: less aggressive, closer to the rest of the product */
+.visual-mvp-card,
+.visual-mvp-card * {
+    font-weight: 750 !important;
+}
+.visual-mvp-name {
+    font-weight: 850 !important;
+}
+.visual-mvp-rank,
+.visual-mvp-value,
+.visual-mvp-kpi b {
+    font-weight: 850 !important;
+}
+.visual-mvp-kpi span {
+    font-size: .56rem !important;
+    letter-spacing: .015em !important;
+    white-space: normal !important;
+    line-height: 1.05 !important;
+}
+.visual-mvp-kpi {
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+.visual-mvp-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+/* Evidence Drivers: negative signals must be red, not green */
+.pi-driver-minus span,
+.pi-driver-minus div span,
+.pi-driver-minus .pi-driver-chip {
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border-color: #fecaca !important;
+}
+.pi-driver-minus i {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.pi-driver-minus {
+    border-color: #fecaca !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9.2 hotfix: restore Visual MVP profile CTA interactivity
+# =============================================================================
+st.markdown(
+    """
+<style>
+.visual-mvp-profile {
+    pointer-events: auto !important;
+    opacity: 1 !important;
     text-decoration: none !important;
     cursor: pointer !important;
 }
