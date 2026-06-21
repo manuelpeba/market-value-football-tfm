@@ -1,0 +1,51 @@
+﻿rank_market_value,player_name,slug,club,league,position,age,market_value_eur,market_value_m,in_manifest,manifest_path,manifest_file_exists,physical_file_exists,physical_file,image_status
+1,Kylian Mbappé,kylian_mbappe,,LaLiga,,,200000000,200.0,False,,False,True,app\assets\players\kylian_mbappe.webp,OK
+2,Lamine Yamal,lamine_yamal,,LaLiga,,,200000000,200.0,False,,False,True,app\assets\players\lamine_yamal.webp,OK
+3,Erling Haaland,erling_haaland,,Premier League,,,200000000,200.0,False,,False,True,app\assets\players\erling_haaland.webp,OK
+4,Pedri,pedri,,LaLiga,,,150000000,150.0,False,,False,True,app\assets\players\pedri.webp,OK
+5,Vinicius Junior,vinicius_junior,,LaLiga,,,150000000,150.0,False,,False,True,app\assets\players\vinicius_junior.webp,OK
+6,Michael Olise,michael_olise,,Bundesliga,,,140000000,140.0,False,,False,True,app\assets\players\michael_olise.webp,OK
+7,Jude Bellingham,jude_bellingham,,LaLiga,,,140000000,140.0,False,,False,True,app\assets\players\jude_bellingham.webp,OK
+8,Federico Valverde,federico_valverde,,LaLiga,,,120000000,120.0,False,,False,True,app\assets\players\federico_valverde.webp,OK
+9,Bukayo Saka,bukayo_saka,,Premier League,,,120000000,120.0,False,,False,True,app\assets\players\bukayo_saka.webp,OK
+10,Declan Rice,declan_rice,,Premier League,,,120000000,120.0,False,,False,True,app\assets\players\declan_rice.webp,OK
+11,Jamal Musiala,jamal_musiala,,Bundesliga,,,120000000,120.0,False,,False,True,app\assets\players\jamal_musiala.webp,OK
+12,João Neves,joao_neves,,Ligue 1,,,110000000,110.0,False,,False,True,app\assets\players\joao_neves.webp,OK
+13,Moisés Caicedo,moises_caicedo,,Premier League,,,110000000,110.0,False,,False,True,app\assets\players\moises_caicedo.webp,OK
+14,Florian Wirtz,florian_wirtz,,Premier League,,,110000000,110.0,False,,False,True,app\assets\players\florian_wirtz.webp,OK
+15,Cole Palmer,cole_palmer,,Premier League,,,110000000,110.0,False,,False,True,app\assets\players\cole_palmer.webp,OK
+16,Vitinha,vitinha,,Ligue 1,,,110000000,110.0,False,,False,True,app\assets\players\vitinha.webp,OK
+17,Fermín López,fermin_lopez,,LaLiga,,,100000000,100.0,False,,False,True,app\assets\players\fermin_lopez.webp,OK
+18,Alexander Isak,alexander_isak,,Premier League,,,100000000,100.0,False,,False,True,app\assets\players\alexander_isak.webp,OK
+19,Dominik Szoboszlai,dominik_szoboszlai,,Premier League,,,100000000,100.0,False,,False,True,app\assets\players\dominik_szoboszlai.webp,OK
+20,Ousmane Dembélé,ousmane_dembele,,Ligue 1,,,100000000,100.0,False,,False,True,app\assets\players\ousmane_dembele.webp,OK
+21,Khvicha Kvaratskhelia,khvicha_kvaratskhelia,,Ligue 1,,,90000000,90.0,False,,False,True,app\assets\players\khvicha_kvaratskhelia.webp,OK
+22,Désiré Doué,desire_doue,,Ligue 1,,,90000000,90.0,False,,False,True,app\assets\players\desire_doue.webp,OK
+23,Ryan Gravenberch,ryan_gravenberch,,Premier League,,,90000000,90.0,False,,False,True,app\assets\players\ryan_gravenberch.webp,OK
+24,William Saliba,william_saliba,,Premier League,,,90000000,90.0,False,,False,True,app\assets\players\william_saliba.webp,OK
+25,Hugo Ekitiké,hugo_ekitike,,Premier League,,,90000000,90.0,False,,False,True,app\assets\players\hugo_ekitike.webp,OK
+26,Arda Güler,arda_guler,,LaLiga,,,90000000,90.0,False,,False,True,app\assets\players\arda_guler.webp,OK
+27,Julián Alvarez,julian_alvarez,,LaLiga,,,90000000,90.0,False,,False,True,app\assets\players\julian_alvarez.webp,OK
+28,Enzo Fernández,enzo_fernandez,,Premier League,,,90000000,90.0,False,,False,True,app\assets\players\enzo_fernandez.webp,OK
+29,Lautaro Martínez,lautaro_martinez,,Serie A,,,85000000,85.0,False,,False,True,app\assets\players\lautaro_martinez.webp,OK
+30,Sandro Tonali,sandro_tonali,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\sandro_tonali.webp,OK
+31,Phil Foden,phil_foden,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\phil_foden.webp,OK
+32,Bryan Mbeumo,bryan_mbeumo,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\bryan_mbeumo.webp,OK
+33,Morgan Rogers,morgan_rogers,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\morgan_rogers.webp,OK
+34,Alexis Mac Allister,alexis_mac_allister,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\alexis_mac_allister.webp,OK
+35,Martín Zubimendi,martin_zubimendi,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\martin_zubimendi.webp,OK
+36,Estêvão,estevao,,Premier League,,,80000000,80.0,False,,False,True,app\assets\players\estevao.webp,OK
+37,Raphinha,raphinha,,LaLiga,,,80000000,80.0,False,,False,True,app\assets\players\raphinha.webp,OK
+38,Pau Cubarsí,pau_cubarsi,,LaLiga,,,80000000,80.0,False,,False,True,app\assets\players\pau_cubarsi.webp,OK
+39,Achraf Hakimi,achraf_hakimi,,Ligue 1,,,80000000,80.0,False,,False,True,app\assets\players\achraf_hakimi.webp,OK
+40,Gabriel,gabriel,,Premier League,,,75000000,75.0,False,,False,True,app\assets\players\gabriel.webp,OK
+41,Bruno Guimarães,bruno_guimaraes,,Premier League,,,75000000,75.0,False,,False,True,app\assets\players\bruno_guimaraes.webp,OK
+42,Antoine Semenyo,antoine_semenyo,,Premier League,,,75000000,75.0,False,,False,True,app\assets\players\antoine_semenyo.webp,OK
+43,Aurélien Tchouaméni,aurelien_tchouameni,,LaLiga,,,75000000,75.0,False,,False,True,app\assets\players\aurelien_tchouameni.webp,OK
+44,Nuno Mendes,nuno_mendes,,Ligue 1,,,75000000,75.0,False,,False,True,app\assets\players\nuno_mendes.webp,OK
+45,Aleksandar Pavlovic,aleksandar_pavlovic,,Bundesliga,,,75000000,75.0,False,,False,True,app\assets\players\aleksandar_pavlovic.webp,OK
+46,João Pedro,joao_pedro,,Premier League,,,75000000,75.0,False,,False,True,app\assets\players\joao_pedro.webp,OK
+47,Kenan Yıldız,kenan_yildiz,,Serie A,,,75000000,75.0,False,,False,True,app\assets\players\kenan_yildiz.webp,OK
+48,Yan Diomande,yan_diomande,,Bundesliga,,,75000000,75.0,False,,False,True,app\assets\players\yan_diomande.webp,OK
+49,Matheus Cunha,matheus_cunha,,Premier League,,,70000000,70.0,False,,False,True,app\assets\players\matheus_cunha.webp,OK
+50,Dayot Upamecano,dayot_upamecano,,Bundesliga,,,70000000,70.0,False,,False,True,app\assets\players\dayot_upamecano.webp,OK
