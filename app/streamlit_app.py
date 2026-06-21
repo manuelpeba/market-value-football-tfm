@@ -27095,6 +27095,13 @@ def _tm69_collect_player_context(row: pd.Series, name_col: str | None = None) ->
     is_en = globals().get("LANG") == "EN"
     raw_name = _tm69_first(ctx, [name_col or "", "player_name_tm", "player_name", "player_name_fbref", "Player"], "Player")
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(raw_name)).strip()
+
+    identity_payload = _tm69_identity_asset_lookup().get(normalize_search_text(player_name), {})
+    if identity_payload:
+        ctx.update(identity_payload)
+        for _k, _v in identity_payload.items():
+            ctx[f"tm69_{_k}"] = _v
+
     club = str(_tm69_first(ctx, ["display_club", "current_club", "current_club_name_tm", "tm69_current_club", "club_actual", "club"], "N/A"))
     league = league_display_name(_tm69_first(ctx, ["display_league", "current_league", "tm69_current_league", "league"], "N/A"))
     country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_name), "") or _tm69_first(ctx, ["country_of_citizenship", "nationality", "citizenship", "country", "tm69_country_of_citizenship", "player_country", "birth_country", "nation", "nationality_display", "country_display"], "N/A")
@@ -38650,6 +38657,30 @@ st.markdown(
 .visual-mvp-profile:hover {
     background: #dbeafe !important;
     border-color: #93c5fd !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# TM.6.9.2 evidence drivers: negative signal color correction
+# =============================================================================
+st.markdown(
+    """
+<style>
+.pi-driver-row.pi-driver-minus,
+.pi-driver-row.pi-driver-minus * {
+    border-color: #fecaca !important;
+}
+.pi-driver-row.pi-driver-minus i {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.pi-driver-row.pi-driver-minus span {
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
 }
 </style>
 """,
