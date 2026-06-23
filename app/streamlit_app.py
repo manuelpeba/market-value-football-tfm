@@ -7723,6 +7723,10 @@ def find_role_dataset_path() -> Path | None:
         ROOT / "data" / "processed" / "player_role_labels.parquet",
         ROOT / "data" / "processed" / "player_role_dss.parquet",
         ROOT / "reports" / "dss" / "player_role_dss.parquet",
+        ROOT / "reports" / "player_role_dss.csv",
+        ROOT / "reports" / "player_role_intelligence.csv",
+        ROOT / "reports" / "roles" / "player_role_labels.csv",
+        ROOT / "reports" / "roles" / "player_role_dna.csv",
         ROOT / "reports" / "tm5_role_intelligence" / "player_role_dss.parquet",
         ROOT / "reports" / "role_intelligence" / "player_role_dss.parquet",
         ROOT / "artifacts" / "player_role_dss.parquet",
@@ -7737,7 +7741,7 @@ def find_role_dataset_path() -> Path | None:
 
     # Fallback: discover suffixed artefacts, preferring processed data over reports.
     search_roots = [PROCESSED_PATH, ROOT / "data" / "processed", ROOT / "reports", ROOT / "artifacts", Path.cwd()]
-    patterns = ["player_role_labels*.parquet", "player_role_dss*.parquet", "*role*dss*.parquet", "*role*intelligence*.parquet"]
+    patterns = ["player_role_labels*.parquet", "player_role_dss*.parquet", "*role*dss*.parquet", "*role*intelligence*.parquet", "player_role_labels*.csv", "player_role_dss*.csv", "*role*dss*.csv", "*role*intelligence*.csv"]
     discovered = []
     for root in search_roots:
         if not root.exists():
@@ -7825,7 +7829,10 @@ def load_role_intelligence_dataset(path: Path | None = None) -> pd.DataFrame:
     if resolved_path is None or not Path(resolved_path).exists():
         return pd.DataFrame()
 
-    role_df = pd.read_parquet(resolved_path).copy()
+    if resolved_path.suffix.lower() == ".csv":
+        role_df = pd.read_csv(resolved_path, low_memory=False).copy()
+    else:
+        role_df = pd.read_parquet(resolved_path).copy()
 
     rename_candidates = {
         "player": "role_player",
@@ -12729,6 +12736,8 @@ def load_football_lookup_dataset() -> pd.DataFrame:
     without altering the Scouting Universe, rankings or recommendations.
     """
     lookup_candidates = [
+        "current_player_snapshot.parquet",
+        "transfermarkt_current_snapshot.parquet",
         "player_season_panel.parquet",
         "player_season_modeling.parquet",
         "player_season_modeling_advanced.parquet",
@@ -39401,3 +39410,6 @@ st.markdown('\n<style>\n/* TM.6.9.7 FINAL — Player Snapshot identity grid layo
 
 
 st.markdown('\n<style>\n/* TM.6.9.7 CLOSE — Cloud visual sync */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n    gap: 18px !important;\n}\n.snapshot-identity-layout .snapshot-meta-grid div,\n.snapshot-identity-layout .snapshot-meta-grid b,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button {\n    border-radius: 14px !important;\n    border: 1px solid #bfdbfe !important;\n    background: #ffffff !important;\n    color: #0f2f5f !important;\n    font-weight: 900 !important;\n    min-height: 46px !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button:hover {\n    background: #eff6ff !important;\n    border-color: #2563eb !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 cloud sync final */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n}\n</style>\n', unsafe_allow_html=True)
