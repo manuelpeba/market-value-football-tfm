@@ -27868,9 +27868,9 @@ def _tm697_player_photo_html(player_name: object, cls: str = "pi-player-photo") 
 
 
 def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
-    """Foto real si existe; silueta si no existe."""
-    if "_tm697_player_photo_html" in globals():
-        return _tm697_player_photo_html(player_name, "pi-player-photo")
+    uri = _tm697_player_image_uri(player_name) if "_tm697_player_image_uri" in globals() else ""
+    if uri:
+        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
     return ""
 
 def _tm69_club_mark_html(ctx: dict, club: str) -> str:
@@ -32188,6 +32188,86 @@ def _tm696_contract_player_photo_html(player_name: object) -> str:
     return "<div class='contract-player-photo-shell'></div>"
 
 # Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
+
+# ============================================================
+# TM.6.9.7 — Player Snapshot identity hardening
+# ============================================================
+def _tm697_safe_asset_data_uri(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".avif": "image/avif",
+            ".svg": "image/svg+xml",
+        }.get(path.suffix.lower(), "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
+def _tm697_slug_player(name: object) -> str:
+    import unicodedata, re
+    x = unicodedata.normalize("NFKD", str(name or ""))
+    x = "".join(c for c in x if not unicodedata.combining(c))
+    x = x.lower()
+    return re.sub(r"[^a-z0-9]+", "_", x).strip("_")
+
+def _tm697_player_image_uri(player_name: object) -> str:
+    slug = _tm697_slug_player(player_name)
+
+    aliases = {
+        "javi_rodriguez": "javi_rodriguez",
+        "javirodriguez": "javi_rodriguez",
+        "christantus_uche": "christantus_uche",
+        "christantusuche": "christantus_uche",
+        "mario_martin": "mario_martin",
+        "saba_goglichidze": "saba_goglichidze",
+        "luca_marianucci": "luca_marianucci",
+        "rabby_nzingoula": "rabby_nzingoula",
+    }
+
+    slug = aliases.get(slug, slug)
+
+    for rel in [
+        f"players/{slug}.png",
+        f"players/{slug}.jpg",
+        f"players/{slug}.jpeg",
+        f"players/{slug}.webp",
+        f"players/{slug}.avif",
+        "defaults/default_player.webp",
+    ]:
+        uri = _tm697_safe_asset_data_uri(rel)
+        if uri:
+            return uri
+    return ""
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    """Final active resolver: real player image when available, default silhouette otherwise."""
+    uri = _tm697_player_image_uri(player_name)
+    if uri:
+        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+    return ""
+
+_TM697_NATIONALITY_OVERRIDES = {
+    "christantus_uche": "Nigeria",
+    "christantusuche": "Nigeria",
+    "javi_rodriguez": "España",
+    "javirodriguez": "España",
+}
+
+def _tm697_player_nationality_fallback(player_name: object, current_value: object = "") -> str:
+    current = str(current_value or "").strip()
+    if current and current.lower() not in {"nan", "none", "null", "n/a", "na"}:
+        return current
+    slug = _tm697_slug_player(player_name)
+    return _TM697_NATIONALITY_OVERRIDES.get(slug, "")
+
+
 def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
     d = _tm69_collect_player_context(row, name_col)
     is_en = d["is_en"]
@@ -39241,3 +39321,6 @@ st.markdown('\n<style>\n/* TM.6.9.7 final identity polish */\n\n/* Player Snapsh
 
 
 st.markdown('\n<style>\n/* TM.6.9.7 — Uche image visible in Player Snapshot */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot Uche identity fix */\n.pi-player-photo {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n}\n</style>\n', unsafe_allow_html=True)
