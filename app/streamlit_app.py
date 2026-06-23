@@ -39,6 +39,56 @@ def render_filter_summary():
 
 
 
+
+# ============================================================
+# TM.6.9E — Player Portrait Layer
+# ============================================================
+from pathlib import Path as _Path
+import base64 as _base64
+import re as _re
+
+def _tm69_slug_player_name(name: str) -> str:
+    import unicodedata
+    x = unicodedata.normalize("NFKD", str(name or ""))
+    x = "".join(c for c in x if not unicodedata.combining(c))
+    x = x.lower()
+    x = _re.sub(r"[^a-z0-9]+", "_", x).strip("_")
+    return x
+
+def _tm69_asset_to_data_uri(path: str) -> str:
+    pp = _Path(path)
+    if not pp.exists():
+        return ""
+    mime = "image/webp" if pp.suffix.lower() == ".webp" else "image/png"
+    return f"data:{mime};base64," + _base64.b64encode(pp.read_bytes()).decode("utf-8")
+
+def _tm69_player_portrait_uri(player_name: str) -> str:
+    slug = _tm69_slug_player_name(player_name)
+    candidates = [
+        f"app/assets/players/{slug}.png",
+        f"app/assets/players/{slug}.jpg",
+        f"app/assets/players/{slug}.webp",
+    ]
+    # Imagen real validada de muestra
+    if slug == "javi_rodriguez":
+        candidates.insert(0, "app/assets/players/javi_rodriguez.png")
+    candidates.append("app/assets/defaults/default_player.webp")
+    for c in candidates:
+        uri = _tm69_asset_to_data_uri(c)
+        if uri:
+            return uri
+    return ""
+
+def _tm69_player_portrait_html(player_name: str) -> str:
+    uri = _tm69_player_portrait_uri(player_name)
+    if not uri:
+        return ""
+    return f"""
+    <div class="tm69-player-portrait-wrap">
+        <img class="tm69-player-portrait" src="{uri}" alt="{player_name}">
+    </div>
+    """
+
 # =============================================================================
 # tactical intelligence.5.1 visual design tokens
 # =============================================================================
@@ -1751,6 +1801,153 @@ div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
     opacity: .55 !important;
     text-decoration: none !important;
 }
+
+
+<style>
+.tm69-player-portrait-wrap {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .65rem;
+}
+.tm69-player-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* TM.6.9.6 hotfix: portrait in Player Intelligence executive summary */
+.exec-decision-left-with-photo {
+    display: grid !important;
+    grid-template-columns: 108px minmax(0, 1fr) !important;
+    gap: 16px !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+.exec-decision-player-photo {
+    width: 96px !important;
+    height: 122px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    background: #eef2f7 !important;
+    border: 1px solid #dbeafe !important;
+    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;
+    flex-shrink: 0 !important;
+}
+.exec-decision-player-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+    display: block !important;
+}
+.exec-decision-copy {
+    min-width: 0 !important;
+}
+
+/* TM.6.9.6 hotfix: section title separated from blue topbar */
+.strategy-hero,
+.methodology-hero,
+.strategy-center-hero,
+.tm-strategy-hero,
+.siq-section-hero {
+    margin-top: 18px !important;
+}
+.scouting-topbar + .strategy-hero,
+.scouting-topbar + .methodology-hero,
+.scouting-topbar + .strategy-center-hero,
+.scouting-topbar + .tm-strategy-hero {
+    margin-top: 20px !important;
+}
+
+
+<style>
+/* TM.6.9.6 FINAL — show player image in Player Intelligence summary */
+.pi-visual-stack {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 112px !important;
+    gap: 8px !important;
+}
+.pi-player-photo,
+.pi-avatar-premium {
+    display: flex !important;
+    width: 96px !important;
+    height: 122px !important;
+    min-width: 96px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    background: #eef2f7 !important;
+    border: 1px solid #dbeafe !important;
+    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.pi-player-photo img,
+.pi-avatar-premium img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+}
+.pi-visual-stack > .pi-visual-clubline {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 110px !important;
+    font-size: .66rem !important;
+}
+
+/* Recruitment > Drivers: fix misaligned silhouette/card */
+.snapshot-card-identity {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+}
+.snapshot-player-photo {
+    display: flex !important;
+    width: 82px !important;
+    height: 104px !important;
+    min-width: 82px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    background: #eef2f7 !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.snapshot-player-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+}
+.snapshot-card-identity * {
+    max-width: 100% !important;
+}
+
+/* Strategy / Methodology spacing under topbar */
+.product-page-hero-unified,
+.product-page-hero {
+    margin-top: 22px !important;
+}
+.scouting-topbar + .product-page-hero-unified,
+.scouting-topbar + .product-page-hero {
+    margin-top: 24px !important;
+}
+</style>
+
+</style>
 
 </style>
 """,
@@ -6753,7 +6950,7 @@ st.markdown(
 .exec-context-details summary {
     list-style: none;
     cursor: pointer;
-    min-height: 44px;
+    min-height: 60px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -11248,12 +11445,15 @@ def _tm69_decision_card_html(ctx: dict, player_name: str, club: str, league: str
     gap_class = "negative" if str(gap_txt).startswith("-") else ("positive" if str(gap_txt).startswith("+") else "neutral")
     return f"""
     <div class="exec-decision-hero exec-decision-hero-v2">
-        <div class="exec-decision-left">
+        <div class="exec-decision-left exec-decision-left-with-photo">
+            {_siq_player_portrait_html(player_name, "exec-decision-player-photo")}
+            <div class="exec-decision-copy">
             <div class="exec-decision-eyebrow">{html.escape(title)}</div>
             <div class="exec-decision-name">{html.escape(player_name)}</div>
             <div class="exec-decision-meta">{html.escape(club)} · {html.escape(str(league))} · {html.escape(role)}</div>
             <div class="exec-decision-status">{html.escape(status_copy)}</div>
-            <div class="exec-decision-thesis">{html.escape(thesis)}</div>
+            <div class="exec-decision-thesis">{html.escape(thesis)}</div></div></div></div></div>
+            </div>
         </div>
         <div class="exec-decision-scorebox exec-decision-scorebox-v2">
             <span>{html.escape(score_label)}</span><b>{html.escape(score_txt)}</b><small>{html.escape(_tm69_target_priority_grade(priority))}</small>
@@ -11869,6 +12069,123 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
     st.markdown(tm69_exec_card_html, unsafe_allow_html=True)
 
 
+
+# =========================================================
+# TM.6.9.6 — Minimal Player Portrait Layer
+# =========================================================
+def _siq_asset_to_data_uri_safe(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        suffix = path.suffix.lower()
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(suffix, "image/png")
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        return f"data:{mime};base64,{encoded}"
+    except Exception:
+        return ""
+
+
+def _siq_player_portrait_html(player_name: object, css_class: str = "snapshot-player-photo") -> str:
+    """Only Javi Rodríguez uses a real portrait; every other player uses default silhouette."""
+    name_key = normalize_search_text(str(player_name or ""))
+    rel = "players/javi_rodriguez.png" if name_key.replace(" ", "") == "javirodriguez" else "defaults/default_player.webp"
+    uri = _siq_asset_to_data_uri_safe(rel)
+    alt = html.escape(str(player_name or "Player"))
+    if not uri:
+        initials = "".join([x[:1] for x in str(player_name or "PI").split()[:2]]).upper() or "PI"
+        return f"<div class='{css_class} snapshot-player-fallback'>{html.escape(initials)}</div>"
+    return f"<div class='{css_class}'><img src='{html.escape(uri)}' alt='{alt}' loading='lazy'></div>"
+
+
+st.markdown("""
+<style>
+.snapshot-card-identity {
+    grid-template-columns: 132px minmax(0, 1fr) !important;
+    align-items: center !important;
+}
+
+.snapshot-player-photo {
+    width: 118px !important;
+    height: 148px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    background: #eef2f7 !important;
+    border: 1px solid #dbeafe !important;
+    box-shadow: 0 10px 24px rgba(15,23,42,.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.snapshot-player-photo img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+    display: block !important;
+}
+
+.snapshot-player-fallback {
+    color: #64748b !important;
+    font-size: 1.4rem !important;
+    font-weight: 950 !important;
+}
+
+.snapshot-identity-assets {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+    align-items: center !important;
+    margin: 8px 0 10px 0 !important;
+}
+
+.snapshot-identity-assets > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    border: 1px solid #dbeafe !important;
+    background: #fbfdff !important;
+    border-radius: 999px !important;
+    padding: 5px 10px !important;
+    font-size: .78rem !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+}
+
+.replacement-identity-line {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+    align-items: center !important;
+    margin-top: 7px !important;
+}
+
+.replacement-identity-line > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    border: 1px solid #dbeafe !important;
+    background: #fbfdff !important;
+    border-radius: 999px !important;
+    padding: 4px 8px !important;
+    font-size: .68rem !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 def render_player_profile_header(row: pd.Series, name_col: str | None = None, title: str | None = None) -> None:
     """Render the TM.4.1 Player Snapshot layer above radar/benchmarking.
 
@@ -11928,6 +12245,14 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
             gap_tone = "negative"
     tags_html = _build_snapshot_tags(row, market_value, expected_value, inefficiency_eur)
     role_badge_html = render_role_badge(row)
+
+    ctx_dict = dict(row)
+    country = _tm69_row_nationality(row, player_name) if "_tm69_row_nationality" in globals() else ""
+    portrait_html = _siq_player_portrait_html(player_name)
+    country_html = _tm69_nationality_html(country) if country and "_tm69_nationality_html" in globals() else ""
+    club_html = _tm69_club_chip_html(ctx_dict, club) if "_tm69_club_chip_html" in globals() else f"<span>{html.escape(club)}</span>"
+    league_html = _tm69_league_chip_html(league) if "_tm69_league_chip_html" in globals() else f"<span>{html.escape(league)}</span>"
+    identity_assets_html = "".join([x for x in [country_html, club_html, league_html] if x])
 
     if title:
         section_title = "Player Snapshot" if globals().get("LANG") == "EN" else "Player Snapshot"
@@ -11997,7 +12322,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
     </div>
     <div class="player-snapshot-grid">
         <div class="snapshot-card snapshot-card-identity">
-            <div class="snapshot-avatar">{html.escape(initials)}</div>
+            {portrait_html}
             <div class="snapshot-identity-main">
                 <div class="snapshot-section-label">{html.escape(lbl_identity)}</div>
                 <div class="snapshot-player-name">{html.escape(player_name)}{role_badge_html}</div>
@@ -12005,8 +12330,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
                     <span class="snapshot-position-pill">{html.escape(position_badge)}</span>
                     <span class="snapshot-role-placeholder">{html.escape(lbl_archetype)}</span>
                 </div>
-                <div class="snapshot-club-line">{html.escape(club)}</div>
-                <div class="snapshot-league-line">{html.escape(league)}</div>
+                <div class="snapshot-identity-assets">{identity_assets_html}</div>
                 <div class="snapshot-meta-grid">
                     <div><span>{html.escape(lbl_age)}</span><b>{html.escape(age_display)} {html.escape(age_suffix)}</b></div>
                     <div><span>{html.escape(lbl_position)}</span><b>{html.escape(position_badge)}</b></div>
@@ -13500,7 +13824,6 @@ def render_metric_winners_table(percentile_matrix: pd.DataFrame) -> pd.DataFrame
     st.markdown(title)
     st.dataframe(
         display_winners,
-        use_container_width=True,
         hide_index=True,
     )
 
@@ -13836,7 +14159,7 @@ def render_multi_player_radar_comparison(shortlist_df: pd.DataFrame) -> None:
 
     left_radar_col, right_radar_col = st.columns([1.25, 1.05], gap="large")
     with left_radar_col:
-        st.plotly_chart(radar_fig, use_container_width=True, config={"displaylogo": False})
+        st.plotly_chart(radar_fig, config={"displaylogo": False})
 
     percentile_matrix = build_multi_player_percentile_matrix(
         selected_rows=selected_rows,
@@ -15160,7 +15483,6 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         TXT("Jugador de referencia"),
         options,
         key="sprint11_similarity_target",
-        use_container_width=True,
     )
     secondary_controls = st.columns([0.75, 0.85, 0.55, 1.85])
     with secondary_controls[0]:
@@ -15318,9 +15640,9 @@ def render_similarity_engine(shortlist_df: pd.DataFrame) -> None:
         similarity_chart_source = apply_club_name_normalization(similarity_df.head(int(top_n)).copy())
         similarity_fig = build_similarity_bubble_chart(similarity_chart_source, target_row, name_col, highlighted_player=get_display_name(best, name_col))
         if similarity_fig is not None:
-            st.plotly_chart(similarity_fig, use_container_width=True, config={"displayModeBar": False, "displaylogo": False})
+            st.plotly_chart(similarity_fig, config={"displayModeBar": False, "displaylogo": False})
         executive_table = build_executive_similarity_table(similarity_chart_source.head(10), name_col)
-        st.dataframe(executive_table, use_container_width=True, hide_index=True, height=min(420, 42 + 36 * max(1, len(executive_table))))
+        st.dataframe(executive_table, hide_index=True, height=min(420, 42 + 36 * max(1, len(executive_table))))
         st.caption("Vista reducida a 8 columnas ejecutivas. Las variables metodológicas quedan fuera de la lectura DSS principal." if LANG == "ES" else "Reduced to 8 executive columns. Methodological variables are kept out of the main DSS readout.")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -15441,7 +15763,6 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         TXT("Jugador a sustituir / comparar"),
         options,
         key="sprint11_replacement_target",
-        use_container_width=True,
     )
     st.markdown("<div class='secondary-filter-row'>", unsafe_allow_html=True)
     top_n = st.selectbox(
@@ -15449,7 +15770,6 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         [5, 8, 10, 15, 20],
         index=2,
         key="sprint11_replacement_top_n_select",
-        use_container_width=False,
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -15478,9 +15798,16 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
     cards = []
     for idx, (_, row) in enumerate(replacement_view.head(3).iterrows(), start=1):
         name = get_display_name(row, name_col)
-        meta = f"{safe_get(row, 'club', 'N/A')} · {league_display_name(safe_get(row, 'league', 'N/A'))} · {safe_get(row, 'position_group', 'N/A')}"
+        club_raw = str(safe_get(row, 'club', 'N/A'))
+        league_raw = league_display_name(safe_get(row, 'league', 'N/A'))
+        pos_raw = str(safe_get(row, 'position_group', 'N/A'))
+        country_raw = _tm69_row_nationality(row, name) if "_tm69_row_nationality" in globals() else ""
+        nationality_html = _tm69_nationality_html(country_raw) if country_raw and "_tm69_nationality_html" in globals() else ""
+        club_html = _tm69_club_chip_html(dict(row), club_raw) if "_tm69_club_chip_html" in globals() else f"<span>{html.escape(club_raw)}</span>"
+        league_html = _tm69_league_chip_html(league_raw) if "_tm69_league_chip_html" in globals() else f"<span>{html.escape(league_raw)}</span>"
+        identity_html = "".join([x for x in [nationality_html, club_html, league_html, f"<span>{html.escape(pos_raw)}</span>"] if x])
         cards.append(
-            f"<div class='replacement-card'><div class='replacement-rank'>{idx}</div><div class='replacement-name'>{html.escape(str(name))}</div><div class='replacement-meta'>{html.escape(meta)}</div><div class='replacement-badges'><span>{'Similarity' if LANG == 'EN' else 'Similitud'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>{'Fit' if LANG == 'EN' else 'Encaje'} {format_score(safe_get(row,'replacement_context_fit',np.nan))}</span><span>{'Risk' if LANG == 'EN' else 'Riesgo'} {format_score(safe_get(row,'risk_score',np.nan))}</span><span>{html.escape(str(safe_get(row,'replacement_fit','Assessment')))}</span></div></div>"
+            f"<div class='replacement-card'><div class='replacement-rank'>{idx}</div><div class='replacement-name'>{html.escape(str(name))}</div><div class='replacement-identity-line'>{identity_html}</div><div class='replacement-badges'><span>{'Similarity' if LANG == 'EN' else 'Similitud'} {format_score(safe_get(row,'similarity_score_pct',np.nan))}</span><span>{'Fit' if LANG == 'EN' else 'Encaje'} {format_score(safe_get(row,'replacement_context_fit',np.nan))}</span><span>{'Risk' if LANG == 'EN' else 'Riesgo'} {format_score(safe_get(row,'risk_score',np.nan))}</span><span>{html.escape(str(safe_get(row,'replacement_fit','Assessment')))}</span></div></div>"
         )
     st.markdown("<div class='replacement-card-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
 
@@ -15491,7 +15818,6 @@ def render_replacement_analysis(shortlist_df: pd.DataFrame) -> None:
         executive_replacement = build_executive_replacement_table(compact.head(10), name_col)
         st.dataframe(
             executive_replacement,
-            use_container_width=True,
             hide_index=True,
             height=min(420, 44 + 36 * max(1, len(executive_replacement))),
         )
@@ -15871,7 +16197,6 @@ def render_executive_recommendation_engine(shortlist_df: pd.DataFrame) -> None:
     )
     st.dataframe(
         localize_display_df(ranking_view)[display_cols],
-        use_container_width=True,
         hide_index=True,
         column_config={
             "executive_rank": st.column_config.NumberColumn("#", format="%d", width="small"),
@@ -15936,7 +16261,6 @@ def render_asset_intelligence(shortlist_df: pd.DataFrame) -> None:
     st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
     st.dataframe(
         localize_display_df(view)[display_cols],
-        use_container_width=True,
         hide_index=True,
         column_config={
             name_col: st.column_config.TextColumn("Player" if LANG == "EN" else "Jugador"),
@@ -16063,7 +16387,6 @@ def render_driver_analysis(shortlist_df: pd.DataFrame) -> None:
             pos_view["Factor"] = pos_view["Factor"].apply(V)
             st.dataframe(
                 localize_display_df(pos_view),
-                use_container_width=True,
                 hide_index=True,
                 column_config={
                     "Factor": st.column_config.TextColumn(TXT("Factor")),
@@ -16080,7 +16403,6 @@ def render_driver_analysis(shortlist_df: pd.DataFrame) -> None:
             neg_view["Factor"] = neg_view["Factor"].apply(V)
             st.dataframe(
                 localize_display_df(neg_view),
-                use_container_width=True,
                 hide_index=True,
                 column_config={
                     "Factor": st.column_config.TextColumn(TXT("Factor")),
@@ -16190,7 +16512,6 @@ def render_recruitment_pipeline(shortlist_df: pd.DataFrame) -> None:
     st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
     st.dataframe(
         localize_display_df(view)[display_cols],
-        use_container_width=True,
         hide_index=True,
         column_config={
             "executive_rank": st.column_config.NumberColumn("Rank", format="%d"),
@@ -16352,8 +16673,101 @@ def render_shortlist_intelligence_dashboard(shortlist_df: pd.DataFrame) -> None:
 
 
 
+
+# ============================================================
+# TM.6.9.7 — Market identity portraits
+# ============================================================
+def _tm697_player_image_uri(player_name: object) -> str:
+    key = _tm696_compact_player_key(player_name) if "_tm696_compact_player_key" in globals() else normalize_search_text(str(player_name or "")).replace(" ", "")
+    slug_map = {
+        "javirodriguez": "javi_rodriguez",
+        "christantusuche": "christantus_uche",
+    }
+    slug = slug_map.get(key, key)
+    for rel in [
+        f"players/{slug}.png",
+        f"players/{slug}.jpg",
+        f"players/{slug}.webp",
+        "defaults/default_player.webp",
+    ]:
+        uri = _tm696_asset_data_uri(rel) if "_tm696_asset_data_uri" in globals() else ""
+        if uri:
+            return uri
+    return ""
+
+def _tm697_player_photo_html(player_name: object, cls: str = "tm697-player-photo") -> str:
+    uri = _tm697_player_image_uri(player_name)
+    if not uri:
+        return ""
+    return f"<div class='{html.escape(cls)}'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+
+
+
+# ============================================================
+# TM.6.9.7 — Unified player photo helper
+# ============================================================
+def _tm697_slug_player(name: object) -> str:
+    import unicodedata, re
+    x = unicodedata.normalize("NFKD", str(name or ""))
+    x = "".join(c for c in x if not unicodedata.combining(c))
+    x = x.lower()
+    x = re.sub(r"[^a-z0-9]+", "_", x).strip("_")
+    return x
+
+def _tm697_asset_data_uri(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(path.suffix.lower(), "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
+def _tm697_player_image_uri(player_name: object) -> str:
+    slug = _tm697_slug_player(player_name)
+
+    aliases = {
+        "javi_rodriguez": "javi_rodriguez",
+        "javirodriguez": "javi_rodriguez",
+        "christantus_uche": "christantus_uche",
+        "christantusuche": "christantus_uche",
+        "mario_martin": "mario_martin",
+        "saba_goglichidze": "saba_goglichidze",
+        "luca_marianucci": "luca_marianucci",
+        "rabby_nzingoula": "rabby_nzingoula",
+    }
+
+    slug = aliases.get(slug, slug)
+
+    for rel in [
+        f"players/{slug}.png",
+        f"players/{slug}.jpg",
+        f"players/{slug}.jpeg",
+        f"players/{slug}.webp",
+        "defaults/default_player.webp",
+    ]:
+        uri = _tm697_asset_data_uri(rel)
+        if uri:
+            return uri
+    return ""
+
+def _tm697_player_photo_html(player_name: object, cls: str = "tm697-player-photo") -> str:
+    uri = _tm697_player_image_uri(player_name)
+    if not uri:
+        return ""
+    return f"<div class='{html.escape(cls)}'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+
+
 def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str = "Top 5 oportunidades ajustadas por riesgo", caption: str = "Prioridad inicial para revisión") -> None:
-    """Render a compact Top 5 executive strip for the Opportunity vs Risk matrix."""
+    """TM.6.9.7: Executive Top5 with featured #1, player image, flags, club crest and league chip."""
     if chart_source.empty or "risk_adjusted_opportunity_score" not in chart_source.columns:
         return
 
@@ -16374,11 +16788,11 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
 
         club_line = ""
         if club_raw:
-            club_line = "<div class='top5-id-line top5-club-line'>" + _tm69_club_mark_html(row_dict, club_raw) + f"<span>{html.escape(club_raw)}</span></div>"
+            club_line = "<div class='top5-id-line'>" + _tm69_club_mark_html(row_dict, club_raw) + f"<span>{html.escape(club_raw)}</span></div>"
 
         nationality_line = ""
         if str(country_raw).strip():
-            nationality_line = "<div class='top5-id-line top5-nationality-line'>" + _tm69_nationality_html(country_raw) + "</div>"
+            nationality_line = "<div class='top5-id-line'>" + _tm69_nationality_html(country_raw) + "</div>"
 
         league_line = ""
         if str(league_raw).strip():
@@ -16388,33 +16802,47 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
         action_raw = action_display_name(safe_get(row, "recommended_action", "Review" if globals().get("LANG") == "EN" else "Revisión"))
         action = html.escape(str(action_raw))
 
-        # Important: build each card as a single non-indented HTML string.
-        # Indented multi-line fragments can be interpreted by Markdown as code blocks,
-        # which causes raw <div> text to appear in Streamlit.
-        item = (
-            "<div class='top5-horizontal-item top5-exec-card'>"
-            "<div class='top5-card-head'>"
-            f"<div class='top5-horizontal-rank'>{idx}</div>"
-            f"<div class='top5-horizontal-score'>{score:.1f}</div>"
-            "</div>"
-            f"<div class='top5-horizontal-name'>{player}</div>"
-            "<div class='top5-identity-stack'>"
-            f"{club_line}{nationality_line}{league_line}"
-            "</div>"
-            f"<div class='top5-action-row'>{action}</div>"
-            "</div>"
-        )
+        if idx == 1:
+            item = (
+                "<div class='top5-horizontal-item top5-exec-card top5-exec-card-featured'>"
+                "<div class='top5-featured-top'>"
+                f"<div class='top5-featured-rank'>1</div>"
+                f"<div class='top5-featured-score'>{score:.1f}</div>"
+                "</div>"
+                "<div class='top5-featured-body'>"
+                f"{_tm697_player_photo_html(player_raw, 'top5-featured-photo') if '_tm697_player_photo_html' in globals() else ''}"
+                "<div class='top5-featured-copy'>"
+                f"<div class='top5-horizontal-name'>{player}</div>"
+                f"{club_line}{nationality_line}{league_line}"
+                f"<div class='top5-action-row'>{action}</div>"
+                "</div></div></div>"
+            )
+        else:
+            item = (
+                "<div class='top5-horizontal-item top5-exec-card top5-exec-card-compact'>"
+                "<div class='top5-card-head'>"
+                f"<div class='top5-horizontal-rank'>{idx}</div>"
+                f"<div class='top5-horizontal-score'>{score:.1f}</div>"
+                "</div>"
+                f"<div class='top5-horizontal-name'>{player}</div>"
+                "<div class='top5-identity-stack'>"
+                f"{club_line}{nationality_line}{league_line}"
+                "</div>"
+                f"<div class='top5-action-row'>{action}</div>"
+                "</div>"
+            )
         items.append(item)
 
     html_block = (
-        "<div class='top5-horizontal-card top5-exec-strip'>"
+        "<div class='top5-horizontal-card top5-exec-strip top5-exec-strip-tm697'>"
         f"<div class='panel-title'>{html.escape(TXT(str(title)))}</div>"
         f"<div class='panel-subtitle'>{html.escape(UI(caption))}</div>"
-        "<div class='top5-horizontal-grid top5-exec-grid'>"
+        "<div class='top5-horizontal-grid top5-exec-grid top5-exec-grid-featured'>"
         + "".join(items)
         + "</div></div>"
     )
     st.markdown(html_block, unsafe_allow_html=True)
+
 
 def opportunity_tier_badge(value) -> str:
     score = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
@@ -18530,7 +18958,6 @@ for _page_option in PAGE_OPTIONS:
         _nav_label(_page_option),
         key=f"nav_btn_{_page_option.replace(' ', '_').lower()}",
         type="primary" if _active else "secondary",
-        use_container_width=True,
     ):
         st.session_state.dashboard_navigation_page = _page_option
         st.rerun()
@@ -20432,6 +20859,20 @@ def _command_entity_type(label: str) -> str:
     return "other"
 
 
+
+def _format_command_pct(value) -> str:
+    """Format percentage safely for global command search."""
+    try:
+        if value is None:
+            return "—"
+        v = float(value)
+        if abs(v) <= 1:
+            v *= 100
+        return f"{v:.1f}%"
+    except Exception:
+        return "—"
+
+
 def rank_global_command_search(
     scoring_df: pd.DataFrame,
     query: str,
@@ -20619,39 +21060,39 @@ def render_command_palette_results(results: pd.DataFrame) -> None:
         if entity == "player":
             action_cols = st.columns([0.18, 0.18, 0.20, 0.20, 0.24], gap="small")
             with action_cols[0]:
-                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Player Intelligence")
                     st.rerun()
             with action_cols[1]:
-                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Player Intelligence")
                     st.session_state["selected_module"] = "Comparables"
                     st.rerun()
             with action_cols[2]:
-                if st.button("Recruitment", key=f"tm69_cmd_recruit_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Recruitment", key=f"tm69_cmd_recruit_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Recruitment Intelligence")
                     st.rerun()
             with action_cols[3]:
-                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Strategy Center")
                     st.session_state["strategy_center_view"] = "Contract Intelligence"
                     st.rerun()
             with action_cols[4]:
-                if st.button("Abrir" if LANG != "EN" else "Open", key=f"tm69_cmd_open_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Abrir" if LANG != "EN" else "Open", key=f"tm69_cmd_open_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, None)
                     st.rerun()
         else:
-            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_{i}_{abs(hash(label))}", use_container_width=True):
+            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_{i}_{abs(hash(label))}"):
                 st.session_state["global_scouting_search"] = label
                 st.session_state["global_scouting_selected_label"] = label
                 st.rerun()
@@ -21894,7 +22335,7 @@ base_df = add_executive_decision_features(scouting_df.copy())
 
 # Search/context panels are useful in scouting pages, but they create dead space
 # in Strategy and Methodology. Keep them out of those pages.
-SHOW_COMMAND_PANEL = dashboard_page not in {"Strategy Center", "Methodology"}
+SHOW_COMMAND_PANEL = dashboard_page not in {"Methodology"}
 
 # Sprint 13.5 v2: compact command row. Search and active context share the first viewport row
 # only where the command/search layer is relevant.
@@ -21914,6 +22355,18 @@ def _page_command_copy(page_name: str) -> tuple[str, str, str]:
             "RECRUITMENT INTELLIGENCE",
             "Recruitment Intelligence",
             "Búsqueda de targets, reemplazos, comparables y validación operativa." if LANG != "EN" else "Target search, replacements, comparables and operational validation.",
+        )
+    if page_name == "Strategy Center":
+        return (
+            "STRATEGY CENTER",
+            "Strategy Center",
+            "Optimización de cartera, timing contractual y planificación de mercado." if LANG != "EN" else "Portfolio optimization, contract timing and market planning.",
+        )
+    if page_name == "Methodology":
+        return (
+            "METHODOLOGY",
+            "Methodology",
+            "Datos, modelización, validación y evaluación de negocio." if LANG != "EN" else "Data, modeling, validation and business evaluation.",
         )
     return (
         "MARKET INTELLIGENCE",
@@ -21955,6 +22408,20 @@ def _tm69_intent_label(intent: dict) -> str:
     if intent.get("replacement"):
         labels_es.append("comparables/reemplazo"); labels_en.append("replacement")
     return " · ".join(labels_en if LANG == "EN" else labels_es)
+
+
+
+def _format_command_pct(value) -> str:
+    """Format percentage safely for global command search."""
+    try:
+        if value is None:
+            return "—"
+        v = float(value)
+        if abs(v) <= 1:
+            v *= 100
+        return f"{v:.1f}%"
+    except Exception:
+        return "—"
 
 
 def rank_global_command_search(
@@ -22193,39 +22660,39 @@ def render_command_palette_results(results: pd.DataFrame) -> None:
         if entity == "player":
             action_cols = st.columns([0.18, 0.18, 0.18, 0.20, 0.26], gap="small")
             with action_cols[0]:
-                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Perfil" if LANG != "EN" else "Profile", key=f"tm69_cmd_profile_pro_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Player Intelligence")
                     st.rerun()
             with action_cols[1]:
-                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Comparar" if LANG != "EN" else "Compare", key=f"tm69_cmd_compare_pro_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Player Intelligence")
                     st.session_state["selected_module"] = "Comparables"
                     st.rerun()
             with action_cols[2]:
-                if st.button("Watchlist", key=f"tm69_cmd_watch_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Watchlist", key=f"tm69_cmd_watch_pro_{i}_{abs(hash(label))}"):
                     _tm69_add_to_watchlist(raw)
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     st.rerun()
             with action_cols[3]:
-                if st.button("Recruitment", key=f"tm69_cmd_recruit_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Recruitment", key=f"tm69_cmd_recruit_pro_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Recruitment Intelligence")
                     st.rerun()
             with action_cols[4]:
-                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_pro_{i}_{abs(hash(label))}", use_container_width=True):
+                if st.button("Contrato" if LANG != "EN" else "Contract", key=f"tm69_cmd_contract_pro_{i}_{abs(hash(label))}"):
                     st.session_state["global_scouting_search"] = label
                     st.session_state["global_scouting_selected_label"] = label
                     _command_set_player_context(raw, "Strategy Center")
                     st.session_state["strategy_center_view"] = "Contract Intelligence"
                     st.rerun()
         else:
-            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_pro_{i}_{abs(hash(label))}", use_container_width=True):
+            if st.button("Aplicar filtro" if LANG != "EN" else "Apply filter", key=f"tm69_cmd_apply_pro_{i}_{abs(hash(label))}"):
                 st.session_state["global_scouting_search"] = label
                 st.session_state["global_scouting_selected_label"] = label
                 st.rerun()
@@ -25117,41 +25584,6 @@ VISUAL_MVP_COUNTRY_OVERRIDE = {
     "clement akpa": "Cote d'Ivoire"
 }
 
-def _visual_mvp_safe_text(value, fallback="N/A"):
-    if value is None:
-        return fallback
-    try:
-        if pd.isna(value):
-            return fallback
-    except Exception:
-        pass
-    value = str(value).strip()
-    return value if value else fallback
-
-
-def _visual_mvp_fmt_score(value):
-    try:
-        if pd.isna(value):
-            return "—"
-        return f"{float(value):.1f}"
-    except Exception:
-        return "—"
-
-
-def _visual_mvp_fmt_money(value):
-    try:
-        if pd.isna(value):
-            return "—"
-        value = float(value)
-        if value >= 1_000_000:
-            return f"€{value / 1_000_000:.1f}M"
-        if value >= 1_000:
-            return f"€{value / 1_000:.0f}K"
-        return f"€{value:,.0f}"
-    except Exception:
-        return "—"
-
-
 def _visual_mvp_initials(name: str) -> str:
     parts = [p for p in str(name).split() if p]
     if not parts:
@@ -25178,20 +25610,6 @@ def _visual_mvp_player_name(row) -> str:
         ),
         "Unknown player",
     )
-
-
-def _visual_mvp_first(row, cols, fallback="N/A"):
-    for c in cols:
-        if c in row.index:
-            v = row.get(c)
-            try:
-                if pd.isna(v):
-                    continue
-            except Exception:
-                pass
-            if str(v).strip() and str(v).strip().lower() not in {"nan", "none", "n/a", "n/d"}:
-                return str(v).strip()
-    return fallback
 
 
 def load_visual_mvp_manifest() -> pd.DataFrame:
@@ -25256,36 +25674,6 @@ def _visual_mvp_current_market_value_lookup() -> dict:
         return {}
 
 
-def _visual_mvp_current_market_value(player_name: object, fallback_value: object = None):
-    key = normalize_search_text(player_name or "")
-    value = _visual_mvp_current_market_value_lookup().get(key)
-    try:
-        if value is not None and pd.notna(value):
-            return value
-    except Exception:
-        pass
-    return fallback_value
-
-
-def _visual_mvp_row_market_value(row: object, player_name: object):
-    """Prefer current snapshot value already merged into manifest; fallback to snapshot lookup."""
-    for col in [
-        "current_market_value_eur",
-        "current_market_value_eur_snapshot",
-        "current_market_value_eur_snapshot.1",
-        "current_market_value_eur_snapshot.2",
-    ]:
-        try:
-            value = row.get(col)
-            if value is not None and pd.notna(value):
-                return value
-        except Exception:
-            pass
-
-    return _visual_mvp_current_market_value(player_name, row.get("market_value_eur"))
-
-
-
 @st.cache_data(show_spinner=False)
 def _visual_mvp_current_country_lookup() -> dict:
     try:
@@ -25304,6 +25692,69 @@ def _visual_mvp_row_country(row: object, player_name: object) -> str:
     return _visual_mvp_current_country_lookup().get(normalize_search_text(player_name or ""), "")
 
 
+@st.cache_data(show_spinner=False)
+def _tm69_player_image_manifest() -> dict:
+    """Load player image manifest for TM.6.9.4 visual asset layer."""
+    path = ROOT / "app" / "data" / "player_images.json"
+    if not path.exists():
+        return {"default_image": "defaults/default_player.webp", "players": {}}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"default_image": "defaults/default_player.webp", "players": {}}
+
+
+def _tm69_player_slug(player_name: object) -> str:
+    value = unicodedata.normalize("NFKD", str(player_name or "").strip())
+    value = "".join(c for c in value if not unicodedata.combining(c))
+    value = value.lower()
+    value = re.sub(r"[^a-z0-9]+", "_", value)
+    return value.strip("_")
+
+
+@st.cache_data(show_spinner=False)
+def _tm69_asset_to_data_uri(rel_path: str) -> str:
+    """Return local asset as data URI for HTML components."""
+    path = ROOT / "app" / "assets" / rel_path
+    if not path.exists():
+        return ""
+    try:
+        import base64
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        suffix = path.suffix.lower().replace(".", "")
+        mime = "image/webp" if suffix == "webp" else f"image/{suffix}"
+        return f"data:{mime};base64,{encoded}"
+    except Exception:
+        return ""
+
+
+def _tm69_player_image_html(player_name: object, alt: str = "") -> str:
+    """Render player image if mapped; otherwise render default silhouette."""
+    manifest = _tm69_player_image_manifest()
+    slug = _tm69_player_slug(player_name)
+
+    # TM.6.9.4C — Prefer MediaPipe standardized portraits
+    portrait_rel = f"players_portraits_mediapipe/{slug}.webp"
+    portrait_path = ROOT / "app" / "assets" / portrait_rel
+
+    if slug and portrait_path.exists():
+        rel = portrait_rel
+    else:
+        rel = (
+            manifest.get("players", {}).get(slug)
+            or manifest.get("default_image", "defaults/default_player.webp")
+        )
+
+    uri = _tm69_asset_to_data_uri(str(rel))
+    if not uri:
+        return html.escape(_visual_mvp_initials(player_name))
+    return (
+        f'<img class="visual-mvp-player-img" '
+        f'src="{html.escape(uri)}" '
+        f'alt="{html.escape(str(alt or player_name or "Player"))}" />'
+    )
+
+
 
 def render_visual_mvp_cards(limit: int = 8) -> None:
     """Render compact visual MVP cards for the Executive Overview demo layer."""
@@ -25315,392 +25766,190 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     df = df.head(limit).copy()
 
     css = """
-    <style>
-    body {
-        margin: 0;
-        background: transparent;
-        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .visual-mvp-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(180px, 1fr));
-        gap: 10px;
-        padding: 4px 4px 8px 4px;
-        box-sizing: border-box;
-    }
-    .visual-mvp-identity {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 6px;
-        margin-top: 6px;
-        max-width: 100%;
-    }
-    .visual-mvp-identity .pi-club-mark,
-    .visual-mvp-identity .pi-league-logo-chip {
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 16px !important;
-        max-width: 16px !important;
-        min-height: 16px !important;
-        max-height: 16px !important;
-        flex: 0 0 16px !important;
-        overflow: hidden !important;
-        object-fit: contain !important;
-    }
-    .visual-mvp-identity .pi-club-mark img,
-    .visual-mvp-identity .pi-league-logo-chip img {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
-        object-fit: contain !important;
-        object-position: center !important;
-    }
-    .visual-mvp-identity-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        border: 1px solid #dbeafe;
-        background: #f8fbff;
-        color: #0f172a;
-        border-radius: 999px;
-        padding: 4px 7px;
-        font-size: .66rem;
-        font-weight: 900;
-        line-height: 1;
-        white-space: nowrap;
-    }
-    .visual-mvp-position-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #334155;
-        border-radius: 999px;
-        padding: 4px 7px;
-        font-size: .66rem;
-        font-weight: 900;
-        line-height: 1;
-        white-space: nowrap;
-    }
-    .visual-mvp-card {
-        min-height: 210px;
-        overflow: hidden;
-        position: relative;
-        background: #ffffff;
-        border: 1px solid #dbe3ee;
-        border-left: 5px solid #3b82f6;
-        border-radius: 18px;
-        padding: 10px 10px 9px 10px;
-        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.050);
-        min-height: 156px;
-        box-sizing: border-box;
-        overflow: hidden;
-        isolation: isolate;
-        contain: paint;
-    }
-    .visual-mvp-top {
-        display: grid;
-        grid-template-columns: 32px minmax(0, 1fr);
-        gap: 7px;
-        align-items: start;
-        margin-bottom: 8px;
-    }
-    .visual-mvp-avatar {
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
-        max-width: 32px;
-        min-height: 32px;
-        max-height: 32px;
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #ffffff;
-        color: #1e3a8a;
-        font-size: 1.02rem;
-        font-weight: 950;
-        box-shadow: 0 8px 18px rgba(15,23,42,.08);
-        border: 1px solid #dbeafe;
-        overflow: hidden;
-        position: relative;
-        z-index: 2;
-        contain: strict;
-    }
-    .visual-mvp-avatar .pi-club-mark {
-        width: 26px !important;
-        height: 26px !important;
-        min-width: 26px !important;
-        max-width: 26px !important;
-        min-height: 26px !important;
-        max-height: 26px !important;
-        flex: 0 0 26px !important;
-        border: 0 !important;
-        background: transparent !important;
-        border-radius: 0 !important;
-        font-size: .88rem !important;
-        box-shadow: none !important;
-        overflow: hidden !important;
-        contain: strict !important;
-    }
-    .visual-mvp-avatar .pi-club-mark img,
-    .visual-mvp-avatar img {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
-        object-fit: contain !important;
-        object-position: center !important;
-    }
-    .visual-mvp-card img {
-        object-fit: contain !important;
-        object-position: center !important;
-    }
-    .visual-mvp-identity .pi-director-chip,
-    .visual-mvp-identity .pi-chip-with-asset,
-    .visual-mvp-identity .tm69-nationality-chip {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 7px !important;
-        line-height: 1 !important;
-        white-space: nowrap !important;
-    }
-    .visual-mvp-identity .tm69-flag-img {
-        width: 16px !important;
-        height: 11px !important;
-        object-fit: cover !important;
-        border-radius: 2px !important;
-        flex: 0 0 auto !important;
-    }
-    .visual-mvp-identity .pi-director-chip b,
-    .visual-mvp-identity .visual-mvp-identity-chip span,
-    .visual-mvp-identity .visual-mvp-position-chip span {
-        display: inline-block !important;
-        padding-left: 1px !important;
-    }
-    .visual-mvp-rank {
-        color: #2563eb;
-        font-size: .68rem;
-        font-weight: 950;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        line-height: 1.05;
-        margin-bottom: 3px;
-    }
-    .visual-mvp-name {
-        color: #0f172a;
-        font-size: .78rem;
-        font-weight: 950;
-        line-height: 1.08;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .visual-mvp-meta {
-        color: #64748b;
-        font-size: .73rem;
-        line-height: 1.24;
-        margin-top: 3px;
-        white-space: normal;
-        overflow: visible;
-        text-overflow: initial;
-    }
-    .visual-mvp-nationality-line {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        margin-top: 3px;
-        margin-bottom: 4px;
-        font-size: .62rem;
-        font-weight: 900;
-        color: #334155;
-        max-width: 112px;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-    .visual-mvp-nationality-line img {
-        width: 16px !important;
-        height: 12px !important;
-        min-width: 16px !important;
-        display: inline-block !important;
-        object-fit: cover !important;
-    }
-    .visual-mvp-value {
-        text-align: right;
-        color: #0f172a;
-        font-size: .76rem;
-        font-weight: 950;
-        line-height: 1.05;
-    }
-    .visual-mvp-value span {
-        display: block;
-        color: #64748b;
-        font-size: .60rem;
-        font-weight: 950;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        margin-bottom: 4px;
-    }
-    .visual-mvp-kpis {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(58px, 1fr));
-        gap: 6px;
-        margin-top: 7px;
-    }
-    .visual-mvp-kpi {
-        background: #f8fafc;
-        border: 1px solid #dbe3ee;
-        border-radius: 12px;
-        padding: 6px 7px;
-        min-height: 34px;
-    }
-    .visual-mvp-kpi span {
-        display: block;
-        color: #475569;
-        font-size: .60rem;
-        font-weight: 950;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        margin-bottom: 3px;
-    }
-    .visual-mvp-kpi b {
-        color: #0f172a;
-        font-size: .96rem;
-        font-weight: 950;
-        line-height: 1.0;
-    }
-    .visual-mvp-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-top: 10px;
-        min-height: 24px;
-    }
-    .visual-mvp-priority {
-        display: inline-flex;
-        align-items: center;
-        width: fit-content;
-        border-radius: 999px;
-        padding: 4px 9px;
-        background: #dcfce7;
-        border: 1px solid #86efac;
-        color: #166534;
-        font-size: .68rem;
-        font-weight: 950;
-        white-space: nowrap;
-    }
-    .visual-mvp-profile {
-        display: inline-flex;
-        align-items: center;
-        width: fit-content;
-        border-radius: 999px;
-        padding: 4px 9px;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1e3a8a;
-        font-size: .66rem;
-        font-weight: 950;
-        white-space: nowrap;
-    }
-    .visual-mvp-value {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: .68rem;
-        max-width: 42px;
-    }
-    .visual-mvp-value span { font-size: .48rem; margin-bottom: 2px; }
+<style>
+.visual-mvp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    padding: 0 2px 28px 2px;
+}
 
-    /* TM.6.9.2 -> TM.6.9.3 MVP design hotfix */
-    .visual-mvp-identity-chip,
-    .visual-mvp-position-chip,
-    .visual-mvp-identity .pi-director-chip,
-    .visual-mvp-identity .pi-chip-with-asset,
-    .visual-mvp-identity .tm69-nationality-chip,
-    .visual-mvp-identity .pi-league-logo-chip {
-        max-width: 100% !important;
-        min-width: 0 !important;
-        width: auto !important;
-        height: 24px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 6px !important;
-        padding: 4px 7px !important;
-        box-sizing: border-box !important;
-        line-height: 1 !important;
-        overflow: hidden !important;
-        white-space: nowrap !important;
-        vertical-align: middle !important;
-        font-weight: 500 !important;
-    }
+.visual-mvp-card {
+    background: #fff;
+    border: 1px solid #dbe7ff;
+    border-left: 5px solid #2f5bff;
+    border-radius: 18px;
+    padding: 14px 16px;
+    min-height: 320px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.055);
+    overflow: hidden;
+}
 
-    .visual-mvp-identity .pi-club-mark {
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 16px !important;
-        flex: 0 0 16px !important;
-    }
+.visual-mvp-top {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) 54px;
+    column-gap: 14px;
+    align-items: start;
+    margin-bottom: 14px;
+}
 
-    .visual-mvp-identity .pi-league-logo-chip img,
-    .visual-mvp-identity .pi-club-mark img,
-    .visual-mvp-identity .tm69-flag-img {
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 16px !important;
-        max-width: 16px !important;
-        object-fit: contain !important;
-        object-position: center !important;
-        margin-right: 2px !important;
-    }
+.visual-mvp-avatar {
+    width: 112px;
+    height: 156px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #f3f6fb;
+    border: 1px solid #dbeafe;
+}
 
-    .visual-mvp-identity .pi-league-logo-chip span,
-    .visual-mvp-identity .pi-league-logo-chip b,
-    .visual-mvp-identity-chip span,
-    .visual-mvp-position-chip span,
-    .visual-mvp-identity .tm69-nationality-chip span,
-    .visual-mvp-identity .tm69-nationality-chip b {
-        min-width: 0 !important;
-        max-width: 92px !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        font-weight: 500 !important;
-        line-height: 1 !important;
-    }
+.visual-mvp-player-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
 
-    .visual-mvp-name {
-        font-weight: 900 !important;
-    }
+.visual-mvp-rank {
+    color: #2f5bff;
+    font-size: .76rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin: 2px 0 5px 0;
+    white-space: nowrap;
+}
 
-    .visual-mvp-rank,
-    .visual-mvp-value,
-    .visual-mvp-value span,
-    .visual-mvp-kpi span,
-    .visual-mvp-kpi b,
-    .visual-mvp-priority,
-    .visual-mvp-profile {
-        font-weight: 500 !important;
-    }
+.visual-mvp-name {
+    color: #07172c;
+    font-size: 1.03rem;
+    font-weight: 950;
+    line-height: 1.15;
+    margin: 0 0 6px 0;
+}
 
-    .visual-mvp-profile {
-        text-decoration: none !important;
-        cursor: pointer !important;
-    }
-    @media (max-width: 1450px) {
-        .visual-mvp-grid { grid-template-columns: repeat(4, minmax(132px, 1fr)); }
-    }
-    @media (max-width: 900px) {
-        .visual-mvp-grid { grid-template-columns: repeat(2, minmax(132px, 1fr)); }
-    }
-    </style>
-    """
+.visual-mvp-value {
+    text-align: right;
+    color: #334155;
+    font-size: .68rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.visual-mvp-value b {
+    display: block;
+    color: #020617;
+    font-size: .84rem;
+    margin-top: 2px;
+}
+
+.visual-mvp-tags,
+.visual-mvp-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.visual-mvp-chip,
+.visual-mvp-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 28px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #dbeafe;
+    background: #fbfdff;
+    color: #0f172a;
+    font-size: .74rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.visual-mvp-chip img,
+.visual-mvp-tag img,
+.visual-mvp-chip .pi-club-mark img,
+.visual-mvp-tag .pi-club-mark img {
+    max-width: 18px !important;
+    max-height: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
+}
+
+.visual-mvp-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 13px;
+}
+
+.visual-mvp-kpi {
+    background: #f8fbff;
+    border: 1px solid #dbe3ee;
+    border-radius: 14px;
+    padding: 10px 11px;
+    min-height: 66px;
+}
+
+.visual-mvp-kpi span {
+    display: block;
+    color: #334155;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+    white-space: nowrap;
+}
+
+.visual-mvp-kpi b {
+    color: #020617;
+    font-size: 1.04rem;
+    font-weight: 950;
+}
+
+.visual-mvp-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.visual-mvp-priority {
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: .76rem;
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.visual-mvp-profile,
+.visual-mvp-profile-link,
+.visual-mvp-cta {
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: .76rem;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+@media (max-width: 1450px) {
+    .visual-mvp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+</style>
+"""
 
     cards = ["<div class='visual-mvp-grid'>"]
     for _, row in df.iterrows():
@@ -25738,7 +25987,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
             f"""
             <div class="visual-mvp-card">
                 <div class="visual-mvp-top">
-                    <div class="visual-mvp-avatar">{_tm69_club_mark_html(dict(row), club) if club else html.escape(_visual_mvp_initials(player))}</div>
+                    <div class="visual-mvp-avatar">{_tm69_player_image_html(player, player)}</div>
                     <div>
                         <div class="visual-mvp-rank">Visual MVP #{rank}</div>
                         <div class="visual-mvp-name">{html.escape(player)}</div>
@@ -25763,7 +26012,7 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     html_block = css + "\n".join(cards)
 
     # 8 cards => compact horizontal shelf for the Market Intelligence executive view.
-    components.html(html_block, height=520, scrolling=False)
+    components.html(html_block, height=1180, scrolling=False)
 
 
 def render_executive_overview_page(source_df: pd.DataFrame) -> None:
@@ -25830,20 +26079,20 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
     st.markdown("<div class='mi-exec-nav-anchor'></div>", unsafe_allow_html=True)
     cta_1, cta_2, cta_3, cta_4 = st.columns(4, gap="small")
     with cta_1:
-        if st.button("👤 " + ("View Player Profile" if LANG == "EN" else "Ver Player Profile"), key="overview_cta_player_profile", use_container_width=True):
+        if st.button("👤 " + ("View Player Profile" if LANG == "EN" else "Ver Player Profile"), key="overview_cta_player_profile"):
             st.session_state.dashboard_navigation_page = "Player Intelligence"
             st.rerun()
     with cta_2:
-        if st.button("🎯 " + ("Go to Recruitment" if LANG == "EN" else "Ir a Recruitment"), key="overview_cta_recruitment", use_container_width=True):
+        if st.button("🎯 " + ("Go to Recruitment" if LANG == "EN" else "Ir a Recruitment"), key="overview_cta_recruitment"):
             st.session_state.dashboard_navigation_page = "Recruitment Intelligence"
             st.rerun()
     with cta_3:
-        if st.button("🧭 " + ("Open Strategy Center" if LANG == "EN" else "Abrir Strategy Center"), key="overview_cta_strategy", use_container_width=True):
+        if st.button("🧭 " + ("Open Strategy Center" if LANG == "EN" else "Abrir Strategy Center"), key="overview_cta_strategy"):
             st.session_state.dashboard_navigation_page = "Strategy Center"
             st.session_state.strategy_center_view = "Transfer Strategy"
             st.rerun()
     with cta_4:
-        if st.button("📄 " + ("Review Contracts" if LANG == "EN" else "Revisar contratos"), key="overview_cta_contracts", use_container_width=True):
+        if st.button("📄 " + ("Review Contracts" if LANG == "EN" else "Revisar contratos"), key="overview_cta_contracts"):
             st.session_state.dashboard_navigation_page = "Strategy Center"
             st.session_state.strategy_center_view = "Contract Intelligence"
             st.rerun()
@@ -25858,9 +26107,13 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
                 club_identity = f"{_tm69_club_mark_html(dict(row), club_raw)} {html.escape(club_raw)}"
                 country_raw = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(safe_get(row, 'player_name_display', '')), '') or _tm69_row_nationality(row, safe_get(row, 'player_name_display', ''))
                 nationality = _tm69_nationality_html(country_raw) if str(country_raw).strip() else ""
-                contract_meta_parts = [x for x in [nationality, club_identity, html.escape(str(safe_get(row, 'position_display', 'N/A'))), html.escape(str(safe_get(row, 'age_display', 'N/A'))) + ' ' + ('years' if LANG == 'EN' else 'años')] if x]
+                league_raw = league_display_name(safe_get(row, 'league_display', safe_get(row, 'league', '')))
+                league_identity = _tm69_league_chip_html(league_raw) if str(league_raw).strip() else ""
+                player_name_row = str(safe_get(row, 'player_name_display', 'N/A'))
+                player_photo = _tm697_player_photo_html(player_name_row, "top-contract-row-photo") if "_tm697_player_photo_html" in globals() else ""
+                contract_meta_parts = [x for x in [nationality, club_identity, league_identity, html.escape(str(safe_get(row, 'position_display', 'N/A'))), html.escape(str(safe_get(row, 'age_display', 'N/A'))) + ' ' + ('years' if LANG == 'EN' else 'años')] if x]
                 preview_rows.append(
-                    f"<div class='top5-row'><div class='top5-rank'>›</div><div><div class='top5-name'>{html.escape(str(safe_get(row, 'player_name_display', 'N/A')))}</div><div class='top5-meta'>{' · '.join(contract_meta_parts)}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
+                    f"<div class='top5-row top-contract-row-identity'><div class='top5-rank'>›</div>{player_photo}<div><div class='top5-name'>{html.escape(player_name_row)}</div><div class='top5-meta'>{' · '.join(contract_meta_parts)}</div></div><div class='top5-score'>{html.escape(format_score(safe_get(row, 'recruitment_contract_score', np.nan)))}</div></div>"
                 )
             st.markdown(
                 f"""
@@ -25877,14 +26130,6 @@ def render_executive_overview_page(source_df: pd.DataFrame) -> None:
         pass
 
     render_opportunity_risk_top5_vertical(source_df, "Top 5 opportunities" if LANG == "EN" else "Top 5 oportunidades", "Initial executive review priority" if LANG == "EN" else "Prioridad inicial para revisión ejecutiva")
-
-    with st.expander("Visual MVP", expanded=False):
-        st.caption(
-            "Top opportunities generated from Opportunity Score, Contract Intelligence and Recruitment Intelligence."
-            if LANG == "EN"
-            else "Top oportunidades generadas desde Opportunity Score, Contract Intelligence y Recruitment Intelligence."
-        )
-        render_visual_mvp_cards(limit=8)
 
 
 def render_transfer_strategy_placeholder() -> None:
@@ -26316,7 +26561,6 @@ def render_transfer_strategy_placeholder() -> None:
 
         st.dataframe(
             display,
-            use_container_width=True,
             hide_index=True,
         )
 
@@ -26398,7 +26642,7 @@ def render_transfer_strategy_placeholder() -> None:
                 )
                 fig.update_xaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
                 fig.update_yaxes(rangemode="tozero", automargin=True, showgrid=True, gridcolor="rgba(226,232,240,0.45)", zeroline=False, showline=True, linewidth=1, linecolor="rgba(148,163,184,0.45)")
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "displayModeBar": False})
+                st.plotly_chart(fig, config={"displaylogo": False, "displayModeBar": False})
             with rank_col:
                 rank_rows = []
                 for idx, (_, row) in enumerate(portfolio.sort_values("portfolio_value_score", ascending=False).head(7).iterrows(), start=1):
@@ -26503,7 +26747,7 @@ def render_market_opportunities_page(source_df: pd.DataFrame) -> None:
 - **Líneas discontinuas:** umbrales dinámicos calculados sobre la muestra filtrada.
 - **Cuadrantes:** objetivo prioritario, apuesta de crecimiento, perfil de bajo impacto y riesgo elevado.
             """)
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"]})
+        st.plotly_chart(fig, config={"displaylogo": False, "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"]})
         render_opportunity_risk_top5_vertical(source_df, T("top5_title"), T("top5_caption"))
         render_opportunity_risk_insight(source_df)
     st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
@@ -26902,7 +27146,7 @@ def render_individual_player_report(table_df: pd.DataFrame) -> None:
     fig_shap.update_xaxes(showgrid=True, gridcolor="rgba(226,232,240,0.42)", zeroline=True)
     fig_shap.update_yaxes(showgrid=False)
     with st.expander(TXT("Ver contribución técnica detallada"), expanded=False):
-        st.plotly_chart(fig_shap, use_container_width=True)
+        st.plotly_chart(fig_shap)
 
 
 
@@ -27575,14 +27819,57 @@ def _tm69_asset_uri(asset_type: str, *names: object) -> str | None:
 
     return None
 
-def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
-    pid = _tm69_first(ctx, ["player_id_tm", "tm69_player_id_tm", "player_id", "id"], "")
-    uri = _tm69_asset_uri("player", pid, player_name)
-    initials = html.escape(_tm69_initials(player_name))
-    if uri:
-        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(player_name)}'></div>"
-    return f"<div class='pi-avatar pi-avatar-premium'><span>{initials}</span><small>{html.escape('Foto pendiente' if globals().get('LANG') != 'EN' else 'Photo pending')}</small></div>"
 
+# ============================================================
+# TM.6.9.7 — Definitive player image resolver
+# ============================================================
+def _tm697_slug_player(name: object) -> str:
+    import unicodedata, re
+    x = unicodedata.normalize("NFKD", str(name or ""))
+    x = "".join(c for c in x if not unicodedata.combining(c))
+    x = x.lower()
+    return re.sub(r"[^a-z0-9]+", "_", x).strip("_")
+
+def _tm697_player_image_uri(player_name: object) -> str:
+    slug = _tm697_slug_player(player_name)
+
+    aliases = {
+        "javi_rodriguez": "javi_rodriguez",
+        "javirodriguez": "javi_rodriguez",
+        "christantus_uche": "christantus_uche",
+        "christantusuche": "christantus_uche",
+        "mario_martin": "mario_martin",
+        "saba_goglichidze": "saba_goglichidze",
+        "luca_marianucci": "luca_marianucci",
+        "rabby_nzingoula": "rabby_nzingoula",
+    }
+
+    slug = aliases.get(slug, slug)
+
+    for rel in [
+        f"players/{slug}.png",
+        f"players/{slug}.jpg",
+        f"players/{slug}.jpeg",
+        f"players/{slug}.webp",
+        "defaults/default_player.webp",
+    ]:
+        uri = _tm696_asset_data_uri(rel) if "_tm696_asset_data_uri" in globals() else ""
+        if uri:
+            return uri
+    return ""
+
+def _tm697_player_photo_html(player_name: object, cls: str = "pi-player-photo") -> str:
+    uri = _tm697_player_image_uri(player_name)
+    if not uri:
+        return ""
+    return f"<div class='{html.escape(cls)}'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    """Foto real si existe; silueta si no existe."""
+    if "_tm697_player_photo_html" in globals():
+        return _tm697_player_photo_html(player_name, "pi-player-photo")
+    return ""
 
 def _tm69_club_mark_html(ctx: dict, club: str) -> str:
     club_id = _tm69_first(ctx, ["current_club_id", "current_club_id_tm", "tm69_current_club_id", "club_id"], "")
@@ -28811,7 +29098,7 @@ def _render_contract_opportunity_matrix(data: pd.DataFrame, matrix_view: str | N
 
     chart_col, top_col = st.columns([3.15, 0.95])
     with chart_col:
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "displayModeBar": False})
+        st.plotly_chart(fig, config={"displaylogo": False, "displayModeBar": False})
     with top_col:
         st.markdown(
             f"""
@@ -28944,7 +29231,7 @@ def _render_contract_window_distribution(data: pd.DataFrame) -> None:
     )
     fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
     fig.update_yaxes(autorange="reversed")
-    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+    st.plotly_chart(fig, config={"displaylogo": False})
 
 
 def _render_contract_league_distribution(data: pd.DataFrame) -> None:
@@ -28976,7 +29263,7 @@ def _render_contract_league_distribution(data: pd.DataFrame) -> None:
     )
     fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb")
     fig.update_yaxes(autorange="reversed")
-    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
+    st.plotly_chart(fig, config={"displaylogo": False})
 
 
 def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
@@ -29128,7 +29415,7 @@ def render_contract_intelligence_page(contract_source_df: pd.DataFrame) -> None:
 <div class="contract-target-card contract-target-card-pro contract-target-card-premium contract-target-card-final">
     <div class="contract-target-main contract-target-main-final">
         <div class="contract-target-identity contract-target-identity-final">
-            <div class="contract-player-photo-shell"><div class="contract-player-avatar contract-player-avatar-final">{html.escape(initials_top)}</div></div>
+            {_tm696_contract_player_photo_html(player_name_top)}
             <div class="contract-target-copy-final">
                 <div class="contract-target-eyebrow">Top Contract Target</div>
                 <div class="contract-target-name">{html.escape(player_name_top)}</div>
@@ -30579,13 +30866,6 @@ def render_market_intelligence_page(source_df: pd.DataFrame) -> None:
 
 def render_strategy_center_page(source_df: pd.DataFrame, contract_source_df: pd.DataFrame) -> None:
     """Sprint 1A grouped entry point for contract and transfer decision layers."""
-    render_product_page_header(
-        "Strategy Center",
-        "Transfer Strategy Intelligence Platform",
-        "Portfolio optimization, contract timing and market planning."
-        if LANG == "EN"
-        else "Optimización de cartera, timing contractual y planificación de mercado.",
-    )
     source_df = add_role_display_columns(source_df)
     view_options = ["Contract Intelligence", "Transfer Strategy"]
     st.markdown("<div class='product-tab-nav'><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Contract Intelligence" else "") + "'>Contrato</span><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Transfer Strategy" else "") + "'>Estrategia</span></div>", unsafe_allow_html=True)
@@ -31165,9 +31445,14 @@ def _tm69_decision_card_html(ctx: dict, player_name: str, club: str, league: str
     return f"""
     <div class="exec-decision-hero exec-decision-hero-v2 exec-decision-hero-final">
         <div class="exec-decision-left">
-            <div class="exec-decision-eyebrow">{html.escape(title)}</div>
-            <div class="exec-status-band exec-status-{html.escape(status_tone)}"><b>{html.escape(status_label)}</b><span>{html.escape(status_copy)}</span></div>
-            <div class="exec-decision-name">{html.escape(player_name)}</div>
+            <div class="exec-decision-identity-row">
+                {_siq_player_portrait_html(player_name, "exec-decision-player-photo") if "_siq_player_portrait_html" in globals() else ""}
+                <div>
+                    <div class="exec-decision-eyebrow">{html.escape(title)}</div>
+                    <div class="exec-status-band exec-status-{html.escape(status_tone)}"><b>{html.escape(status_label)}</b><span>{html.escape(status_copy)}</span></div>
+                    <div class="exec-decision-name">{html.escape(player_name)}</div>
+                </div>
+            </div>
             <div class="exec-decision-meta">{html.escape(club)} · {html.escape(str(league))} · {html.escape(role)}</div>
             <div class="exec-decision-thesis">{html.escape(thesis)}</div>
         </div>
@@ -31758,11 +32043,10 @@ st.markdown(
 
 
 def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
-    """No visual placeholder when player photos are not guaranteed."""
-    pid = _tm69_first(ctx, ["player_id_tm", "tm69_player_id_tm", "player_id", "id"], "")
-    uri = _tm69_asset_uri("player", pid, player_name)
+    """Player portrait layer: real Javi image, default silhouette for the rest."""
+    uri = _tm696_player_image_uri(player_name) if "_tm696_player_image_uri" in globals() else ""
     if uri:
-        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(player_name)}'></div>"
+        return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
     return ""
 
 
@@ -31781,6 +32065,125 @@ def _tm69_strength_weakness_html(ctx: dict) -> str:
         f"<div class='pi-mini-panel'><h4>{html.escape('Alertas técnicas' if not is_en else 'Technical flags')}</h4><div class='pi-mini-list'>{w_rows}</div></div>"
     )
 
+
+
+# ============================================================
+# TM.6.9.6 FINAL — Player portrait override
+# ============================================================
+def _tm696_asset_data_uri(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(path.suffix.lower(), "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
+def _tm696_player_slug(player_name: object) -> str:
+    try:
+        key = normalize_search_text(str(player_name or ""))
+    except Exception:
+        key = str(player_name or "").lower()
+    key = key.replace(" ", "")
+    return key
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    """Player Intelligence portrait layer: Javi real image, others generic silhouette."""
+    compact = _tm696_player_slug(player_name)
+
+    candidates = []
+    if compact == "javirodriguez":
+        candidates.append("players/javi_rodriguez.png")
+
+    # fallback universal
+    candidates.append("defaults/default_player.webp")
+
+    uri = ""
+    for rel in candidates:
+        uri = _tm696_asset_data_uri(rel)
+        if uri:
+            break
+
+    if not uri:
+        initials = html.escape(_tm69_initials(player_name))
+        return f"<div class='pi-avatar pi-avatar-premium'><span>{initials}</span></div>"
+
+    return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+
+
+# ============================================================
+# TM.6.9.6 FINAL — Unified player portrait helpers
+# ============================================================
+def _tm696_asset_data_uri(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(path.suffix.lower(), "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
+def _tm696_compact_player_key(player_name: object) -> str:
+    try:
+        return normalize_search_text(str(player_name or "")).replace(" ", "")
+    except Exception:
+        return str(player_name or "").lower().replace(" ", "")
+
+def _tm696_player_image_uri(player_name: object) -> str:
+    key = _tm696_compact_player_key(player_name)
+
+    slug_map = {
+        "javirodriguez": "javi_rodriguez",
+        "christantusuche": "christantus_uche",
+    }
+
+    slug = slug_map.get(key)
+    candidates = []
+
+    if slug:
+        candidates += [
+            f"players/{slug}.png",
+            f"players/{slug}.jpg",
+            f"players/{slug}.webp",
+        ]
+
+    # fallback por slug directo
+    raw_slug = key
+    candidates += [
+        f"players/{raw_slug}.png",
+        f"players/{raw_slug}.jpg",
+        f"players/{raw_slug}.webp",
+        "defaults/default_player.webp",
+    ]
+
+    for rel in candidates:
+        uri = _tm696_asset_data_uri(rel)
+        if uri:
+            return uri
+
+    return ""
+
+def _tm696_contract_player_photo_html(player_name: object) -> str:
+    uri = _tm696_player_image_uri(player_name)
+    if uri:
+        return f"<div class='contract-player-photo-shell contract-player-photo-shell-img'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
+    return "<div class='contract-player-photo-shell'></div>"
 
 # Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
 def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = None) -> None:
@@ -31839,6 +32242,58 @@ def render_tm69_executive_summary_tab(row: pd.Series, name_col: str | None = Non
     </div>
     """
     st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+
+
+# ============================================================
+# TM.6.9.6 FINAL — Player portrait override
+# ============================================================
+def _tm696_asset_data_uri(rel_path: str) -> str:
+    try:
+        import base64
+        path = ROOT / "app" / "assets" / rel_path
+        if not path.exists():
+            return ""
+        mime = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+        }.get(path.suffix.lower(), "image/png")
+        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+    except Exception:
+        return ""
+
+def _tm696_player_slug(player_name: object) -> str:
+    try:
+        key = normalize_search_text(str(player_name or ""))
+    except Exception:
+        key = str(player_name or "").lower()
+    key = key.replace(" ", "")
+    return key
+
+def _tm69_player_avatar_html(ctx: dict, player_name: str) -> str:
+    """Player Intelligence portrait layer: Javi real image, others generic silhouette."""
+    compact = _tm696_player_slug(player_name)
+
+    candidates = []
+    if compact == "javirodriguez":
+        candidates.append("players/javi_rodriguez.png")
+
+    # fallback universal
+    candidates.append("defaults/default_player.webp")
+
+    uri = ""
+    for rel in candidates:
+        uri = _tm696_asset_data_uri(rel)
+        if uri:
+            break
+
+    if not uri:
+        initials = html.escape(_tm69_initials(player_name))
+        return f"<div class='pi-avatar pi-avatar-premium'><span>{initials}</span></div>"
+
+    return f"<div class='pi-player-photo'><img src='{html.escape(uri)}' alt='{html.escape(str(player_name or 'Player'))}'></div>"
 
 # Technical file: ficha técnica first; no duplicate name; real field with standard labels and visual assets.
 
@@ -38763,3 +39218,24 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+
+st.markdown('\n<style>\n/* TM.6.9.6 closure — Player Intelligence portrait visible */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 122px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n    margin-right: 14px !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    display: flex !important;\n    flex-direction: column !important;\n    align-items: center !important;\n    justify-content: center !important;\n    min-width: 126px !important;\n    padding-right: 18px !important;\n    margin-right: 14px !important;\n    gap: 10px !important;\n}\n.pi-visual-stack > .pi-visual-clubline,\n.pi-visual-stack > .pi-visual-nationality {\n    display: flex !important;\n}\n\n/* Recruitment > Drivers: más aire entre silueta y datos */\n.pi-ficha-identity,\n.pi-card-identity,\n.pi-director-identity,\n.snapshot-card-identity {\n    column-gap: 22px !important;\n}\n.pi-card,\n.snapshot-card {\n    overflow: visible !important;\n}\n\n/* Contract Intelligence: mismo tratamiento visual que silueta de jugador */\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 128px !important;\n    border-radius: 22px !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    overflow: hidden !important;\n}\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.6 layout closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada en la columna izquierda */\n.exec-summary-main-row {\n    display: grid !important;\n    grid-template-columns: 112px minmax(0, 1fr) !important;\n    gap: 18px !important;\n    align-items: center !important;\n}\n.exec-summary-photo-slot {\n    width: 104px !important;\n    height: 132px !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.exec-summary-photo-slot .pi-player-photo,\n.exec-summary-photo-slot .pi-avatar-premium {\n    width: 104px !important;\n    height: 132px !important;\n    min-width: 104px !important;\n    margin: 0 !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n}\n.exec-summary-photo-slot .pi-player-photo img,\n.exec-summary-photo-slot .pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.exec-summary-copy {\n    min-width: 0 !important;\n}\n\n/* Ocultar visual stack residual si quedó duplicado arriba */\n.exec-decision-left > .pi-visual-stack {\n    display: none !important;\n}\n\n/* Recruitment / Drivers: más aire con la silueta */\n.pi-visual-stack,\n.snapshot-card-identity .pi-visual-stack {\n    margin-right: 22px !important;\n    padding-right: 20px !important;\n}\n\n/* Silueta profesional homogénea */\n.pi-avatar-premium,\n.contract-player-photo-shell-img,\n.contract-player-photo-shell {\n    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.10) !important;\n}\n\n/* Contract Intelligence: mismo estilo que Player/Recruitment */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.6 FINAL UI closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada, no flotante */\n.pi-director-main {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    gap: 18px !important;\n    align-items: center !important;\n}\n.pi-director-main > .pi-visual-stack {\n    grid-column: 1 !important;\n    grid-row: 1 !important;\n    align-self: center !important;\n    justify-self: center !important;\n    margin: 0 !important;\n    padding: 0 !important;\n    min-width: 0 !important;\n}\n.pi-director-main > .pi-director-main-text {\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    min-width: 0 !important;\n}\n.pi-director-main .pi-visual-clubline,\n.pi-director-main .pi-visual-nationality {\n    display: none !important;\n}\n.pi-director-main .pi-player-photo,\n.pi-director-main .pi-avatar-premium {\n    width: 104px !important;\n    height: 132px !important;\n    min-width: 104px !important;\n    margin: 0 !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n}\n.pi-director-main .pi-player-photo img,\n.pi-director-main .pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n\n/* Contract Intelligence: misma silueta premium */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Recruitment Drivers: más separación entre silueta y contenido */\n.snapshot-card-identity,\n.pi-card-identity {\n    column-gap: 24px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Player image expansion */\n\n/* Contract / Market reusable player image */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Market Intelligence compact portraits */\n.market-top-player-row {\n    display: grid !important;\n    grid-template-columns: 54px minmax(0,1fr) !important;\n    gap: 10px !important;\n    align-items: center !important;\n}\n.market-top-player-row .contract-player-photo-shell,\n.market-top-player-row .contract-player-photo-shell-img {\n    width: 46px !important;\n    height: 58px !important;\n    border-radius: 13px !important;\n    box-shadow: 0 8px 18px rgba(15,23,42,.10) !important;\n}\n\n/* Recruitment Drivers spacing */\n.snapshot-card-identity,\n.pi-card-identity {\n    column-gap: 26px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Market Intelligence Top5 identity layer */\n.top5-exec-grid-featured {\n    grid-template-columns: minmax(290px, 1.55fr) repeat(4, minmax(0, 1fr)) !important;\n    align-items: stretch !important;\n}\n.top5-exec-card-featured {\n    border-color: #bcd3ff !important;\n    box-shadow: 0 14px 34px rgba(37,99,235,.12) !important;\n    min-height: 188px !important;\n}\n.top5-featured-top {\n    display: flex !important;\n    justify-content: space-between !important;\n    align-items: flex-start !important;\n    margin-bottom: 8px !important;\n}\n.top5-featured-rank {\n    font-size: 3.2rem !important;\n    line-height: .85 !important;\n    font-weight: 950 !important;\n    color: #2f5bff !important;\n    letter-spacing: -.08em !important;\n}\n.top5-featured-score {\n    font-size: 1.45rem !important;\n    font-weight: 950 !important;\n    color: #166534 !important;\n}\n.top5-featured-body {\n    display: grid !important;\n    grid-template-columns: 96px minmax(0,1fr) !important;\n    gap: 14px !important;\n    align-items: center !important;\n}\n.top5-featured-photo {\n    width: 92px !important;\n    height: 118px !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 10px 24px rgba(15,23,42,.12) !important;\n}\n.top5-featured-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n.top5-exec-card-compact .top5-horizontal-rank {\n    width: 22px !important;\n    height: 22px !important;\n    font-size: .72rem !important;\n}\n.top5-exec-card-compact .top5-horizontal-name {\n    font-size: .86rem !important;\n}\n.top5-exec-card-compact .top5-horizontal-score {\n    font-size: .95rem !important;\n}\n.top5-id-line {\n    display: flex !important;\n    align-items: center !important;\n    gap: 7px !important;\n    margin-top: 6px !important;\n    color: #334155 !important;\n    font-size: .76rem !important;\n    font-weight: 800 !important;\n}\n.top5-league-line {\n    margin-top: 7px !important;\n}\n\n/* Top Contract Opportunities with photo + richer identity */\n.top-contract-row-identity {\n    grid-template-columns: 32px 42px minmax(0,1fr) 72px !important;\n}\n.top-contract-row-photo {\n    width: 36px !important;\n    height: 46px !important;\n    border-radius: 11px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n}\n.top-contract-row-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n.top5-meta .pi-club-mark,\n.top5-meta .pi-chip-with-asset,\n.top5-meta .tm69-nationality-chip {\n    vertical-align: middle !important;\n}\n@media (max-width: 1200px) {\n    .top5-exec-grid-featured {\n        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;\n    }\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 final identity polish */\n\n/* Player Snapshot / Drivers */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 92px !important;\n    height: 118px !important;\n    min-width: 92px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Top Contract Opportunities */\n.top-contract-row-identity {\n    grid-template-columns: 32px 42px minmax(0,1fr) 72px !important;\n    align-items: center !important;\n}\n.top-contract-row-photo {\n    width: 36px !important;\n    height: 48px !important;\n    border-radius: 11px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 6px 14px rgba(15,23,42,.08) !important;\n}\n.top-contract-row-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Top 5 oportunidades: rank #1 menos grande */\n.top5-featured-rank,\n.top5-exec-card-featured .top5-featured-rank {\n    font-size: 2.35rem !important;\n    line-height: .95 !important;\n    letter-spacing: -.04em !important;\n}\n.top5-featured-photo {\n    width: 82px !important;\n    height: 104px !important;\n}\n.top5-featured-body {\n    grid-template-columns: 88px minmax(0,1fr) !important;\n    gap: 12px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Uche image visible in Player Snapshot */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n</style>\n', unsafe_allow_html=True)
