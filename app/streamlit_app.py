@@ -12073,6 +12073,7 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
 # =========================================================
 # TM.6.9.6 — Minimal Player Portrait Layer
 # =========================================================
+
 def _siq_asset_to_data_uri_safe(rel_path: str) -> str:
     try:
         import base64
@@ -12085,6 +12086,7 @@ def _siq_asset_to_data_uri_safe(rel_path: str) -> str:
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
             ".webp": "image/webp",
+            ".avif": "image/avif",
             ".svg": "image/svg+xml",
         }.get(suffix, "image/png")
         encoded = base64.b64encode(path.read_bytes()).decode("ascii")
@@ -12093,16 +12095,46 @@ def _siq_asset_to_data_uri_safe(rel_path: str) -> str:
         return ""
 
 
+def _siq_slug_player_name(player_name: object) -> str:
+    import unicodedata, re
+    x = unicodedata.normalize("NFKD", str(player_name or ""))
+    x = "".join(c for c in x if not unicodedata.combining(c))
+    x = x.lower()
+    return re.sub(r"[^a-z0-9]+", "_", x).strip("_")
+
+
 def _siq_player_portrait_html(player_name: object, css_class: str = "snapshot-player-photo") -> str:
-    """Only Javi Rodríguez uses a real portrait; every other player uses default silhouette."""
-    name_key = normalize_search_text(str(player_name or ""))
-    rel = "players/javi_rodriguez.png" if name_key.replace(" ", "") == "javirodriguez" else "defaults/default_player.webp"
-    uri = _siq_asset_to_data_uri_safe(rel)
-    alt = html.escape(str(player_name or "Player"))
-    if not uri:
-        initials = "".join([x[:1] for x in str(player_name or "PI").split()[:2]]).upper() or "PI"
-        return f"<div class='{css_class} snapshot-player-fallback'>{html.escape(initials)}</div>"
-    return f"<div class='{css_class}'><img src='{html.escape(uri)}' alt='{alt}' loading='lazy'></div>"
+    """Real portrait when local asset exists; default silhouette otherwise."""
+    slug = _siq_slug_player_name(player_name)
+
+    aliases = {
+        "javirodriguez": "javi_rodriguez",
+        "javi_rodriguez": "javi_rodriguez",
+        "christantusuche": "christantus_uche",
+        "christantus_uche": "christantus_uche",
+        "mario_martin": "mario_martin",
+        "saba_goglichidze": "saba_goglichidze",
+        "luca_marianucci": "luca_marianucci",
+        "rabby_nzingoula": "rabby_nzingoula",
+    }
+    slug = aliases.get(slug, slug)
+
+    for rel in [
+        f"players/{slug}.png",
+        f"players/{slug}.jpg",
+        f"players/{slug}.jpeg",
+        f"players/{slug}.webp",
+        f"players/{slug}.avif",
+        "defaults/default_player.webp",
+    ]:
+        uri = _siq_asset_to_data_uri_safe(rel)
+        if uri:
+            alt = html.escape(str(player_name or "Player"))
+            return f"<div class='{css_class}'><img src='{html.escape(uri)}' alt='{alt}' loading='lazy'></div>"
+
+    initials = "".join([x[:1] for x in str(player_name or "PI").split()[:2]]).upper() or "PI"
+    return f"<div class='{css_class} snapshot-player-fallback'>{html.escape(initials)}</div>"
+
 
 
 st.markdown("""
@@ -28080,6 +28112,21 @@ def _tm69_row_nationality(row: object, player_name: object = "") -> str:
             return str(val).strip()
 
     key = normalize_search_text(player_name or row_dict.get("player_name_fbref", "") or row_dict.get("player_name_display", ""))
+    compact_key = key.replace(" ", "").replace("_", "").replace("-", "")
+
+    nationality_overrides = {
+        "christantusuche": "Nigeria",
+        "javirodriguez": "España",
+        "javi rodriguez": "España",
+        "sabagoglichidze": "Georgia",
+        "lucamarianucci": "Italia",
+        "rabbynzingoula": "Francia",
+        "mariomartin": "España",
+    }
+
+    if compact_key in nationality_overrides:
+        return nationality_overrides[compact_key]
+
     return _tm69_player_nationality_lookup().get(key, "")
 
 
@@ -39324,3 +39371,15 @@ st.markdown('\n<style>\n/* TM.6.9.7 — Uche image visible in Player Snapshot */
 
 
 st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot Uche identity fix */\n.pi-player-photo {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot portrait + nationality fix */\n.snapshot-player-photo {\n    display: flex !important;\n    width: 118px !important;\n    height: 148px !important;\n    min-width: 118px !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 10px 24px rgba(15,23,42,.08) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.snapshot-player-photo img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.snapshot-identity-assets {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 — Sprint closure: Player Snapshot image layout */\n.snapshot-identity-card,\n.player-snapshot-identity-card,\n.pi-snapshot-identity-card {\n    overflow: hidden !important;\n}\n\n.snapshot-identity-row,\n.player-snapshot-identity-row,\n.pi-snapshot-identity-row {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 20px !important;\n    align-items: start !important;\n}\n\n.snapshot-player-photo,\n.pi-player-photo {\n    width: 112px !important;\n    height: 144px !important;\n    min-width: 112px !important;\n    max-width: 112px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    margin: 0 !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-player-photo img,\n.pi-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-identity-content,\n.player-snapshot-identity-content,\n.pi-snapshot-identity-content {\n    min-width: 0 !important;\n    position: relative !important;\n    z-index: 2 !important;\n    padding-left: 6px !important;\n}\n\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    max-width: 100% !important;\n}\n\n/* Evita que el bloque inferior invada la zona de imagen */\n.snapshot-identity-metrics,\n.pi-snapshot-metrics {\n    clear: both !important;\n    margin-top: 14px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 FINAL — no overlap in Player Snapshot identity card */\n.snapshot-player-photo {\n    float: left !important;\n    width: 92px !important;\n    height: 120px !important;\n    min-width: 92px !important;\n    max-width: 92px !important;\n    margin: 6px 20px 12px 0 !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    margin-left: 112px !important;\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n}\n\n.snapshot-identity-assets + *,\n.pi-identity-assets + *,\n.pi-chip-row + * {\n    margin-left: 112px !important;\n}\n\n/* La fila inferior queda debajo de la imagen */\n.snapshot-identity-metrics,\n.pi-snapshot-metrics {\n    clear: both !important;\n    margin-top: 14px !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 FINAL — Player Snapshot identity grid layout */\n.snapshot-card.snapshot-card-identity {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 18px !important;\n    align-items: start !important;\n    overflow: hidden !important;\n    padding: 22px 24px !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo {\n    grid-column: 1 !important;\n    grid-row: 1 !important;\n    float: none !important;\n    width: 108px !important;\n    height: 138px !important;\n    min-width: 108px !important;\n    max-width: 108px !important;\n    margin: 18px 0 0 0 !important;\n    border-radius: 20px !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-identity-main {\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    min-width: 0 !important;\n    max-width: 100% !important;\n    position: relative !important;\n    z-index: 2 !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-identity-assets {\n    margin: 12px 0 12px 0 !important;\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-position-row {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    margin-top: 12px !important;\n    display: grid !important;\n    grid-template-columns: 0.75fr 1fr 1fr !important;\n    gap: 14px !important;\n    min-width: 0 !important;\n    overflow: hidden !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n\n/* Neutraliza hacks anteriores */\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    margin-left: 0 !important;\n}\n.snapshot-identity-assets + *,\n.pi-identity-assets + *,\n.pi-chip-row + * {\n    margin-left: 0 !important;\n}\n</style>\n', unsafe_allow_html=True)
