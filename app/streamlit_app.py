@@ -16752,6 +16752,7 @@ def _tm697_player_image_uri(player_name: object) -> str:
         f"players/{slug}.jpg",
         f"players/{slug}.jpeg",
         f"players/{slug}.webp",
+        f"players/{slug}.avif",
         "defaults/default_player.webp",
     ]:
         uri = _tm697_asset_data_uri(rel)
@@ -27851,6 +27852,7 @@ def _tm697_player_image_uri(player_name: object) -> str:
         f"players/{slug}.jpg",
         f"players/{slug}.jpeg",
         f"players/{slug}.webp",
+        f"players/{slug}.avif",
         "defaults/default_player.webp",
     ]:
         uri = _tm696_asset_data_uri(rel) if "_tm696_asset_data_uri" in globals() else ""
