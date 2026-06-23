@@ -50,6 +50,10 @@ data/external/*
 
 # Large / binary files
 *.parquet
+
+!data/processed/player_role_features_advanced.parquet
+!data/processed/current_player_snapshot.parquet
+
 *.feather
 *.csv.gz
 *.pkl
