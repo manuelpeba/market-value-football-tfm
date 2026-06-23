@@ -1945,6 +1945,76 @@ div[data-testid="stSelectbox"] div[data-baseweb="popover"] {
 .scouting-topbar + .product-page-hero {
     margin-top: 24px !important;
 }
+<style>
+.role-dna-context-box {
+    max-width: 940px;
+    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 58%, #f1f6ff 100%);
+    border: 1px solid #dbeafe;
+    border-left: 5px solid #2563eb;
+    border-radius: 18px;
+    padding: 15px 17px 14px 17px;
+    margin: 12px 0 18px 0;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .055);
+}
+.role-dna-context-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #1d4ed8;
+    font-size: .74rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .075em;
+    margin-bottom: 9px;
+}
+.role-dna-context-title::before {
+    content: "i";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: .72rem;
+    font-weight: 950;
+    font-family: Inter, sans-serif;
+}
+.role-dna-context-copy {
+    color: #0f172a;
+    font-size: .91rem;
+    line-height: 1.48;
+    font-weight: 650;
+}
+.role-dna-context-copy b {
+    color: #071c55;
+    font-weight: 950;
+}
+
+.role-dna-role-pill {
+    display: inline-block;
+    padding: 5px 10px;
+    margin-bottom: 8px;
+    border-radius: 999px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+}
+
+
+.role-dna-context-note {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: .79rem;
+    line-height: 1.42;
+}
+</style>
 </style>
 
 </style>
@@ -11008,28 +11078,170 @@ def _tm69_target_priority_grade(score: float) -> str:
         return "C"
     return "D"
 
-def _tm69_dna_values(ctx: dict) -> list[tuple[str, float]]:
-    is_en = globals().get("LANG") == "EN"
-    items = [
-        ("Creation" if is_en else "Creación", _tm69_numeric(ctx, ["creation_index_role", "chance_creation_index", "tm69_creation_index_role", "tm69_chance_creation_index"])),
-        ("Progression" if is_en else "Progresión", _tm69_numeric(ctx, ["progression_index_role", "ball_progression_index", "tm69_progression_index_role", "tm69_ball_progression_index"])),
-        ("Finishing" if is_en else "Finalización", _tm69_numeric(ctx, ["finishing_index_role", "tm69_finishing_index_role"])),
-        ("Defending" if is_en else "Defensa", _tm69_numeric(ctx, ["defending_index_role", "defensive_activity_index", "tm69_defensive_activity_index", "interceptions_position_pct", "tm69_interceptions_position_pct", "tm69_defending_index_role"])),
-        ("Duels" if is_en else "Duelos", _tm69_numeric(ctx, ["duel_index_role", "tackles_won_position_pct", "tm69_tackles_won_position_pct", "aerial_duels_won_pct", "tm69_aerial_duels_won_pct", "tm69_duel_index_role"])),
-    ]
-    cleaned = []
-    for label, value in items:
-        if pd.notna(value):
-            # Role features can be 0-1, z-like or 0-100 depending on artefact. Convert conservatively to 0-100.
-            if -3 <= value <= 3:
-                value = max(0, min(100, 50 + value * 16.7))
-            elif 0 <= value <= 1:
-                value = value * 100
-            else:
-                value = max(0, min(100, value))
-        cleaned.append((label, value))
-    return cleaned
+def _tm69_scale_role_metric(value: object) -> float:
+    """Normalize role/DNA artefacts to a 0-100 product scale."""
+    num = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(num):
+        return np.nan
+    num = float(num)
 
+    # Role artefacts may be z-like, 0-1, or already 0-100.
+    if -3 <= num <= 3:
+        return float(np.clip(50 + num * 16.7, 0, 100))
+    if 0 <= num <= 1:
+        return float(np.clip(num * 100, 0, 100))
+    return float(np.clip(num, 0, 100))
+
+
+def _tm69_is_defensive_profile(ctx: dict) -> bool:
+    """Detect centre-back/defensive profiles to avoid offensive-led Role DNA narratives."""
+    role_raw = _tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup", "taxonomy_role_context"], "")
+    pos_raw = _tm69_first(ctx, ["position_group", "position", "pos_", "tm69_position_group"], "")
+
+    role_key = normalize_join_text(role_raw) if "normalize_join_text" in globals() else str(role_raw).lower()
+    pos_key = normalize_join_text(pos_raw) if "normalize_join_text" in globals() else str(pos_raw).lower()
+
+    defensive_roles = {
+        "ball playing centre back",
+        "aerial defender",
+        "aggressive defender",
+        "defensive anchor",
+        "ball winner",
+        "def cb",
+        "defender",
+        "centre back",
+        "center back",
+    }
+
+    return (
+        pos_key in {"def", "cb", "dc", "def cb", "defender"}
+        or "centre back" in role_key
+        or "center back" in role_key
+        or role_key in defensive_roles
+        or str(role_raw).upper() in {"DEF_CB", "CB"}
+    )
+
+
+
+
+def _tm69_dna_values(ctx: dict) -> list[tuple[str, float]]:
+    """
+    Position-aware tactical DNA for TM.6.9 Player Intelligence.
+
+    Values describe relative tactical contribution inside the detected role.
+    They are not absolute performance grades or global percentiles.
+    """
+    is_en = globals().get("LANG") == "EN"
+    is_defensive = _tm69_is_defensive_profile(ctx)
+
+    creation = _tm69_scale_role_metric(_tm69_numeric(ctx, [
+        "creation_index_role",
+        "chance_creation_index",
+        "tm69_creation_index_role",
+        "tm69_chance_creation_index",
+    ]))
+    progression = _tm69_scale_role_metric(_tm69_numeric(ctx, [
+        "progression_index_role",
+        "ball_progression_index",
+        "tm69_progression_index_role",
+        "tm69_ball_progression_index",
+    ]))
+    finishing = _tm69_scale_role_metric(_tm69_numeric(ctx, [
+        "finishing_index_role",
+        "tm69_finishing_index_role",
+    ]))
+    defending = _tm69_scale_role_metric(_tm69_numeric(ctx, [
+        "defending_index_role",
+        "defensive_activity_index",
+        "tm69_defensive_activity_index",
+        "interceptions_position_pct",
+        "tm69_interceptions_position_pct",
+        "tm69_defending_index_role",
+    ]))
+    duels = _tm69_scale_role_metric(_tm69_numeric(ctx, [
+        "duel_index_role",
+        "tackles_won_position_pct",
+        "tm69_tackles_won_position_pct",
+        "aerial_duels_won_pct",
+        "tm69_aerial_duels_won_pct",
+        "tm69_duel_index_role",
+    ]))
+
+    if is_defensive:
+        finishing_secondary = np.nan if pd.isna(finishing) else min(finishing, 45.0)
+        items = [
+            ("Progression" if is_en else "Progresión", progression),
+            ("Defending" if is_en else "Defensa", defending),
+            ("Duels" if is_en else "Duelos", duels),
+            ("Creation" if is_en else "Creación", creation),
+            ("Secondary finishing" if is_en else "Finalización secundaria", finishing_secondary),
+        ]
+    else:
+        items = [
+            ("Creation" if is_en else "Creación", creation),
+            ("Progression" if is_en else "Progresión", progression),
+            ("Finishing" if is_en else "Finalización", finishing),
+            ("Defending" if is_en else "Defensa", defending),
+            ("Duels" if is_en else "Duelos", duels),
+        ]
+
+    return [(label, value) for label, value in items if pd.notna(value)]
+
+def _tm69_role_dna_context_html(ctx: dict) -> str:
+    """Contextual explanation for interpreting Role DNA in Player Intelligence."""
+    is_en = globals().get("LANG") == "EN"
+    role = str(_tm69_first(ctx, ["primary_role", "role_subgroup", "tm69_role_subgroup", "taxonomy_role_context"], ""))
+    role_clean = clean_role_display(role, "Role pending" if is_en else "Rol pendiente")
+    role_key = normalize_join_text(role)
+
+    es = {
+        "ball playing centre back": "Central constructor especializado en progresión de balón, seguridad defensiva y participación en la construcción desde primera fase.",
+        "aerial defender": "El sistema identifica un defensor dominante en juego aéreo cuya aportación se explica principalmente por protección del área, duelos y seguridad defensiva.",
+        "aggressive defender": "El sistema identifica un defensor proactivo cuya identidad táctica se basa en anticipación, presión, acciones defensivas y capacidad para defender hacia adelante.",
+        "defensive anchor": "El sistema identifica un mediocentro defensivo cuya identidad táctica se basa en equilibrio, recuperación, protección de zonas centrales y seguridad posicional.",
+        "ball winner": "El sistema identifica un recuperador cuya aportación se explica por actividad defensiva, presión, duelos e interrupción del juego rival.",
+        "creative playmaker": "El sistema identifica un creador cuya identidad táctica se basa en generación de ventajas, pase progresivo y producción ofensiva.",
+        "attacking progressor": "El sistema identifica un progresor ofensivo cuya aportación se explica por conducción, recepción avanzada y aceleración de ataques.",
+        "box finisher": "El sistema identifica un finalizador cuya identidad táctica está impulsada por presencia en área, remate y conversión de ocasiones.",
+        "creator forward": "El sistema identifica un delantero generador cuya aportación combina amenaza ofensiva, movilidad y creación para compañeros.",
+        "mobile forward": "El sistema identifica un atacante móvil cuya identidad táctica se basa en desmarques, progresión y participación en diferentes alturas del ataque.",
+    }
+
+    en = {
+        "ball playing centre back": "The system identifies a build-up centre-back whose tactical identity is mainly driven by ball progression, defensive reliability and involvement in first-phase possession.",
+        "aerial defender": "The system identifies a box-protection defender whose contribution is mainly explained by aerial presence, duels and defensive security.",
+        "aggressive defender": "The system identifies a proactive defender whose tactical identity is based on anticipation, pressure, defensive actions and forward defending.",
+        "defensive anchor": "The system identifies a defensive midfielder whose tactical identity is based on balance, ball recovery, central-zone protection and positional security.",
+        "ball winner": "The system identifies a recovery-oriented profile explained by defensive activity, pressure, duels and disruption of opposition play.",
+        "creative playmaker": "The system identifies a creator whose tactical identity is based on chance creation, progressive passing and offensive production.",
+        "attacking progressor": "The system identifies an attacking progressor whose contribution is explained by carrying, advanced receiving and attack acceleration.",
+        "box finisher": "The system identifies a finisher whose tactical identity is driven by box presence, shooting and chance conversion.",
+        "creator forward": "The system identifies a creator forward combining attacking threat, mobility and chance creation for teammates.",
+        "mobile forward": "The system identifies a mobile attacker whose tactical identity is based on runs, progression and involvement across attacking zones.",
+    }
+
+    explanation = (en if is_en else es).get(
+        role_key,
+        (
+            "The dimensions below explain the tactical characteristics behind the detected role."
+            if is_en
+            else "Las dimensiones mostradas explican las características que mejor describen el perfil táctico detectado por el sistema."
+        ),
+    )
+
+    note = (
+        "Role DNA explains why the player has been classified in this tactical role. Values describe relative tactical contribution inside the detected profile; they are not absolute performance grades."
+        if is_en
+        else "ℹ Valores relativos al rol detectado por el sistema."
+    )
+
+    return f"""
+    <div class="role-dna-context-box">
+        <div class="role-dna-context-title">{html.escape('Tactical profile keys' if is_en else 'Claves del perfil táctico')}</div>
+        <div class="role-dna-context-copy"><b>{html.escape(role_clean)}:</b> {html.escape(explanation)}</div>
+        <div class="role-dna-context-note">{html.escape(note)}</div>
+    </div>
+    """
 
 def _tm69_dna_bars(ctx: dict) -> str:
     rows = []
@@ -32564,7 +32776,7 @@ def render_tm69_profile_role_tab(row: pd.Series, table: pd.DataFrame, name_col: 
         </div>
       </div>
     </div>
-    <div class='pi-card'><div class='pi-section-head'><h3>{html.escape('ADN de rol' if not is_en else 'Role DNA')}</h3></div>{_tm69_dna_bars(d['ctx'])}</div>
+    <div class='pi-card'><div class='pi-section-head'><h3>{html.escape('ADN de rol' if not is_en else 'Role DNA')}</h3></div>{_tm69_role_dna_context_html(d['ctx'])}{_tm69_dna_bars(d['ctx'])}</div>
     """
     st.markdown("".join(line.strip() for line in pitch_html.splitlines()), unsafe_allow_html=True)
 
