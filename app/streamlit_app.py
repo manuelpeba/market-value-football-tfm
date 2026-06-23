@@ -8617,9 +8617,25 @@ def render_role_dna_filters(source_df: pd.DataFrame, key_prefix: str) -> pd.Data
     )
     chips_html = "".join(f"<span>{html.escape(x)}</span>" for x in intent_examples)
     st.markdown(
-        f"<div class='role-dna-filter-shell'><div class='role-dna-filter-title'>{html.escape(title)}</div><div class='role-dna-filter-subtitle'>{html.escape(subtitle)}</div><div class='role-dna-filter-intents'>{chips_html}</div>",
+        f"<div class='role-dna-filter-shell'><div class='role-dna-filter-title'>{html.escape(title)}</div><div class='role-dna-filter-subtitle'>{html.escape(subtitle)}</div>",
         unsafe_allow_html=True,
     )
+
+    intent_rules = [
+        ("🛡 Construcción desde atrás" if LANG == "ES" else "🛡 Build-up from deep", {"ball_progression_index": 60, "passing_security_index": 55}),
+        ("🎨 Creación ofensiva" if LANG == "ES" else "🎨 Offensive creation", {"chance_creation_index": 60, "ball_progression_index": 50}),
+        ("⚙ Seguridad en posesión" if LANG == "ES" else "⚙ Possession security", {"passing_security_index": 65}),
+        ("🏃 Disponibilidad competitiva" if LANG == "ES" else "🏃 Competitive availability", {"availability_index_role": 65}),
+    ]
+    btn_cols = st.columns(len(intent_rules), gap="small")
+    for bidx, (label, rules) in enumerate(intent_rules):
+        with btn_cols[bidx]:
+            if st.button(label, key=f"{key_prefix}_intent_{bidx}", use_container_width=True):
+                for c in ROLE_DNA_FILTER_COLUMNS:
+                    st.session_state[f"{key_prefix}_{c}_min_filter"] = int(rules.get(c, 0))
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
     cols = st.columns(len(available), gap="small")
     thresholds: dict[str, int] = {}
     for idx, col in enumerate(available):
@@ -8628,7 +8644,7 @@ def render_role_dna_filters(source_df: pd.DataFrame, key_prefix: str) -> pd.Data
                 role_dna_label(col) + " ≥",
                 min_value=0,
                 max_value=100,
-                value=0,
+                value=int(st.session_state.get(f"{key_prefix}_{col}_min_filter", 0)),
                 step=5,
                 key=f"{key_prefix}_{col}_min_filter",
             )
@@ -12366,7 +12382,6 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
                 <div class="snapshot-meta-grid">
                     <div><span>{html.escape(lbl_age)}</span><b>{html.escape(age_display)} {html.escape(age_suffix)}</b></div>
                     <div><span>{html.escape(lbl_position)}</span><b>{html.escape(position_badge)}</b></div>
-                    <div><span>{html.escape(lbl_context)}</span><b>{html.escape(league)}</b></div>
                 </div>
             </div>
         </div>
@@ -24085,7 +24100,7 @@ if current_global_search is not None and str(current_global_search) not in searc
     st.session_state["global_scouting_search"] = None
 
 query_value_state = str(st.session_state.get("global_scouting_query", "") or "")
-candidate_results = rank_global_command_search(base_df, query_value_state, search_options, search_label_to_raw, max_results=5)
+candidate_results = rank_global_command_search(football_df, query_value_state, search_options, search_label_to_raw, max_results=5)
 
 selected_from_session = st.session_state.get("global_scouting_search")
 if selected_from_session in search_label_to_raw:
@@ -39383,3 +39398,6 @@ st.markdown('\n<style>\n/* TM.6.9.7 FINAL — no overlap in Player Snapshot iden
 
 
 st.markdown('\n<style>\n/* TM.6.9.7 FINAL — Player Snapshot identity grid layout */\n.snapshot-card.snapshot-card-identity {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 18px !important;\n    align-items: start !important;\n    overflow: hidden !important;\n    padding: 22px 24px !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo {\n    grid-column: 1 !important;\n    grid-row: 1 !important;\n    float: none !important;\n    width: 108px !important;\n    height: 138px !important;\n    min-width: 108px !important;\n    max-width: 108px !important;\n    margin: 18px 0 0 0 !important;\n    border-radius: 20px !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-identity-main {\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    min-width: 0 !important;\n    max-width: 100% !important;\n    position: relative !important;\n    z-index: 2 !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-identity-assets {\n    margin: 12px 0 12px 0 !important;\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-position-row {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    margin-top: 12px !important;\n    display: grid !important;\n    grid-template-columns: 0.75fr 1fr 1fr !important;\n    gap: 14px !important;\n    min-width: 0 !important;\n    overflow: hidden !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n\n/* Neutraliza hacks anteriores */\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    margin-left: 0 !important;\n}\n.snapshot-identity-assets + *,\n.pi-identity-assets + *,\n.pi-chip-row + * {\n    margin-left: 0 !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+
+st.markdown('\n<style>\n/* TM.6.9.7 CLOSE — Cloud visual sync */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n    gap: 18px !important;\n}\n.snapshot-identity-layout .snapshot-meta-grid div,\n.snapshot-identity-layout .snapshot-meta-grid b,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button {\n    border-radius: 14px !important;\n    border: 1px solid #bfdbfe !important;\n    background: #ffffff !important;\n    color: #0f2f5f !important;\n    font-weight: 900 !important;\n    min-height: 46px !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button:hover {\n    background: #eff6ff !important;\n    border-color: #2563eb !important;\n}\n</style>\n', unsafe_allow_html=True)
