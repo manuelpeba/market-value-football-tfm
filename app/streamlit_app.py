@@ -40195,3 +40195,72 @@ st.markdown('\n<style>\n/* TM.6.9.7 CLOSE — Cloud visual sync */\n.snapshot-id
 
 
 st.markdown('\n<style>\n/* TM.6.9.7 cloud sync final */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n}\n</style>\n', unsafe_allow_html=True)
+
+# =============================================================================
+# TM.6.11.3 — FINAL Mobile Command Header Override
+# =============================================================================
+st.markdown(
+    """
+<style>
+@media (max-width: 900px) {
+
+    .product-page-hero-minimal-v69,
+    .product-page-hero-unified,
+    .product-page-hero {
+        margin-bottom: 42px !important;
+    }
+
+    .tm69-command-search-card {
+        margin-top: 28px !important;
+        padding-top: 8px !important;
+        clear: both !important;
+    }
+
+    .tm69-command-search-card .final-search-title-row,
+    .final-search-title-row {
+        margin-top: 18px !important;
+        margin-bottom: 14px !important;
+        min-height: 24px !important;
+        align-items: flex-start !important;
+    }
+
+    .tm69-command-search-card .final-search-title,
+    .final-search-title {
+        display: block !important;
+        position: relative !important;
+        top: auto !important;
+        margin: 0 0 10px 0 !important;
+        line-height: 1.25 !important;
+    }
+
+    .tm69-command-search-card label,
+    div[data-testid="stSelectbox"] label {
+        display: block !important;
+        margin-top: 8px !important;
+        margin-bottom: 10px !important;
+        line-height: 1.25 !important;
+    }
+
+    .tm69-command-search-card div[data-baseweb="select"] > div {
+        min-height: 52px !important;
+        border-radius: 18px !important;
+    }
+
+    .context-strip,
+    .context-strip-v2,
+    .compact-context-panel {
+        margin-top: 26px !important;
+        clear: both !important;
+    }
+
+    .search-suggestion-caption {
+        margin-top: 20px !important;
+        margin-bottom: 14px !important;
+        display: block !important;
+        clear: both !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
