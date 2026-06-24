@@ -7431,6 +7431,75 @@ st.markdown(
 )
 
 
+
+# =============================================================================
+# TM.6.11.1 — Mobile Search Spacing Hotfix
+# =============================================================================
+st.markdown(
+    """
+<style>
+@media (max-width: 900px) {
+
+    /* Separación real entre hero/header y buscador */
+    .final-search-title,
+    .global-search-title,
+    .search-suggestion-caption {
+        display: block !important;
+        margin-top: 18px !important;
+        margin-bottom: 10px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* El buscador no debe quedar pegado al hero */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+    div[data-testid="stElementContainer"]:has(.final-search-title),
+    .global-search-shell {
+        margin-top: 14px !important;
+        margin-bottom: 22px !important;
+    }
+
+    /* Fila Buscar + jugador seleccionado */
+    .search-clear-row,
+    .context-strip-v2 {
+        margin-top: 10px !important;
+    }
+
+    /* Evita que el chip de búsqueda se meta debajo de la label */
+    div[data-testid="stSelectbox"] {
+        margin-bottom: 14px !important;
+    }
+
+    div[data-testid="stSelectbox"] label {
+        display: block !important;
+        margin-bottom: 8px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Tabs: scroll horizontal limpio en móvil */
+    div[data-testid="stTabs"] div[role="tablist"] {
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        scrollbar-width: thin !important;
+    }
+
+    div[data-testid="stTabs"] button {
+        flex: 0 0 auto !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* Topbar: que el breadcrumb no fuerce ancho */
+    .scouting-topbar-right {
+        flex-wrap: wrap !important;
+        line-height: 1.35 !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # TM.6.11 — Mobile Safe UX Patch
 # =============================================================================
