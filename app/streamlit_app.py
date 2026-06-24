@@ -24166,12 +24166,10 @@ def render_player_intelligence_command_center(
     coverage_text = f"{filtered_pct_shortlist:.0%}" if isinstance(filtered_pct_shortlist, (int, float)) else "N/A"
 
     st.markdown("<div class='tm69-command-center-css-anchor'></div>", unsafe_allow_html=True)
-    # TM.6.11.5 — Mobile-safe command center structure
-    # Se elimina el layout st.columns() en esta capa crítica porque en mobile
-    # Streamlit mantiene wrappers que provocan solapes entre hero, search y contexto.
-    left_col = st.container()
-    search_col = st.container()
-    context_col = st.container()
+    # TM.6.11.6 — Desktop columns + mobile stacked command center
+    # Desktop conserva la línea compacta original.
+    # Mobile se controla por CSS forzando las columnas a stack vertical.
+    left_col, search_col, context_col = st.columns([2.2, 4.3, 3.5], gap="small")
 
     with left_col:
         st.markdown(
@@ -40471,6 +40469,81 @@ st.markdown(
     .tm69-command-chip-row {
         max-height: none !important;
         overflow: visible !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.11.6 — Desktop preserved, mobile stacked command center
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* Desktop: conservar Command Center en una sola línea */
+@media (min-width: 901px) {
+    div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) {
+        display: flex !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) > div[data-testid="column"] {
+        min-width: 0 !important;
+    }
+}
+
+/* Mobile: las tres columnas pasan a flujo vertical real */
+@media (max-width: 900px) {
+    div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 22px !important;
+        width: 100% !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) > div[data-testid="column"] {
+        width: 100% !important;
+        min-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    .product-page-hero-unified,
+    .product-page-hero,
+    .product-page-hero-minimal-v69 {
+        margin-bottom: 0 !important;
+    }
+
+    .tm69-command-search-card {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        clear: both !important;
+    }
+
+    .tm69-command-search-card .final-search-title-row,
+    .final-search-title-row {
+        margin-bottom: 12px !important;
+    }
+
+    .tm69-command-search-card div[data-testid="stSelectbox"] {
+        margin-bottom: 18px !important;
+    }
+
+    .search-suggestion-caption {
+        margin-top: 14px !important;
+        margin-bottom: 14px !important;
+        clear: both !important;
+    }
+
+    .compact-context-panel,
+    .context-strip,
+    .context-strip-v2 {
+        margin-top: 0 !important;
+        margin-bottom: 24px !important;
+        clear: both !important;
     }
 }
 </style>
