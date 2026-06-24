@@ -13373,6 +13373,7 @@ def get_all_radar_metric_columns() -> list[str]:
     return sorted(set(cols))
 
 
+@st.cache_data(show_spinner=False)
 def load_radar_feature_dataset() -> pd.DataFrame:
     """Load the richest available processed player-season dataset for radar metrics."""
     for filename in RADAR_DATASET_CANDIDATES:
@@ -13391,6 +13392,7 @@ def load_radar_feature_dataset() -> pd.DataFrame:
     return pd.DataFrame()
 
 
+@st.cache_data(show_spinner=False)
 def enrich_shortlist_with_radar_features(shortlist_df: pd.DataFrame) -> pd.DataFrame:
     """Attach FBref/modeling football metrics to the shortlist if rankings do not contain them.
 
@@ -13465,6 +13467,7 @@ def enrich_shortlist_with_radar_features(shortlist_df: pd.DataFrame) -> pd.DataF
 
     return best_enriched
 
+@st.cache_data(show_spinner=False)
 def load_football_lookup_dataset() -> pd.DataFrame:
     """Load the broadest available current player-season dataset for global lookup.
 
