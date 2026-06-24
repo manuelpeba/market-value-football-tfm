@@ -7500,6 +7500,95 @@ st.markdown(
 )
 
 
+
+# =============================================================================
+# TM.6.11.2 — Mobile Header/Search Hard Fix
+# =============================================================================
+st.markdown(
+    """
+<style>
+@media (max-width: 900px) {
+
+    /* 1) Hero superior con margen inferior real */
+    .product-page-hero-unified,
+    .product-page-hero,
+    .siq-section-hero,
+    .market-hero,
+    .player-hero {
+        margin-bottom: 34px !important;
+    }
+
+    /* 2) Título BUSCADOR GLOBAL: fuera del borde de la card anterior */
+    .final-search-title,
+    .global-search-title {
+        display: block !important;
+        position: static !important;
+        clear: both !important;
+        margin: 26px 0 12px 0 !important;
+        padding-top: 0 !important;
+        line-height: 1.25 !important;
+        z-index: 1 !important;
+    }
+
+    /* 3) Label secundaria "Búsqueda global" */
+    div[data-testid="stSelectbox"] label {
+        display: block !important;
+        margin: 0 0 10px 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+        font-size: 1rem !important;
+    }
+
+    /* 4) Input buscador */
+    div[data-testid="stSelectbox"] {
+        margin-top: 0 !important;
+        margin-bottom: 22px !important;
+    }
+
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        min-height: 50px !important;
+        border-radius: 18px !important;
+    }
+
+    /* 5) Fila Buscar + jugador: que nunca invada universo */
+    .search-suggestion-caption,
+    .search-clear-row {
+        display: block !important;
+        clear: both !important;
+        margin: 18px 0 14px 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+    }
+
+    /* 6) Universo activo separado del chip de búsqueda */
+    .context-strip,
+    .context-strip-v2 {
+        clear: both !important;
+        margin-top: 18px !important;
+        margin-bottom: 26px !important;
+        padding-top: 18px !important;
+    }
+
+    /* 7) Si el chip seleccionado queda en línea, permitir wrap limpio */
+    .context-chip,
+    .context-chip-link,
+    .context-chip-clear {
+        white-space: normal !important;
+        max-width: 100% !important;
+        line-height: 1.25 !important;
+    }
+
+    /* 8) Evitar que Streamlit compacte verticalmente el bloque inicial */
+    div[data-testid="stVerticalBlock"] {
+        gap: 1rem !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # TM.6.11 — Mobile Safe UX Patch
 # =============================================================================
