@@ -24166,7 +24166,12 @@ def render_player_intelligence_command_center(
     coverage_text = f"{filtered_pct_shortlist:.0%}" if isinstance(filtered_pct_shortlist, (int, float)) else "N/A"
 
     st.markdown("<div class='tm69-command-center-css-anchor'></div>", unsafe_allow_html=True)
-    left_col, search_col, context_col = st.columns([2.2, 4.3, 3.5], gap="small")
+    # TM.6.11.5 — Mobile-safe command center structure
+    # Se elimina el layout st.columns() en esta capa crítica porque en mobile
+    # Streamlit mantiene wrappers que provocan solapes entre hero, search y contexto.
+    left_col = st.container()
+    search_col = st.container()
+    context_col = st.container()
 
     with left_col:
         st.markdown(
@@ -40369,6 +40374,103 @@ st.markdown(
         clear: both !important;
         margin-top: 30px !important;
         margin-bottom: 30px !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# =============================================================================
+# TM.6.11.5 — Command Center Structural Mobile Fix
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* El Command Center ahora se renderiza como 3 containers consecutivos:
+   hero -> search -> active context. Este CSS normaliza el flujo. */
+
+.tm69-command-panel {
+    width: 100% !important;
+}
+
+.tm69-command-left {
+    margin-bottom: 18px !important;
+}
+
+.tm69-search-label-row-final {
+    margin-top: 6px !important;
+    margin-bottom: 10px !important;
+}
+
+.tm69-search-example-final {
+    margin-top: 12px !important;
+    margin-bottom: 18px !important;
+}
+
+.tm69-command-context-panel {
+    margin-top: 6px !important;
+    margin-bottom: 24px !important;
+}
+
+@media (max-width: 900px) {
+
+    .tm69-command-left {
+        margin-bottom: 30px !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    .tm69-search-label-row-final {
+        display: block !important;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        clear: both !important;
+    }
+
+    .tm69-command-search-label {
+        display: block !important;
+        margin-bottom: 12px !important;
+        line-height: 1.2 !important;
+    }
+
+    .tm69-command-search-help {
+        display: none !important;
+    }
+
+    div[data-testid="stSelectbox"] {
+        margin-bottom: 22px !important;
+    }
+
+    .tm69-search-example-final {
+        display: block !important;
+        margin-top: 16px !important;
+        margin-bottom: 28px !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        line-height: 1.35 !important;
+    }
+
+    .tm69-search-example-final span {
+        display: inline-flex !important;
+        margin-top: 6px !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        line-height: 1.25 !important;
+    }
+
+    .tm69-command-context-panel {
+        margin-top: 0 !important;
+        margin-bottom: 30px !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    .tm69-command-chip-row {
+        max-height: none !important;
+        overflow: visible !important;
     }
 }
 </style>
