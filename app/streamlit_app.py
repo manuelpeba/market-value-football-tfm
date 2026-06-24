@@ -8170,11 +8170,45 @@ def load_role_explainability_dataset(path: Path | None = None) -> pd.DataFrame:
         return pd.DataFrame()
 
     resolved_path = Path(resolved_path)
+
+    role_dna_required_cols = list(dict.fromkeys([
+        "player_name_fbref",
+        "player_name",
+        "player",
+        "team",
+        "club",
+        "squad",
+        "league",
+        "competition",
+        "season",
+        "season_label",
+        "role_dna_player",
+        "role_dna_team",
+        "role_dna_league",
+        "role_dna_season",
+        *ROLE_DNA_COLUMNS,
+        "role_fit_explainability_score",
+        "role_explainability_quality",
+        "dominant_tactical_dimension",
+        "dominant_tactical_score",
+        "role_explanation_text",
+    ]))
+
     if resolved_path.suffix.lower() == ".csv":
         dna = pd.read_csv(resolved_path, low_memory=False)
+        keep_cols = [c for c in role_dna_required_cols if c in dna.columns]
+        if keep_cols:
+            dna = dna[keep_cols].copy()
     else:
-        dna = pd.read_parquet(resolved_path)
-    dna = apply_club_name_normalization(dna.copy())
+        try:
+            import pyarrow.parquet as pq
+            available_cols = set(pq.ParquetFile(resolved_path).schema.names)
+            keep_cols = [c for c in role_dna_required_cols if c in available_cols]
+            dna = pd.read_parquet(resolved_path, columns=keep_cols) if keep_cols else pd.DataFrame()
+        except Exception:
+            dna = pd.read_parquet(resolved_path)
+    dna = dna.copy()
+
 
     rename_candidates = {
         "player_name_fbref": "role_dna_player",
