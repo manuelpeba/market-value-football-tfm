@@ -55,6 +55,7 @@ def _tm69_slug_player_name(name: str) -> str:
     x = _re.sub(r"[^a-z0-9]+", "_", x).strip("_")
     return x
 
+@st.cache_data(show_spinner=False)
 def _tm69_asset_to_data_uri(path: str) -> str:
     pp = _Path(path)
     if not pp.exists():
@@ -12833,6 +12834,7 @@ def render_tm69_executive_scouting_card(row: pd.Series, name_col: str | None = N
 # TM.6.9.6 — Minimal Player Portrait Layer
 # =========================================================
 
+@st.cache_data(show_spinner=False)
 def _siq_asset_to_data_uri_safe(rel_path: str) -> str:
     try:
         import base64
@@ -17552,6 +17554,7 @@ def _tm697_slug_player(name: object) -> str:
     x = re.sub(r"[^a-z0-9]+", "_", x).strip("_")
     return x
 
+@st.cache_data(show_spinner=False)
 def _tm697_asset_data_uri(rel_path: str) -> str:
     try:
         import base64
@@ -21568,6 +21571,7 @@ def _command_row_context(df, raw):
     except Exception:
         return {}
 
+@st.cache_data(show_spinner=False)
 def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
     """Build global search options with clean product labels.
 
@@ -26454,6 +26458,7 @@ def _visual_mvp_player_name(row) -> str:
     )
 
 
+@st.cache_data(show_spinner=False)
 def load_visual_mvp_manifest() -> pd.DataFrame:
     path = ROOT / "reports" / "visual_identity" / "tm6_9a_top30_visual_mvp_manifest.csv"
     if not path.exists():
@@ -28832,6 +28837,7 @@ def _tm69_country_iso2(country: object) -> str:
     return mapping.get(key, "")
 
 
+@st.cache_data(show_spinner=False)
 def _tm69_flag_uri(country: object) -> str:
     try:
         country_raw = str(country or "").strip()
@@ -32928,6 +32934,7 @@ def _tm69_strength_weakness_html(ctx: dict) -> str:
 # ============================================================
 # TM.6.9.6 FINAL — Player portrait override
 # ============================================================
+@st.cache_data(show_spinner=False)
 def _tm696_asset_data_uri(rel_path: str) -> str:
     try:
         import base64
@@ -33048,6 +33055,7 @@ def _tm696_contract_player_photo_html(player_name: object) -> str:
 # ============================================================
 # TM.6.9.7 — Player Snapshot identity hardening
 # ============================================================
+@st.cache_data(show_spinner=False)
 def _tm697_safe_asset_data_uri(rel_path: str) -> str:
     try:
         import base64
