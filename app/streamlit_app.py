@@ -7430,6 +7430,372 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# TM.6.11 — Mobile Safe UX Patch
+# =============================================================================
+st.markdown(
+    """
+<style>
+/* =========================================================
+   TM.6.11 — Mobile Safe UX Patch
+   Objetivo: mantener DSS operativo en Streamlit Cloud mobile
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    /* Base mobile container */
+    .block-container {
+        padding-left: 0.85rem !important;
+        padding-right: 0.85rem !important;
+        padding-top: 0.45rem !important;
+        max-width: 100% !important;
+    }
+
+    header[data-testid="stHeader"] {
+        height: 1.25rem !important;
+        min-height: 1.25rem !important;
+    }
+
+    /* Topbar */
+    .scouting-topbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        min-height: auto !important;
+        padding: 12px 14px !important;
+        border-radius: 14px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .scouting-brand {
+        font-size: 1rem !important;
+        line-height: 1.15 !important;
+    }
+
+    .scouting-brand-mark {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .scouting-topbar-right {
+        width: 100% !important;
+        justify-content: space-between !important;
+        font-size: .72rem !important;
+        gap: 8px !important;
+    }
+
+    /* Search */
+    .global-search-shell,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title),
+    div[data-testid="stElementContainer"]:has(.final-search-title) {
+        padding: 13px 14px 15px 14px !important;
+        border-radius: 16px !important;
+        margin-bottom: 14px !important;
+    }
+
+    .final-search-title,
+    .global-search-title {
+        font-size: .78rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .final-search-caption,
+    .global-search-caption {
+        font-size: .78rem !important;
+        line-height: 1.35 !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.final-search-title) div[data-baseweb="select"] > div {
+        min-height: 48px !important;
+        border-radius: 14px !important;
+    }
+
+    /* Universal grid collapse */
+    .scouting-hero-grid,
+    .exec-overview-grid,
+    .exec-card-top,
+    .exec-mid-grid,
+    .exec-context-body,
+    .exec-recommendation-panel,
+    .exec-visible-pitch-grid,
+    .exec-decision-support-grid,
+    .opportunity-layout,
+    .radar-modern-grid,
+    .similarity-professional-layout,
+    .similarity-reco-band,
+    .similarity-decision-grid,
+    .contract-matrix-layout,
+    .contract-target-main-final,
+    .pi-director-grid,
+    .pi-technical-grid,
+    .pi-director-bottom,
+    .pi-evidence-compact,
+    .outside-scouting-main,
+    .role-identity-flow {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* KPI grids: max 2 columns, then 1 where dense */
+    .exec-kpi-grid,
+    .scouting-mini-grid,
+    .exec-meta-grid,
+    .exec-signals-grid,
+    .exec-market-grid,
+    .exec-identity-bottom-grid,
+    .exec-market-ranking-grid,
+    .exec-benchmark-summary,
+    .exec-recruitment-grid,
+    .contract-kpi-grid,
+    .contract-kpi-grid-v3,
+    .contract-target-metric-strip,
+    .role-profile-grid,
+    .role-similar-grid,
+    .similarity-benchmark-grid,
+    .eligibility-grid,
+    .outside-scouting-metrics,
+    .pi-director-market,
+    .pi-ficha-grid,
+    .pi-role-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+    }
+
+    /* Dense/decision grids to single column */
+    .exec-next-actions,
+    .exec-watchlist-details,
+    .exec-decision-kpis,
+    .exec-decision-drivers,
+    .exec-comparable-grid,
+    .exec-scouting-fit-grid,
+    .exec-transfer-feasibility,
+    .contract-action-board-grid,
+    .contract-target-grid,
+    .contract-top-target-grid,
+    .top5-horizontal-grid,
+    .compact-top5-grid,
+    .quick-guide-grid,
+    .quick-guide-layout,
+    .quick-guide-glossary,
+    .strategy-glossary-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    /* Cards */
+    .metric-card,
+    .scouting-hero-card,
+    .exec-player-card,
+    .exec-score-card,
+    .exec-kpi-card,
+    .radar-card,
+    .compact-top5-card,
+    .pro-section-card,
+    .executive-recommendation-card,
+    .panel-card,
+    .top5-list-card,
+    .top5-horizontal-card,
+    .pi-director-hero,
+    .pi-technical-card,
+    .pi-mini-panel {
+        padding: 12px 13px !important;
+        border-radius: 14px !important;
+        min-height: 0 !important;
+    }
+
+    /* Typography scale */
+    .exec-player-name,
+    .pi-director-name {
+        font-size: 1.35rem !important;
+        line-height: 1.08 !important;
+    }
+
+    .exec-score-main,
+    .scouting-score-value,
+    .pi-director-score b {
+        font-size: 2.15rem !important;
+    }
+
+    .metric-value {
+        font-size: 1.25rem !important;
+    }
+
+    .panel-title,
+    .tm4-section-title {
+        font-size: .98rem !important;
+    }
+
+    /* Player identity / photos */
+    .exec-identity-grid,
+    .exec-decision-left-with-photo,
+    .snapshot-card-identity {
+        grid-template-columns: 72px minmax(0, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .pi-player-photo,
+    .pi-avatar-premium,
+    .exec-decision-player-photo,
+    .snapshot-player-photo {
+        width: 64px !important;
+        min-width: 64px !important;
+        height: 82px !important;
+        border-radius: 14px !important;
+    }
+
+    .tm69-player-portrait-wrap {
+        width: 76px !important;
+        height: 76px !important;
+        border-radius: 16px !important;
+    }
+
+    /* Pitch / heavy visuals */
+    .exec-pitch,
+    .exec-pitch-compact,
+    .pi-real-pitch,
+    .exec-pitch.pi-real-pitch {
+        min-height: 190px !important;
+        max-height: 230px !important;
+        border-radius: 14px !important;
+    }
+
+    .exec-pos-marker {
+        min-width: 26px !important;
+        height: 26px !important;
+        font-size: .58rem !important;
+    }
+
+    /* Tables: always scroll horizontally */
+    .comparison-table-wrapper,
+    .contract-table-wrapper,
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .player-table {
+        min-width: 760px !important;
+        font-size: .70rem !important;
+        display: table !important;
+    }
+
+    .player-table th,
+    .player-table td {
+        padding: 8px 7px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Plotly / charts */
+    div[data-testid="stPlotlyChart"] {
+        width: 100% !important;
+        overflow-x: auto !important;
+        border-radius: 14px !important;
+    }
+
+    /* Hide secondary/heavy modules on mobile */
+    .mobile-hide,
+    .exec-benchmark-list,
+    .exec-trajectory-bridge,
+    .matrix-shell {
+        display: none !important;
+    }
+
+    /* Sidebar/filter usability */
+    [data-testid="stSidebar"] {
+        min-width: 280px !important;
+    }
+
+    [data-testid="stSidebar"] .sidebar-slider-title {
+        font-size: .80rem !important;
+        margin-top: .85rem !important;
+    }
+
+    [data-testid="stSidebar"] .sidebar-filter-value-badge,
+    [data-testid="stSidebar"] .sidebar-slider-current-state,
+    [data-testid="stSidebar"] .sidebar-slider-state-modern {
+        padding: 7px 8px !important;
+        margin-bottom: .55rem !important;
+    }
+
+    [data-testid="stSidebar"] div[data-testid="stNumberInput"] input {
+        min-height: 38px !important;
+        font-size: .86rem !important;
+    }
+
+    /* Streamlit columns: force vertical stacking */
+    div[data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+@media (max-width: 560px) {
+
+    .block-container {
+        padding-left: 0.65rem !important;
+        padding-right: 0.65rem !important;
+    }
+
+    .exec-kpi-grid,
+    .scouting-mini-grid,
+    .exec-meta-grid,
+    .exec-signals-grid,
+    .exec-market-grid,
+    .exec-identity-bottom-grid,
+    .contract-kpi-grid,
+    .contract-kpi-grid-v3,
+    .contract-target-metric-strip,
+    .role-profile-grid,
+    .role-similar-grid,
+    .similarity-benchmark-grid,
+    .eligibility-grid,
+    .outside-scouting-metrics,
+    .pi-director-market,
+    .pi-ficha-grid,
+    .pi-role-strip {
+        grid-template-columns: 1fr !important;
+    }
+
+    .scouting-topbar-right {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .exec-identity-grid,
+    .exec-decision-left-with-photo,
+    .snapshot-card-identity {
+        grid-template-columns: 1fr !important;
+    }
+
+    .pi-player-photo,
+    .pi-avatar-premium,
+    .exec-decision-player-photo,
+    .snapshot-player-photo {
+        width: 72px !important;
+        height: 90px !important;
+    }
+
+    .player-table {
+        min-width: 680px !important;
+    }
+
+    .exec-pitch,
+    .exec-pitch-compact,
+    .pi-real-pitch,
+    .exec-pitch.pi-real-pitch {
+        min-height: 170px !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
