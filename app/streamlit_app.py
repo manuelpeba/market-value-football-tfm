@@ -40264,3 +40264,114 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+# =============================================================================
+# TM.6.11.4 — Mobile Command Center Layout Final Fix
+# =============================================================================
+st.markdown(
+    """
+<style>
+@media (max-width: 900px) {
+
+    /* Command Center: pasar de layout compacto a flujo vertical real */
+    .tm69-command-grid,
+    .tm69-command-layout,
+    .tm69-command-shell,
+    div[data-testid="stHorizontalBlock"]:has(.product-page-eyebrow):has(.final-search-title) {
+        display: block !important;
+    }
+
+    /* Hero/card superior */
+    .product-page-hero-minimal-v69,
+    .product-page-hero-unified,
+    .product-page-hero {
+        display: block !important;
+        margin: 0 0 36px 0 !important;
+        padding: 18px 20px !important;
+        min-height: 0 !important;
+    }
+
+    /* Buscador: bloque independiente, no flotante ni grid */
+    .tm69-command-search-card {
+        display: block !important;
+        position: static !important;
+        float: none !important;
+        width: 100% !important;
+        margin: 0 0 28px 0 !important;
+        padding: 0 !important;
+        clear: both !important;
+    }
+
+    .tm69-command-search-card .final-search-title-row,
+    .final-search-title-row {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        margin: 0 0 14px 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+        clear: both !important;
+    }
+
+    .tm69-command-search-card .final-search-title,
+    .final-search-title {
+        display: block !important;
+        position: static !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+    }
+
+    /* Label e input */
+    .tm69-command-search-card label,
+    .tm69-command-search-card div[data-testid="stSelectbox"] label,
+    div[data-testid="stSelectbox"] label {
+        margin: 0 0 10px 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        line-height: 1.25 !important;
+    }
+
+    .tm69-command-search-card div[data-testid="stSelectbox"] {
+        margin: 0 0 22px 0 !important;
+    }
+
+    .tm69-command-search-card div[data-baseweb="select"] > div {
+        min-height: 52px !important;
+        border-radius: 18px !important;
+    }
+
+    /* Buscar + chip: bloque propio */
+    .search-suggestion-caption {
+        display: block !important;
+        position: static !important;
+        clear: both !important;
+        margin: 18px 0 18px 0 !important;
+        padding: 0 !important;
+        line-height: 1.25 !important;
+    }
+
+    .search-suggestion-caption .context-chip,
+    .search-suggestion-caption .context-chip-link,
+    .search-suggestion-caption .context-chip-clear {
+        display: inline-flex !important;
+        margin-top: 8px !important;
+        white-space: normal !important;
+        max-width: calc(100vw - 70px) !important;
+    }
+
+    /* Universo activo: bajar para no quedar debajo del chip */
+    .compact-context-panel,
+    .context-strip,
+    .context-strip-v2 {
+        display: block !important;
+        clear: both !important;
+        margin-top: 30px !important;
+        margin-bottom: 30px !important;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
