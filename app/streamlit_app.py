@@ -25017,11 +25017,6 @@ if search_norm and search_entity_type == "player":
                             outside_football_profile.loc[fill_mask, dst_col] = src_values[fill_mask]
                         except Exception:
                             pass
-        
-        if not outside_football_profile.empty:
-            print("\n=== OUTSIDE PLAYER DEBUG ===")
-            print(outside_football_profile.head(1).T)
-            print("=== END OUTSIDE PLAYER DEBUG ===\n")
         if not outside_football_profile.empty:
             # Enrich outside-scouting informational profiles with productive panel fields
             # when the current snapshot lacks club, age or minutes.
@@ -25471,27 +25466,6 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
         outside_metrics_html = "<div class='outside-scouting-metrics'>" + "".join(
             f"<div><span>{html.escape(label)}</span><b>{html.escape(value)}</b>{('<small>' + html.escape(caption) + '</small>') if caption else ''}</div>" for label, value, caption in outside_metrics[:4]
         ) + "</div>"
-    print("\n=== OUTSIDE PLAYER FIELDS ===")
-    for c in [
-        "player_name",
-        "player_name_tm",
-        "player_name_fbref",
-        "club",
-        "current_club",
-        "league",
-        "current_league",
-        "age",
-        "current_age",
-        "minutes_played",
-        "current_minutes_played",
-        "market_value_eur",
-        "current_market_value_eur",
-        "position_group",
-        "position",
-    ]:
-        if c in outside_row.index:
-            print(c, "=", outside_row[c])
-    print("=== END OUTSIDE PLAYER FIELDS ===\n")
 
     outside_title = "Player found outside the scouting universe" if LANG == "EN" else "Jugador encontrado fuera del universo de scouting"
     outside_text = (
