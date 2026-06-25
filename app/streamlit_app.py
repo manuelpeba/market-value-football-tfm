@@ -25040,10 +25040,16 @@ if search_norm and search_entity_type == "player":
                         "position_group",
                         "position",
                     ]
-                    panel = pd.read_parquet(
-                        panel_path,
-                        columns=[c for c in panel_cols if c in pd.read_parquet(panel_path).columns],
-                    )
+                    try:
+                        import pyarrow.parquet as pq
+                        available_cols = set(pq.ParquetFile(panel_path).schema.names)
+                        panel = pd.read_parquet(
+                            panel_path,
+                            columns=[c for c in panel_cols if c in available_cols],
+                        )
+                    except Exception:
+                        panel = pd.read_parquet(panel_path)
+                        panel = panel[[c for c in panel_cols if c in panel.columns]].copy()
                     panel["_outside_key_name_tm"] = panel.get("player_name_tm", "").fillna("").astype(str).map(normalize_search_text)
                     panel["_outside_key_name_fbref"] = panel.get("player_name_fbref", "").fillna("").astype(str).map(normalize_search_text)
 
