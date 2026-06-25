@@ -24967,10 +24967,143 @@ if search_norm and search_entity_type == "player":
     if scouting_name_col is not None and scouting_name_col in scouting_df.columns:
         scouting_names_norm = scouting_df[scouting_name_col].dropna().astype(str).map(normalize_search_text)
         search_matches_scouting_universe = bool((scouting_names_norm == search_norm).any())
-    if not search_matches_scouting_universe and football_name_col is not None and football_name_col in football_df.columns:
-        outside_mask = football_df[football_name_col].fillna("").astype(str).map(normalize_search_text) == search_norm
+    if not search_matches_scouting_universe:
+        outside_name_candidates = [
+            "player_name_tm",
+            "player_name_fbref",
+            "player_name",
+            "player",
+            "name",
+        ]
+        outside_mask = pd.Series(False, index=football_df.index)
+        for outside_name_col in outside_name_candidates:
+            if outside_name_col in football_df.columns:
+                outside_mask = outside_mask | (
+                    football_df[outside_name_col]
+                    .fillna("")
+                    .astype(str)
+                    .map(normalize_search_text)
+                    .eq(search_norm)
+                )
         outside_football_profile = football_df[outside_mask].head(1).copy()
+        if not outside_football_profile.empty:
+            # Normalize outside-scouting profile aliases for the fallback card.
+            alias_map = {
+                "player_name_tm": "player_name",
+                "player_name_fbref": "player_name",
+                "club": "current_club",
+                "team": "current_club",
+                "league": "current_league",
+                "position_group": "position",
+                "position": "position_group",
+                "age": "current_age",
+                "minutes_played": "current_minutes_played",
+                "minutes": "current_minutes_played",
+                "market_value_eur": "current_market_value_eur",
+                "market_value_eur": "market_value_eur",
+                "confidence_score": "confidence_score",
+                "opportunity_score": "opportunity_score",
+                "risk_score": "risk_score",
+            }
+            for src_col, dst_col in alias_map.items():
+                if src_col in outside_football_profile.columns:
+                    if dst_col not in outside_football_profile.columns:
+                        outside_football_profile[dst_col] = outside_football_profile[src_col]
+                    else:
+                        src_values = outside_football_profile[src_col]
+                        dst_values = outside_football_profile[dst_col]
+                        try:
+                            fill_mask = dst_values.isna() | dst_values.astype(str).str.strip().isin(["", "nan", "None", "N/A"])
+                            outside_football_profile.loc[fill_mask, dst_col] = src_values[fill_mask]
+                        except Exception:
+                            pass
+        
+        if not outside_football_profile.empty:
+            print("\n=== OUTSIDE PLAYER DEBUG ===")
+            print(outside_football_profile.head(1).T)
+            print("=== END OUTSIDE PLAYER DEBUG ===\n")
+        if not outside_football_profile.empty:
+            # Enrich outside-scouting informational profiles with productive panel fields
+            # when the current snapshot lacks club, age or minutes.
+            try:
+                panel_path = PROCESSED_PATH / "player_season_modeling_v13b_productive_candidate.parquet"
+                if panel_path.exists():
+                    panel_cols = [
+                        "player_id_tm",
+                        "player_name_tm",
+                        "player_name_fbref",
+                        "club",
+                        "league",
+                        "age",
+                        "minutes_played",
+                        "market_value_eur",
+                        "position_group",
+                        "position",
+                    ]
+                    panel = pd.read_parquet(
+                        panel_path,
+                        columns=[c for c in panel_cols if c in pd.read_parquet(panel_path).columns],
+                    )
+                    panel["_outside_key_name_tm"] = panel.get("player_name_tm", "").fillna("").astype(str).map(normalize_search_text)
+                    panel["_outside_key_name_fbref"] = panel.get("player_name_fbref", "").fillna("").astype(str).map(normalize_search_text)
+
+                    outside_name_key = normalize_search_text(
+                        outside_football_profile.iloc[0].get("player_name_tm", outside_football_profile.iloc[0].get("player_name", ""))
+                    )
+                    panel_match = panel[
+                        (panel["_outside_key_name_tm"] == outside_name_key)
+                        | (panel["_outside_key_name_fbref"] == outside_name_key)
+                    ].copy()
+
+                    if not panel_match.empty:
+                        if "minutes_played" in panel_match.columns:
+                            panel_match = panel_match.sort_values("minutes_played", ascending=False, na_position="last")
+                        enrich_row = panel_match.iloc[0]
+                        enrich_map = {
+                            "club": "current_club",
+                            "league": "current_league",
+                            "age": "current_age",
+                            "minutes_played": "current_minutes_played",
+                            "market_value_eur": "current_market_value_eur",
+                            "position_group": "position_group",
+                            "position": "position",
+                        }
+                        for src_col, dst_col in enrich_map.items():
+                            if src_col in enrich_row.index:
+                                val = enrich_row.get(src_col)
+                                if pd.notna(val) and str(val).strip() not in {"", "nan", "None", "N/A"}:
+                                    if dst_col not in outside_football_profile.columns:
+                                        outside_football_profile[dst_col] = val
+                                    else:
+                                        cur = outside_football_profile.iloc[0].get(dst_col)
+                                        if pd.isna(cur) or str(cur).strip() in {"", "nan", "None", "N/A"}:
+                                            outside_football_profile.loc[outside_football_profile.index[0], dst_col] = val
+                                    if src_col not in outside_football_profile.columns:
+                                        outside_football_profile[src_col] = val
+                                    else:
+                                        cur2 = outside_football_profile.iloc[0].get(src_col)
+                                        if pd.isna(cur2) or str(cur2).strip() in {"", "nan", "None", "N/A"}:
+                                            outside_football_profile.loc[outside_football_profile.index[0], src_col] = val
+            except Exception as exc:
+                print(f"[TM6.10 outside profile enrichment skipped] {exc}")
+
+        if not outside_football_profile.empty:
+            try:
+                projected = add_projected_market_value_features(outside_football_profile.copy())
+                for col in [
+                    "projected_market_value_3y_eur",
+                    "asset_upside_3y_eur",
+                    "projected_value_multiplier_3y",
+                    "asset_roi_3y_pct",
+                    "future_asset_score",
+                ]:
+                    if col in projected.columns:
+                        outside_football_profile[col] = projected[col]
+            except Exception as exc:
+                print(f"[TM6.10 outside profile projection skipped] {exc}")
+
         search_is_outside_scouting_player = not outside_football_profile.empty
+
 
 PRESETS = {
     "full_exploration": {
@@ -25332,6 +25465,28 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
         outside_metrics_html = "<div class='outside-scouting-metrics'>" + "".join(
             f"<div><span>{html.escape(label)}</span><b>{html.escape(value)}</b>{('<small>' + html.escape(caption) + '</small>') if caption else ''}</div>" for label, value, caption in outside_metrics[:4]
         ) + "</div>"
+    print("\n=== OUTSIDE PLAYER FIELDS ===")
+    for c in [
+        "player_name",
+        "player_name_tm",
+        "player_name_fbref",
+        "club",
+        "current_club",
+        "league",
+        "current_league",
+        "age",
+        "current_age",
+        "minutes_played",
+        "current_minutes_played",
+        "market_value_eur",
+        "current_market_value_eur",
+        "position_group",
+        "position",
+    ]:
+        if c in outside_row.index:
+            print(c, "=", outside_row[c])
+    print("=== END OUTSIDE PLAYER FIELDS ===\n")
+
     outside_title = "Player found outside the scouting universe" if LANG == "EN" else "Jugador encontrado fuera del universo de scouting"
     outside_text = (
         "The system has historical football information for this player, but he is not part of the opportunity universe defined for this version. Ranking, shortlist, Opportunity/Risk matrix and executive recommendations remain based on the Scouting Universe."
