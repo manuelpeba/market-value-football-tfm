@@ -4432,9 +4432,9 @@ st.markdown(
     padding:4px 9px;
     font-size:.70rem;
     font-weight:950;
-    background:#eff6ff;
-    color:#1e3a8a;
-    border:1px solid #bfdbfe;
+    background:#f8fafc;
+    color:#475569;
+    border:1px solid #e2e8f0;
 }
 @media (max-width: 1350px) {
     .contract-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -6224,7 +6224,7 @@ st.markdown(
     vertical-align:middle; white-space:nowrap;
 }
 .role-profile-grid {
-    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
     gap:12px; margin:12px 0 18px 0;
 }
 .role-profile-card {
@@ -8564,6 +8564,7 @@ def build_scouting_eligibility_checks(
     max_market_value_m: float,
     min_roi: float,
     max_risk_filter: float,
+    informational_only: bool = False,
 ) -> list[dict[str, object]]:
     """Build pass/fail cards explaining Scouting Universe eligibility.
 
@@ -8595,18 +8596,32 @@ def build_scouting_eligibility_checks(
         pd.notna(minutes) and minutes >= min_minutes,
         f"≥ {min_minutes:,.0f}",
     )
-    _add(
-        "Confidence" if LANG == "EN" else "Confianza",
-        "N/A" if pd.isna(confidence) else f"{confidence:.0f}",
-        pd.notna(confidence) and confidence >= min_confidence,
-        f"≥ {min_confidence:.0f}",
-    )
-    _add(
-        "Opportunity" if LANG == "EN" else "Opportunity",
-        "N/A" if pd.isna(opportunity) else f"{opportunity:.0f}",
-        pd.notna(opportunity) and os_range[0] <= opportunity <= os_range[1],
-        f"{os_range[0]:.0f}–{os_range[1]:.0f}",
-    )
+    if informational_only:
+        _add(
+            "Confidence" if LANG == "EN" else "Confianza",
+            "Not evaluated" if LANG == "EN" else "No evaluado",
+            False,
+            "Outside active universe" if LANG == "EN" else "Fuera del universo activo",
+        )
+        _add(
+            "Opportunity Score" if LANG == "EN" else "Opportunity Score",
+            "Excluded" if LANG == "EN" else "Excluido",
+            False,
+            "Not ranked" if LANG == "EN" else "No entra en ranking",
+        )
+    else:
+        _add(
+            "Confidence" if LANG == "EN" else "Confianza",
+            "N/A" if pd.isna(confidence) else f"{confidence:.0f}",
+            pd.notna(confidence) and confidence >= min_confidence,
+            f"≥ {min_confidence:.0f}",
+        )
+        _add(
+            "Opportunity" if LANG == "EN" else "Opportunity",
+            "N/A" if pd.isna(opportunity) else f"{opportunity:.0f}",
+            pd.notna(opportunity) and os_range[0] <= opportunity <= os_range[1],
+            f"{os_range[0]:.0f}–{os_range[1]:.0f}",
+        )
     _add(
         "Market value" if LANG == "EN" else "Valor de mercado",
         "N/A" if pd.isna(value) else format_money_short(value),
@@ -8619,12 +8634,20 @@ def build_scouting_eligibility_checks(
         pd.notna(roi) and roi >= min_roi,
         f"≥ {min_roi:.0f}%",
     )
-    _add(
-        "Risk" if LANG == "EN" else "Risk",
-        "N/A" if pd.isna(risk) else f"{risk:.0f}",
-        pd.notna(risk) and risk <= max_risk_filter,
-        f"≤ {max_risk_filter:.0f}",
-    )
+    if informational_only:
+        _add(
+            "Risk" if LANG == "EN" else "Risk",
+            "N/A",
+            True,
+            "Not applicable" if LANG == "EN" else "No aplica",
+        )
+    else:
+        _add(
+            "Risk" if LANG == "EN" else "Risk",
+            "N/A" if pd.isna(risk) else f"{risk:.0f}",
+            pd.notna(risk) and risk <= max_risk_filter,
+            f"≤ {max_risk_filter:.0f}",
+        )
 
     if selected_league != T("all_f"):
         league_val = league_display_name(safe_get(row, "league", ""))
@@ -8650,7 +8673,7 @@ def render_eligibility_check_panel(checks: list[dict[str, object]], title: str |
     passed = sum(1 for item in checks if item.get("passed"))
     total = len(checks)
     status_text = (
-        f"{passed}/{total} criteria passed" if LANG == "EN" else f"{passed}/{total} criterios cumplidos"
+        f"✓ {passed} of {total} criteria" if LANG == "EN" else f"✓ {passed} de {total} criterios"
     )
     panel_title = title or ("Scouting Universe Eligibility" if LANG == "EN" else "Elegibilidad Scouting Universe")
     cards = []
@@ -13524,6 +13547,19 @@ def load_football_lookup_dataset() -> pd.DataFrame:
         if not candidate_df.empty:
             return candidate_df.copy()
     return pd.DataFrame()
+
+
+def enrich_with_role_layers(
+    base_df: pd.DataFrame,
+    role_intelligence_df: pd.DataFrame,
+    position_taxonomy_df: pd.DataFrame,
+    role_explainability_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Apply role, taxonomy and explainability enrichments in the canonical order."""
+    out = merge_role_intelligence(base_df, role_intelligence_df)
+    out = merge_position_taxonomy(out, position_taxonomy_df)
+    out = merge_role_explainability(out, role_explainability_df)
+    return out
 
 
 def build_football_universe_dataset(scored_df: pd.DataFrame) -> pd.DataFrame:
@@ -19576,10 +19612,13 @@ role_intelligence_df = load_role_intelligence_dataset()
 ROLE_DATASET_STATUS = get_role_dataset_status(role_intelligence_df)
 position_taxonomy_df = load_position_taxonomy_dataset()
 TAXONOMY_DATASET_STATUS = get_taxonomy_dataset_status(position_taxonomy_df)
-df = merge_role_intelligence(df, role_intelligence_df)
-df = merge_position_taxonomy(df, position_taxonomy_df)
 role_explainability_df = load_role_explainability_dataset()
-df = merge_role_explainability(df, role_explainability_df)
+df = enrich_with_role_layers(
+    df,
+    role_intelligence_df,
+    position_taxonomy_df,
+    role_explainability_df,
+)
 df = apply_current_club_overrides(apply_club_name_normalization(df))
 # Enforce current Transfermarkt DSS scope before and after current-context resolution.
 # This prevents historical 11-league coverage or global Kaggle leagues from leaking into the product KPIs.
@@ -19706,9 +19745,12 @@ scouting_df = apply_current_club_overrides(df.copy())
 scouting_df = apply_club_name_normalization(scouting_df)
 scouting_df = enforce_current_dss_league_scope(scouting_df)
 football_df = build_football_universe_dataset(scouting_df)
-football_df = merge_role_intelligence(football_df, role_intelligence_df)
-football_df = merge_position_taxonomy(football_df, position_taxonomy_df)
-football_df = merge_role_explainability(football_df, role_explainability_df)
+football_df = enrich_with_role_layers(
+    football_df,
+    role_intelligence_df,
+    position_taxonomy_df,
+    role_explainability_df,
+)
 football_df = apply_current_club_overrides(football_df)
 football_df = apply_club_name_normalization(football_df)
 FOOTBALL_UNIVERSE_SIZE = len(football_df)
@@ -25450,7 +25492,6 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
     outside_projected_value = format_money_short(safe_get(outside_row, "projected_market_value_3y_eur", np.nan))
     outside_upside_3y = format_signed_money_short(safe_get(outside_row, "asset_upside_3y_eur", np.nan))
     outside_roi_3y = get_numeric_value(outside_row, "asset_roi_3y_pct", np.nan)
-    outside_future_asset = get_numeric_value(outside_row, "future_asset_score", np.nan)
     outside_metrics = []
     if outside_projected_value != "N/A":
         outside_metrics.append(("Projected 3Y value" if LANG == "EN" else "Valor proyectado 3Y", outside_projected_value, ""))
@@ -25459,38 +25500,151 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
     if pd.notna(outside_roi_3y):
         roi_caption = outside_upside_3y if outside_upside_3y != "N/A" else ""
         outside_metrics.append(("ROI 3Y", f"{outside_roi_3y:.0f}%", roi_caption))
-    if pd.notna(outside_future_asset):
-        outside_metrics.append(("Future Asset", f"{outside_future_asset:.1f} / 100", ""))
     outside_metrics_html = ""
     if outside_metrics:
         outside_metrics_html = "<div class='outside-scouting-metrics'>" + "".join(
-            f"<div><span>{html.escape(label)}</span><b>{html.escape(value)}</b>{('<small>' + html.escape(caption) + '</small>') if caption else ''}</div>" for label, value, caption in outside_metrics[:4]
+            f"<div><span>{html.escape(label)}</span><b>{html.escape(value)}</b>{('<small>' + html.escape(caption) + '</small>') if caption else ''}</div>" for label, value, caption in outside_metrics[:3]
         ) + "</div>"
 
-    outside_title = "Player found outside the scouting universe" if LANG == "EN" else "Jugador encontrado fuera del universo de scouting"
+    outside_title = "Player located" if LANG == "EN" else "Jugador localizado"
     outside_text = (
-        "The system has historical football information for this player, but he is not part of the opportunity universe defined for this version. Ranking, shortlist, Opportunity/Risk matrix and executive recommendations remain based on the Scouting Universe."
+        "This player is shown for informational purposes only and is excluded from the active Scouting Universe. Rankings and executive recommendations are not affected."
         if LANG == "EN"
-        else "El sistema dispone de información histórica de este jugador, pero no forma parte del universo de oportunidades definido para esta versión. Ranking, shortlist, matriz Opportunity/Risk y recomendaciones ejecutivas se mantienen sobre el Scouting Universe."
+        else "Este jugador se muestra únicamente con fines informativos y queda excluido del Scouting Universe activo. Rankings y recomendaciones ejecutivas no se modifican."
     )
-    st.markdown(
-        f"""
-<div class="outside-scouting-card outside-scouting-card-v3">
+    outside_meta = " · ".join(
+        [
+            part
+            for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value]
+            if str(part).strip() and str(part).strip() != "N/A"
+        ]
+    )
+    outside_cta = (
+        "ℹ Informational profile"
+        if LANG == "EN"
+        else "ℹ Perfil informativo"
+    )
+    outside_card_html = f"""
+<style>
+body {{
+    margin:0;
+    background:transparent;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}}
+.outside-scouting-card {{
+    box-sizing:border-box;
+    width:100%;
+    min-height:200px;
+    background:#ffffff;
+    border:1px solid #bfdbfe;
+    border-left:5px solid #5B8CFF;
+    border-radius:18px;
+    padding:16px 20px;
+    box-shadow:0 16px 34px rgba(15,23,42,.075);
+}}
+.outside-scouting-main {{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(440px,.46fr);
+    gap:18px;
+    align-items:center;
+}}
+.outside-scouting-eyebrow {{
+    color:#1d4ed8;
+    font-size:11px;
+    font-weight:950;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    margin-bottom:10px;
+}}
+.outside-scouting-title {{
+    color:#0f172a;
+    font-size:18px;
+    font-weight:950;
+    margin-bottom:10px;
+}}
+.outside-scouting-player {{
+    color:#020617;
+    font-size:24px;
+    font-weight:950;
+    line-height:1.1;
+    margin-bottom:8px;
+}}
+.outside-scouting-meta {{
+    color:#334155;
+    font-size:14px;
+    line-height:1.35;
+}}
+.outside-scouting-metrics {{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin-top:12px;
+}}
+.outside-scouting-metrics > div {{
+    background:#ffffff;
+    border:1px solid #dbe3ee;
+    border-radius:14px;
+    padding:13px 12px;
+    min-height:68px;
+    box-shadow:0 10px 24px rgba(15,23,42,.045);
+}}
+.outside-scouting-metrics span {{
+    display:block;
+    color:#64748b;
+    font-size:11px;
+    font-weight:900;
+    margin-bottom:7px;
+}}
+.outside-scouting-metrics b {{
+    display:block;
+    color:#020617;
+    font-size:17px;
+    font-weight:950;
+}}
+.outside-scouting-metrics small {{
+    display:block;
+    color:#166534;
+    font-size:11px;
+    font-weight:900;
+    margin-top:6px;
+}}
+.outside-scouting-text {{
+    color:#334155;
+    font-size:14px;
+    line-height:1.5;
+    margin-top:14px;
+}}
+.outside-scouting-cta {{
+    display:inline-flex;
+    margin-top:10px;
+    border-radius:999px;
+    padding:8px 12px;
+    background:#eff6ff;
+    color:#1e3a8a;
+    border:1px solid #bfdbfe;
+    font-size:13px;
+    font-weight:900;
+}}
+@media (max-width:900px) {{
+    .outside-scouting-main {{ grid-template-columns:1fr; }}
+    .outside-scouting-metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+}}
+</style>
+<div class="outside-scouting-card">
     <div class="outside-scouting-main">
         <div>
-            <div class="outside-scouting-eyebrow">Football Intelligence Layer</div>
-            <div class="outside-scouting-title">{outside_title}</div>
+            <div class="outside-scouting-eyebrow">Outside Scouting Universe</div>
+            <div class="outside-scouting-title">{html.escape(str(outside_title))}</div>
             <div class="outside-scouting-player">{outside_name}</div>
-            <div class="outside-scouting-meta">{" · ".join([part for part in [outside_position, outside_club, outside_league, outside_age_text, outside_value] if str(part).strip() and str(part).strip() != "N/A"])}</div>
+            <div class="outside-scouting-meta">{outside_meta}</div>
         </div>
         {outside_metrics_html}
     </div>
     <div class="outside-scouting-text">{html.escape(outside_text)}</div>
-    <div class="outside-scouting-cta">{'Informative profile' if LANG == 'EN' else 'Perfil informativo'} · {'ranking unchanged' if LANG == 'EN' else 'ranking sin alterar'}</div>
+    <div class="outside-scouting-cta">{html.escape(outside_cta)}</div>
 </div>
-""",
-        unsafe_allow_html=True,
-    )
+"""
+    components.html(outside_card_html, height=220, scrolling=False)
 
     render_eligibility_check_panel(
         build_scouting_eligibility_checks(
@@ -25506,6 +25660,7 @@ if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_foot
             max_market_value_m=max_market_value_m,
             min_roi=min_roi,
             max_risk_filter=max_risk_filter,
+            informational_only=True,
         ),
         title="Why it does not enter the active universe" if LANG == "EN" else "Por qué no entra en el universo activo",
     )
