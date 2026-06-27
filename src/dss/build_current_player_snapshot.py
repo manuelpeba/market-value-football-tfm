@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2] if "src" in Path(__file__).parts else Path.cwd()
+ROOT = Path(__file__).resolve().parents[2]
 
 COMPETITION_TO_LEAGUE = {
     "GB1": "Premier League",
@@ -50,94 +50,131 @@ def calculate_age(date_of_birth: pd.Series, ref_date: pd.Series) -> pd.Series:
     return ((ref - dob).dt.days / 365.25).round(2)
 
 
-def resolve_tm_raw_dir(raw_dir: str | Path) -> Path:
-    raw_dir = Path(raw_dir)
-    if not raw_dir.is_absolute():
-        raw_dir = ROOT / raw_dir
-    if not raw_dir.exists():
-        raise FileNotFoundError(f"Transfermarkt raw directory not found: {raw_dir}")
-    for required in ["players.csv", "player_valuations.csv"]:
-        if not (raw_dir / required).exists():
-            raise FileNotFoundError(f"Missing {required} in {raw_dir}")
-    return raw_dir
+def first_available(df: pd.DataFrame, candidates: list[str]) -> pd.Series:
+    out = pd.Series(pd.NA, index=df.index, dtype="object")
+    for col in candidates:
+        if col in df.columns:
+            out = out.fillna(df[col])
+    return out
 
 
-def build_snapshot(raw_dir: str | Path, scope: str = "productive") -> pd.DataFrame:
-    raw_dir = resolve_tm_raw_dir(raw_dir)
-    players = pd.read_csv(raw_dir / "players.csv")
-    valuations = pd.read_csv(raw_dir / "player_valuations.csv")
+def resolve_input_path(input_path: str | Path) -> Path:
+    path = Path(input_path)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.exists():
+        raise FileNotFoundError(f"Transfermarkt features file not found: {path}")
+    return path
 
-    valuations = valuations.copy()
-    valuations["current_valuation_date"] = pd.to_datetime(valuations["date"], errors="coerce")
-    valuations = valuations[valuations["current_valuation_date"].notna()].copy()
-    valuations = valuations[valuations["market_value_in_eur"].notna()].copy()
-    valuations = valuations[valuations["market_value_in_eur"] > 0].copy()
 
-    latest_val = (
-        valuations.sort_values(["player_id", "current_valuation_date"], ascending=[True, False])
-        .drop_duplicates("player_id", keep="first")
+def build_snapshot(input_path: str | Path, scope: str = "productive") -> pd.DataFrame:
+    input_path = resolve_input_path(input_path)
+    tm = pd.read_parquet(input_path).copy()
+
+    required = [
+        "player_id_tm",
+        "market_value_eur",
+        "valuation_date",
+    ]
+    missing = [c for c in required if c not in tm.columns]
+    if missing:
+        raise ValueError(f"Missing required columns in {input_path}: {missing}")
+
+    tm["current_valuation_date"] = pd.to_datetime(tm["valuation_date"], errors="coerce")
+    tm["current_market_value_eur"] = pd.to_numeric(tm["market_value_eur"], errors="coerce")
+
+    tm = tm[tm["player_id_tm"].notna()].copy()
+    tm = tm[tm["current_valuation_date"].notna()].copy()
+    tm = tm[tm["current_market_value_eur"].notna()].copy()
+    tm = tm[tm["current_market_value_eur"] > 0].copy()
+
+    latest = (
+        tm.sort_values(
+            ["player_id_tm", "current_valuation_date", "current_market_value_eur"],
+            ascending=[True, False, False],
+        )
+        .drop_duplicates("player_id_tm", keep="first")
         .copy()
     )
 
-    keep_player_cols = [
-        "player_id",
-        "name",
-        "date_of_birth",
-        "country_of_citizenship",
-        "position",
-        "sub_position",
-        "foot",
-        "height_in_cm",
-        "current_club_id",
-        "current_club_name",
-        "current_club_domestic_competition_id",
-    ]
-    keep_player_cols = [c for c in keep_player_cols if c in players.columns]
-    players = players[keep_player_cols].copy()
+    latest["player_name_tm"] = first_available(latest, ["player_name_tm", "name", "player_name"])
+    latest["player_name_tm"] = latest["player_name_tm"].astype("string")
+    latest["player_name_norm"] = latest["player_name_tm"].map(normalize_key)
 
-    snap = latest_val.merge(players, on="player_id", how="left", suffixes=("_valuation", "_player"))
-
-    # Prefer valuation-time club/competition, because it reflects the club at the latest value date.
-    snap["current_club"] = snap.get("current_club_name_valuation", pd.Series(index=snap.index, dtype="object"))
-    snap["current_club"] = snap["current_club"].fillna(snap.get("current_club_name_player", pd.Series(index=snap.index, dtype="object")))
-
-    snap["current_club_id"] = snap.get("current_club_id_valuation", pd.Series(index=snap.index, dtype="object"))
-    snap["current_club_id"] = snap["current_club_id"].fillna(snap.get("current_club_id_player", pd.Series(index=snap.index, dtype="object")))
-
-    snap["current_competition_id"] = snap.get(
-        "player_club_domestic_competition_id", pd.Series(index=snap.index, dtype="object")
+    latest["current_club"] = first_available(
+        latest,
+        [
+            "current_club_name_tm",
+            "current_club_name",
+            "current_club",
+            "club",
+            "season_context_club",
+        ],
     )
-    if "current_club_domestic_competition_id" in snap.columns:
-        snap["current_competition_id"] = snap["current_competition_id"].fillna(
-            snap["current_club_domestic_competition_id"]
-        )
 
-    snap["current_league"] = snap["current_competition_id"].map(COMPETITION_TO_LEAGUE)
-    snap["current_market_value_eur"] = snap["market_value_in_eur"].astype("Int64")
-    snap["current_season"] = snap["current_valuation_date"].apply(season_from_date)
+    latest["current_club_id"] = first_available(
+        latest,
+        [
+            "current_club_id_tm",
+            "current_club_id",
+            "club_id",
+        ],
+    )
 
-    if "date_of_birth" in snap.columns:
-        snap["current_age"] = calculate_age(snap["date_of_birth"], snap["current_valuation_date"])
+    latest["current_competition_id"] = first_available(
+        latest,
+        [
+            "competition_id_tm",
+            "current_club_domestic_competition_id",
+            "player_club_domestic_competition_id",
+            "current_competition_id",
+        ],
+    )
+
+    latest["current_league"] = latest["current_competition_id"].map(COMPETITION_TO_LEAGUE)
+    if "current_league" in tm.columns:
+        latest["current_league"] = latest["current_league"].fillna(latest["current_league"])
+
+    latest["current_season"] = latest["current_valuation_date"].apply(season_from_date)
+
+    if "date_of_birth" in latest.columns:
+        latest["current_age"] = calculate_age(latest["date_of_birth"], latest["current_valuation_date"])
     else:
-        snap["current_age"] = np.nan
+        latest["current_age"] = pd.to_numeric(first_available(latest, ["age_tm", "age"]), errors="coerce")
 
-    snap["player_name_tm"] = snap["name"].astype("string")
-    snap["player_name_norm"] = snap["player_name_tm"].map(normalize_key)
-    snap["current_club_norm"] = snap["current_club"].map(normalize_key)
+    latest["current_position"] = first_available(latest, ["position", "sub_position"])
+    latest["current_position_group"] = first_available(latest, ["position_group", "position_group_tm"])
+    latest["nationality"] = first_available(latest, ["nationality", "country_of_citizenship"])
+    latest["current_club_norm"] = latest["current_club"].map(normalize_key)
 
-    homonym_counts = snap.groupby("player_name_norm", dropna=False)["player_id"].transform("nunique")
-    snap["homonym_group_size"] = homonym_counts.astype("Int64")
-    snap["is_homonym_name"] = snap["homonym_group_size"].fillna(0).astype(int) > 1
-    snap["identity_resolution_status"] = np.where(
-        snap["is_homonym_name"],
+    homonym_counts = latest.groupby("player_name_norm", dropna=False)["player_id_tm"].transform("nunique")
+    latest["homonym_group_size"] = homonym_counts.astype("Int64")
+    latest["is_homonym_name"] = latest["homonym_group_size"].fillna(0).astype(int) > 1
+    latest["identity_resolution_status"] = np.where(
+        latest["is_homonym_name"],
         "PLAYER_ID_REQUIRED_HOMONYM",
         "UNIQUE_NAME_FALLBACK_ALLOWED",
     )
-    snap["identity_primary_key"] = "player_id_tm"
-    snap["snapshot_source"] = "transfermarkt_kaggle_player_scores_latest_valuation"
+
+    latest["identity_primary_key"] = "player_id_tm"
+    latest["snapshot_source"] = "transfermarkt_features_v13a_latest_valuation"
+    latest["identity_quality_status"] = "OK"
+
+    critical = [
+        "player_id_tm",
+        "player_name_tm",
+        "current_club",
+        "current_league",
+        "current_market_value_eur",
+        "current_valuation_date",
+        "current_age",
+    ]
+    for col in critical:
+        bad = latest[col].isna() | (latest[col].astype(str).str.strip() == "")
+        latest.loc[bad, "identity_quality_status"] = "INCOMPLETE"
 
     out_cols = [
-        "player_id",
+        "player_id_tm",
         "player_name_tm",
         "player_name_norm",
         "current_club",
@@ -150,8 +187,9 @@ def build_snapshot(raw_dir: str | Path, scope: str = "productive") -> pd.DataFra
         "current_valuation_date",
         "current_age",
         "date_of_birth",
-        "country_of_citizenship",
-        "position",
+        "nationality",
+        "current_position",
+        "current_position_group",
         "sub_position",
         "foot",
         "height_in_cm",
@@ -160,16 +198,22 @@ def build_snapshot(raw_dir: str | Path, scope: str = "productive") -> pd.DataFra
         "identity_resolution_status",
         "identity_primary_key",
         "snapshot_source",
+        "identity_quality_status",
     ]
-    out_cols = [c for c in out_cols if c in snap.columns]
-    snap = snap[out_cols].copy().rename(columns={"player_id": "player_id_tm"})
+    out_cols = [c for c in out_cols if c in latest.columns]
+    snapshot = latest[out_cols].copy()
 
     if scope == "productive":
-        snap = snap[snap["current_league"].isin(PRODUCTIVE_LEAGUES)].copy()
+        snapshot = snapshot[snapshot["current_league"].isin(PRODUCTIVE_LEAGUES)].copy()
     elif scope != "full":
         raise ValueError("scope must be 'productive' or 'full'")
 
-    return snap.sort_values(["current_league", "current_market_value_eur"], ascending=[True, False]).reset_index(drop=True)
+    snapshot["current_market_value_eur"] = snapshot["current_market_value_eur"].round().astype("Int64")
+
+    return snapshot.sort_values(
+        ["current_league", "current_market_value_eur"],
+        ascending=[True, False],
+    ).reset_index(drop=True)
 
 
 def write_outputs(snapshot: pd.DataFrame, output_dir: str | Path) -> None:
@@ -194,9 +238,15 @@ def write_outputs(snapshot: pd.DataFrame, output_dir: str | Path) -> None:
         "current_valuation_date_max": str(pd.to_datetime(snapshot["current_valuation_date"]).max().date()),
         "market_value_min": int(snapshot["current_market_value_eur"].min()),
         "market_value_max": int(snapshot["current_market_value_eur"].max()),
+        "missing_current_club": int(snapshot["current_club"].isna().sum()),
+        "missing_current_age": int(snapshot["current_age"].isna().sum()),
+        "missing_current_position": int(snapshot.get("current_position", pd.Series(index=snapshot.index)).isna().sum()),
+        "identity_ok_pct": round(float(snapshot["identity_quality_status"].eq("OK").mean() * 100), 2),
         "homonym_names": int(snapshot.loc[snapshot["is_homonym_name"], "player_name_norm"].nunique()),
         "leagues": sorted(snapshot["current_league"].dropna().unique().tolist()),
+        "snapshot_source": "transfermarkt_features_v13a_latest_valuation",
     }
+
     audit_path.write_text(json.dumps(audit, indent=2, ensure_ascii=False), encoding="utf-8")
 
     homonyms = snapshot[snapshot["is_homonym_name"]].copy()
@@ -204,7 +254,7 @@ def write_outputs(snapshot: pd.DataFrame, output_dir: str | Path) -> None:
         homonyms.to_csv(homonyms_path, index=False, encoding="utf-8")
 
     print("=" * 100)
-    print("CURRENT PLAYER SNAPSHOT BUILD")
+    print("CURRENT PLAYER SNAPSHOT BUILD — SNAPSHOT AUTHORITY")
     print("=" * 100)
     print(json.dumps(audit, indent=2, ensure_ascii=False))
     print(f"\n[OK] CSV:     {csv_path}")
@@ -216,12 +266,12 @@ def write_outputs(snapshot: pd.DataFrame, output_dir: str | Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw-dir", default="data/raw/transfermarkt/kaggle_player_scores")
+    parser.add_argument("--input", default="data/processed/transfermarkt_features_v13a.parquet")
     parser.add_argument("--output-dir", default="data/processed")
-    parser.add_argument("--scope", choices=["productive", "full"], default="productive")
+    parser.add_argument("--scope", default="productive", choices=["productive", "full"])
     args = parser.parse_args()
 
-    snapshot = build_snapshot(args.raw_dir, args.scope)
+    snapshot = build_snapshot(args.input, scope=args.scope)
     write_outputs(snapshot, args.output_dir)
 
 

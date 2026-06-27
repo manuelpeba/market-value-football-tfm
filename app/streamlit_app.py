@@ -11,6 +11,31 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+# =========================================================
+# TM.7.0 — DSS Snapshot Authority API
+# =========================================================
+try:
+    import sys as _tm70_sys
+    _tm70_root = Path(__file__).resolve().parents[1]
+    if str(_tm70_root) not in _tm70_sys.path:
+        _tm70_sys.path.insert(0, str(_tm70_root))
+
+    from src.dss.identity import load_identity_layer, build_identity_lookup
+    from src.dss.player_service import get_player_view
+    from src.dss.presentation import build_presentation_row, build_presentation_df
+    from src.dss.performance import build_performance_lookup
+
+    TM70_IMPORT_ERROR = None
+except Exception as _tm70_exc:
+    TM70_IMPORT_ERROR = repr(_tm70_exc)
+    print(f"[TM.7.0 IMPORT ERROR] {TM70_IMPORT_ERROR}")
+    load_identity_layer = None
+    build_identity_lookup = None
+    get_player_view = None
+    build_presentation_row = None
+    build_presentation_df = None
+    build_performance_lookup = None
 from utils.assets import (
     get_club_logo,
     get_league_logo
@@ -137,6 +162,51 @@ def find_project_root() -> Path:
 
 ROOT = find_project_root()
 
+# =============================================================================
+# TM.7.5 — DSS Domain Presentation Adapter
+# =============================================================================
+@st.cache_resource(show_spinner=False)
+def get_tm7_player_registry():
+    from src.dss.registry import PlayerRegistry
+    return PlayerRegistry.build()
+
+
+def tm7_display_series(row: pd.Series) -> pd.Series:
+    """
+    Attach TM.7 display_* fields to a UI row without mutating legacy semantics.
+
+    Streamlit modules should read display_* fields first.
+    Legacy columns remain available only as fallback during migration.
+    """
+    try:
+        from src.dss.presentation import build_display_row
+        registry = get_tm7_player_registry()
+        display_row = build_display_row(row.get("player_id_tm"), registry)
+        if not display_row:
+            return row
+        enriched = row.copy()
+        for k, v in display_row.items():
+            enriched[k] = v
+        return enriched
+    except Exception:
+        return row
+
+
+def tm7_value(row: pd.Series, display_col: str, fallback_col: str | None = None, default=None):
+    value = safe_get(row, display_col, default)
+    try:
+        if pd.notna(value):
+            return value
+    except Exception:
+        if value not in (None, ""):
+            return value
+
+    if fallback_col:
+        return safe_get(row, fallback_col, default)
+    return default
+
+
+
 RANKINGS_PATH = ROOT / "reports" / "rankings"
 BUSINESS_PATH = ROOT / "reports" / "business"
 EVALUATION_PATH = ROOT / "reports" / "evaluation"
@@ -147,6 +217,165 @@ CONTRACT_REPORTS_PATH = ROOT / "reports" / "tm3_contract_intelligence"
 STRATEGY_SRC_PATH = ROOT / "src" / "strategy"
 
 SCORED_UNIVERSE_SIZE = 1_138
+
+# =========================================================
+# TM.7.0 — Snapshot Authority runtime helpers
+# =========================================================
+@st.cache_data(show_spinner=False)
+def load_tm70_identity_lookup():
+    """Load current player identity authority once per Streamlit session."""
+    if load_identity_layer is None or build_identity_lookup is None:
+        print(f"[TM.7.0] Identity imports unavailable: {globals().get('TM70_IMPORT_ERROR')}")
+        return {}
+
+    try:
+        identity_df = load_identity_layer()
+        lookup = build_identity_lookup(identity_df)
+        lookup = {str(k): v for k, v in dict(lookup).items()}
+        print(f"[TM.7.0] Identity lookup loaded: {len(lookup)} players")
+        return lookup
+    except Exception as exc:
+        print(f"[TM.7.0] Identity lookup load failed: {repr(exc)}")
+        return {}
+
+
+def tm70_get_player_view(row):
+    """Return PlayerView using current identity authority + row analytics."""
+    if get_player_view is None:
+        return None
+    try:
+        return get_player_view(row, load_tm70_identity_lookup())
+    except Exception:
+        return None
+
+
+def tm70_identity_value(row, field: str, default=None):
+    """
+    Safe presentation accessor.
+    Use for current identity fields only:
+    club, league, age, market_value_eur, position, position_group, nationality.
+    """
+    player = tm70_get_player_view(row)
+    if player is None:
+        return default
+    return getattr(player.identity, field, default) or default
+
+
+
+def tm70_format_market_value(value):
+    """Format EUR market value for DSS identity display."""
+    try:
+        value = float(value)
+    except Exception:
+        return "N/A"
+
+    if value >= 1_000_000:
+        return f"€{value / 1_000_000:.1f}M".replace(".0M", "M")
+    if value >= 1_000:
+        return f"€{value / 1_000:.0f}K"
+    return f"€{value:,.0f}"
+
+
+
+# =========================================================
+# TM.7.1 — Presentation Authority helpers
+# =========================================================
+def tm71_build_presentation_row(row):
+    """Return one row enriched with display_* fields from Snapshot Authority."""
+    if build_presentation_row is None:
+        return row
+    try:
+        return build_presentation_row(row, load_tm70_identity_lookup())
+    except Exception:
+        return row
+
+
+def tm71_build_presentation_df(df):
+    """Return DataFrame enriched with display_* fields from Snapshot, Performance and DSS Authority."""
+    if df is None or getattr(df, "empty", True):
+        return df
+
+    try:
+        lookup = load_tm70_identity_lookup()
+        lookup = {str(k): v for k, v in dict(lookup).items()}
+
+        try:
+            performance_df = tm71_load_full_modeling_analytics()
+            performance_lookup = build_performance_lookup(performance_df) if "build_performance_lookup" in globals() else None
+        except Exception:
+            performance_lookup = None
+
+        if not lookup:
+            print("[TM.7.1] Empty identity lookup")
+            return df
+
+        enriched_rows = []
+        for _, row in df.iterrows():
+            try:
+                enriched = build_presentation_row(
+                    row,
+                    identity_lookup=lookup,
+                    performance_lookup=performance_lookup,
+                )
+                enriched_rows.append(enriched)
+            except Exception as exc:
+                print(f"[TM.7.2 row enrichment failed] {exc}")
+                enriched_rows.append(row)
+
+        out = pd.DataFrame(enriched_rows)
+        out.index = df.index
+        return out
+
+    except Exception as exc:
+        print(f"[TM.7.2 presentation enrichment failed] {exc}")
+        return df
+
+
+def tm71_age_text(row):
+    age = get_numeric_value(row, "display_age", get_numeric_value(row, "display_age", get_numeric_value(row, "age", np.nan)))
+    if pd.isna(age):
+        return "N/A"
+    return f"{age:.1f} years" if LANG == "EN" else f"{age:.1f} años"
+
+
+def tm70_identity_context(row):
+    """
+    Current identity context for presentation.
+    This is the only approved accessor for current club/league/age/value.
+    """
+    player = tm70_get_player_view(row)
+
+    if player is None:
+        return {
+            "club": "N/A",
+            "league": "N/A",
+            "age": "N/A",
+            "market_value": "N/A",
+            "position": "N/A",
+            "nationality": "N/A",
+            "identity_status": "MISSING_IDENTITY",
+        }
+
+    ident = player.identity
+
+    return {
+        "club": ident.club or "N/A",
+        "league": ident.league or "N/A",
+        "age": f"{ident.age:.1f}" if ident.age is not None else "N/A",
+        "market_value": tm70_format_market_value(ident.market_value_eur),
+        "position": ident.position or ident.position_group or "N/A",
+        "nationality": ident.nationality or "N/A",
+        "identity_status": ident.quality_status or "UNKNOWN",
+    }
+
+
+def tm70_analytics_value(row, field: str, default=None):
+    """Safe analytics accessor for historical/modeling context."""
+    player = tm70_get_player_view(row)
+    if player is None:
+        return default
+    return getattr(player.analytics, field, default) or default
+
 
 st.set_page_config(
     page_title="Scouting IQ - Market Value Intelligence",
@@ -8506,13 +8735,15 @@ def get_role_dataset_status(role_df: pd.DataFrame) -> dict[str, object]:
 def explain_scouting_exclusion(row: pd.Series, *, max_age: float, min_minutes: float, min_confidence: float, os_range: tuple[float, float], selected_league: str, selected_position: str, selected_role: str, selected_tier: str, max_market_value_m: float, min_roi: float, max_risk_filter: float) -> list[str]:
     """Return human-readable reasons explaining why a searched player is outside active scouting criteria."""
     reasons = []
-    age = get_numeric_value(row, "age", np.nan)
-    minutes = get_numeric_value(row, "minutes_played", np.nan)
-    confidence = get_numeric_value(row, "confidence_score", np.nan)
-    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
-    value = get_numeric_value(row, "market_value_eur", np.nan)
-    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
+    age = get_numeric_value(row, "display_age", get_numeric_value(row, "display_age", get_numeric_value(row, "age", np.nan)))
+    minutes = get_numeric_value(row, "display_minutes_played", get_numeric_value(row, "minutes_played", np.nan))
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", np.nan))
+    if pd.notna(confidence) and confidence <= 1:
+        confidence = confidence * 100
+    opportunity = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
+    value = get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "market_value_eur", np.nan)))
+    roi = get_numeric_value(row, "display_roi_pct", get_numeric_value(row, "asset_roi_3y_pct", np.nan))
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
 
     if pd.notna(age) and age > max_age:
         reasons.append((f"Age {age:.1f} > active max {max_age:.0f}" if LANG == "EN" else f"Edad {age:.1f} > máximo activo {max_age:.0f}"))
@@ -8529,10 +8760,10 @@ def explain_scouting_exclusion(row: pd.Series, *, max_age: float, min_minutes: f
     if pd.notna(risk) and risk > max_risk_filter:
         reasons.append((f"Risk {risk:.1f} > max {max_risk_filter:.0f}" if LANG == "EN" else f"Risk {risk:.1f} > máximo {max_risk_filter:.0f}"))
 
-    league_val = safe_get(row, "league", "")
+    league_val = safe_get(row, "display_league", safe_get(row, "league", ""))
     if selected_league != T("all_f") and str(league_val) != str(selected_league):
         reasons.append((f"League {league_display_name(league_val)} ≠ active league {league_display_name(selected_league)}" if LANG == "EN" else f"Liga {league_display_name(league_val)} ≠ liga activa {league_display_name(selected_league)}"))
-    pos_val = safe_get(row, "position_group", "")
+    pos_val = safe_get(row, "display_position_group", safe_get(row, "position_group", ""))
     if selected_position != T("all_f") and str(pos_val) != str(selected_position):
         reasons.append((f"Position {pos_val} ≠ active position {selected_position}" if LANG == "EN" else f"Posición {pos_val} ≠ posición activa {selected_position}"))
     if selected_role != T("all_m"):
@@ -8576,13 +8807,15 @@ def build_scouting_eligibility_checks(
     def _add(label: str, value: str, passed: bool, detail: str) -> None:
         checks.append({"label": label, "value": value, "passed": bool(passed), "detail": detail})
 
-    age = get_numeric_value(row, "age", np.nan)
-    minutes = get_numeric_value(row, "minutes_played", np.nan)
-    confidence = get_numeric_value(row, "confidence_score", np.nan)
-    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
-    value = get_numeric_value(row, "market_value_eur", np.nan)
-    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
+    age = get_numeric_value(row, "display_age", get_numeric_value(row, "display_age", get_numeric_value(row, "age", np.nan)))
+    minutes = get_numeric_value(row, "display_minutes_played", get_numeric_value(row, "minutes_played", np.nan))
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", np.nan))
+    if pd.notna(confidence) and confidence <= 1:
+        confidence = confidence * 100
+    opportunity = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
+    value = get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "market_value_eur", np.nan)))
+    roi = get_numeric_value(row, "display_roi_pct", get_numeric_value(row, "asset_roi_3y_pct", np.nan))
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
 
     _add(
         "Age" if LANG == "EN" else "Edad",
@@ -8650,11 +8883,11 @@ def build_scouting_eligibility_checks(
         )
 
     if selected_league != T("all_f"):
-        league_val = league_display_name(safe_get(row, "league", ""))
+        league_val = league_display_name(safe_get(row, "display_league", safe_get(row, "league", "")))
         selected_league_label = league_display_name(selected_league)
         _add("League" if LANG == "EN" else "Liga", league_val, str(league_val) == str(selected_league_label), selected_league_label)
     if selected_position != T("all_f"):
-        pos_val = str(safe_get(row, "position_group", "N/A"))
+        pos_val = str(safe_get(row, "display_position_group", tm7_value(row, "display_position_group", "position_group", "N/A")))
         _add("Position" if LANG == "EN" else "Posición", pos_val, pos_val == str(selected_position), str(selected_position))
     if selected_role != T("all_m"):
         role_val = str(safe_get(row, "primary_role", "N/A"))
@@ -9482,7 +9715,7 @@ def _build_role_similar_fallback(player_row: pd.Series, universe_df: pd.DataFram
         season = safe_get(row, season_col, "N/A") if season_col else "N/A"
         sim_value = safe_get(row, "primary_role_similarity", np.nan)
         if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]):
-            sim_value = safe_get(row, "opportunity_score", np.nan)
+            sim_value = tm7_value(row, "display_opportunity_score", "opportunity_score", np.nan)
         score = "N/A" if pd.isna(pd.to_numeric(pd.Series([sim_value]), errors="coerce").iloc[0]) else f"{float(sim_value):.1f}"
         items.append((rank, {"player": name, "club": club, "season": season, "score": sim_value}, score))
     return items
@@ -10498,6 +10731,20 @@ def apply_current_context(df: pd.DataFrame | None, current_context: pd.DataFrame
 def audit_current_season_consistency(df: pd.DataFrame | None) -> pd.DataFrame:
     """Small QA table for checking current-season coherence."""
     checks = []
+    try:
+        print("[TM.7.2 ELIGIBILITY DEBUG]", {
+            "player_id_tm": row.get("player_id_tm"),
+            "display_minutes_played": row.get("display_minutes_played"),
+            "legacy_minutes_played": row.get("minutes_played"),
+            "display_market_value_eur": row.get("display_market_value_eur"),
+            "legacy_market_value_eur": row.get("market_value_eur"),
+            "display_confidence_score": row.get("display_confidence_score"),
+            "legacy_confidence_score": row.get("confidence_score"),
+            "display_opportunity_score": row.get("display_opportunity_score"),
+            "legacy_opportunity_score": row.get("opportunity_score"),
+        })
+    except Exception:
+        pass
     if df is None or not isinstance(df, pd.DataFrame) or df.empty:
         return pd.DataFrame({"check": ["Dataset"], "value": ["Sin datos"]})
     if "season" in df.columns:
@@ -13051,7 +13298,7 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
     # (e.g. "JaviRodríguez"). Restore a readable display label without
     # changing the underlying data or keys used by the app.
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", player_name).strip()
-    position = str(safe_get(row, "position", safe_get(row, "position_group", "N/A")))
+    position = str(safe_get(row, "position", tm7_value(row, "display_position_group", "position_group", "N/A")))
     # TM.4.1 product polish: expose a role-aware badge even before role intelligence clustering.
     # This keeps the UX closer to professional scouting tools: the user sees an
     # interpreted football profile, not only a coarse position group.
@@ -13072,8 +13319,8 @@ def render_player_profile_header(row: pd.Series, name_col: str | None = None, ti
     }
     position_key = str(position).upper().strip()
     position_badge = f"{position} · {position_role_map.get(position_key, 'Football role')}" if position and position != "N/A" else position
-    club = str(safe_get(row, "display_club", safe_get(row, "current_club", safe_get(row, "club_actual", safe_get(row, "club", "N/A")))))
-    league = league_display_name(safe_get(row, "display_league", safe_get(row, "current_league", safe_get(row, "league", "N/A"))))
+    club = str(safe_get(row, "display_club", safe_get(row, "current_club", safe_get(row, "club_actual", tm7_value(row, "display_club", "club", "N/A")))))
+    league = league_display_name(safe_get(row, "display_league", safe_get(row, "current_league", tm7_value(row, "display_league", "league", "N/A"))))
     age_value = _snapshot_numeric(row, ["current_age", "current_age_snapshot", "age", "player_age", "age_years", "tm_age"], default=np.nan)
     age_display = "N/A" if pd.isna(age_value) else f"{age_value:.1f}"
     age_suffix = "years" if globals().get("LANG") == "EN" else "años"
@@ -13242,17 +13489,17 @@ def render_player_dossier_summary(row: pd.Series) -> None:
     is_en = globals().get("LANG") == "EN"
     player_name = re.sub(r"(?<=[a-záéíóúñü])(?=[A-ZÁÉÍÓÚÑÜ])", " ", str(get_player_name(row))).strip()
     role = clean_role_display(safe_get(row, "primary_role", np.nan), "Role pending" if is_en else "Perfil táctico pendiente")
-    taxonomy = str(safe_get(row, "position_taxonomy", safe_get(row, "position_group", "N/A")))
-    league = league_display_name(safe_get(row, "league", "N/A"))
-    club = str(safe_get(row, "club", "N/A"))
-    age = get_numeric_value(row, "age", np.nan)
-    opp = get_numeric_value(row, "opportunity_score", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
-    conf = get_numeric_value(row, "confidence_score", np.nan)
-    value = format_money_short(safe_get(row, "market_value_eur", np.nan))
-    expected_value = format_money_short(safe_get(row, "predicted_market_value_eur", safe_get(row, "projected_market_value_3y_eur", np.nan)))
-    gap = get_numeric_value(row, "market_value_gap_eur", np.nan)
-    minutes = get_numeric_value(row, "minutes_played", np.nan)
+    taxonomy = str(safe_get(row, "position_taxonomy", tm7_value(row, "display_position_group", "position_group", "N/A")))
+    league = league_display_name(tm7_value(row, "display_league", "league", "N/A"))
+    club = str(tm7_value(row, "display_club", "club", "N/A"))
+    age = get_numeric_value(row, "display_age", get_numeric_value(row, "display_age", get_numeric_value(row, "age", np.nan)))
+    opp = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
+    conf = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", np.nan))
+    value = format_money_short(tm7_value(row, "display_market_value_eur", "market_value_eur", np.nan))
+    expected_value = format_money_short(tm7_value(row, "display_predicted_market_value_eur", "predicted_market_value_eur", safe_get(row, "projected_market_value_3y_eur", np.nan)))
+    gap = get_numeric_value(row, "display_market_value_gap_eur", get_numeric_value(row, "market_value_gap_eur", np.nan))
+    minutes = get_numeric_value(row, "display_minutes_played", get_numeric_value(row, "minutes_played", np.nan))
 
     age_txt = "N/A" if pd.isna(age) else f"{age:.1f}"
     opp_txt = "N/A" if pd.isna(opp) else f"{opp:.0f}/100"
@@ -13332,9 +13579,9 @@ def get_player_name(row):
 
 def build_recommendation(row):
     try:
-        opportunity = float(safe_get(row, "opportunity_score", 0))
-        confidence = float(safe_get(row, "confidence_score", 0))
-        gap = float(safe_get(row, "market_value_gap_eur", 0))
+        opportunity = float(tm7_value(row, "display_opportunity_score", "opportunity_score", 0))
+        confidence = float(tm7_value(row, "display_confidence_score", "confidence_score", 0))
+        gap = float(tm7_value(row, "display_market_value_gap_eur", "market_value_gap_eur", 0))
     except Exception:
         return "Revisión exploratoria"
 
@@ -13547,19 +13794,6 @@ def load_football_lookup_dataset() -> pd.DataFrame:
         if not candidate_df.empty:
             return candidate_df.copy()
     return pd.DataFrame()
-
-
-def enrich_with_role_layers(
-    base_df: pd.DataFrame,
-    role_intelligence_df: pd.DataFrame,
-    position_taxonomy_df: pd.DataFrame,
-    role_explainability_df: pd.DataFrame,
-) -> pd.DataFrame:
-    """Apply role, taxonomy and explainability enrichments in the canonical order."""
-    out = merge_role_intelligence(base_df, role_intelligence_df)
-    out = merge_position_taxonomy(out, position_taxonomy_df)
-    out = merge_role_explainability(out, role_explainability_df)
-    return out
 
 
 def build_football_universe_dataset(scored_df: pd.DataFrame) -> pd.DataFrame:
@@ -15055,10 +15289,10 @@ def get_display_name(row: pd.Series, name_col: str) -> str:
 
 def classify_candidate_recommendation(row: pd.Series) -> str:
     """Executive recommendation for a candidate comparison table."""
-    opportunity = get_numeric_value(row, "opportunity_score", 0)
-    risk = get_numeric_value(row, "risk_score", 100)
+    opportunity = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", 0))
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", 100))
     adjusted = get_numeric_value(row, "risk_adjusted_opportunity_score", 0)
-    confidence = get_numeric_value(row, "confidence_score", 0)
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", 0))
 
     if adjusted >= 55 and opportunity >= 80 and risk <= 45:
         return "Priorizar"
@@ -15074,7 +15308,7 @@ def classify_candidate_recommendation(row: pd.Series) -> str:
 def classify_replacement_fit(row: pd.Series) -> str:
     """Executive label for replacement candidates."""
     replacement = get_numeric_value(row, "replacement_score_league_adjusted", get_numeric_value(row, "replacement_score", 0))
-    risk = get_numeric_value(row, "risk_score", 100)
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", 100))
     similarity = get_numeric_value(row, "similarity_score_pct", 0)
 
     if replacement >= 75 and similarity >= 70 and risk <= 55:
@@ -15417,10 +15651,10 @@ def classify_similarity_recommendation(row: pd.Series) -> str:
     delta_opp = get_numeric_value(row, "delta_opportunity", np.nan)
     delta_risk = get_numeric_value(row, "delta_risk", np.nan)
     similarity = get_numeric_value(row, "similarity_score_pct", np.nan)
-    opportunity = get_numeric_value(row, "opportunity_score", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
-    future_asset = get_numeric_value(row, "future_asset_score", np.nan)
-    growth = get_numeric_value(row, "growth_score", np.nan)
+    opportunity = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
+    future_asset = get_numeric_value(row, "display_future_asset_score", get_numeric_value(row, "future_asset_score", np.nan))
+    growth = get_numeric_value(row, "display_growth_score", get_numeric_value(row, "growth_score", np.nan))
 
     # Red is reserved for genuinely riskier profiles, not simply lower
     # opportunity than an exceptional reference player.
@@ -15478,12 +15712,12 @@ def render_similarity_rank_panel(similarity_view: pd.DataFrame, name_col: str, h
     rows_html = ""
     for rank, (_, row) in enumerate(similarity_view.head(5).iterrows(), start=1):
         player = get_display_name(row, name_col)
-        club = safe_get(row, "club", "")
+        club = tm7_value(row, "display_club", "club", "")
         league = league_display_name(safe_get(row, "league", ""))
         sim = get_numeric_value(row, "similarity_score_pct", np.nan)
-        opp = get_numeric_value(row, "opportunity_score", np.nan)
-        risk = get_numeric_value(row, "risk_score", np.nan)
-        value = get_numeric_value(row, "market_value_eur", np.nan)
+        opp = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
+        risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
+        value = get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "display_market_value_eur", get_numeric_value(row, "market_value_eur", np.nan)))
         status_raw = str(safe_get(row, "_recommendation_class", "Lower Priority"))
         status = similarity_recommendation_label(status_raw)
         status_class = similarity_status_class(status_raw)
@@ -16717,8 +16951,8 @@ def classify_decision_stage(score: object) -> str:
 def classify_executive_action(row: pd.Series) -> str:
     """Translate Executive Decision Score into the next operational action."""
     score = get_numeric_value(row, "executive_decision_score_v2", get_numeric_value(row, "executive_decision_score", 0))
-    risk = get_numeric_value(row, "risk_score", 100)
-    confidence = get_numeric_value(row, "confidence_score", 0)
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", 100))
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", 0))
     adaptation = get_numeric_value(row, "adaptation_risk_score", 0)
 
     if score >= 82 and risk <= 55 and confidence >= 70 and adaptation <= 8:
@@ -16747,12 +16981,14 @@ def classify_executive_priority_v2(row: pd.Series) -> str:
 def build_decision_drivers(row: pd.Series) -> str:
     """Generate compact automatic decision drivers for executive tables."""
     drivers = []
-    roi = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
-    future_asset = get_numeric_value(row, "future_asset_score", np.nan)
+    roi = get_numeric_value(row, "display_roi_pct", get_numeric_value(row, "asset_roi_3y_pct", np.nan))
+    future_asset = get_numeric_value(row, "display_future_asset_score", get_numeric_value(row, "future_asset_score", np.nan))
     projected_value = get_numeric_value(row, "projected_value_score", np.nan)
     opportunity_context = get_numeric_value(row, "risk_adjusted_opportunity_league", np.nan)
-    confidence = get_numeric_value(row, "confidence_score", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", np.nan))
+    if pd.notna(confidence) and confidence <= 1:
+        confidence = confidence * 100
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
     adaptation = get_numeric_value(row, "adaptation_risk_score", 0)
     replacement_fit = get_numeric_value(row, "replacement_fit_light", np.nan)
 
@@ -16883,10 +17119,12 @@ def build_executive_recommendation_rationale(row: pd.Series) -> str:
     """Generate an executive rationale from score components."""
     player = html.escape(str(safe_get(row, "player_display_name", get_player_name(row))))
     score = get_numeric_value(row, "executive_decision_score_v2", get_numeric_value(row, "executive_decision_score", np.nan))
-    future_asset = get_numeric_value(row, "future_asset_score", np.nan)
+    future_asset = get_numeric_value(row, "display_future_asset_score", get_numeric_value(row, "future_asset_score", np.nan))
     roi_pct = get_numeric_value(row, "asset_roi_3y_pct", np.nan)
-    risk = get_numeric_value(row, "risk_score", np.nan)
-    confidence = get_numeric_value(row, "confidence_score", np.nan)
+    risk = get_numeric_value(row, "display_risk_score", get_numeric_value(row, "risk_score", np.nan))
+    confidence = get_numeric_value(row, "display_confidence_score", get_numeric_value(row, "confidence_score", np.nan))
+    if pd.notna(confidence) and confidence <= 1:
+        confidence = confidence * 100
     context = get_numeric_value(row, "risk_adjusted_opportunity_league", get_numeric_value(row, "risk_adjusted_opportunity_score", np.nan))
     adaptation = get_numeric_value(row, "adaptation_risk_score", 0)
     stage = html.escape(str(safe_get(row, "decision_stage", "Shortlist")))
@@ -17435,9 +17673,9 @@ def render_role_market_dashboard(source_df: pd.DataFrame) -> None:
     cards = []
     for idx, (_, row) in enumerate(top.iterrows(), start=1):
         player = html.escape(str(get_player_name(row)))
-        club = html.escape(format_club_name(safe_get(row, "club", "")))
+        club = html.escape(format_club_name(tm7_value(row, "display_club", "club", "")))
         league = html.escape(league_display_name(safe_get(row, "league", "")))
-        opp = get_numeric_value(row, "opportunity_score", np.nan)
+        opp = get_numeric_value(row, "display_opportunity_score", get_numeric_value(row, "opportunity_score", np.nan))
         conf = role_metric_display(safe_get(row, "role_purity", safe_get(row, "role_confidence", np.nan)))
         prog = role_dna_score(safe_get(row, "ball_progression_index", np.nan))
         creation = role_dna_score(safe_get(row, "chance_creation_index", np.nan))
@@ -17697,7 +17935,7 @@ def render_opportunity_risk_top5_vertical(chart_source: pd.DataFrame, title: str
         row_dict = dict(row)
         player_raw = str(get_player_name(row))
         player = html.escape(player_raw)
-        club_raw = str(safe_get(row, "club", "")).strip()
+        club_raw = str(tm7_value(row, "display_club", "club", "")).strip()
         league_raw = league_display_name(safe_get(row, "league", ""))
         country_raw = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player_raw), "") or _tm69_row_nationality(row, player_raw)
 
@@ -18143,8 +18381,8 @@ def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
 
 def assign_decision_quadrant(row, opportunity_ref: float, risk_ref: float) -> str:
     """Assign scouting decision quadrant from Opportunity and Risk scores."""
-    opportunity = pd.to_numeric(pd.Series([safe_get(row, "opportunity_score")]), errors="coerce").iloc[0]
-    risk = pd.to_numeric(pd.Series([safe_get(row, "risk_score")]), errors="coerce").iloc[0]
+    opportunity = pd.to_numeric(pd.Series([tm7_value(row, "display_opportunity_score", "opportunity_score", np.nan)]), errors="coerce").iloc[0]
+    risk = pd.to_numeric(pd.Series([tm7_value(row, "display_risk_score", "risk_score", np.nan)]), errors="coerce").iloc[0]
 
     if pd.isna(opportunity) or pd.isna(risk):
         return "Sin clasificar"
@@ -18687,7 +18925,7 @@ def render_opportunity_risk_top5(chart_source: pd.DataFrame) -> None:
     for idx, ((_, row), col) in enumerate(zip(top.iterrows(), cols), start=1):
         with col:
             player = html.escape(get_player_name(row))
-            club = html.escape(str(safe_get(row, "club", "")))
+            club = html.escape(str(tm7_value(row, "display_club", "club", "")))
             league = html.escape(league_display_name(safe_get(row, "league", "")))
             score = get_numeric_value(row, "risk_adjusted_opportunity_score", 0)
             st.markdown(
@@ -19612,13 +19850,10 @@ role_intelligence_df = load_role_intelligence_dataset()
 ROLE_DATASET_STATUS = get_role_dataset_status(role_intelligence_df)
 position_taxonomy_df = load_position_taxonomy_dataset()
 TAXONOMY_DATASET_STATUS = get_taxonomy_dataset_status(position_taxonomy_df)
+df = merge_role_intelligence(df, role_intelligence_df)
+df = merge_position_taxonomy(df, position_taxonomy_df)
 role_explainability_df = load_role_explainability_dataset()
-df = enrich_with_role_layers(
-    df,
-    role_intelligence_df,
-    position_taxonomy_df,
-    role_explainability_df,
-)
+df = merge_role_explainability(df, role_explainability_df)
 df = apply_current_club_overrides(apply_club_name_normalization(df))
 # Enforce current Transfermarkt DSS scope before and after current-context resolution.
 # This prevents historical 11-league coverage or global Kaggle leagues from leaking into the product KPIs.
@@ -19745,12 +19980,9 @@ scouting_df = apply_current_club_overrides(df.copy())
 scouting_df = apply_club_name_normalization(scouting_df)
 scouting_df = enforce_current_dss_league_scope(scouting_df)
 football_df = build_football_universe_dataset(scouting_df)
-football_df = enrich_with_role_layers(
-    football_df,
-    role_intelligence_df,
-    position_taxonomy_df,
-    role_explainability_df,
-)
+football_df = merge_role_intelligence(football_df, role_intelligence_df)
+football_df = merge_position_taxonomy(football_df, position_taxonomy_df)
+football_df = merge_role_explainability(football_df, role_explainability_df)
 football_df = apply_current_club_overrides(football_df)
 football_df = apply_club_name_normalization(football_df)
 FOOTBALL_UNIVERSE_SIZE = len(football_df)
@@ -24147,7 +24379,7 @@ def _tm69_top_opportunity_html() -> str:
         row = rank_df.iloc[0]
         name = html.escape(str(get_player_name(row)))
         club = html.escape(str(safe_get(row, "display_club", safe_get(row, "current_club", safe_get(row, "club_actual", "N/A")))))
-        pos = html.escape(str(safe_get(row, "position_group", safe_get(row, "position", "N/A"))))
+        pos = html.escape(str(safe_get(row, "position_group", tm7_value(row, "display_position", "position", "N/A"))))
         score = _format_command_score(row.get("opportunity_score"))
         label = "Top opportunity" if LANG == "EN" else "Top oportunidad"
         return f"""
@@ -24204,6 +24436,70 @@ def _tm69_quick_actions_html() -> str:
         else ["Top oportunidades", "Talentos al alza", "Alertas contrato", "Similares", "Shortlist"]
     )
     return "<div class='tm69-quick-actions'>" + "".join(f"<span>{html.escape(x)}</span>" for x in actions) + "</div>"
+
+
+# TM.6.12C — Executive Demo Cases: fast, controlled player picker for live demos.
+# The universal search remains available below as an explicit experimental lookup.
+EXECUTIVE_DEMO_CASES = [
+    ("Javi Rodríguez", "Opportunity"),
+    ("Yan Diomandé", "Opportunity"),
+    ("Nick Woltemade", "Opportunity"),
+    ("Pau Víctor", "Opportunity"),
+    ("Hugo Álvarez", "Opportunity"),
+    ("Christantus Uche", "Opportunity"),
+    ("Arda Güler", "Future Asset"),
+    ("Endrick", "Future Asset"),
+    ("João Neves", "Future Asset"),
+    ("Warren Zaïre-Emery", "Future Asset"),
+    ("Désiré Doué", "Future Asset"),
+    ("Estevão", "Future Asset"),
+    ("Lamine Yamal", "Outside Universe"),
+    ("Jude Bellingham", "Outside Universe"),
+    ("Florian Wirtz", "Outside Universe"),
+    ("Jamal Musiala", "Outside Universe"),
+    ("Jonathan David", "Contract"),
+    ("Leroy Sané", "Contract"),
+    ("Angel Gomes", "Contract"),
+    ("Dominic Calvert-Lewin", "Contract"),
+    ("Johan Manzambi", "League Coverage"),
+    ("Hugo Rincón", "League Coverage"),
+    ("Arthur Atta", "League Coverage"),
+    ("Emilio Kehrer", "League Coverage"),
+    ("Christos Mouzakitis", "League Coverage"),
+    ("Mika Godts", "League Coverage"),
+    ("Konstantinos Karetsas", "League Coverage"),
+    ("Lucas Stassin", "League Coverage"),
+]
+
+
+def _tm612_demo_case_label_for_player(player_name: str, search_label_to_raw: dict[str, str]) -> str | None:
+    """Return the current search label matching a demo player raw name."""
+    target = normalize_search_text(player_name)
+    for label, raw in (search_label_to_raw or {}).items():
+        if _command_entity_type(str(label)) != "player":
+            continue
+        if normalize_search_text(raw) == target:
+            return str(label)
+    return None
+
+
+def _tm612_demo_case_display(option: object) -> str:
+    if option is None:
+        return ""
+    try:
+        player, category = option
+    except Exception:
+        return str(option)
+    if LANG == "EN":
+        return f"{player} · {category}"
+    category_es = {
+        "Opportunity": "Oportunidad",
+        "Future Asset": "Activo futuro",
+        "Outside Universe": "Fuera del universo",
+        "Contract": "Contrato",
+        "League Coverage": "Cobertura ligas",
+    }.get(str(category), str(category))
+    return f"{player} · {category_es}"
 
 
 def render_player_intelligence_command_center(
@@ -24268,15 +24564,13 @@ def render_player_intelligence_command_center(
         )
 
     with search_col:
-        # Native Streamlit typeahead. The search column is now a real Streamlit
-        # vertical block styled via a local anchor, instead of split/open HTML.
-        # This prevents the input from being detached and pushed down the page.
+        # TM.6.12C: fast demo picker first; universal search remains explicit and experimental.
         st.markdown(
             f"""
 <div class="tm69-search-card-anchor"></div>
 <div class="tm69-command-search-label-row tm69-search-label-row-final">
-    <div class="tm69-command-search-label">{html.escape(search_label)}</div>
-    <div class="tm69-command-search-help">{html.escape(search_help)}</div>
+    <div class="tm69-command-search-label">{'⭐ EXECUTIVE DEMO CASES' if LANG == 'EN' else '⭐ CASOS EJECUTIVOS DEMO'}</div>
+    <div class="tm69-command-search-help">{'Representative players for a fast, stable live demo' if LANG == 'EN' else 'Jugadores representativos para una demo rápida y estable'}</div>
 </div>
 <div class="tm69-search-vertical-spacer"></div>
 """,
@@ -24285,52 +24579,66 @@ def render_player_intelligence_command_center(
         search_options = search_options or globals().get("search_options", []) or []
         search_label_to_raw = search_label_to_raw or globals().get("search_label_to_raw", {}) or {}
 
+        demo_options = [None] + list(EXECUTIVE_DEMO_CASES)
+        current_raw = ""
         current_selected = st.session_state.get("global_scouting_search")
-        select_options = [None] + list(search_options)
-        selected_index = 0
-        if current_selected in search_options:
-            selected_index = select_options.index(current_selected)
+        if current_selected in search_label_to_raw:
+            current_raw = str(search_label_to_raw.get(current_selected, ""))
 
-        def _tm69_format_search_option(option: object) -> str:
-            if option is None:
-                return ""
-            label = str(option)
-            raw = str(search_label_to_raw.get(label, label))
-            entity = _command_entity_type(label)
-            if entity == "player":
-                return label.replace("Player · ", "").replace("Jugador · ", "").strip()
-            if entity == "league":
-                return f"Liga · {league_display_name(raw)}" if LANG != "EN" else f"League · {league_display_name(raw)}"
-            if entity == "club":
-                club = format_club_name(raw, raw) if "format_club_name" in globals() else raw
-                return f"Club · {club}"
-            if entity == "position":
-                return f"Posición · {raw}" if LANG != "EN" else f"Position · {raw}"
-            if entity == "role":
-                return f"Rol · {raw}" if LANG != "EN" else f"Role · {raw}"
-            return raw
+        demo_index = 0
+        for i, item in enumerate(demo_options):
+            if item is None:
+                continue
+            if normalize_search_text(item[0]) == normalize_search_text(current_raw):
+                demo_index = i
+                break
 
-        selected_label = st.selectbox(
-            "Search" if LANG == "EN" else "Búsqueda global",
-            options=select_options,
-            index=selected_index,
-            format_func=_tm69_format_search_option,
-            placeholder=placeholder,
-            key="tm69_global_search_typeahead",
+        selected_demo_case = st.selectbox(
+            "Executive Demo Cases" if LANG == "EN" else "Casos ejecutivos demo",
+            options=demo_options,
+            index=demo_index,
+            format_func=_tm612_demo_case_display,
+            placeholder="Choose a representative player..." if LANG == "EN" else "Elige un jugador representativo...",
+            key="tm612_executive_demo_case_picker",
             label_visibility="collapsed",
         )
-        if selected_label is not None and selected_label != st.session_state.get("global_scouting_search"):
-            st.session_state["global_scouting_search"] = selected_label
-            st.session_state["global_scouting_selected_label"] = selected_label
-            st.session_state["global_scouting_query"] = str(search_label_to_raw.get(selected_label, selected_label))
-            st.rerun()
-        elif selected_label is None and st.session_state.get("global_scouting_search") is not None:
-            clear_global_scouting_search()
-            st.rerun()
+
+        if selected_demo_case is not None:
+            demo_player = str(selected_demo_case[0])
+            demo_label = _tm612_demo_case_label_for_player(demo_player, search_label_to_raw)
+            if demo_label and demo_label != st.session_state.get("global_scouting_search"):
+                st.session_state["global_scouting_search"] = demo_label
+                st.session_state["global_scouting_selected_label"] = demo_label
+                st.session_state["global_scouting_query"] = str(search_label_to_raw.get(demo_label, demo_player))
+                st.rerun()
 
         st.markdown(
             f"""
-<div class="tm69-search-example tm69-search-example-final"><b>Buscar:</b> <span>{html.escape(example)}</span></div>
+<div class="tm612-universal-search-caption">
+    <b>{'Universal Player Search (Experimental)' if LANG == 'EN' else 'Búsqueda universal de jugadores (experimental)'}</b>
+    <span>{'Use only when you need a player outside the demo cases.' if LANG == 'EN' else 'Úsala solo si necesitas un jugador fuera de los casos demo.'}</span>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+        universal_query = st.text_input(
+            "Universal Player Search" if LANG == "EN" else "Búsqueda universal",
+            value=str(st.session_state.get("tm612_universal_search_input", "") or ""),
+            placeholder="Type exact player name and press Search" if LANG == "EN" else "Escribe el nombre exacto y pulsa Buscar",
+            key="tm612_universal_search_input",
+            label_visibility="collapsed",
+        )
+        if st.button("Search" if LANG == "EN" else "Buscar", key="tm612_universal_search_button"):
+            q = str(universal_query or "").strip()
+            if q:
+                st.session_state["global_scouting_search"] = None
+                st.session_state["global_scouting_selected_label"] = None
+                st.session_state["global_scouting_query"] = q
+                st.rerun()
+
+        st.markdown(
+            f"""
+<div class="tm69-search-example tm69-search-example-final"><b>{'Demo flow:' if LANG == 'EN' else 'Flujo demo:'}</b> <span>{html.escape(example)}</span></div>
 """,
             unsafe_allow_html=True,
         )
@@ -24966,6 +25274,47 @@ div[data-testid="stHorizontalBlock"]:has(.tm69-command-panel) {
     unsafe_allow_html=True,
 )
 
+
+# =============================================================================
+# TM.6.12C — Executive Demo Cases visual layer
+# =============================================================================
+st.markdown(
+    """
+<style>
+.tm612-universal-search-caption {
+    margin: 10px 0 6px 0 !important;
+    padding-top: 9px !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+.tm612-universal-search-caption b {
+    display: block !important;
+    color: #0f2f5f !important;
+    font-size: .72rem !important;
+    font-weight: 950 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+}
+.tm612-universal-search-caption span {
+    display: block !important;
+    color: #64748b !important;
+    font-size: .72rem !important;
+    line-height: 1.25 !important;
+}
+.tm612-universal-search-caption + div[data-testid="stTextInput"] input {
+    min-height: 38px !important;
+    border-radius: 12px !important;
+}
+.tm612-universal-search-caption + div[data-testid="stTextInput"] + div[data-testid="stButton"] button,
+div[data-testid="stButton"] button[kind="secondary"] {
+    border-radius: 999px !important;
+    font-weight: 900 !important;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # CRM-style autocomplete search. Labels show entity type, while filtering keeps the raw value.
 # TM.6.9C: search state is resolved before filters, but the visual Command Center
 # is rendered after active filters are computed so the context panel stays inside
@@ -24977,9 +25326,13 @@ if current_global_search is not None and str(current_global_search) not in searc
     st.session_state["global_scouting_search"] = None
 
 query_value_state = str(st.session_state.get("global_scouting_query", "") or "")
-candidate_results = rank_global_command_search(football_df, query_value_state, search_options, search_label_to_raw, max_results=5)
-
 selected_from_session = st.session_state.get("global_scouting_search")
+if selected_from_session in search_label_to_raw:
+    candidate_results = pd.DataFrame()
+    global_search_label = selected_from_session
+else:
+    candidate_results = rank_global_command_search(football_df, query_value_state, search_options, search_label_to_raw, max_results=5)
+
 if selected_from_session in search_label_to_raw:
     global_search_label = selected_from_session
 elif str(query_value_state).strip() and candidate_results is not None and not candidate_results.empty:
@@ -25145,7 +25498,176 @@ if search_norm and search_entity_type == "player":
             except Exception as exc:
                 print(f"[TM6.10 outside profile projection skipped] {exc}")
 
+        if not outside_football_profile.empty:
+            outside_football_profile = tm71_select_latest_analytics_row(outside_football_profile)
+            outside_football_profile = tm71_build_presentation_df(outside_football_profile)
+
         search_is_outside_scouting_player = not outside_football_profile.empty
+
+
+
+@st.cache_data(show_spinner=False)
+def tm71_load_full_modeling_analytics():
+    """Load full modeling dataset for latest player-season analytics lookup."""
+    try:
+        path = PROCESSED_PATH / "player_season_modeling_v13a.parquet"
+        if path.exists():
+            return pd.read_parquet(path)
+    except Exception as exc:
+        print(f"[TM.7.2 full modeling analytics load failed] {exc}")
+    return pd.DataFrame()
+
+
+
+def tm71_latest_player_dss_metrics_from_full(player_id_tm):
+    """Return latest row with DSS-derived metrics for a player."""
+    full = tm71_load_full_modeling_analytics()
+    if full.empty or "player_id_tm" not in full.columns:
+        return pd.Series(dtype="object")
+
+    try:
+        pid = int(float(player_id_tm))
+    except Exception:
+        return pd.Series(dtype="object")
+
+    player_ids = pd.to_numeric(full["player_id_tm"], errors="coerce")
+    rows = full[player_ids == pid].copy()
+    if rows.empty:
+        return pd.Series(dtype="object")
+
+    dss_cols = [
+        "opportunity_score",
+        "confidence_score",
+        "risk_score",
+        "asset_roi_3y_pct",
+        "predicted_market_value_eur",
+        "market_value_gap_eur",
+    ]
+    existing = [c for c in dss_cols if c in rows.columns]
+    if not existing:
+        return pd.Series(dtype="object")
+
+    # DSS row must contain model-derived opportunity/risk/ROI, not only raw matching confidence.
+    priority_cols = [c for c in ["opportunity_score", "risk_score", "asset_roi_3y_pct"] if c in rows.columns]
+    if priority_cols:
+        mask = rows[priority_cols].notna().any(axis=1)
+    else:
+        mask = rows[existing].notna().any(axis=1)
+    rows = rows[mask].copy()
+    if rows.empty:
+        return pd.Series(dtype="object")
+
+    if "valuation_date" in rows.columns:
+        rows["_tm71_dss_date_sort"] = pd.to_datetime(rows["valuation_date"], errors="coerce")
+    else:
+        rows["_tm71_dss_date_sort"] = pd.NaT
+
+    if "season" in rows.columns:
+        rows["_tm71_dss_season_sort"] = pd.to_numeric(
+            rows["season"].astype(str).str.extract(r"(\\d{4})")[0],
+            errors="coerce",
+        )
+    else:
+        rows["_tm71_dss_season_sort"] = np.nan
+
+    rows = rows.sort_values(
+        ["_tm71_dss_date_sort", "_tm71_dss_season_sort"],
+        ascending=[False, False],
+    )
+
+    return rows.iloc[0]
+
+
+
+def tm71_latest_player_analytics_from_full(player_id_tm):
+    """Return latest analytical row for a player from full modeling dataset."""
+    full = tm71_load_full_modeling_analytics()
+    if full.empty or "player_id_tm" not in full.columns:
+        return pd.DataFrame()
+
+    try:
+        pid = int(float(player_id_tm))
+    except Exception:
+        return pd.DataFrame()
+
+    player_ids = pd.to_numeric(full["player_id_tm"], errors="coerce")
+    rows = full[player_ids == pid].copy()
+
+    if rows.empty:
+        return pd.DataFrame()
+
+    if "valuation_date" in rows.columns:
+        rows["_tm71_date_sort"] = pd.to_datetime(rows["valuation_date"], errors="coerce")
+    else:
+        rows["_tm71_date_sort"] = pd.NaT
+
+    if "season_start_year" in rows.columns:
+        rows["_tm71_season_sort"] = pd.to_numeric(rows["season_start_year"], errors="coerce")
+    elif "season" in rows.columns:
+        rows["_tm71_season_sort"] = pd.to_numeric(
+            rows["season"].astype(str).str.extract(r"(\\d{4})")[0],
+            errors="coerce",
+        )
+    else:
+        rows["_tm71_season_sort"] = np.nan
+
+    rows["_tm71_minutes_sort"] = (
+        pd.to_numeric(rows["minutes_played"], errors="coerce")
+        if "minutes_played" in rows.columns
+        else 0
+    )
+
+    rows = rows.sort_values(
+        ["_tm71_date_sort", "_tm71_season_sort", "_tm71_minutes_sort"],
+        ascending=[False, False, False],
+    )
+
+    return rows.head(1).drop(
+        columns=[c for c in ["_tm71_date_sort", "_tm71_season_sort", "_tm71_minutes_sort"] if c in rows.columns]
+    )
+
+
+
+
+@st.cache_data(show_spinner=False)
+def tm72_load_dss_authority():
+    """Load DSS-derived metrics authority."""
+    try:
+        path = ROOT / "reports" / "dss" / "global_prospect_universe.csv"
+        if path.exists():
+            return pd.read_csv(path)
+    except Exception as exc:
+        print(f"[TM.7.2 DSS authority load failed] {exc}")
+    return pd.DataFrame()
+
+
+def tm72_latest_player_dss_metrics(player_id_tm):
+    """Return DSS-derived metrics for a player from DSS Authority."""
+    dss = tm72_load_dss_authority()
+    if dss.empty or "player_id_tm" not in dss.columns:
+        return pd.Series(dtype="object")
+
+    try:
+        pid = int(float(player_id_tm))
+    except Exception:
+        return pd.Series(dtype="object")
+
+    rows = dss[pd.to_numeric(dss["player_id_tm"], errors="coerce") == pid].copy()
+    if rows.empty:
+        return pd.Series(dtype="object")
+
+    sort_cols = []
+    if "opportunity_score" in rows.columns:
+        rows["_tm72_opp_sort"] = pd.to_numeric(rows["opportunity_score"], errors="coerce")
+        sort_cols.append("_tm72_opp_sort")
+    if "confidence_score" in rows.columns:
+        rows["_tm72_conf_sort"] = pd.to_numeric(rows["confidence_score"], errors="coerce")
+        sort_cols.append("_tm72_conf_sort")
+
+    if sort_cols:
+        rows = rows.sort_values(sort_cols, ascending=[False] * len(sort_cols))
+
+    return rows.iloc[0]
 
 
 PRESETS = {
@@ -25368,7 +25890,34 @@ if search_query_clean and search_entity_type == "player" and not search_is_outsi
         active_player_mask = filtered_df[player_col].fillna("").astype(str).map(normalize_search_text) == search_norm if player_col in filtered_df.columns else pd.Series(False, index=filtered_df.index)
         if bool(base_player_mask.any()) and not bool(active_player_mask.any()):
             search_is_outside_active_filters = True
-            outside_active_profile = base_df[base_player_mask].head(1).copy()
+            outside_active_profile = base_df[base_player_mask].copy()
+            _player_id_for_latest = outside_active_profile.iloc[0].get("player_id_tm") if not outside_active_profile.empty else None
+            _latest_full_profile = tm71_latest_player_analytics_from_full(_player_id_for_latest)
+            if not _latest_full_profile.empty:
+                outside_active_profile = _latest_full_profile
+
+                _latest_dss_row = tm72_latest_player_dss_metrics(_player_id_for_latest)
+                if not getattr(_latest_dss_row, "empty", True):
+                    for _dss_col in [
+                        "opportunity_score",
+                        "confidence_score",
+                        "risk_score",
+                        "asset_roi_3y_pct",
+                        "expected_roi",
+                        "predicted_market_value_eur",
+                        "market_value_gap_eur",
+                    ]:
+                        if _dss_col in _latest_dss_row.index:
+                            outside_active_profile[_dss_col] = _latest_dss_row.get(_dss_col)
+                    if "expected_roi" in _latest_dss_row.index and "asset_roi_3y_pct" not in outside_active_profile.columns:
+                        outside_active_profile["asset_roi_3y_pct"] = _latest_dss_row.get("expected_roi")
+            else:
+                outside_active_profile = tm71_select_latest_analytics_row(outside_active_profile)
+            outside_active_profile = tm71_build_presentation_df(outside_active_profile)
+            try:
+                print("[TM.7.1 LATEST ACTIVE PROFILE]", outside_active_profile[[c for c in ["player_id_tm", "season", "club", "league", "minutes_played", "market_value_eur", "valuation_date", "display_club", "display_league", "display_market_value_eur"] if c in outside_active_profile.columns]].to_string(index=False))
+            except Exception as exc:
+                print(f"[TM.7.1 latest profile debug failed] {exc}")
 
 # If the selected player is inside the active criteria, focus the dashboard on that profile.
 if search_query_clean and search_entity_type == "player" and not search_is_outside_scouting_player and not search_is_outside_active_filters:
@@ -25483,12 +26032,27 @@ if SHOW_COMMAND_PANEL:
 
 if SHOW_COMMAND_PANEL and search_is_outside_scouting_player and not outside_football_profile.empty:
     outside_row = outside_football_profile.iloc[0]
+    try:
+        print("[TM.7.1 OUTSIDE DEBUG]", {
+            "player_id_tm": outside_row.get("player_id_tm"),
+            "name": get_player_name(outside_row),
+            "display_club": outside_row.get("display_club"),
+            "display_league": outside_row.get("display_league"),
+            "display_age": outside_row.get("display_age"),
+            "display_market_value_eur": outside_row.get("display_market_value_eur"),
+            "legacy_club": outside_row.get("club"),
+            "legacy_league": outside_row.get("league"),
+            "legacy_age": outside_row.get("age"),
+            "legacy_market_value_eur": outside_row.get("market_value_eur"),
+        })
+    except Exception:
+        pass
     outside_name = html.escape(str(get_player_name(outside_row)))
-    outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
-    outside_league = html.escape(league_display_name(safe_get(outside_row, "league", "N/A")))
-    outside_position = html.escape(str(safe_get(outside_row, "position_group", "N/A")))
-    outside_age_text = format_age_metadata(outside_row, LANG)
-    outside_value = format_money_short(safe_get(outside_row, "market_value_eur", np.nan))
+    outside_club = html.escape(str(safe_get(outside_row, "display_club", safe_get(outside_row, "club", "N/A"))))
+    outside_league = html.escape(league_display_name(safe_get(outside_row, "display_league", safe_get(outside_row, "league", "N/A"))))
+    outside_position = html.escape(str(safe_get(outside_row, "display_position_group", safe_get(outside_row, "position_group", "N/A"))))
+    outside_age_text = tm71_age_text(outside_row)
+    outside_value = format_money_short(safe_get(outside_row, "display_market_value_eur", safe_get(outside_row, "market_value_eur", np.nan)))
     outside_projected_value = format_money_short(safe_get(outside_row, "projected_market_value_3y_eur", np.nan))
     outside_upside_3y = format_signed_money_short(safe_get(outside_row, "asset_upside_3y_eur", np.nan))
     outside_roi_3y = get_numeric_value(outside_row, "asset_roi_3y_pct", np.nan)
@@ -25667,13 +26231,28 @@ body {{
 
 
 if SHOW_COMMAND_PANEL and search_is_outside_active_filters and not outside_active_profile.empty:
-    outside_row = outside_active_profile.iloc[0]
+    outside_row = tm7_display_series(outside_active_profile.iloc[0])
+    try:
+        print("[TM.7.1 ACTIVE OUTSIDE DEBUG]", {
+            "player_id_tm": outside_row.get("player_id_tm"),
+            "name": get_player_name(outside_row),
+            "display_club": outside_row.get("display_club"),
+            "display_league": outside_row.get("display_league"),
+            "display_age": outside_row.get("display_age"),
+            "display_market_value_eur": outside_row.get("display_market_value_eur"),
+            "legacy_club": outside_row.get("club"),
+            "legacy_league": outside_row.get("league"),
+            "legacy_age": outside_row.get("age"),
+            "legacy_market_value_eur": outside_row.get("market_value_eur"),
+        })
+    except Exception:
+        pass
     outside_name = html.escape(str(get_player_name(outside_row)))
-    outside_club = html.escape(str(safe_get(outside_row, "club", "N/A")))
-    outside_league = html.escape(league_display_name(safe_get(outside_row, "league", "N/A")))
-    outside_position = html.escape(str(safe_get(outside_row, "position_group", "N/A")))
-    outside_age_text = format_age_metadata(outside_row, LANG)
-    outside_value = format_money_short(safe_get(outside_row, "market_value_eur", np.nan))
+    outside_club = html.escape(str(safe_get(outside_row, "display_club", safe_get(outside_row, "club", "N/A"))))
+    outside_league = html.escape(league_display_name(safe_get(outside_row, "display_league", safe_get(outside_row, "league", "N/A"))))
+    outside_position = html.escape(str(safe_get(outside_row, "display_position_group", safe_get(outside_row, "position_group", "N/A"))))
+    outside_age_text = tm71_age_text(outside_row)
+    outside_value = format_money_short(safe_get(outside_row, "display_market_value_eur", safe_get(outside_row, "market_value_eur", np.nan)))
     title = "Player outside active scouting criteria" if LANG == "EN" else "Jugador fuera de los criterios activos de scouting"
     text_msg = (
         "The player exists in the analytical model universe, but does not enter the current active preset or filter set. The executive ranking, shortlist and Opportunity/Risk matrix remain based on the active Scouting Universe."
@@ -30340,9 +30919,9 @@ def _render_contract_action_board(data: pd.DataFrame, max_items: int = 3) -> Non
     def _player_row(item_idx: int, row: pd.Series) -> str:
         days_value = safe_get(row, "contract_days_remaining_dynamic", np.nan)
         days_txt = "N/A" if pd.isna(days_value) else f"{int(float(days_value))}d"
-        upside_txt = format_signed_money_short(safe_get(row, "market_value_gap_eur", np.nan))
+        upside_txt = format_signed_money_short(tm7_value(row, "display_market_value_gap_eur", "market_value_gap_eur", np.nan))
         score_txt = _contract_score_display(safe_get(row, "recruitment_contract_score", np.nan))
-        opp_txt = format_score(safe_get(row, "opportunity_score", np.nan), decimals=0)
+        opp_txt = format_score(tm7_value(row, "display_opportunity_score", "opportunity_score", np.nan), decimals=0)
         name_txt = str(safe_get(row, "player_name_display", safe_get(row, "player_name_fbref", "N/A")))
         meta_txt = f"{safe_get(row, 'age_display', 'N/A')} · {safe_get(row, 'position_display', 'N/A')} · {safe_get(row, 'league_display', 'N/A')}"
         return (
