@@ -1,0 +1,554 @@
+63:    return f"data:{mime};base64," + _base64.b64encode(pp.read_bytes()).decode("utf-8")
+2024:    unsafe_allow_html=True,
+2110:    unsafe_allow_html=True,
+2240:    unsafe_allow_html=True,
+2289:    unsafe_allow_html=True,
+2343:    unsafe_allow_html=True,
+2457:    unsafe_allow_html=True,
+2590:    unsafe_allow_html=True,
+2736:    unsafe_allow_html=True,
+2908:    unsafe_allow_html=True,
+3164:    unsafe_allow_html=True,
+3301:    unsafe_allow_html=True,
+3457:    unsafe_allow_html=True,
+3563:    unsafe_allow_html=True,
+3700:    unsafe_allow_html=True,
+3856:    unsafe_allow_html=True,
+3970:    unsafe_allow_html=True,
+4057:    unsafe_allow_html=True,
+4130:    unsafe_allow_html=True,
+4228:    unsafe_allow_html=True,
+4347:    unsafe_allow_html=True,
+4446:    unsafe_allow_html=True,
+4588:    unsafe_allow_html=True,
+4736:    unsafe_allow_html=True,
+4802:    unsafe_allow_html=True,
+4826:    unsafe_allow_html=True,
+4867:    unsafe_allow_html=True,
+4966:    unsafe_allow_html=True,
+5043:    unsafe_allow_html=True,
+5275:    unsafe_allow_html=True,
+5357:    unsafe_allow_html=True,
+5523:    unsafe_allow_html=True,
+5598:    unsafe_allow_html=True,
+5675:    unsafe_allow_html=True,
+5793:    unsafe_allow_html=True,
+5876:    unsafe_allow_html=True,
+5913:    unsafe_allow_html=True,
+6207:    unsafe_allow_html=True,
+6278:    unsafe_allow_html=True,
+6432:    unsafe_allow_html=True,
+6791:    unsafe_allow_html=True,
+6882:    unsafe_allow_html=True,
+7062:    unsafe_allow_html=True,
+7289:    unsafe_allow_html=True,
+7368:    unsafe_allow_html=True,
+7430:    unsafe_allow_html=True,
+7499:    unsafe_allow_html=True,
+7588:    unsafe_allow_html=True,
+7953:    unsafe_allow_html=True,
+7961:@st.cache_data(show_spinner=False)
+7965:    return pd.read_csv(path)
+7968:@st.cache_data(show_spinner=False)
+7972:    return pd.read_parquet(path)
+8159:@st.cache_data(show_spinner=False)
+8173:        dna = pd.read_csv(resolved_path, low_memory=False)
+8175:        dna = pd.read_parquet(resolved_path)
+8414:@st.cache_data(show_spinner=False)
+8427:        role_df = pd.read_csv(resolved_path, low_memory=False).copy()
+8429:        role_df = pd.read_parquet(resolved_path).copy()
+8646:        unsafe_allow_html=True,
+8837:        unsafe_allow_html=True,
+9198:        unsafe_allow_html=True,
+9222:        unsafe_allow_html=True,
+9236:                    st.session_state[f"{key_prefix}_{c}_min_filter"] = int(rules.get(c, 0))
+9238:    st.markdown("</div>", unsafe_allow_html=True)
+9248:                value=int(st.session_state.get(f"{key_prefix}_{col}_min_filter", 0)),
+9261:        unsafe_allow_html=True,
+9377:        unsafe_allow_html=True,
+9472:            unsafe_allow_html=True,
+9486:        unsafe_allow_html=True,
+9590:    df = pd.read_csv(input_file)
+10460:    st.markdown(f"<div class='internal-nav-toolbar'>{html_items}</div>", unsafe_allow_html=True)
+10464:    st.markdown('<div class="siq-section-gap"></div>', unsafe_allow_html=True)
+10468:    st.markdown('<div class="siq-card-gap"></div>', unsafe_allow_html=True)
+10472:    st.markdown('<div class="siq-micro-gap"></div>', unsafe_allow_html=True)
+10596:    unsafe_allow_html=True,
+10666:    unsafe_allow_html=True,
+10952:        unsafe_allow_html=True,
+10972:        unsafe_allow_html=True,
+11002:        unsafe_allow_html=True,
+11195:@st.cache_data(show_spinner=False)
+11255:@st.cache_data(show_spinner=False)
+11260:        df = pd.read_parquet(path)
+12828:    st.markdown(tm69_exec_card_html, unsafe_allow_html=True)
+12851:        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+12977:""", unsafe_allow_html=True)
+13176:        unsafe_allow_html=True,
+13256:        unsafe_allow_html=True,
+13769:def build_player_radar_chart(radar_df: pd.DataFrame, selected_player: str) -> go.Figure | None:
+13776:    fig = go.Figure()
+13832:                unsafe_allow_html=True,
+13871:        unsafe_allow_html=True,
+13931:            unsafe_allow_html=True,
+13934:        st.markdown('<div class="tm4-benchmark-toolbar-anchor"></div>', unsafe_allow_html=True)
+13992:            st.markdown(_tm69_performance_bars_html(radar_df), unsafe_allow_html=True)
+14001:                unsafe_allow_html=True,
+14020:        st.markdown(f"<div class='radar-readout-card'>{readout_text}</div>", unsafe_allow_html=True)
+14438:) -> go.Figure | None:
+14448:    fig = go.Figure()
+14731:        unsafe_allow_html=True,
+14752:        unsafe_allow_html=True,
+14886:            unsafe_allow_html=True,
+14931:            unsafe_allow_html=True,
+14936:    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+14939:    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+14954:        st.plotly_chart(radar_fig, config={"displaylogo": False})
+15036:        unsafe_allow_html=True,
+15333:    st.markdown(html_block, unsafe_allow_html=True)
+15443:        unsafe_allow_html=True,
+15447:def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.Series, name_col: str, highlighted_player: str | None = None) -> go.Figure | None:
+15528:    fig = go.Figure()
+15637:        unsafe_allow_html=True,
+15684:        unsafe_allow_html=True,
+15738:        unsafe_allow_html=True,
+15958:        unsafe_allow_html=True,
+16142:            unsafe_allow_html=True,
+16146:    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+16148:    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+16149:    st.markdown(build_comparison_html_table(comparison_df), unsafe_allow_html=True)
+16153:        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+16161:            unsafe_allow_html=True,
+16252:        unsafe_allow_html=True,
+16273:    st.markdown("<div class='similar-final-controls'>", unsafe_allow_html=True)
+16291:    st.markdown("</div>", unsafe_allow_html=True)
+16416:        unsafe_allow_html=True,
+16428:    st.markdown("<div class='similar-card-list'>" + "".join(mini_cards) + "</div>", unsafe_allow_html=True)
+16431:        st.markdown("<div class='similar-advanced-view'>", unsafe_allow_html=True)
+16435:            st.plotly_chart(similarity_fig, config={"displayModeBar": False, "displaylogo": False})
+16439:        st.markdown("</div>", unsafe_allow_html=True)
+16559:    st.markdown("<div class='secondary-filter-row'>", unsafe_allow_html=True)
+16566:    st.markdown("</div>", unsafe_allow_html=True)
+16604:    st.markdown("<div class='replacement-card-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
+16608:        st.markdown("<div class='replacement-advanced-view'>", unsafe_allow_html=True)
+16609:        st.markdown(f"<div class='replacement-table-title'>{html.escape('Vista ejecutiva reducida' if LANG == 'ES' else 'Reduced executive view')}</div>", unsafe_allow_html=True)
+16617:        st.markdown("</div>", unsafe_allow_html=True)
+16621:        st.markdown(f"<div class='radar-info-box'><b>{html.escape(TXT('Replacement Insight'))}</b><br><br>{narrative}</div>", unsafe_allow_html=True)
+16948:        unsafe_allow_html=True,
+16951:    st.markdown('<div class="score-methodology-spacer"></div>', unsafe_allow_html=True)
+16953:        st.markdown(rationale, unsafe_allow_html=True)
+16988:        unsafe_allow_html=True,
+17053:    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+17089:        unsafe_allow_html=True,
+17228:        unsafe_allow_html=True,
+17304:    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+17332:        unsafe_allow_html=True,
+17460:        unsafe_allow_html=True,
+17472:        unsafe_allow_html=True,
+17482:    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+17502:        st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+17568:        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+17683:    st.markdown(html_block, unsafe_allow_html=True)
+17853:            unsafe_allow_html=True,
+17876:                unsafe_allow_html=True,
+17882:def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
+17921:    fig = go.Figure()
+18096:def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | None:
+18192:    fig = go.Figure()
+18593:        unsafe_allow_html=True,
+18609:    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+18626:                unsafe_allow_html=True,
+18771:    unsafe_allow_html=True,
+18814:@st.cache_data(show_spinner=False)
+18821:    tax_df = pd.read_parquet(resolved_path).copy()
+19044:        unsafe_allow_html=True,
+19055:            unsafe_allow_html=True,
+19058:    st.markdown("<div class='role-filter-controls role-filter-controls-v2 role-filter-controls-stable'>", unsafe_allow_html=True)
+19096:    st.markdown("</div>", unsafe_allow_html=True)
+19129:        unsafe_allow_html=True,
+19215:    unsafe_allow_html=True,
+19385:    unsafe_allow_html=True,
+19455:    unsafe_allow_html=True,
+19512:    unsafe_allow_html=True,
+19691:    unsafe_allow_html=True,
+19694:_INITIAL_LANG = st.session_state.get("scouting_iq_language", "ES")
+19699:        unsafe_allow_html=True,
+19742:if "dashboard_navigation_page" in st.session_state:
+19743:    st.session_state.dashboard_navigation_page = LEGACY_PAGE_MAP.get(
+19744:        st.session_state.dashboard_navigation_page,
+19745:        st.session_state.dashboard_navigation_page,
+19748:    st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
+19750:if st.session_state.dashboard_navigation_page not in PAGE_OPTIONS:
+19751:    st.session_state.dashboard_navigation_page = PAGE_OPTIONS[0]
+19761:        st.session_state["selected_player"] = _tm69_player
+19762:        st.session_state["contract_selected_player"] = _tm69_player
+19763:        st.session_state["contract_focus_player"] = _tm69_player
+19764:        st.session_state["player_intelligence_report_selector"] = _tm69_player
+19765:        st.session_state["radar_selected_player"] = _tm69_player
+19766:        st.session_state["sprint11_similarity_target"] = _tm69_player
+19767:        st.session_state["sprint11_replacement_target"] = _tm69_player
+19768:        st.session_state["driver_analysis_player"] = _tm69_player
+19770:            st.session_state.dashboard_navigation_page = str(_tm69_nav)
+19772:            st.session_state.dashboard_navigation_page = "Player Intelligence"
+19793:st.sidebar.markdown("<div class='sidebar-nav-stack'>", unsafe_allow_html=True)
+19795:    _active = st.session_state.dashboard_navigation_page == _page_option
+19801:        st.session_state.dashboard_navigation_page = _page_option
+19803:st.sidebar.markdown("</div>", unsafe_allow_html=True)
+19804:dashboard_page = st.session_state.dashboard_navigation_page
+19807:if "market_intelligence_view" not in st.session_state:
+19808:    st.session_state.market_intelligence_view = "Executive Overview"
+19809:if "strategy_center_view" not in st.session_state:
+19810:    st.session_state.strategy_center_view = "Contract Intelligence"
+19837:        unsafe_allow_html=True,
+19992:    unsafe_allow_html=True,
+20004:    unsafe_allow_html=True,
+20753:        unsafe_allow_html=True,
+20773:        unsafe_allow_html=True,
+20793:        unsafe_allow_html=True,
+20871:    unsafe_allow_html=True,
+20973:</style>""", unsafe_allow_html=True)
+21048:    unsafe_allow_html=True,
+21314:    unsafe_allow_html=True,
+21420:    unsafe_allow_html=True,
+21496:                unsafe_allow_html=True,
+21799:    st.session_state["selected_player"] = player_name
+21800:    st.session_state["contract_selected_player"] = player_name
+21801:    st.session_state["contract_focus_player"] = player_name
+21802:    st.session_state["player_intelligence_report_selector"] = player_name
+21803:    st.session_state["radar_selected_player"] = player_name
+21804:    st.session_state["sprint11_similarity_target"] = player_name
+21805:    st.session_state["sprint11_replacement_target"] = player_name
+21806:    st.session_state["driver_analysis_player"] = player_name
+21808:        st.session_state.dashboard_navigation_page = destination
+21816:            unsafe_allow_html=True,
+21846:            unsafe_allow_html=True,
+21849:    st.markdown('<div class="tm69-command-list">', unsafe_allow_html=True)
+21897:            unsafe_allow_html=True,
+21903:                    st.session_state["global_scouting_search"] = label
+21904:                    st.session_state["global_scouting_selected_label"] = label
+21909:                    st.session_state["global_scouting_search"] = label
+21910:                    st.session_state["global_scouting_selected_label"] = label
+21912:                    st.session_state["selected_module"] = "Comparables"
+21916:                    st.session_state["global_scouting_search"] = label
+21917:                    st.session_state["global_scouting_selected_label"] = label
+21922:                    st.session_state["global_scouting_search"] = label
+21923:                    st.session_state["global_scouting_selected_label"] = label
+21925:                    st.session_state["strategy_center_view"] = "Contract Intelligence"
+21929:                    st.session_state["global_scouting_search"] = label
+21930:                    st.session_state["global_scouting_selected_label"] = label
+21935:                st.session_state["global_scouting_search"] = label
+21936:                st.session_state["global_scouting_selected_label"] = label
+21938:    st.markdown('</div>', unsafe_allow_html=True)
+22104:    unsafe_allow_html=True,
+22310:    unsafe_allow_html=True,
+22440:    unsafe_allow_html=True,
+22530:    unsafe_allow_html=True,
+22683:    unsafe_allow_html=True,
+22876:    unsafe_allow_html=True,
+22902:    unsafe_allow_html=True,
+22976:    unsafe_allow_html=True,
+22992:    unsafe_allow_html=True,
+23049:    unsafe_allow_html=True,
+23119:    unsafe_allow_html=True,
+23140:    unsafe_allow_html=True,
+23157:    unsafe_allow_html=True,
+23167:    unsafe_allow_html=True,
+23405:    wl = st.session_state.get("tm69_watchlist", [])
+23408:    st.session_state["tm69_watchlist"] = wl
+23416:            unsafe_allow_html=True,
+23441:            unsafe_allow_html=True,
+23444:    st.markdown('<div class="tm69-command-list tm69-command-list-pro">', unsafe_allow_html=True)
+23497:            unsafe_allow_html=True,
+23503:                    st.session_state["global_scouting_search"] = label
+23504:                    st.session_state["global_scouting_selected_label"] = label
+23509:                    st.session_state["global_scouting_search"] = label
+23510:                    st.session_state["global_scouting_selected_label"] = label
+23512:                    st.session_state["selected_module"] = "Comparables"
+23517:                    st.session_state["global_scouting_search"] = label
+23518:                    st.session_state["global_scouting_selected_label"] = label
+23522:                    st.session_state["global_scouting_search"] = label
+23523:                    st.session_state["global_scouting_selected_label"] = label
+23528:                    st.session_state["global_scouting_search"] = label
+23529:                    st.session_state["global_scouting_selected_label"] = label
+23531:                    st.session_state["strategy_center_view"] = "Contract Intelligence"
+23535:                st.session_state["global_scouting_search"] = label
+23536:                st.session_state["global_scouting_selected_label"] = label
+23538:    st.markdown('</div>', unsafe_allow_html=True)
+23543:    st.session_state["global_scouting_search"] = None
+23544:    st.session_state["global_scouting_query"] = ""
+23545:    st.session_state["global_scouting_selected_label"] = None
+23570:        st.session_state.pop(key, None)
+23581:    for key in list(st.session_state.keys()):
+23583:            st.session_state.pop(key, None)
+23588:        st.session_state.pop(key, None)
+23591:    st.session_state["tm69_filters_last_cleared_at"] = datetime.now(timezone.utc).isoformat()
+23964:    unsafe_allow_html=True,
+24031:                encoded = base64.b64encode(Path(logo_path).read_bytes()).decode("utf-8")
+24168:    st.markdown("<div class='tm69-command-center-css-anchor'></div>", unsafe_allow_html=True)
+24184:            unsafe_allow_html=True,
+24200:            unsafe_allow_html=True,
+24205:        current_selected = st.session_state.get("global_scouting_search")
+24239:        if selected_label is not None and selected_label != st.session_state.get("global_scouting_search"):
+24240:            st.session_state["global_scouting_search"] = selected_label
+24241:            st.session_state["global_scouting_selected_label"] = selected_label
+24242:            st.session_state["global_scouting_query"] = str(search_label_to_raw.get(selected_label, selected_label))
+24244:        elif selected_label is None and st.session_state.get("global_scouting_search") is not None:
+24252:            unsafe_allow_html=True,
+24266:            unsafe_allow_html=True,
+24269:            st.markdown("<div class='tm69-clear-button-anchor'></div>", unsafe_allow_html=True)
+24276:    return str(st.session_state.get("global_scouting_query", "") or "")
+24521:    unsafe_allow_html=True,
+24727:    unsafe_allow_html=True,
+24883:    unsafe_allow_html=True,
+24892:current_global_search = st.session_state.get("global_scouting_search")
+24894:    st.session_state["global_scouting_search"] = None
+24896:query_value_state = str(st.session_state.get("global_scouting_query", "") or "")
+24899:selected_from_session = st.session_state.get("global_scouting_search")
+25008:    unsafe_allow_html=True,
+25014:    unsafe_allow_html=True,
+25022:    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('max_age'))}</div>", unsafe_allow_html=True)
+25027:    max_age_preview = int(st.session_state.get(max_age_key, max_age_default))
+25039:    st.markdown(f"<div class='sidebar-slider-title'>{html.escape(T('min_minutes'))}</div>", unsafe_allow_html=True)
+25042:    min_minutes_preview = int(st.session_state.get(min_minutes_key, min_minutes_default))
+25058:    unsafe_allow_html=True,
+25178:    unsafe_allow_html=True,
+25316:        unsafe_allow_html=True,
+25380:        unsafe_allow_html=True,
+25403:st.markdown('\n<style>\n.pro-section-card .compact-board-note { margin-top: 14px !important; }\n.pro-section-card + div[data-testid="stExpander"] { margin-top: 14px !important; }\n</style>\n', unsafe_allow_html=True)
+25652:    unsafe_allow_html=True,
+25744:    unsafe_allow_html=True,
+25822:    unsafe_allow_html=True,
+26122:    unsafe_allow_html=True,
+26232:    unsafe_allow_html=True,
+26293:    unsafe_allow_html=True,
+26311:        unsafe_allow_html=True,
+26317:    st.markdown(f"<div class='layer-badge'>{html.escape(str(label))}</div>", unsafe_allow_html=True)
+26371:                unsafe_allow_html=True,
+26392:        unsafe_allow_html=True,
+26462:        df = pd.read_csv(path)
+26465:        snap = pd.read_parquet(
+26490:        return pd.read_csv(path)
+26494:@st.cache_data(show_spinner=False)
+26499:        df = pd.read_parquet(path)
+26519:@st.cache_data(show_spinner=False)
+26522:        df = pd.read_parquet(
+26537:@st.cache_data(show_spinner=False)
+26557:@st.cache_data(show_spinner=False)
+26565:        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+26857:    components.html(html_block, height=1180, scrolling=False)
+26883:        unsafe_allow_html=True,
+26906:    st.markdown("<div class='overview-row-gap'></div>", unsafe_allow_html=True)
+26908:    st.markdown("<div class='overview-row-gap overview-row-gap-small'></div>", unsafe_allow_html=True)
+26918:        unsafe_allow_html=True,
+26921:    st.markdown("<div class='mi-exec-nav-anchor'></div>", unsafe_allow_html=True)
+26925:            st.session_state.dashboard_navigation_page = "Player Intelligence"
+26929:            st.session_state.dashboard_navigation_page = "Recruitment Intelligence"
+26933:            st.session_state.dashboard_navigation_page = "Strategy Center"
+26934:            st.session_state.strategy_center_view = "Transfer Strategy"
+26938:            st.session_state.dashboard_navigation_page = "Strategy Center"
+26939:            st.session_state.strategy_center_view = "Contract Intelligence"
+26941:    st.markdown("<div class='overview-row-gap-small'></div>", unsafe_allow_html=True)
+26969:                unsafe_allow_html=True,
+26992:        unsafe_allow_html=True,
+27024:    st.markdown("<div class='strategy-filter-panel'><div class='contract-filter-title'>" + html.escape('Tactical portfolio filters' if LANG == 'EN' else 'Filtros tácticos de cartera') + "</div><div class='contract-filter-subtitle'>" + html.escape('Compact controls for budget, risk profile, style, squad level and positional needs.' if LANG == 'EN' else 'Controles compactos de presupuesto, riesgo, estilo, nivel de plantilla y necesidades posicionales.') + "</div>", unsafe_allow_html=True)
+27149:    st.markdown("</div>", unsafe_allow_html=True)
+27184:        unsafe_allow_html=True,
+27195:        unsafe_allow_html=True,
+27252:            unsafe_allow_html=True,
+27296:        st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+27420:                    unsafe_allow_html=True,
+27422:                fig = go.Figure()
+27487:                st.plotly_chart(fig, config={"displaylogo": False, "displayModeBar": False})
+27495:                st.markdown("<div class='strategy-ranking-card'><div class='contract-panel-title'>" + html.escape('Recommended portfolio' if LANG == 'EN' else 'Cartera recomendada') + "</div><div class='contract-panel-subtitle'>" + html.escape('Ranking by portfolio score' if LANG == 'EN' else 'Ranking por score de cartera') + "</div>" + "".join(rank_rows) + "</div>", unsafe_allow_html=True)
+27561:    st.markdown(f"## 🎯 {T('matrix_title')}", unsafe_allow_html=True)
+27562:    st.markdown(f"<div class='matrix-subtitle-strong'>{html.escape(T('matrix_caption'))}</div>", unsafe_allow_html=True)
+27576:            unsafe_allow_html=True,
+27592:        st.plotly_chart(fig, config={"displaylogo": False, "modeBarButtonsToRemove": ["zoom", "pan", "select", "lasso2d", "autoScale", "resetScale"]})
+27595:    st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+27607:    if "players_page" not in st.session_state:
+27608:        st.session_state.players_page = 1
+27609:    st.session_state.players_page = min(st.session_state.players_page, total_pages)
+27610:    start_idx = (st.session_state.players_page - 1) * PAGE_SIZE
+27612:    st.markdown(build_html_table(page_df), unsafe_allow_html=True)
+27619:            if st.button("‹", disabled=st.session_state.players_page <= 1, key="market_page_prev"):
+27620:                st.session_state.players_page -= 1
+27623:            st.markdown(f"**{st.session_state.players_page} / {total_pages}**")
+27625:            if st.button("›", disabled=st.session_state.players_page >= total_pages, key="market_page_next"):
+27626:                st.session_state.players_page += 1
+27647:        unsafe_allow_html=True,
+27657:    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+27819:        unsafe_allow_html=True,
+27883:        unsafe_allow_html=True,
+27901:            unsafe_allow_html=True,
+27965:        unsafe_allow_html=True,
+27968:    fig_shap = go.Figure(
+27991:        st.plotly_chart(fig_shap)
+28228:    unsafe_allow_html=True,
+28245:@st.cache_data(show_spinner=False)
+28456:    unsafe_allow_html=True,
+28539:    unsafe_allow_html=True,
+28747:                encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+28784:            encoded = base64.b64encode(Path(logo_path).read_bytes()).decode("utf-8")
+28849:        encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
+28877:@st.cache_data(show_spinner=False)
+28884:        snap = pd.read_parquet(
+28897:        panel = pd.read_parquet(panel_path, columns=["player_name_fbref", "nationality"])
+28965:        unsafe_allow_html=True,
+29127:        unsafe_allow_html=True,
+29420:    unsafe_allow_html=True,
+29699:    unsafe_allow_html=True,
+29707:    st.session_state["selected_player"] = player_name
+29708:    st.session_state["contract_selected_player"] = player_name
+29709:    st.session_state["contract_focus_player"] = player_name
+29711:    st.session_state["player_intelligence_report_selector"] = player_name
+29712:    st.session_state["radar_selected_player"] = player_name
+29713:    st.session_state["sprint11_similarity_target"] = player_name
+29714:    st.session_state["sprint11_replacement_target"] = player_name
+29715:    st.session_state["driver_analysis_player"] = player_name
+29722:        st.session_state["selected_module"] = module
+29723:        st.session_state["selected_page"] = page_name
+29724:    st.session_state.dashboard_navigation_page = page_name
+29901:    fig = go.Figure()
+29959:        st.plotly_chart(fig, config={"displaylogo": False, "displayModeBar": False})
+29969:            unsafe_allow_html=True,
+30061:    st.markdown(board_html, unsafe_allow_html=True)
+30072:    fig = go.Figure(go.Bar(
+30092:    st.plotly_chart(fig, config={"displaylogo": False})
+30103:    fig = go.Figure(go.Bar(
+30124:    st.plotly_chart(fig, config={"displaylogo": False})
+30145:""", unsafe_allow_html=True)
+30150:        unsafe_allow_html=True,
+30154:    if st.session_state.get("contract_quick_preset_last_v36") != quick_preset:
+30155:        st.session_state["contract_action_board_lane"] = None
+30156:        st.session_state["contract_quick_preset_last_v36"] = quick_preset
+30200:    board_lane_filter = st.session_state.get("contract_action_board_lane")
+30233:    if st.session_state.get("contract_action_board_lane") in board_lane_label_map:
+30234:        active_chips.append(("Board" if LANG == "EN" else "Board") + f": {board_lane_label_map[st.session_state.get('contract_action_board_lane')]}")
+30244:    st.markdown(f"<div class='contract-active-summary'>{chip_html}<span class='contract-chip contract-chip-muted'>{len(filtered_contract):,} targets</span></div>", unsafe_allow_html=True)
+30294:""", unsafe_allow_html=True)
+30302:        unsafe_allow_html=True,
+30304:    st.markdown("<div class='contract-native-toolbar-anchor'></div>", unsafe_allow_html=True)
+30322:    st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
+30336:    st.markdown("<div class='contract-section-gap'></div>", unsafe_allow_html=True)
+30370:        unsafe_allow_html=True,
+30376:        unsafe_allow_html=True,
+30380:        unsafe_allow_html=True,
+30389:        unsafe_allow_html=True,
+30406:        st.markdown(_contract_table_html(filtered_contract, "recruitment_contract_score", max_table_rows), unsafe_allow_html=True)
+30410:        st.markdown(_contract_table_html(contract_rank, "contract_opportunity_score", max_table_rows), unsafe_allow_html=True)
+30414:            st.markdown(f"<div class='contract-panel-title'>{html.escape('Contract window distribution' if LANG == 'EN' else 'Distribución por ventana contractual')}</div>", unsafe_allow_html=True)
+30417:            st.markdown(f"<div class='contract-panel-title'>{html.escape('Top leagues by contract opportunity' if LANG == 'EN' else 'Ligas con mayor oportunidad contractual')}</div>", unsafe_allow_html=True)
+30557:    unsafe_allow_html=True,
+30724:    unsafe_allow_html=True,
+30757:    unsafe_allow_html=True,
+30813:            unsafe_allow_html=True,
+30871:        unsafe_allow_html=True,
+30888:            unsafe_allow_html=True,
+30899:            unsafe_allow_html=True,
+30910:            unsafe_allow_html=True,
+30934:            unsafe_allow_html=True,
+30963:            unsafe_allow_html=True,
+30978:@st.cache_data(show_spinner=False)
+31075:        unsafe_allow_html=True,
+31088:        unsafe_allow_html=True,
+31106:        unsafe_allow_html=True,
+31119:        unsafe_allow_html=True,
+31134:            unsafe_allow_html=True,
+31240:            unsafe_allow_html=True,
+31412:        unsafe_allow_html=True,
+31446:        unsafe_allow_html=True,
+31484:        unsafe_allow_html=True,
+31662:        unsafe_allow_html=True,
+31667:    st.markdown('<div class="methodology-grid">', unsafe_allow_html=True)
+31679:    st.markdown('</div>', unsafe_allow_html=True)
+31714:        index=view_options.index(st.session_state.get("market_intelligence_view", "Executive Overview")) if st.session_state.get("market_intelligence_view", "Executive Overview") in view_options else 0,
+31729:    st.markdown("<div class='product-tab-nav'><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Contract Intelligence" else "") + "'>Contrato</span><span class='product-tab-pill " + ("is-active" if st.session_state.get("strategy_center_view", "Contract Intelligence") == "Transfer Strategy" else "") + "'>Estrategia</span></div>", unsafe_allow_html=True)
+31733:        index=view_options.index(st.session_state.get("strategy_center_view", "Contract Intelligence")) if st.session_state.get("strategy_center_view", "Contract Intelligence") in view_options else 0,
+31738:    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+31749:                unsafe_allow_html=True,
+31847:    unsafe_allow_html=True,
+32163:    unsafe_allow_html=True,
+32245:    unsafe_allow_html=True,
+32533:""", unsafe_allow_html=True)
+32609:    unsafe_allow_html=True,
+32810:    unsafe_allow_html=True,
+32899:    unsafe_allow_html=True,
+32944:        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+32996:        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+33065:        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+33182:    st.markdown("".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)
+33201:        return "data:" + mime + ";base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+33261:    st.markdown("".join(line.strip() for line in market_html.splitlines()), unsafe_allow_html=True)
+33308:    st.markdown("".join(line.strip() for line in pitch_html.splitlines()), unsafe_allow_html=True)
+33341:        unsafe_allow_html=True,
+33347:            unsafe_allow_html=True,
+33354:            unsafe_allow_html=True,
+33366:    selected_player = st.session_state.get("radar_selected_player", player_names[0] if player_names else "Jugador")
+33562:    unsafe_allow_html=True,
+33573:    unsafe_allow_html=True,
+33696:    unsafe_allow_html=True,
+33781:    unsafe_allow_html=True,
+33813:    unsafe_allow_html=True,
+34126:    unsafe_allow_html=True,
+34400:    unsafe_allow_html=True,
+34714:    unsafe_allow_html=True,
+35017:    unsafe_allow_html=True,
+35051:    unsafe_allow_html=True,
+35289:    unsafe_allow_html=True,
+35425:    unsafe_allow_html=True,
+35539:    unsafe_allow_html=True,
+35664:    unsafe_allow_html=True,
+35761:    unsafe_allow_html=True,
+35883:    unsafe_allow_html=True,
+36034:    unsafe_allow_html=True,
+36131:    unsafe_allow_html=True,
+36252:    unsafe_allow_html=True,
+36316:    unsafe_allow_html=True,
+36606:    unsafe_allow_html=True,
+36689:    unsafe_allow_html=True,
+36792:    unsafe_allow_html=True,
+36938:    unsafe_allow_html=True,
+37018:    unsafe_allow_html=True,
+37068:    unsafe_allow_html=True,
+37119:    unsafe_allow_html=True,
+37216:    unsafe_allow_html=True,
+37287:    unsafe_allow_html=True,
+37423:    unsafe_allow_html=True,
+37571:    unsafe_allow_html=True,
+37748:    unsafe_allow_html=True,
+37939:    unsafe_allow_html=True,
+38125:    unsafe_allow_html=True,
+38150:    unsafe_allow_html=True,
+38165:""", unsafe_allow_html=True)
+38302:    unsafe_allow_html=True,
+38551:    unsafe_allow_html=True,
+38815:    unsafe_allow_html=True,
+38987:    unsafe_allow_html=True,
+39197:    unsafe_allow_html=True,
+39251:    unsafe_allow_html=True,
+39277:    unsafe_allow_html=True,
+39565:    unsafe_allow_html=True,
+39805:    unsafe_allow_html=True,
+39972:    unsafe_allow_html=True,
+40059:    unsafe_allow_html=True,
+40112:    unsafe_allow_html=True,
+40133:    unsafe_allow_html=True,
+40157:    unsafe_allow_html=True,
+40161:st.markdown('\n<style>\n/* TM.6.9.6 closure — Player Intelligence portrait visible */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 122px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n    margin-right: 14px !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    display: flex !important;\n    flex-direction: column !important;\n    align-items: center !important;\n    justify-content: center !important;\n    min-width: 126px !important;\n    padding-right: 18px !important;\n    margin-right: 14px !important;\n    gap: 10px !important;\n}\n.pi-visual-stack > .pi-visual-clubline,\n.pi-visual-stack > .pi-visual-nationality {\n    display: flex !important;\n}\n\n/* Recruitment > Drivers: más aire entre silueta y datos */\n.pi-ficha-identity,\n.pi-card-identity,\n.pi-director-identity,\n.snapshot-card-identity {\n    column-gap: 22px !important;\n}\n.pi-card,\n.snapshot-card {\n    overflow: visible !important;\n}\n\n/* Contract Intelligence: mismo tratamiento visual que silueta de jugador */\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 128px !important;\n    border-radius: 22px !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    overflow: hidden !important;\n}\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n</style>\n', unsafe_allow_html=True)
+40164:st.markdown('\n<style>\n/* TM.6.9.6 layout closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada en la columna izquierda */\n.exec-summary-main-row {\n    display: grid !important;\n    grid-template-columns: 112px minmax(0, 1fr) !important;\n    gap: 18px !important;\n    align-items: center !important;\n}\n.exec-summary-photo-slot {\n    width: 104px !important;\n    height: 132px !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.exec-summary-photo-slot .pi-player-photo,\n.exec-summary-photo-slot .pi-avatar-premium {\n    width: 104px !important;\n    height: 132px !important;\n    min-width: 104px !important;\n    margin: 0 !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n}\n.exec-summary-photo-slot .pi-player-photo img,\n.exec-summary-photo-slot .pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.exec-summary-copy {\n    min-width: 0 !important;\n}\n\n/* Ocultar visual stack residual si quedó duplicado arriba */\n.exec-decision-left > .pi-visual-stack {\n    display: none !important;\n}\n\n/* Recruitment / Drivers: más aire con la silueta */\n.pi-visual-stack,\n.snapshot-card-identity .pi-visual-stack {\n    margin-right: 22px !important;\n    padding-right: 20px !important;\n}\n\n/* Silueta profesional homogénea */\n.pi-avatar-premium,\n.contract-player-photo-shell-img,\n.contract-player-photo-shell {\n    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.10) !important;\n}\n\n/* Contract Intelligence: mismo estilo que Player/Recruitment */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n</style>\n', unsafe_allow_html=True)
+40167:st.markdown('\n<style>\n/* TM.6.9.6 FINAL UI closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada, no flotante */\n.pi-director-main {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    gap: 18px !important;\n    align-items: center !important;\n}\n.pi-director-main > .pi-visual-stack {\n    grid-column: 1 !important;\n    grid-row: 1 !important;\n    align-self: center !important;\n    justify-self: center !important;\n    margin: 0 !important;\n    padding: 0 !important;\n    min-width: 0 !important;\n}\n.pi-director-main > .pi-director-main-text {\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    min-width: 0 !important;\n}\n.pi-director-main .pi-visual-clubline,\n.pi-director-main .pi-visual-nationality {\n    display: none !important;\n}\n.pi-director-main .pi-player-photo,\n.pi-director-main .pi-avatar-premium {\n    width: 104px !important;\n    height: 132px !important;\n    min-width: 104px !important;\n    margin: 0 !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n}\n.pi-director-main .pi-player-photo img,\n.pi-director-main .pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n\n/* Contract Intelligence: misma silueta premium */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Recruitment Drivers: más separación entre silueta y contenido */\n.snapshot-card-identity,\n.pi-card-identity {\n    column-gap: 24px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40170:st.markdown('\n<style>\n/* TM.6.9.7 — Player image expansion */\n\n/* Contract / Market reusable player image */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius: 22px !important;\n    overflow: hidden !important;\n    background: linear-gradient(180deg,#f1f5f9 0%,#e8eef7 100%) !important;\n    border: 1px solid #d7e2f0 !important;\n    box-shadow: 0 14px 30px rgba(15,23,42,.12) !important;\n    display: flex !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.contract-player-photo-shell img,\n.contract-player-photo-shell-img img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Market Intelligence compact portraits */\n.market-top-player-row {\n    display: grid !important;\n    grid-template-columns: 54px minmax(0,1fr) !important;\n    gap: 10px !important;\n    align-items: center !important;\n}\n.market-top-player-row .contract-player-photo-shell,\n.market-top-player-row .contract-player-photo-shell-img {\n    width: 46px !important;\n    height: 58px !important;\n    border-radius: 13px !important;\n    box-shadow: 0 8px 18px rgba(15,23,42,.10) !important;\n}\n\n/* Recruitment Drivers spacing */\n.snapshot-card-identity,\n.pi-card-identity {\n    column-gap: 26px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40173:st.markdown('\n<style>\n/* TM.6.9.7 — Market Intelligence Top5 identity layer */\n.top5-exec-grid-featured {\n    grid-template-columns: minmax(290px, 1.55fr) repeat(4, minmax(0, 1fr)) !important;\n    align-items: stretch !important;\n}\n.top5-exec-card-featured {\n    border-color: #bcd3ff !important;\n    box-shadow: 0 14px 34px rgba(37,99,235,.12) !important;\n    min-height: 188px !important;\n}\n.top5-featured-top {\n    display: flex !important;\n    justify-content: space-between !important;\n    align-items: flex-start !important;\n    margin-bottom: 8px !important;\n}\n.top5-featured-rank {\n    font-size: 3.2rem !important;\n    line-height: .85 !important;\n    font-weight: 950 !important;\n    color: #2f5bff !important;\n    letter-spacing: -.08em !important;\n}\n.top5-featured-score {\n    font-size: 1.45rem !important;\n    font-weight: 950 !important;\n    color: #166534 !important;\n}\n.top5-featured-body {\n    display: grid !important;\n    grid-template-columns: 96px minmax(0,1fr) !important;\n    gap: 14px !important;\n    align-items: center !important;\n}\n.top5-featured-photo {\n    width: 92px !important;\n    height: 118px !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 10px 24px rgba(15,23,42,.12) !important;\n}\n.top5-featured-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n.top5-exec-card-compact .top5-horizontal-rank {\n    width: 22px !important;\n    height: 22px !important;\n    font-size: .72rem !important;\n}\n.top5-exec-card-compact .top5-horizontal-name {\n    font-size: .86rem !important;\n}\n.top5-exec-card-compact .top5-horizontal-score {\n    font-size: .95rem !important;\n}\n.top5-id-line {\n    display: flex !important;\n    align-items: center !important;\n    gap: 7px !important;\n    margin-top: 6px !important;\n    color: #334155 !important;\n    font-size: .76rem !important;\n    font-weight: 800 !important;\n}\n.top5-league-line {\n    margin-top: 7px !important;\n}\n\n/* Top Contract Opportunities with photo + richer identity */\n.top-contract-row-identity {\n    grid-template-columns: 32px 42px minmax(0,1fr) 72px !important;\n}\n.top-contract-row-photo {\n    width: 36px !important;\n    height: 46px !important;\n    border-radius: 11px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n}\n.top-contract-row-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n.top5-meta .pi-club-mark,\n.top5-meta .pi-chip-with-asset,\n.top5-meta .tm69-nationality-chip {\n    vertical-align: middle !important;\n}\n@media (max-width: 1200px) {\n    .top5-exec-grid-featured {\n        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;\n    }\n}\n</style>\n', unsafe_allow_html=True)
+40176:st.markdown('\n<style>\n/* TM.6.9.7 final identity polish */\n\n/* Player Snapshot / Drivers */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 92px !important;\n    height: 118px !important;\n    min-width: 92px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Top Contract Opportunities */\n.top-contract-row-identity {\n    grid-template-columns: 32px 42px minmax(0,1fr) 72px !important;\n    align-items: center !important;\n}\n.top-contract-row-photo {\n    width: 36px !important;\n    height: 48px !important;\n    border-radius: 11px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 6px 14px rgba(15,23,42,.08) !important;\n}\n.top-contract-row-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n/* Top 5 oportunidades: rank #1 menos grande */\n.top5-featured-rank,\n.top5-exec-card-featured .top5-featured-rank {\n    font-size: 2.35rem !important;\n    line-height: .95 !important;\n    letter-spacing: -.04em !important;\n}\n.top5-featured-photo {\n    width: 82px !important;\n    height: 104px !important;\n}\n.top5-featured-body {\n    grid-template-columns: 88px minmax(0,1fr) !important;\n    gap: 12px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40179:st.markdown('\n<style>\n/* TM.6.9.7 — Uche image visible in Player Snapshot */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img,\n.pi-avatar-premium img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n</style>\n', unsafe_allow_html=True)
+40182:st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot Uche identity fix */\n.pi-player-photo {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 12px 26px rgba(15,23,42,.12) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.pi-player-photo img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.pi-visual-stack {\n    min-width: 112px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40185:st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot portrait + nationality fix */\n.snapshot-player-photo {\n    display: flex !important;\n    width: 118px !important;\n    height: 148px !important;\n    min-width: 118px !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    background: #eef2f7 !important;\n    border: 1px solid #dbeafe !important;\n    box-shadow: 0 10px 24px rgba(15,23,42,.08) !important;\n    align-items: center !important;\n    justify-content: center !important;\n}\n.snapshot-player-photo img {\n    display: block !important;\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n}\n.snapshot-identity-assets {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n}\n</style>\n', unsafe_allow_html=True)
+40188:st.markdown('\n<style>\n/* TM.6.9.7 — Sprint closure: Player Snapshot image layout */\n.snapshot-identity-card,\n.player-snapshot-identity-card,\n.pi-snapshot-identity-card {\n    overflow: hidden !important;\n}\n\n.snapshot-identity-row,\n.player-snapshot-identity-row,\n.pi-snapshot-identity-row {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 20px !important;\n    align-items: start !important;\n}\n\n.snapshot-player-photo,\n.pi-player-photo {\n    width: 112px !important;\n    height: 144px !important;\n    min-width: 112px !important;\n    max-width: 112px !important;\n    border-radius: 20px !important;\n    overflow: hidden !important;\n    margin: 0 !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-player-photo img,\n.pi-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-identity-content,\n.player-snapshot-identity-content,\n.pi-snapshot-identity-content {\n    min-width: 0 !important;\n    position: relative !important;\n    z-index: 2 !important;\n    padding-left: 6px !important;\n}\n\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    max-width: 100% !important;\n}\n\n/* Evita que el bloque inferior invada la zona de imagen */\n.snapshot-identity-metrics,\n.pi-snapshot-metrics {\n    clear: both !important;\n    margin-top: 14px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40191:st.markdown('\n<style>\n/* TM.6.9.7 FINAL — no overlap in Player Snapshot identity card */\n.snapshot-player-photo {\n    float: left !important;\n    width: 92px !important;\n    height: 120px !important;\n    min-width: 92px !important;\n    max-width: 92px !important;\n    margin: 6px 20px 12px 0 !important;\n    border-radius: 18px !important;\n    overflow: hidden !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    margin-left: 112px !important;\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n}\n\n.snapshot-identity-assets + *,\n.pi-identity-assets + *,\n.pi-chip-row + * {\n    margin-left: 112px !important;\n}\n\n/* La fila inferior queda debajo de la imagen */\n.snapshot-identity-metrics,\n.pi-snapshot-metrics {\n    clear: both !important;\n    margin-top: 14px !important;\n}\n</style>\n', unsafe_allow_html=True)
+40194:st.markdown('\n<style>\n/* TM.6.9.7 FINAL — Player Snapshot identity grid layout */\n.snapshot-card.snapshot-card-identity {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 18px !important;\n    align-items: start !important;\n    overflow: hidden !important;\n    padding: 22px 24px !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo {\n    grid-column: 1 !important;\n    grid-row: 1 !important;\n    float: none !important;\n    width: 108px !important;\n    height: 138px !important;\n    min-width: 108px !important;\n    max-width: 108px !important;\n    margin: 18px 0 0 0 !important;\n    border-radius: 20px !important;\n    position: relative !important;\n    z-index: 1 !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-player-photo img {\n    width: 100% !important;\n    height: 100% !important;\n    object-fit: cover !important;\n    object-position: center top !important;\n    display: block !important;\n}\n\n.snapshot-card.snapshot-card-identity > .snapshot-identity-main {\n    grid-column: 2 !important;\n    grid-row: 1 !important;\n    min-width: 0 !important;\n    max-width: 100% !important;\n    position: relative !important;\n    z-index: 2 !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-identity-assets {\n    margin: 12px 0 12px 0 !important;\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-position-row {\n    display: flex !important;\n    flex-wrap: wrap !important;\n    gap: 8px !important;\n    align-items: center !important;\n    justify-content: flex-start !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    margin-top: 12px !important;\n    display: grid !important;\n    grid-template-columns: 0.75fr 1fr 1fr !important;\n    gap: 14px !important;\n    min-width: 0 !important;\n    overflow: hidden !important;\n}\n\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n\n/* Neutraliza hacks anteriores */\n.snapshot-identity-assets,\n.pi-identity-assets,\n.pi-chip-row {\n    margin-left: 0 !important;\n}\n.snapshot-identity-assets + *,\n.pi-identity-assets + *,\n.pi-chip-row + * {\n    margin-left: 0 !important;\n}\n</style>\n', unsafe_allow_html=True)
+40197:st.markdown('\n<style>\n/* TM.6.9.7 CLOSE — Cloud visual sync */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n    gap: 18px !important;\n}\n.snapshot-identity-layout .snapshot-meta-grid div,\n.snapshot-identity-layout .snapshot-meta-grid b,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid div,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid b {\n    min-width: 0 !important;\n    overflow: hidden !important;\n    text-overflow: ellipsis !important;\n    white-space: nowrap !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button {\n    border-radius: 14px !important;\n    border: 1px solid #bfdbfe !important;\n    background: #ffffff !important;\n    color: #0f2f5f !important;\n    font-weight: 900 !important;\n    min-height: 46px !important;\n}\n.role-dna-filter-shell + div[data-testid="stHorizontalBlock"] button:hover {\n    background: #eff6ff !important;\n    border-color: #2563eb !important;\n}\n</style>\n', unsafe_allow_html=True)
+40200:st.markdown('\n<style>\n/* TM.6.9.7 cloud sync final */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n}\n</style>\n', unsafe_allow_html=True)
+40268:    unsafe_allow_html=True,
+40379:    unsafe_allow_html=True,
+40476:    unsafe_allow_html=True,
+40551:    unsafe_allow_html=True,
