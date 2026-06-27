@@ -1,0 +1,10 @@
+player_id_tm,name,identity_club,identity_league,identity_age,identity_market_value_eur,identity_status,performance_season,performance_club,performance_league,performance_minutes,performance_market_value_eur,analytics_modeling_club,analytics_modeling_league,analytics_modeling_age,analytics_modeling_market_value_eur
+1390649,Yan Diomande,RasenBallsport Leipzig,Bundesliga,19.35,75000000.0,OK,2025-2026,RB Leipzig,Bundesliga,2472,20000000.0,RB Leipzig,Bundesliga,18.915811088295687,20000000.0
+974982,Ousmane Diomande,Sporting Clube de Portugal,Liga Portugal,22.04,45000000.0,OK,2025-2026,Sporting CP,Liga Portugal,1296,45000000.0,Sporting CP,Liga Portugal,21.04312114989733,40000000.0
+974982,Ousmane Diomande,Sporting Clube de Portugal,Liga Portugal,22.04,45000000.0,OK,2025-2026,Sporting CP,Liga Portugal,1296,45000000.0,Sporting CP,Liga Portugal,19.81930184804928,25000000.0
+974982,Ousmane Diomande,Sporting Clube de Portugal,Liga Portugal,22.04,45000000.0,OK,2025-2026,Sporting CP,Liga Portugal,1296,45000000.0,Sporting CP,Liga Portugal,22.039698836413415,45000000.0
+1390649,Yan Diomande,RasenBallsport Leipzig,Bundesliga,19.35,75000000.0,OK,2025-2026,RB Leipzig,Bundesliga,2472,20000000.0,Leganés,LaLiga,18.472279260780287,600000.0
+702441,Sinaly Diomandé,Association de la Jeunesse auxerroise,Ligue 1,24.96,5000000.0,OK,2023-2024,Lyon,Ligue 1,889,7000000.0,Lyon,Ligue 1,21.56605065023956,5000000.0
+702441,Sinaly Diomandé,Association de la Jeunesse auxerroise,Ligue 1,24.96,5000000.0,OK,2023-2024,Lyon,Ligue 1,889,7000000.0,Lyon,Ligue 1,19.51813826146475,1500000.0
+702441,Sinaly Diomandé,Association de la Jeunesse auxerroise,Ligue 1,24.96,5000000.0,OK,2023-2024,Lyon,Ligue 1,889,7000000.0,Lyon,Ligue 1,22.691307323750856,7000000.0
+702441,Sinaly Diomandé,Association de la Jeunesse auxerroise,Ligue 1,24.96,5000000.0,OK,2023-2024,Lyon,Ligue 1,889,7000000.0,Lyon,Ligue 1,20.687200547570157,7000000.0

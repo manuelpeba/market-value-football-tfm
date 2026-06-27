@@ -1,0 +1,2 @@
+rows,unique_players,missing_club,missing_league,missing_age,missing_market_value,missing_position,status_ok_pct,output
+17430,17430,0,0,24,0,17430,99.86,data\processed\player_identity_current.parquet
