@@ -3,6 +3,7 @@ from .evidence import attach_evidence, build_decision_evidence
 from .narrative import build_executive_decision_narrative
 from .recommendation import classify_decision_action, generate_dss_recommendation
 from .policies import PolicyResult, evaluate_decision_policies, policy_score
+from .strategy import StrategyProfile, get_strategy_profile, DEFAULT_STRATEGY_PROFILES
 from .models import DecisionContext, DecisionEvidence
 
 __all__ = [
@@ -17,4 +18,7 @@ __all__ = [
     "PolicyResult",
     "evaluate_decision_policies",
     "policy_score",
+    "StrategyProfile",
+    "get_strategy_profile",
+    "DEFAULT_STRATEGY_PROFILES",
 ]

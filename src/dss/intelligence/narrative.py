@@ -2,10 +2,14 @@ from __future__ import annotations
 
 from .models import DecisionContext
 from .recommendation import generate_dss_recommendation
+from .strategy import BALANCED, StrategyProfile
 
 
-def build_executive_decision_narrative(context: DecisionContext) -> str:
-    rec = generate_dss_recommendation(context)
+def build_executive_decision_narrative(
+    context: DecisionContext,
+    strategy_profile: StrategyProfile = BALANCED,
+) -> str:
+    rec = generate_dss_recommendation(context, strategy_profile=strategy_profile)
     action = rec["decision_action"]
     positives = rec["positive_evidence"]
     negatives = rec["negative_evidence"]
@@ -13,8 +17,12 @@ def build_executive_decision_narrative(context: DecisionContext) -> str:
     player = context.player_name
     club = context.club or "current club unavailable"
     league = context.league or "league unavailable"
+    strategy_label = strategy_profile.label
 
-    intro = f"{player} ({club}, {league}) receives a DSS action of {action}."
+    intro = (
+        f"{player} ({club}, {league}) receives a DSS action of {action} "
+        f"under the {strategy_label} strategy profile."
+    )
 
     if positives:
         positive_text = " Main supporting signals: " + "; ".join(e.label for e in positives[:3]) + "."

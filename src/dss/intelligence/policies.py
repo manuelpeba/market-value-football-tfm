@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .models import DecisionContext, DecisionEvidence
+from .strategy import BALANCED, StrategyProfile
 
 
 @dataclass(frozen=True)
@@ -266,11 +267,45 @@ DEFAULT_POLICIES = (
 def evaluate_decision_policies(
     context: DecisionContext,
     policies: tuple[DecisionPolicy, ...] = DEFAULT_POLICIES,
+    strategy_profile: StrategyProfile = BALANCED,
 ) -> tuple[PolicyResult, ...]:
-    return tuple(policy.evaluate(context) for policy in policies)
+    raw_results = tuple(policy.evaluate(context) for policy in policies)
+    adjusted: list[PolicyResult] = []
+
+    for result in raw_results:
+        multiplier = 1.0
+        if result.policy_name == "market_inefficiency":
+            multiplier = strategy_profile.market_gap_weight
+        elif result.policy_name == "opportunity":
+            multiplier = strategy_profile.opportunity_weight
+        elif result.policy_name == "growth":
+            multiplier = strategy_profile.growth_weight
+        elif result.policy_name == "confidence":
+            multiplier = strategy_profile.confidence_weight
+        elif result.policy_name == "risk" and result.score_delta < 0:
+            multiplier = max(0.25, 1.25 - strategy_profile.risk_tolerance)
+
+        adjusted.append(PolicyResult(
+            policy_name=result.policy_name,
+            score_delta=result.score_delta * multiplier,
+            evidence=result.evidence,
+        ))
+
+    return tuple(adjusted)
 
 
-def policy_score(context: DecisionContext) -> float:
+def policy_score(
+    context: DecisionContext,
+    strategy_profile: StrategyProfile = BALANCED,
+) -> float:
     base = 50.0
-    score = base + sum(result.score_delta for result in evaluate_decision_policies(context))
+    score = base + sum(
+        result.score_delta
+        for result in evaluate_decision_policies(context, strategy_profile=strategy_profile)
+    )
+
+    if strategy_profile.max_preferred_age is not None and context.age is not None:
+        if context.age > strategy_profile.max_preferred_age:
+            score -= min(12.0, (context.age - strategy_profile.max_preferred_age) * 3.0)
+
     return max(0.0, min(100.0, score))

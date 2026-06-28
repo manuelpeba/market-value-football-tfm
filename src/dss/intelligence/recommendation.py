@@ -3,30 +3,43 @@ from __future__ import annotations
 from .evidence import attach_evidence
 from .models import DecisionAction, DecisionContext, DecisionEvidence
 from .policies import evaluate_decision_policies, policy_score
+from .strategy import BALANCED, StrategyProfile
 
 
-def classify_decision_action(context: DecisionContext) -> DecisionAction:
+def classify_decision_action(
+    context: DecisionContext,
+    strategy_profile: StrategyProfile = BALANCED,
+) -> DecisionAction:
     risk = context.risk_score
     confidence = context.confidence_score
-    score = policy_score(context)
+    score = policy_score(context, strategy_profile=strategy_profile)
 
-    if risk is not None and risk >= 75:
+    critical_risk_cutoff = 75 + (strategy_profile.risk_tolerance - 0.50) * 20
+    if risk is not None and risk >= critical_risk_cutoff:
         return "AVOID"
 
-    if score >= 78 and (confidence is None or confidence >= 50):
+    if score >= strategy_profile.buy_threshold and (
+        confidence is None or confidence >= strategy_profile.min_confidence_for_buy
+    ):
         return "BUY"
 
-    if score >= 62:
+    if score >= strategy_profile.compare_threshold:
         return "COMPARE"
 
-    if score >= 45:
+    if score >= strategy_profile.monitor_threshold:
         return "MONITOR"
 
     return "AVOID"
 
 
-def generate_dss_recommendation(context: DecisionContext) -> dict:
-    policy_results = evaluate_decision_policies(context)
+def generate_dss_recommendation(
+    context: DecisionContext,
+    strategy_profile: StrategyProfile = BALANCED,
+) -> dict:
+    policy_results = evaluate_decision_policies(
+        context,
+        strategy_profile=strategy_profile,
+    )
     policy_evidence: list[DecisionEvidence] = [
         evidence
         for result in policy_results
@@ -43,7 +56,7 @@ def generate_dss_recommendation(context: DecisionContext) -> dict:
         }
     )
 
-    action = classify_decision_action(enriched)
+    action = classify_decision_action(enriched, strategy_profile=strategy_profile)
 
     positives = [e for e in enriched.evidence if e.polarity == "positive"]
     negatives = [e for e in enriched.evidence if e.polarity == "negative"]
@@ -52,7 +65,8 @@ def generate_dss_recommendation(context: DecisionContext) -> dict:
     return {
         "player_name": enriched.player_name,
         "decision_action": action,
-        "policy_score": policy_score(enriched),
+        "strategy_profile": strategy_profile,
+        "policy_score": policy_score(enriched, strategy_profile=strategy_profile),
         "policy_results": policy_results,
         "positive_evidence": positives,
         "negative_evidence": negatives,
