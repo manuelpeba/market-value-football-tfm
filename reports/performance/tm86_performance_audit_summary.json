@@ -1,0 +1,104 @@
+{
+  "datasets_audited": 322,
+  "slowest_datasets": [
+    {
+      "path": "data\\processed\\current_performance_snapshot.parquet",
+      "suffix": ".parquet",
+      "rows": 785,
+      "columns": 25,
+      "read_seconds": 0.748583,
+      "memory_mb": 0.505
+    },
+    {
+      "path": "data\\processed\\transfermarkt_features_v13a.parquet",
+      "suffix": ".parquet",
+      "rows": 616377,
+      "columns": 24,
+      "read_seconds": 0.363355,
+      "memory_mb": 551.846
+    },
+    {
+      "path": "data\\processed\\transfermarkt_features.parquet",
+      "suffix": ".parquet",
+      "rows": 616377,
+      "columns": 24,
+      "read_seconds": 0.361521,
+      "memory_mb": 551.846
+    },
+    {
+      "path": "data\\processed\\transfermarkt_features_v13c.parquet",
+      "suffix": ".parquet",
+      "rows": 507814,
+      "columns": 24,
+      "read_seconds": 0.281304,
+      "memory_mb": 454.351
+    },
+    {
+      "path": "reports\\roles\\player_role_labels.csv",
+      "suffix": ".csv",
+      "rows": 11889,
+      "columns": 64,
+      "read_seconds": 0.142622,
+      "memory_mb": 20.165
+    },
+    {
+      "path": "reports\\data_quality\\tm6_6_transfermarkt_refresh\\transfermarkt_refresh_latest_diff.csv",
+      "suffix": ".csv",
+      "rows": 39361,
+      "columns": 17,
+      "read_seconds": 0.142469,
+      "memory_mb": 28.307
+    },
+    {
+      "path": "reports\\roles\\player_role_dna.csv",
+      "suffix": ".csv",
+      "rows": 22929,
+      "columns": 28,
+      "read_seconds": 0.1405,
+      "memory_mb": 19.852
+    },
+    {
+      "path": "reports\\strategy\\transfer_portfolio_dataset.csv",
+      "suffix": ".csv",
+      "rows": 6208,
+      "columns": 91,
+      "read_seconds": 0.109292,
+      "memory_mb": 22.463
+    },
+    {
+      "path": "reports\\data_quality\\snapshot_refresh\\candidate_20260615_154627\\current_player_snapshot.csv",
+      "suffix": ".csv",
+      "rows": 16546,
+      "columns": 23,
+      "read_seconds": 0.095821,
+      "memory_mb": 18.863
+    },
+    {
+      "path": "data\\processed\\current_player_snapshot.csv",
+      "suffix": ".csv",
+      "rows": 17430,
+      "columns": 24,
+      "read_seconds": 0.083583,
+      "memory_mb": 19.986
+    }
+  ],
+  "cache_summary": {
+    "total_functions": 495,
+    "cached_functions": 29,
+    "cache_data_functions": 28,
+    "cache_resource_functions": 1,
+    "uncached_functions": 466
+  },
+  "hotspot_count": 252,
+  "hotspot_breakdown": {
+    "st_markdown_html": 90,
+    "apply": 63,
+    "plotly": 40,
+    "st_dataframe": 15,
+    "read_parquet": 14,
+    "merge": 9,
+    "st_plotly_chart": 8,
+    "read_csv": 7,
+    "groupby": 6
+  }
+}

@@ -1,0 +1,253 @@
+hotspot_type,line,code
+apply,9894,"df[""player_level_tier""] = df[""portfolio_value_score""].apply(classify_player_level_from_score)"
+apply,10692,"latest[""display_club""] = latest.apply(resolve_display_club, axis=1)"
+apply,14271,"benchmark_df[""position_group""].apply(normalize_position_group) == player_position"
+apply,14489,"result[""league_strength_index""] = result[""league""].apply(get_league_strength)"
+apply,14490,"result[""league_quality_tier""] = result[""league_strength_index""].apply(classify_league_quality)"
+apply,14590,"result[""league_strength_index""] = result[""league""].apply(get_league_strength)"
+apply,14591,"result[""league_quality_tier""] = result[""league_strength_index""].apply(classify_league_quality)"
+apply,14594,"age_factor = result.get(""age"", pd.Series([21] * len(result), index=result.index)).apply(get_age_projection_factor)"
+apply,14639,"result[""future_asset_tier""] = result[""future_asset_score""].apply(classify_future_asset_tier)"
+apply,14914,"display_winners[""Métrica""] = display_winners[""Métrica""].apply(metric_display_name)"
+apply,15088,"selector_df[""_s11_position""] = selector_df[""position_group""].apply(normalize_position_group)"
+apply,15203,"benchmark_df[""position_group""].apply(normalize_position_group).astype(str) == target_position"
+apply,15774,"chart[""_league_label""] = chart.get(""league"", pd.Series("""", index=chart.index)).fillna("""").astype(str).apply(league_display_name)"
+apply,15776,"chart[""_recommendation_class""] = chart.apply(classify_similarity_recommendation, axis=1)"
+apply,16513,"source = source[source[""position_group""].apply(normalize_position_group) == target_position].copy()"
+apply,16519,"matrix = source[feature_cols].apply(pd.to_numeric, errors=""coerce"")"
+apply,16632,"similarity_df[""_recommendation_class""] = similarity_df.apply(classify_similarity_recommendation, axis=1)"
+apply,16780,"result[""adaptation_risk_label""] = result[""adaptation_risk_score""].apply(classify_adaptation_risk)"
+apply,16890,"replacement_df[""replacement_fit""] = replacement_df.apply(classify_replacement_fit, axis=1)"
+apply,16893,"replacement_view[""market_value_display""] = replacement_view[""market_value_eur""].apply(format_money_short)"
+apply,16895,"replacement_view[""projected_value_3y_display""] = replacement_view[""projected_market_value_3y_eur""].apply(format_money_short)"
+apply,16897,"replacement_view[""asset_upside_3y_display""] = replacement_view[""asset_upside_3y_eur""].apply(format_money_short)"
+apply,17111,"result[""decision_stage""] = result[""executive_decision_score_v2""].apply(classify_decision_stage)"
+apply,17112,"result[""recommended_action""] = result.apply(classify_executive_action, axis=1)"
+apply,17113,"result[""executive_priority""] = result.apply(classify_executive_priority_v2, axis=1)"
+apply,17114,"result[""decision_drivers""] = result.apply(build_decision_drivers, axis=1)"
+apply,17272,"ranking_view[""valor_actual""] = ranking_view[""market_value_eur""].apply(format_money_short) if ""market_value_eur"" in ranking_view.columns else ""N/A"""
+apply,17273,"ranking_view[""valor_3y""] = ranking_view[""projected_market_value_3y_eur""].apply(format_money_short) if ""projected_market_value_3y_eur"" in ranking_view.columns else ""N/A"""
+apply,17360,"view[""valor_actual""] = view[""market_value_eur""].apply(format_money_short)"
+apply,17361,"view[""valor_3y""] = view[""projected_market_value_3y_eur""].apply(format_money_short)"
+apply,17362,"view[""upside_3y""] = view[""asset_upside_3y_eur""].apply(format_money_short)"
+apply,17492,"pos_view[""Factor""] = pos_view[""Factor""].apply(V)"
+apply,17508,"neg_view[""Factor""] = neg_view[""Factor""].apply(V)"
+apply,17579,).apply(V)
+apply,17596,"view[""valor_actual""] = view[""market_value_eur""].apply(format_money_short)"
+apply,17598,"view[""valor_3y""] = view[""projected_market_value_3y_eur""].apply(format_money_short)"
+apply,18464,"df[""risk_zone""] = df.apply(assign_zone, axis=1)"
+apply,18772,quadrants = summary_df.apply(
+apply,18858,"zones = insight_df.apply(lambda row: assign_decision_quadrant(row, opportunity_ref, risk_ref), axis=1)"
+apply,19451,"out[""taxonomy_role_context""] = out.apply(role_context_label, axis=1)"
+apply,19973,"df[""opportunity_tier_label""] = df[""opportunity_tier""].apply(translate_tier)"
+apply,19975,"df[""opportunity_tier_label""] = df[""opportunity_tier_label""].apply(translate_tier)"
+apply,21021,result[col] = result[col].apply(format_club_name)
+apply,21023,result[col] = result[col].apply(league_display_name)
+apply,21025,result[col] = result[col].apply(V)
+apply,21027,result[col] = result[col].apply(league_quality_display_name)
+apply,21029,result[col] = result[col].apply(driver_display_name)
+apply,25876,search_mask = filtered_df[searchable_cols].astype(str).apply(
+apply,28272,display[col] = display[col].apply(player_level_display_name)
+apply,28280,display[col] = display[col].apply(format_money_short)
+apply,28343,"group_df.apply(get_current_club_display, axis=1),"
+apply,28378,"text=label_df.apply(get_player_display_from_row, axis=1).astype(str).str.split().str[:2].str.join("" ""),"
+apply,28818,"shap_display[""feature""] = shap_display[""feature""].apply(V)"
+apply,30020,"data[""contract_window_display""] = days_remaining.apply(_window)"
+apply,30021,"data[""contract_status_dynamic""] = days_remaining.apply(_status)"
+apply,30022,"data[""contract_status_display""] = data[""contract_status_dynamic""].apply(_contract_status_display)"
+apply,30172,"data[""club_display""] = data[""club_display_full""].apply(_shorten_contract_club_name)"
+apply,30173,"data[""league_display""] = data[""league_display""].apply(league_display_name)"
+apply,30800,"matrix_df[""market_value_hover""] = matrix_df[""market_value_for_color""].apply(format_money_short)"
+apply,30801,"matrix_df[""expected_value_hover""] = pd.to_numeric(matrix_df.get(""predicted_market_value_eur""), errors=""coerce"").apply(format_money_short)"
+apply,30802,"matrix_df[""positive_inefficiency_hover""] = matrix_df[""positive_inefficiency_eur""].apply(format_money_short)"
+apply,30982,"dist[""order""] = dist[""window""].apply(_contract_window_order)"
+apply,31051,"data[""age_display""] = data.apply(_contract_age_value, axis=1)"
+groupby,10690,"latest = current.dropna(subset=[name_col]).groupby(name_col, as_index=False).tail(1).copy()"
+groupby,10754,"multi = df.groupby(name_col)[""club""].nunique(dropna=True)"
+groupby,14963,"counts = offensive_winners.groupby(""Jugador"")[""Métrica""].agg(list).sort_values(key=lambda s: s.str.len(), ascending=False)"
+groupby,28334,"for position_group, group_df in portfolio.groupby(""position_group""):"
+groupby,31011,"top_leagues = data.groupby(""league_display"", dropna=False).agg("
+groupby,31259,".groupby(""league_display"")[""_rc""]"
+merge,8535,"matched = tmp.merge(tmp_right, on=available_join_cols, how=""left"")"
+merge,8560,"matched = tmp[[""_role_dna_row_id"", ""role_dna_player_key""]].merge(tmp_right, on=""role_dna_player_key"", how=""left"")"
+merge,9223,"matched = tmp_left.merge(tmp_right, on=join_left_cols, how=""left"")"
+merge,9260,"matched = tmp_left[[""_role_row_id"", ""_role_player_key""]].merge(tmp_right, on=""_role_player_key"", how=""left"")"
+merge,10718,"out = out.merge(ctx.drop_duplicates(""_ctx_key""), on=""_ctx_key"", how=""left"")"
+merge,13760,merged = left.merge(
+merge,13910,"merged = enriched.merge(right, on=merge_keys, how=""left"", suffixes=("""", ""_scouting""))"
+merge,19271,"matched = tmp_left.merge(tmp_right, on=join_cols, how=""left"").dropna(subset=[""position_taxonomy""])"
+merge,27386,df = df.merge(
+plotly,12,import plotly.graph_objects as go
+plotly,14078,"def build_player_radar_chart(radar_df: pd.DataFrame, selected_player: str) -> go.Figure | None:"
+plotly,14085,fig = go.Figure()
+plotly,14087,go.Scatterpolar(
+plotly,14747,) -> go.Figure | None:
+plotly,14757,fig = go.Figure()
+plotly,14794,fig.add_trace(go.Scatterpolar(**trace_kwargs))
+plotly,15263,"st.plotly_chart(radar_fig, config={""displaylogo"": False})"
+plotly,15756,"def build_similarity_bubble_chart(similarity_view: pd.DataFrame, target_row: pd.Series, name_col: str, highlighted_player: str | None = None) -> go.Figure | None:"
+plotly,15837,fig = go.Figure()
+plotly,15853,go.Scatter(
+plotly,16744,"st.plotly_chart(similarity_fig, config={""displayModeBar"": False, ""displaylogo"": False})"
+plotly,18196,def build_opportunity_chart(chart_source: pd.DataFrame) -> go.Figure | None:
+plotly,18235,fig = go.Figure()
+plotly,18271,go.Scatter(
+plotly,18302,go.Scatter(
+plotly,18320,go.Scatter(
+plotly,18410,def build_opportunity_risk_matrix(chart_source: pd.DataFrame) -> go.Figure | None:
+plotly,18506,fig = go.Figure()
+plotly,18580,go.Scatter(
+plotly,18597,go.Scatter(
+plotly,27121,"div[data-testid=""stPlotlyChart""] .js-plotly-plot,"
+plotly,28333,fig = go.Figure()
+plotly,28336,go.Scatter(
+plotly,28374,go.Scatter(
+plotly,28398,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+plotly,28503,"st.plotly_chart(fig, config={""displaylogo"": False, ""modeBarButtonsToRemove"": [""zoom"", ""pan"", ""select"", ""lasso2d"", ""autoScale"", ""resetScale""]})"
+plotly,28879,fig_shap = go.Figure(
+plotly,28880,go.Bar(
+plotly,28902,st.plotly_chart(fig_shap)
+plotly,30813,fig = go.Figure()
+plotly,30832,fig.add_trace(go.Scatter(
+plotly,30871,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+plotly,30984,fig = go.Figure(go.Bar(
+plotly,31004,"st.plotly_chart(fig, config={""displaylogo"": False})"
+plotly,31015,fig = go.Figure(go.Bar(
+plotly,31036,"st.plotly_chart(fig, config={""displaylogo"": False})"
+plotly,37211,"div[data-testid=""stExpander""]:has(.js-plotly-plot) {"
+plotly,37217,"div[data-testid=""stExpander""]:has(.js-plotly-plot) details > summary {"
+plotly,37222,"div[data-testid=""stExpander""]:has(.js-plotly-plot) div[data-testid=""stPlotlyChart""] {"
+read_csv,8195,return pd.read_csv(path)
+read_csv,8427,"dna = pd.read_csv(resolved_path, low_memory=False)"
+read_csv,8691,"role_df = pd.read_csv(resolved_path, low_memory=False).copy()"
+read_csv,9881,df = pd.read_csv(input_file)
+read_csv,25638,return pd.read_csv(path)
+read_csv,27373,df = pd.read_csv(path)
+read_csv,27401,return pd.read_csv(path)
+read_parquet,8202,return pd.read_parquet(path)
+read_parquet,8436,"dna = pd.read_parquet(resolved_path, columns=keep_cols) if keep_cols else pd.DataFrame()"
+read_parquet,8438,dna = pd.read_parquet(resolved_path)
+read_parquet,8693,role_df = pd.read_parquet(resolved_path).copy()
+read_parquet,11565,df = pd.read_parquet(path)
+read_parquet,19135,tax_df = pd.read_parquet(resolved_path).copy()
+read_parquet,25436,panel = pd.read_parquet(
+read_parquet,25441,panel = pd.read_parquet(panel_path)
+read_parquet,25515,return pd.read_parquet(path)
+read_parquet,27376,snap = pd.read_parquet(
+read_parquet,27410,df = pd.read_parquet(path)
+read_parquet,27433,df = pd.read_parquet(
+read_parquet,29796,snap = pd.read_parquet(
+read_parquet,29809,"panel = pd.read_parquet(panel_path, columns=[""player_name_fbref"", ""nationality""])"
+st_dataframe,14926,st.dataframe(
+st_dataframe,16746,"st.dataframe(executive_table, hide_index=True, height=min(420, 42 + 36 * max(1, len(executive_table))))"
+st_dataframe,16920,st.dataframe(
+st_dataframe,17303,st.dataframe(
+st_dataframe,17367,st.dataframe(
+st_dataframe,17493,st.dataframe(
+st_dataframe,17509,st.dataframe(
+st_dataframe,17618,st.dataframe(
+st_dataframe,28315,st.dataframe(
+st_dataframe,31862,"st.dataframe(details_df, width=""stretch"", hide_index=True)"
+st_dataframe,32112,"st.dataframe(pd.DataFrame(rows), width=""stretch"", hide_index=True)"
+st_dataframe,32127,"st.dataframe(detail_df, width=""stretch"", hide_index=True)"
+st_dataframe,32221,"st.dataframe(feature_df, width=""stretch"", hide_index=True)"
+st_dataframe,32238,"st.dataframe(pd.DataFrame(score_rows), width=""stretch"", hide_index=True)"
+st_dataframe,32255,"st.dataframe(detail_df, width=""stretch"", hide_index=True)"
+st_markdown_html,9529,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,10765,"st.markdown(f""<div class='internal-nav-toolbar'>{html_items}</div>"", unsafe_allow_html=True)"
+st_markdown_html,10769,"st.markdown('<div class=""siq-section-gap""></div>', unsafe_allow_html=True)"
+st_markdown_html,10773,"st.markdown('<div class=""siq-card-gap""></div>', unsafe_allow_html=True)"
+st_markdown_html,10777,"st.markdown('<div class=""siq-micro-gap""></div>', unsafe_allow_html=True)"
+st_markdown_html,13133,"st.markdown(tm69_exec_card_html, unsafe_allow_html=True)"
+st_markdown_html,14243,"st.markdown('<div class=""tm4-benchmark-toolbar-anchor""></div>', unsafe_allow_html=True)"
+st_markdown_html,14301,"st.markdown(_tm69_performance_bars_html(radar_df), unsafe_allow_html=True)"
+st_markdown_html,14329,"st.markdown(f""<div class='radar-readout-card'>{readout_text}</div>"", unsafe_allow_html=True)"
+st_markdown_html,15245,"st.markdown(""<div style='height:28px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,15248,"st.markdown(""<div style='height:12px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,15642,"st.markdown(html_block, unsafe_allow_html=True)"
+st_markdown_html,16455,"st.markdown(""<div style='height:14px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,16457,"st.markdown(""<div style='height:18px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,16458,"st.markdown(build_comparison_html_table(comparison_df), unsafe_allow_html=True)"
+st_markdown_html,16462,"st.markdown(""<div style='height:16px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,16582,"st.markdown(""<div class='similar-final-controls'>"", unsafe_allow_html=True)"
+st_markdown_html,16600,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16737,"st.markdown(""<div class='similar-card-list'>"" + """".join(mini_cards) + ""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16740,"st.markdown(""<div class='similar-advanced-view'>"", unsafe_allow_html=True)"
+st_markdown_html,16748,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16868,"st.markdown(""<div class='secondary-filter-row'>"", unsafe_allow_html=True)"
+st_markdown_html,16875,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16913,"st.markdown(""<div class='replacement-card-grid'>"" + """".join(cards) + ""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16917,"st.markdown(""<div class='replacement-advanced-view'>"", unsafe_allow_html=True)"
+st_markdown_html,16918,"st.markdown(f""<div class='replacement-table-title'>{html.escape('Vista ejecutiva reducida' if LANG == 'ES' else 'Reduced executive view')}</div>"", unsafe_allow_html=True)"
+st_markdown_html,16926,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,16930,"st.markdown(f""<div class='radar-info-box'><b>{html.escape(TXT('Replacement Insight'))}</b><br><br>{narrative}</div>"", unsafe_allow_html=True)"
+st_markdown_html,17264,"st.markdown('<div class=""score-methodology-spacer""></div>', unsafe_allow_html=True)"
+st_markdown_html,17266,"st.markdown(rationale, unsafe_allow_html=True)"
+st_markdown_html,17366,"st.markdown(""<div style='height:18px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,17617,"st.markdown(""<div style='height:18px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,17795,"st.markdown(""<div style='height:24px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,17815,"st.markdown(""<div style='height:18px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,17997,"st.markdown(html_block, unsafe_allow_html=True)"
+st_markdown_html,18923,"st.markdown(""<div style='height:8px'></div>"", unsafe_allow_html=True)"
+st_markdown_html,19372,"st.markdown(""<div class='role-filter-controls role-filter-controls-v2 role-filter-controls-stable'>"", unsafe_allow_html=True)"
+st_markdown_html,19410,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,22164,"st.markdown('<div class=""tm69-command-list"">', unsafe_allow_html=True)"
+st_markdown_html,22253,"st.markdown('</div>', unsafe_allow_html=True)"
+st_markdown_html,23759,"st.markdown('<div class=""tm69-command-list tm69-command-list-pro"">', unsafe_allow_html=True)"
+st_markdown_html,23853,"st.markdown('</div>', unsafe_allow_html=True)"
+st_markdown_html,24547,"st.markdown(""<div class='tm69-command-center-css-anchor'></div>"", unsafe_allow_html=True)"
+st_markdown_html,24660,"st.markdown(""<div class='tm69-clear-button-anchor'></div>"", unsafe_allow_html=True)"
+st_markdown_html,25761,"st.markdown(f""<div class='sidebar-slider-title'>{html.escape(T('max_age'))}</div>"", unsafe_allow_html=True)"
+st_markdown_html,25778,"st.markdown(f""<div class='sidebar-slider-title'>{html.escape(T('min_minutes'))}</div>"", unsafe_allow_html=True)"
+st_markdown_html,26313,"st.markdown('\n<style>\n.pro-section-card .compact-board-note { margin-top: 14px !important; }\n.pro-section-card + div[data-testid=""stExpander""] { margin-top: 14px !important; }\n</style>\n', unsafe_allow_html=True)"
+st_markdown_html,27227,"st.markdown(f""<div class='layer-badge'>{html.escape(str(label))}</div>"", unsafe_allow_html=True)"
+st_markdown_html,27817,"st.markdown(""<div class='overview-row-gap'></div>"", unsafe_allow_html=True)"
+st_markdown_html,27819,"st.markdown(""<div class='overview-row-gap overview-row-gap-small'></div>"", unsafe_allow_html=True)"
+st_markdown_html,27832,"st.markdown(""<div class='mi-exec-nav-anchor'></div>"", unsafe_allow_html=True)"
+st_markdown_html,27852,"st.markdown(""<div class='overview-row-gap-small'></div>"", unsafe_allow_html=True)"
+st_markdown_html,27935,"st.markdown(""<div class='strategy-filter-panel'><div class='contract-filter-title'>"" + html.escape('Tactical portfolio filters' if LANG == 'EN' else 'Filtros tácticos de cartera') + ""</div><div class='contract-filter-subtitle'>"" + html.escape('Compact controls"
+st_markdown_html,28060,"st.markdown(""</div>"", unsafe_allow_html=True)"
+st_markdown_html,28207,"st.markdown(""<div style='height:18px;'></div>"", unsafe_allow_html=True)"
+st_markdown_html,28406,"st.markdown(""<div class='strategy-ranking-card'><div class='contract-panel-title'>"" + html.escape('Recommended portfolio' if LANG == 'EN' else 'Cartera recomendada') + ""</div><div class='contract-panel-subtitle'>"" + html.escape('Ranking by portfolio score' if "
+st_markdown_html,28472,"st.markdown(f""## 🎯 {T('matrix_title')}"", unsafe_allow_html=True)"
+st_markdown_html,28473,"st.markdown(f""<div class='matrix-subtitle-strong'>{html.escape(T('matrix_caption'))}</div>"", unsafe_allow_html=True)"
+st_markdown_html,28506,"st.markdown(""<div style='height:28px;'></div>"", unsafe_allow_html=True)"
+st_markdown_html,28523,"st.markdown(build_html_table(page_df), unsafe_allow_html=True)"
+st_markdown_html,30973,"st.markdown(board_html, unsafe_allow_html=True)"
+st_markdown_html,31156,"st.markdown(f""<div class='contract-active-summary'>{chip_html}<span class='contract-chip contract-chip-muted'>{len(filtered_contract):,} targets</span></div>"", unsafe_allow_html=True)"
+st_markdown_html,31216,"st.markdown(""<div class='contract-native-toolbar-anchor'></div>"", unsafe_allow_html=True)"
+st_markdown_html,31234,"st.markdown(""<div class='contract-section-gap'></div>"", unsafe_allow_html=True)"
+st_markdown_html,31248,"st.markdown(""<div class='contract-section-gap'></div>"", unsafe_allow_html=True)"
+st_markdown_html,31318,"st.markdown(_contract_table_html(filtered_contract, ""recruitment_contract_score"", max_table_rows), unsafe_allow_html=True)"
+st_markdown_html,31322,"st.markdown(_contract_table_html(contract_rank, ""contract_opportunity_score"", max_table_rows), unsafe_allow_html=True)"
+st_markdown_html,31326,"st.markdown(f""<div class='contract-panel-title'>{html.escape('Contract window distribution' if LANG == 'EN' else 'Distribución por ventana contractual')}</div>"", unsafe_allow_html=True)"
+st_markdown_html,31329,"st.markdown(f""<div class='contract-panel-title'>{html.escape('Top leagues by contract opportunity' if LANG == 'EN' else 'Ligas con mayor oportunidad contractual')}</div>"", unsafe_allow_html=True)"
+st_markdown_html,32579,"st.markdown('<div class=""methodology-grid"">', unsafe_allow_html=True)"
+st_markdown_html,32591,"st.markdown('</div>', unsafe_allow_html=True)"
+st_markdown_html,32641,"st.markdown(""<div class='product-tab-nav'><span class='product-tab-pill "" + (""is-active"" if st.session_state.get(""strategy_center_view"", ""Contract Intelligence"") == ""Contract Intelligence"" else """") + ""'>Contrato</span><span class='product-tab-pill "" + (""is-act"
+st_markdown_html,32650,"st.markdown(""<div style='height:10px;'></div>"", unsafe_allow_html=True)"
+st_markdown_html,34096,"st.markdown("""".join(line.strip() for line in html_block.splitlines()), unsafe_allow_html=True)"
+st_markdown_html,34175,"st.markdown("""".join(line.strip() for line in market_html.splitlines()), unsafe_allow_html=True)"
+st_markdown_html,34222,"st.markdown("""".join(line.strip() for line in pitch_html.splitlines()), unsafe_allow_html=True)"
+st_markdown_html,41075,"st.markdown('\n<style>\n/* TM.6.9.6 closure — Player Intelligence portrait visible */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 122px !important;\n    min-width: 96px !important;\n    bord"
+st_markdown_html,41078,"st.markdown('\n<style>\n/* TM.6.9.6 layout closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada en la columna izquierda */\n.exec-summary-main-row {\n    display: grid !important;\n    grid-template-columns: 112px minmax(0, 1fr) !important;"
+st_markdown_html,41081,"st.markdown('\n<style>\n/* TM.6.9.6 FINAL UI closure */\n\n/* Player Intelligence > Resumen Ejecutivo: foto integrada, no flotante */\n.pi-director-main {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    gap: 18p"
+st_markdown_html,41084,"st.markdown('\n<style>\n/* TM.6.9.7 — Player image expansion */\n\n/* Contract / Market reusable player image */\n.contract-player-photo-shell,\n.contract-player-photo-shell-img {\n    width: 104px !important;\n    height: 132px !important;\n    border-radius:"
+st_markdown_html,41087,"st.markdown('\n<style>\n/* TM.6.9.7 — Market Intelligence Top5 identity layer */\n.top5-exec-grid-featured {\n    grid-template-columns: minmax(290px, 1.55fr) repeat(4, minmax(0, 1fr)) !important;\n    align-items: stretch !important;\n}\n.top5-exec-card-featu"
+st_markdown_html,41090,"st.markdown('\n<style>\n/* TM.6.9.7 final identity polish */\n\n/* Player Snapshot / Drivers */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 92px !important;\n    height: 118px !important;\n    min-width: 92px !important;"
+st_markdown_html,41093,"st.markdown('\n<style>\n/* TM.6.9.7 — Uche image visible in Player Snapshot */\n.pi-player-photo,\n.pi-avatar-premium {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radi"
+st_markdown_html,41096,st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot Uche identity fix */\n.pi-player-photo {\n    display: flex !important;\n    width: 96px !important;\n    height: 124px !important;\n    min-width: 96px !important;\n    border-radius: 20px !important;\n   
+st_markdown_html,41099,st.markdown('\n<style>\n/* TM.6.9.7 — Player Snapshot portrait + nationality fix */\n.snapshot-player-photo {\n    display: flex !important;\n    width: 118px !important;\n    height: 148px !important;\n    min-width: 118px !important;\n    border-radius: 18px
+st_markdown_html,41102,"st.markdown('\n<style>\n/* TM.6.9.7 — Sprint closure: Player Snapshot image layout */\n.snapshot-identity-card,\n.player-snapshot-identity-card,\n.pi-snapshot-identity-card {\n    overflow: hidden !important;\n}\n\n.snapshot-identity-row,\n.player-snapshot-ide"
+st_markdown_html,41105,st.markdown('\n<style>\n/* TM.6.9.7 FINAL — no overlap in Player Snapshot identity card */\n.snapshot-player-photo {\n    float: left !important;\n    width: 92px !important;\n    height: 120px !important;\n    min-width: 92px !important;\n    max-width: 92px 
+st_markdown_html,41108,"st.markdown('\n<style>\n/* TM.6.9.7 FINAL — Player Snapshot identity grid layout */\n.snapshot-card.snapshot-card-identity {\n    display: grid !important;\n    grid-template-columns: 118px minmax(0, 1fr) !important;\n    column-gap: 18px !important;\n    alig"
+st_markdown_html,41111,"st.markdown('\n<style>\n/* TM.6.9.7 CLOSE — Cloud visual sync */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n    gap: 18px !important;\n}\n.sn"
+st_markdown_html,41114,"st.markdown('\n<style>\n/* TM.6.9.7 cloud sync final */\n.snapshot-identity-layout .snapshot-meta-grid,\n.snapshot-card.snapshot-card-identity .snapshot-meta-grid {\n    grid-template-columns: 0.8fr 1.2fr !important;\n}\n</style>\n', unsafe_allow_html=True)"
+st_plotly_chart,15263,"st.plotly_chart(radar_fig, config={""displaylogo"": False})"
+st_plotly_chart,16744,"st.plotly_chart(similarity_fig, config={""displayModeBar"": False, ""displaylogo"": False})"
+st_plotly_chart,28398,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+st_plotly_chart,28503,"st.plotly_chart(fig, config={""displaylogo"": False, ""modeBarButtonsToRemove"": [""zoom"", ""pan"", ""select"", ""lasso2d"", ""autoScale"", ""resetScale""]})"
+st_plotly_chart,28902,st.plotly_chart(fig_shap)
+st_plotly_chart,30871,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+st_plotly_chart,31004,"st.plotly_chart(fig, config={""displaylogo"": False})"
+st_plotly_chart,31036,"st.plotly_chart(fig, config={""displaylogo"": False})"

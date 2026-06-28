@@ -1,0 +1,130 @@
+hotspot_type,line,function,function_start,function_end,function_n_lines,function_decorators,code
+read_csv,8195,load_csv,8192.0,8195.0,4.0,st.cache_data(show_spinner=False),return pd.read_csv(path)
+read_parquet,8202,load_parquet,8199.0,8202.0,4.0,st.cache_data(show_spinner=False),return pd.read_parquet(path)
+read_csv,8427,load_role_explainability_dataset,8390.0,8469.0,80.0,st.cache_data(show_spinner=False),"dna = pd.read_csv(resolved_path, low_memory=False)"
+read_parquet,8436,load_role_explainability_dataset,8390.0,8469.0,80.0,st.cache_data(show_spinner=False),"dna = pd.read_parquet(resolved_path, columns=keep_cols) if keep_cols else pd.DataFrame()"
+read_parquet,8438,load_role_explainability_dataset,8390.0,8469.0,80.0,st.cache_data(show_spinner=False),dna = pd.read_parquet(resolved_path)
+merge,8535,_merge_fill,8516.0,8543.0,28.0,,"matched = tmp.merge(tmp_right, on=available_join_cols, how=""left"")"
+merge,8560,merge_role_explainability,8472.0,8568.0,97.0,,"matched = tmp[[""_role_dna_row_id"", ""role_dna_player_key""]].merge(tmp_right, on=""role_dna_player_key"", how=""left"")"
+read_csv,8691,load_role_intelligence_dataset,8679.0,8722.0,44.0,st.cache_data(show_spinner=False),"role_df = pd.read_csv(resolved_path, low_memory=False).copy()"
+read_parquet,8693,load_role_intelligence_dataset,8679.0,8722.0,44.0,st.cache_data(show_spinner=False),role_df = pd.read_parquet(resolved_path).copy()
+merge,9223,_fill_from_strategy,9204.0,9243.0,40.0,,"matched = tmp_left.merge(tmp_right, on=join_left_cols, how=""left"")"
+merge,9260,merge_role_intelligence,9131.0,9275.0,145.0,,"matched = tmp_left[[""_role_row_id"", ""_role_player_key""]].merge(tmp_right, on=""_role_player_key"", how=""left"")"
+read_csv,9881,optimize_transfer_portfolio_with_style,9781.0,10025.0,245.0,,df = pd.read_csv(input_file)
+apply_generic,9894,optimize_transfer_portfolio_with_style,9781.0,10025.0,245.0,,"df[""player_level_tier""] = df[""portfolio_value_score""].apply(classify_player_level_from_score)"
+groupby,10690,build_current_context,10671.0,10702.0,32.0,,"latest = current.dropna(subset=[name_col]).groupby(name_col, as_index=False).tail(1).copy()"
+dataframe_apply_axis1,10692,build_current_context,10671.0,10702.0,32.0,,"latest[""display_club""] = latest.apply(resolve_display_club, axis=1)"
+apply_generic,10692,build_current_context,10671.0,10702.0,32.0,,"latest[""display_club""] = latest.apply(resolve_display_club, axis=1)"
+merge,10718,apply_current_context,10705.0,10728.0,24.0,,"out = out.merge(ctx.drop_duplicates(""_ctx_key""), on=""_ctx_key"", how=""left"")"
+groupby,10754,audit_current_season_consistency,10731.0,10756.0,26.0,,"multi = df.groupby(name_col)[""club""].nunique(dropna=True)"
+read_parquet,11565,_tm69_v13b_identity_performance_lookup,11561.0,11602.0,42.0,st.cache_data(show_spinner=False),df = pd.read_parquet(path)
+merge,13760,enrich_shortlist_with_radar_features,13700.0,13772.0,73.0,st.cache_data(show_spinner=False),merged = left.merge(
+merge,13910,build_football_universe_dataset,13799.0,13987.0,189.0,,"merged = enriched.merge(right, on=merge_keys, how=""left"", suffixes=("""", ""_scouting""))"
+plotly_figure,14085,build_player_radar_chart,14078.0,14111.0,34.0,,fig = go.Figure()
+apply_generic,14271,render_player_radar_benchmarking,14184.0,14329.0,146.0,,"benchmark_df[""position_group""].apply(normalize_position_group) == player_position"
+apply_generic,14489,add_league_strength_features,14478.0,14526.0,49.0,,"result[""league_strength_index""] = result[""league""].apply(get_league_strength)"
+apply_generic,14490,add_league_strength_features,14478.0,14526.0,49.0,,"result[""league_quality_tier""] = result[""league_strength_index""].apply(classify_league_quality)"
+apply_generic,14590,add_projected_market_value_features,14568.0,14640.0,73.0,,"result[""league_strength_index""] = result[""league""].apply(get_league_strength)"
+apply_generic,14591,add_projected_market_value_features,14568.0,14640.0,73.0,,"result[""league_quality_tier""] = result[""league_strength_index""].apply(classify_league_quality)"
+apply_generic,14594,add_projected_market_value_features,14568.0,14640.0,73.0,,"age_factor = result.get(""age"", pd.Series([21] * len(result), index=result.index)).apply(get_age_projection_factor)"
+apply_generic,14639,add_projected_market_value_features,14568.0,14640.0,73.0,,"result[""future_asset_tier""] = result[""future_asset_score""].apply(classify_future_asset_tier)"
+plotly_figure,14757,build_multi_player_radar_chart,14742.0,14820.0,79.0,,fig = go.Figure()
+apply_generic,14914,render_metric_winners_table,14896.0,14931.0,36.0,,"display_winners[""Métrica""] = display_winners[""Métrica""].apply(metric_display_name)"
+groupby,14963,build_comparative_conclusion,14933.0,15022.0,90.0,,"counts = offensive_winners.groupby(""Jugador"")[""Métrica""].agg(list).sort_values(key=lambda s: s.str.len(), ascending=False)"
+apply_generic,15088,render_multi_player_radar_comparison,15052.0,15273.0,222.0,,"selector_df[""_s11_position""] = selector_df[""position_group""].apply(normalize_position_group)"
+apply_generic,15203,render_multi_player_radar_comparison,15052.0,15273.0,222.0,,"benchmark_df[""position_group""].apply(normalize_position_group).astype(str) == target_position"
+st_plotly_chart,15263,render_multi_player_radar_comparison,15052.0,15273.0,222.0,,"st.plotly_chart(radar_fig, config={""displaylogo"": False})"
+apply_generic,15774,build_similarity_bubble_chart,15756.0,15916.0,161.0,,"chart[""_league_label""] = chart.get(""league"", pd.Series("""", index=chart.index)).fillna("""").astype(str).apply(league_display_name)"
+dataframe_apply_axis1,15776,build_similarity_bubble_chart,15756.0,15916.0,161.0,,"chart[""_recommendation_class""] = chart.apply(classify_similarity_recommendation, axis=1)"
+apply_generic,15776,build_similarity_bubble_chart,15756.0,15916.0,161.0,,"chart[""_recommendation_class""] = chart.apply(classify_similarity_recommendation, axis=1)"
+plotly_figure,15837,build_similarity_bubble_chart,15756.0,15916.0,161.0,,fig = go.Figure()
+apply_generic,16513,calculate_similarity_table,16493.0,16544.0,52.0,,"source = source[source[""position_group""].apply(normalize_position_group) == target_position].copy()"
+apply_generic,16519,calculate_similarity_table,16493.0,16544.0,52.0,,"matrix = source[feature_cols].apply(pd.to_numeric, errors=""coerce"")"
+dataframe_apply_axis1,16632,render_similarity_engine,16547.0,16752.0,206.0,,"similarity_df[""_recommendation_class""] = similarity_df.apply(classify_similarity_recommendation, axis=1)"
+apply_generic,16632,render_similarity_engine,16547.0,16752.0,206.0,,"similarity_df[""_recommendation_class""] = similarity_df.apply(classify_similarity_recommendation, axis=1)"
+st_plotly_chart,16744,render_similarity_engine,16547.0,16752.0,206.0,,"st.plotly_chart(similarity_fig, config={""displayModeBar"": False, ""displaylogo"": False})"
+apply_generic,16780,build_replacement_candidates,16755.0,16789.0,35.0,,"result[""adaptation_risk_label""] = result[""adaptation_risk_score""].apply(classify_adaptation_risk)"
+dataframe_apply_axis1,16890,render_replacement_analysis,16844.0,16933.0,90.0,,"replacement_df[""replacement_fit""] = replacement_df.apply(classify_replacement_fit, axis=1)"
+apply_generic,16890,render_replacement_analysis,16844.0,16933.0,90.0,,"replacement_df[""replacement_fit""] = replacement_df.apply(classify_replacement_fit, axis=1)"
+apply_generic,16893,render_replacement_analysis,16844.0,16933.0,90.0,,"replacement_view[""market_value_display""] = replacement_view[""market_value_eur""].apply(format_money_short)"
+apply_generic,16895,render_replacement_analysis,16844.0,16933.0,90.0,,"replacement_view[""projected_value_3y_display""] = replacement_view[""projected_market_value_3y_eur""].apply(format_money_short)"
+apply_generic,16897,render_replacement_analysis,16844.0,16933.0,90.0,,"replacement_view[""asset_upside_3y_display""] = replacement_view[""asset_upside_3y_eur""].apply(format_money_short)"
+apply_generic,17111,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""decision_stage""] = result[""executive_decision_score_v2""].apply(classify_decision_stage)"
+dataframe_apply_axis1,17112,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""recommended_action""] = result.apply(classify_executive_action, axis=1)"
+apply_generic,17112,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""recommended_action""] = result.apply(classify_executive_action, axis=1)"
+dataframe_apply_axis1,17113,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""executive_priority""] = result.apply(classify_executive_priority_v2, axis=1)"
+apply_generic,17113,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""executive_priority""] = result.apply(classify_executive_priority_v2, axis=1)"
+dataframe_apply_axis1,17114,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""decision_drivers""] = result.apply(build_decision_drivers, axis=1)"
+apply_generic,17114,add_executive_decision_features,17057.0,17115.0,59.0,,"result[""decision_drivers""] = result.apply(build_decision_drivers, axis=1)"
+apply_generic,17272,render_executive_recommendation_engine,17187.0,17321.0,135.0,,"ranking_view[""valor_actual""] = ranking_view[""market_value_eur""].apply(format_money_short) if ""market_value_eur"" in ranking_view.columns else ""N/A"""
+apply_generic,17273,render_executive_recommendation_engine,17187.0,17321.0,135.0,,"ranking_view[""valor_3y""] = ranking_view[""projected_market_value_3y_eur""].apply(format_money_short) if ""projected_market_value_3y_eur"" in ranking_view.columns else ""N/A"""
+apply_generic,17360,render_asset_intelligence,17323.0,17403.0,81.0,,"view[""valor_actual""] = view[""market_value_eur""].apply(format_money_short)"
+apply_generic,17361,render_asset_intelligence,17323.0,17403.0,81.0,,"view[""valor_3y""] = view[""projected_market_value_3y_eur""].apply(format_money_short)"
+apply_generic,17362,render_asset_intelligence,17323.0,17403.0,81.0,,"view[""upside_3y""] = view[""asset_upside_3y_eur""].apply(format_money_short)"
+apply_generic,17492,render_driver_analysis,17407.0,17542.0,136.0,,"pos_view[""Factor""] = pos_view[""Factor""].apply(V)"
+apply_generic,17508,render_driver_analysis,17407.0,17542.0,136.0,,"neg_view[""Factor""] = neg_view[""Factor""].apply(V)"
+apply_generic,17579,render_recruitment_pipeline,17545.0,17646.0,102.0,,).apply(V)
+apply_generic,17596,render_recruitment_pipeline,17545.0,17646.0,102.0,,"view[""valor_actual""] = view[""market_value_eur""].apply(format_money_short)"
+apply_generic,17598,render_recruitment_pipeline,17545.0,17646.0,102.0,,"view[""valor_3y""] = view[""projected_market_value_3y_eur""].apply(format_money_short)"
+plotly_figure,18235,build_opportunity_chart,18196.0,18378.0,183.0,,fig = go.Figure()
+dataframe_apply_axis1,18464,build_opportunity_risk_matrix,18410.0,18728.0,319.0,,"df[""risk_zone""] = df.apply(assign_zone, axis=1)"
+apply_generic,18464,build_opportunity_risk_matrix,18410.0,18728.0,319.0,,"df[""risk_zone""] = df.apply(assign_zone, axis=1)"
+plotly_figure,18506,build_opportunity_risk_matrix,18410.0,18728.0,319.0,,fig = go.Figure()
+apply_generic,18772,render_opportunity_risk_summary,18731.0,18838.0,108.0,,quadrants = summary_df.apply(
+apply_generic,18858,render_opportunity_risk_insight,18840.0,18908.0,69.0,,"zones = insight_df.apply(lambda row: assign_decision_quadrant(row, opportunity_ref, risk_ref), axis=1)"
+read_parquet,19135,load_position_taxonomy_dataset,19129.0,19186.0,58.0,st.cache_data(show_spinner=False),tax_df = pd.read_parquet(resolved_path).copy()
+merge,19271,_fill,19253.0,19288.0,36.0,,"matched = tmp_left.merge(tmp_right, on=join_cols, how=""left"").dropna(subset=[""position_taxonomy""])"
+dataframe_apply_axis1,19451,add_role_display_columns,19447.0,19455.0,9.0,,"out[""taxonomy_role_context""] = out.apply(role_context_label, axis=1)"
+apply_generic,19451,add_role_display_columns,19447.0,19455.0,9.0,,"out[""taxonomy_role_context""] = out.apply(role_context_label, axis=1)"
+apply_generic,19973,__module__,,,,,"df[""opportunity_tier_label""] = df[""opportunity_tier""].apply(translate_tier)"
+apply_generic,19975,__module__,,,,,"df[""opportunity_tier_label""] = df[""opportunity_tier_label""].apply(translate_tier)"
+apply_generic,21021,localize_display_df,21015.0,21033.0,19.0,,result[col] = result[col].apply(format_club_name)
+apply_generic,21023,localize_display_df,21015.0,21033.0,19.0,,result[col] = result[col].apply(league_display_name)
+apply_generic,21025,localize_display_df,21015.0,21033.0,19.0,,result[col] = result[col].apply(V)
+apply_generic,21027,localize_display_df,21015.0,21033.0,19.0,,result[col] = result[col].apply(league_quality_display_name)
+apply_generic,21029,localize_display_df,21015.0,21033.0,19.0,,result[col] = result[col].apply(driver_display_name)
+read_parquet,25436,__module__,,,,,panel = pd.read_parquet(
+read_parquet,25441,__module__,,,,,panel = pd.read_parquet(panel_path)
+read_parquet,25515,tm71_load_full_modeling_analytics,25510.0,25518.0,9.0,st.cache_data(show_spinner=False),return pd.read_parquet(path)
+read_csv,25638,tm72_load_dss_authority,25633.0,25641.0,9.0,st.cache_data(show_spinner=False),return pd.read_csv(path)
+apply_generic,25876,__module__,,,,,search_mask = filtered_df[searchable_cols].astype(str).apply(
+read_csv,27373,load_visual_mvp_manifest,27368.0,27401.0,34.0,st.cache_data(show_spinner=False),df = pd.read_csv(path)
+read_parquet,27376,load_visual_mvp_manifest,27368.0,27401.0,34.0,st.cache_data(show_spinner=False),snap = pd.read_parquet(
+merge,27386,load_visual_mvp_manifest,27368.0,27401.0,34.0,st.cache_data(show_spinner=False),df = df.merge(
+read_csv,27401,load_visual_mvp_manifest,27368.0,27401.0,34.0,st.cache_data(show_spinner=False),return pd.read_csv(path)
+read_parquet,27410,_visual_mvp_current_market_value_lookup,27406.0,27427.0,22.0,st.cache_data(show_spinner=False),df = pd.read_parquet(path)
+read_parquet,27433,_visual_mvp_current_country_lookup,27431.0,27441.0,11.0,st.cache_data(show_spinner=False),df = pd.read_parquet(
+apply_generic,28272,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,display[col] = display[col].apply(player_level_display_name)
+apply_generic,28280,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,display[col] = display[col].apply(format_money_short)
+plotly_figure,28333,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,fig = go.Figure()
+groupby,28334,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"for position_group, group_df in portfolio.groupby(""position_group""):"
+dataframe_apply_axis1,28343,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"group_df.apply(get_current_club_display, axis=1),"
+apply_generic,28343,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"group_df.apply(get_current_club_display, axis=1),"
+dataframe_apply_axis1,28378,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"text=label_df.apply(get_player_display_from_row, axis=1).astype(str).str.split().str[:2].str.join("" ""),"
+apply_generic,28378,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"text=label_df.apply(get_player_display_from_row, axis=1).astype(str).str.split().str[:2].str.join("" ""),"
+st_plotly_chart,28398,render_transfer_strategy_placeholder,27888.0,28463.0,576.0,,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+st_plotly_chart,28503,render_market_opportunities_page,28465.0,28511.0,47.0,,"st.plotly_chart(fig, config={""displaylogo"": False, ""modeBarButtonsToRemove"": [""zoom"", ""pan"", ""select"", ""lasso2d"", ""autoScale"", ""resetScale""]})"
+apply_generic,28818,render_individual_player_report,28542.0,28902.0,361.0,,"shap_display[""feature""] = shap_display[""feature""].apply(V)"
+plotly_figure,28879,render_individual_player_report,28542.0,28902.0,361.0,,fig_shap = go.Figure(
+st_plotly_chart,28902,render_individual_player_report,28542.0,28902.0,361.0,,st.plotly_chart(fig_shap)
+read_parquet,29796,_tm69_player_nationality_lookup,29790.0,29817.0,28.0,st.cache_data(show_spinner=False),snap = pd.read_parquet(
+read_parquet,29809,_tm69_player_nationality_lookup,29790.0,29817.0,28.0,st.cache_data(show_spinner=False),"panel = pd.read_parquet(panel_path, columns=[""player_name_fbref"", ""nationality""])"
+apply_generic,30020,_add_dynamic_contract_timing,29950.0,30027.0,78.0,,"data[""contract_window_display""] = days_remaining.apply(_window)"
+apply_generic,30021,_add_dynamic_contract_timing,29950.0,30027.0,78.0,,"data[""contract_status_dynamic""] = days_remaining.apply(_status)"
+apply_generic,30022,_add_dynamic_contract_timing,29950.0,30027.0,78.0,,"data[""contract_status_display""] = data[""contract_status_dynamic""].apply(_contract_status_display)"
+apply_generic,30172,_prepare_contract_dataset,30099.0,30178.0,80.0,,"data[""club_display""] = data[""club_display_full""].apply(_shorten_contract_club_name)"
+apply_generic,30173,_prepare_contract_dataset,30099.0,30178.0,80.0,,"data[""league_display""] = data[""league_display""].apply(league_display_name)"
+apply_generic,30800,_render_contract_opportunity_matrix,30756.0,30882.0,127.0,,"matrix_df[""market_value_hover""] = matrix_df[""market_value_for_color""].apply(format_money_short)"
+apply_generic,30801,_render_contract_opportunity_matrix,30756.0,30882.0,127.0,,"matrix_df[""expected_value_hover""] = pd.to_numeric(matrix_df.get(""predicted_market_value_eur""), errors=""coerce"").apply(format_money_short)"
+apply_generic,30802,_render_contract_opportunity_matrix,30756.0,30882.0,127.0,,"matrix_df[""positive_inefficiency_hover""] = matrix_df[""positive_inefficiency_eur""].apply(format_money_short)"
+plotly_figure,30813,_render_contract_opportunity_matrix,30756.0,30882.0,127.0,,fig = go.Figure()
+st_plotly_chart,30871,_render_contract_opportunity_matrix,30756.0,30882.0,127.0,,"st.plotly_chart(fig, config={""displaylogo"": False, ""displayModeBar"": False})"
+apply_generic,30982,_render_contract_window_distribution,30976.0,31004.0,29.0,,"dist[""order""] = dist[""window""].apply(_contract_window_order)"
+plotly_figure,30984,_render_contract_window_distribution,30976.0,31004.0,29.0,,fig = go.Figure(go.Bar(
+st_plotly_chart,31004,_render_contract_window_distribution,30976.0,31004.0,29.0,,"st.plotly_chart(fig, config={""displaylogo"": False})"
+groupby,31011,_render_contract_league_distribution,31007.0,31036.0,30.0,,"top_leagues = data.groupby(""league_display"", dropna=False).agg("
+plotly_figure,31015,_render_contract_league_distribution,31007.0,31036.0,30.0,,fig = go.Figure(go.Bar(
+st_plotly_chart,31036,_render_contract_league_distribution,31007.0,31036.0,30.0,,"st.plotly_chart(fig, config={""displaylogo"": False})"
+dataframe_apply_axis1,31051,render_contract_intelligence_page,31039.0,31333.0,295.0,,"data[""age_display""] = data.apply(_contract_age_value, axis=1)"
+apply_generic,31051,render_contract_intelligence_page,31039.0,31333.0,295.0,,"data[""age_display""] = data.apply(_contract_age_value, axis=1)"
+groupby,31259,render_contract_intelligence_page,31039.0,31333.0,295.0,,".groupby(""league_display"")[""_rc""]"

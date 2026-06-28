@@ -1,0 +1,58 @@
+function,priority_score,hotspot_count,hotspot_types,function_start,function_end,function_n_lines,cached
+render_transfer_strategy_placeholder,19,9,"apply_generic, dataframe_apply_axis1, groupby, plotly_figure, st_plotly_chart",27888.0,28463.0,576.0,False
+load_visual_mvp_manifest,18,4,"merge, read_csv, read_parquet",27368.0,27401.0,34.0,True
+add_executive_decision_features,16,7,"apply_generic, dataframe_apply_axis1",17057.0,17115.0,59.0,False
+load_role_explainability_dataset,15,3,"read_csv, read_parquet",8390.0,8469.0,80.0,True
+__module__,13,5,"apply_generic, read_parquet",,,,False
+_tm69_player_nationality_lookup,10,2,read_parquet,29790.0,29817.0,28.0,True
+load_role_intelligence_dataset,10,2,"read_csv, read_parquet",8679.0,8722.0,44.0,True
+render_replacement_analysis,8,5,"apply_generic, dataframe_apply_axis1",16844.0,16933.0,90.0,False
+build_similarity_bubble_chart,8,4,"apply_generic, dataframe_apply_axis1, plotly_figure",15756.0,15916.0,161.0,False
+build_current_context,8,3,"apply_generic, dataframe_apply_axis1, groupby",10671.0,10702.0,32.0,False
+render_contract_intelligence_page,8,3,"apply_generic, dataframe_apply_axis1, groupby",31039.0,31333.0,295.0,False
+_render_contract_opportunity_matrix,7,5,"apply_generic, plotly_figure, st_plotly_chart",30756.0,30882.0,127.0,False
+_render_contract_league_distribution,7,3,"groupby, plotly_figure, st_plotly_chart",31007.0,31036.0,30.0,False
+build_opportunity_risk_matrix,7,3,"apply_generic, dataframe_apply_axis1, plotly_figure",18410.0,18728.0,319.0,False
+render_similarity_engine,7,3,"apply_generic, dataframe_apply_axis1, st_plotly_chart",16547.0,16752.0,206.0,False
+optimize_transfer_portfolio_with_style,6,2,"apply_generic, read_csv",9781.0,10025.0,245.0,False
+localize_display_df,5,5,apply_generic,21015.0,21033.0,19.0,False
+_render_contract_window_distribution,5,3,"apply_generic, plotly_figure, st_plotly_chart",30976.0,31004.0,29.0,False
+render_individual_player_report,5,3,"apply_generic, plotly_figure, st_plotly_chart",28542.0,28902.0,361.0,False
+add_role_display_columns,5,2,"apply_generic, dataframe_apply_axis1",19447.0,19455.0,9.0,False
+_tm69_v13b_identity_performance_lookup,5,1,read_parquet,11561.0,11602.0,42.0,True
+_visual_mvp_current_country_lookup,5,1,read_parquet,27431.0,27441.0,11.0,True
+_visual_mvp_current_market_value_lookup,5,1,read_parquet,27406.0,27427.0,22.0,True
+load_csv,5,1,read_csv,8192.0,8195.0,4.0,True
+load_parquet,5,1,read_parquet,8199.0,8202.0,4.0,True
+load_position_taxonomy_dataset,5,1,read_parquet,19129.0,19186.0,58.0,True
+tm71_load_full_modeling_analytics,5,1,read_parquet,25510.0,25518.0,9.0,True
+tm72_load_dss_authority,5,1,read_csv,25633.0,25641.0,9.0,True
+add_projected_market_value_features,4,4,apply_generic,14568.0,14640.0,73.0,False
+render_multi_player_radar_comparison,4,3,"apply_generic, st_plotly_chart",15052.0,15273.0,222.0,False
+_add_dynamic_contract_timing,3,3,apply_generic,29950.0,30027.0,78.0,False
+render_asset_intelligence,3,3,apply_generic,17323.0,17403.0,81.0,False
+render_recruitment_pipeline,3,3,apply_generic,17545.0,17646.0,102.0,False
+_fill,3,1,merge,19253.0,19288.0,36.0,False
+_fill_from_strategy,3,1,merge,9204.0,9243.0,40.0,False
+_merge_fill,3,1,merge,8516.0,8543.0,28.0,False
+apply_current_context,3,1,merge,10705.0,10728.0,24.0,False
+audit_current_season_consistency,3,1,groupby,10731.0,10756.0,26.0,False
+build_comparative_conclusion,3,1,groupby,14933.0,15022.0,90.0,False
+build_football_universe_dataset,3,1,merge,13799.0,13987.0,189.0,False
+enrich_shortlist_with_radar_features,3,1,merge,13700.0,13772.0,73.0,True
+merge_role_explainability,3,1,merge,8472.0,8568.0,97.0,False
+merge_role_intelligence,3,1,merge,9131.0,9275.0,145.0,False
+_prepare_contract_dataset,2,2,apply_generic,30099.0,30178.0,80.0,False
+add_league_strength_features,2,2,apply_generic,14478.0,14526.0,49.0,False
+calculate_similarity_table,2,2,apply_generic,16493.0,16544.0,52.0,False
+render_driver_analysis,2,2,apply_generic,17407.0,17542.0,136.0,False
+render_executive_recommendation_engine,2,2,apply_generic,17187.0,17321.0,135.0,False
+build_multi_player_radar_chart,2,1,plotly_figure,14742.0,14820.0,79.0,False
+build_opportunity_chart,2,1,plotly_figure,18196.0,18378.0,183.0,False
+build_player_radar_chart,2,1,plotly_figure,14078.0,14111.0,34.0,False
+render_market_opportunities_page,2,1,st_plotly_chart,28465.0,28511.0,47.0,False
+build_replacement_candidates,1,1,apply_generic,16755.0,16789.0,35.0,False
+render_metric_winners_table,1,1,apply_generic,14896.0,14931.0,36.0,False
+render_opportunity_risk_insight,1,1,apply_generic,18840.0,18908.0,69.0,False
+render_opportunity_risk_summary,1,1,apply_generic,18731.0,18838.0,108.0,False
+render_player_radar_benchmarking,1,1,apply_generic,14184.0,14329.0,146.0,False

@@ -1,0 +1,7 @@
+path,exists,rows,columns,memory_mb,cold_read_seconds,median_read_seconds,min_read_seconds,max_read_seconds,all_reads_seconds
+data\processed\transfermarkt_features_v13a.parquet,True,616377,24,551.846,0.351158,0.354017,0.31956,0.543118,"[0.351158, 0.354017, 0.31956, 0.361857, 0.543118]"
+reports\roles\player_role_labels.csv,True,11889,64,20.165,0.328199,0.29034,0.216227,0.328199,"[0.328199, 0.296287, 0.29034, 0.216227, 0.287837]"
+reports\roles\player_role_dna.csv,True,22929,28,19.852,0.275782,0.264219,0.180228,0.278598,"[0.275782, 0.278598, 0.180228, 0.22269, 0.264219]"
+reports\strategy\transfer_portfolio_dataset.csv,True,6208,91,22.463,0.211721,0.211721,0.153088,0.250565,"[0.211721, 0.167122, 0.153088, 0.233493, 0.250565]"
+data\processed\current_player_snapshot.csv,True,17430,24,19.986,0.122649,0.136796,0.122185,0.199103,"[0.122649, 0.199103, 0.145604, 0.122185, 0.136796]"
+data\processed\current_performance_snapshot.parquet,True,785,25,0.505,0.050891,0.004304,0.003932,0.050891,"[0.050891, 0.004169, 0.003932, 0.006007, 0.004304]"

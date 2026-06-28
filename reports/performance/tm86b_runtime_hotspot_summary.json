@@ -1,0 +1,207 @@
+{
+  "repeated_dataset_reads": 6,
+  "hotspot_lines": 129,
+  "candidate_functions": 57,
+  "top_candidate_functions": [
+    {
+      "function": "render_transfer_strategy_placeholder",
+      "priority_score": 19,
+      "hotspot_count": 9,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, groupby, plotly_figure, st_plotly_chart",
+      "function_start": 27888.0,
+      "function_end": 28463.0,
+      "function_n_lines": 576.0,
+      "cached": false
+    },
+    {
+      "function": "load_visual_mvp_manifest",
+      "priority_score": 18,
+      "hotspot_count": 4,
+      "hotspot_types": "merge, read_csv, read_parquet",
+      "function_start": 27368.0,
+      "function_end": 27401.0,
+      "function_n_lines": 34.0,
+      "cached": true
+    },
+    {
+      "function": "add_executive_decision_features",
+      "priority_score": 16,
+      "hotspot_count": 7,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1",
+      "function_start": 17057.0,
+      "function_end": 17115.0,
+      "function_n_lines": 59.0,
+      "cached": false
+    },
+    {
+      "function": "load_role_explainability_dataset",
+      "priority_score": 15,
+      "hotspot_count": 3,
+      "hotspot_types": "read_csv, read_parquet",
+      "function_start": 8390.0,
+      "function_end": 8469.0,
+      "function_n_lines": 80.0,
+      "cached": true
+    },
+    {
+      "function": "__module__",
+      "priority_score": 13,
+      "hotspot_count": 5,
+      "hotspot_types": "apply_generic, read_parquet",
+      "function_start": NaN,
+      "function_end": NaN,
+      "function_n_lines": NaN,
+      "cached": false
+    },
+    {
+      "function": "_tm69_player_nationality_lookup",
+      "priority_score": 10,
+      "hotspot_count": 2,
+      "hotspot_types": "read_parquet",
+      "function_start": 29790.0,
+      "function_end": 29817.0,
+      "function_n_lines": 28.0,
+      "cached": true
+    },
+    {
+      "function": "load_role_intelligence_dataset",
+      "priority_score": 10,
+      "hotspot_count": 2,
+      "hotspot_types": "read_csv, read_parquet",
+      "function_start": 8679.0,
+      "function_end": 8722.0,
+      "function_n_lines": 44.0,
+      "cached": true
+    },
+    {
+      "function": "render_replacement_analysis",
+      "priority_score": 8,
+      "hotspot_count": 5,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1",
+      "function_start": 16844.0,
+      "function_end": 16933.0,
+      "function_n_lines": 90.0,
+      "cached": false
+    },
+    {
+      "function": "build_similarity_bubble_chart",
+      "priority_score": 8,
+      "hotspot_count": 4,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, plotly_figure",
+      "function_start": 15756.0,
+      "function_end": 15916.0,
+      "function_n_lines": 161.0,
+      "cached": false
+    },
+    {
+      "function": "build_current_context",
+      "priority_score": 8,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, groupby",
+      "function_start": 10671.0,
+      "function_end": 10702.0,
+      "function_n_lines": 32.0,
+      "cached": false
+    },
+    {
+      "function": "render_contract_intelligence_page",
+      "priority_score": 8,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, groupby",
+      "function_start": 31039.0,
+      "function_end": 31333.0,
+      "function_n_lines": 295.0,
+      "cached": false
+    },
+    {
+      "function": "_render_contract_opportunity_matrix",
+      "priority_score": 7,
+      "hotspot_count": 5,
+      "hotspot_types": "apply_generic, plotly_figure, st_plotly_chart",
+      "function_start": 30756.0,
+      "function_end": 30882.0,
+      "function_n_lines": 127.0,
+      "cached": false
+    },
+    {
+      "function": "_render_contract_league_distribution",
+      "priority_score": 7,
+      "hotspot_count": 3,
+      "hotspot_types": "groupby, plotly_figure, st_plotly_chart",
+      "function_start": 31007.0,
+      "function_end": 31036.0,
+      "function_n_lines": 30.0,
+      "cached": false
+    },
+    {
+      "function": "build_opportunity_risk_matrix",
+      "priority_score": 7,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, plotly_figure",
+      "function_start": 18410.0,
+      "function_end": 18728.0,
+      "function_n_lines": 319.0,
+      "cached": false
+    },
+    {
+      "function": "render_similarity_engine",
+      "priority_score": 7,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1, st_plotly_chart",
+      "function_start": 16547.0,
+      "function_end": 16752.0,
+      "function_n_lines": 206.0,
+      "cached": false
+    },
+    {
+      "function": "optimize_transfer_portfolio_with_style",
+      "priority_score": 6,
+      "hotspot_count": 2,
+      "hotspot_types": "apply_generic, read_csv",
+      "function_start": 9781.0,
+      "function_end": 10025.0,
+      "function_n_lines": 245.0,
+      "cached": false
+    },
+    {
+      "function": "localize_display_df",
+      "priority_score": 5,
+      "hotspot_count": 5,
+      "hotspot_types": "apply_generic",
+      "function_start": 21015.0,
+      "function_end": 21033.0,
+      "function_n_lines": 19.0,
+      "cached": false
+    },
+    {
+      "function": "_render_contract_window_distribution",
+      "priority_score": 5,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, plotly_figure, st_plotly_chart",
+      "function_start": 30976.0,
+      "function_end": 31004.0,
+      "function_n_lines": 29.0,
+      "cached": false
+    },
+    {
+      "function": "render_individual_player_report",
+      "priority_score": 5,
+      "hotspot_count": 3,
+      "hotspot_types": "apply_generic, plotly_figure, st_plotly_chart",
+      "function_start": 28542.0,
+      "function_end": 28902.0,
+      "function_n_lines": 361.0,
+      "cached": false
+    },
+    {
+      "function": "add_role_display_columns",
+      "priority_score": 5,
+      "hotspot_count": 2,
+      "hotspot_types": "apply_generic, dataframe_apply_axis1",
+      "function_start": 19447.0,
+      "function_end": 19455.0,
+      "function_n_lines": 9.0,
+      "cached": false
+    }
+  ]
+}
