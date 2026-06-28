@@ -26,6 +26,19 @@ try:
     from src.dss.presentation import build_presentation_row, build_presentation_df
     from src.dss.performance import build_performance_lookup
 
+    try:
+        from src.dss.intelligence import (
+            build_decision_context_from_player_view,
+            build_dss_recommendation,
+            get_strategy_profile,
+        )
+        TM95_IMPORT_ERROR = None
+    except Exception as _tm95_exc:
+        TM95_IMPORT_ERROR = repr(_tm95_exc)
+        build_decision_context_from_player_view = None
+        build_dss_recommendation = None
+        get_strategy_profile = None
+
     TM70_IMPORT_ERROR = None
 except Exception as _tm70_exc:
     TM70_IMPORT_ERROR = repr(_tm70_exc)
@@ -36,6 +49,10 @@ except Exception as _tm70_exc:
     build_presentation_row = None
     build_presentation_df = None
     build_performance_lookup = None
+    TM95_IMPORT_ERROR = TM70_IMPORT_ERROR
+    build_decision_context_from_player_view = None
+    build_dss_recommendation = None
+    get_strategy_profile = None
 from utils.assets import (
     get_club_logo,
     get_league_logo
@@ -34268,6 +34285,272 @@ def render_tm69_evidence_tab(row: pd.Series, table: pd.DataFrame, name_col: str 
             unsafe_allow_html=True,
         )
 
+
+# =========================================================
+# TM.9.5B — DSS Recommendation Panel UI
+# =========================================================
+def _tm95_dss_action_class(action: object) -> str:
+    action_txt = str(action or "").upper()
+    if action_txt == "BUY":
+        return "buy"
+    if action_txt == "COMPARE":
+        return "compare"
+    if action_txt == "MONITOR":
+        return "monitor"
+    return "avoid"
+
+
+def _tm95_evidence_html(items, max_items: int = 4) -> str:
+    if not items:
+        return "<div class='tm95-empty'>No dominant signal detected.</div>"
+    rows = []
+    for ev in list(items)[:max_items]:
+        label = html.escape(str(getattr(ev, "label", "Evidence")))
+        value = getattr(ev, "value", None)
+        try:
+            value_txt = "" if value is None else f"<b>{float(value):.0f}</b>"
+        except Exception:
+            value_txt = "" if value is None else f"<b>{html.escape(str(value))}</b>"
+        explanation = html.escape(str(getattr(ev, "explanation", "")))
+        rows.append(
+            f"""
+            <div class="tm95-evidence-row">
+                <div>
+                    <span>{label}</span>
+                    <small>{explanation}</small>
+                </div>
+                {value_txt}
+            </div>
+            """
+        )
+    return "".join(rows)
+
+
+def render_dss_recommendation_panel(row: pd.Series) -> None:
+    """Render DSS Intelligence recommendation using PlayerView → DecisionContext adapter."""
+    if build_decision_context_from_player_view is None or build_dss_recommendation is None or get_strategy_profile is None:
+        return
+
+    player_view = tm70_get_player_view(row)
+    if player_view is None:
+        return
+
+    is_en = globals().get("LANG") == "EN"
+
+    strategy_options = {
+        "Balanced": "balanced",
+        "Aggressive Growth": "aggressive_growth",
+        "Low Risk": "low_risk",
+        "Elite Club": "elite_club",
+        "Value Investing": "value_investing",
+    }
+
+    label = "Strategy Profile" if is_en else "Perfil estratégico"
+    selected_label = st.selectbox(
+        label,
+        list(strategy_options.keys()),
+        index=0,
+        key="tm95_strategy_profile",
+        help=(
+            "Changes the decision policy without recalculating the underlying models."
+            if is_en
+            else "Cambia la política de decisión sin recalcular los modelos subyacentes."
+        ),
+    )
+
+    strategy = get_strategy_profile(strategy_options[selected_label])
+
+    try:
+        context = build_decision_context_from_player_view(player_view)
+        recommendation = build_dss_recommendation(context, strategy_profile=strategy)
+    except Exception as exc:
+        st.caption(f"DSS Intelligence unavailable: {exc!r}")
+        return
+
+    action = recommendation.action
+    action_class = _tm95_dss_action_class(action)
+    score = recommendation.policy_score
+    score_txt = f"{score:.0f}/100"
+
+    title = "DSS Recommendation" if is_en else "Recomendación DSS"
+    subtitle = (
+        "Decision-support recommendation generated from PlayerView, policy evidence and strategy profile."
+        if is_en
+        else "Recomendación de soporte a decisión generada desde PlayerView, evidencias de política y perfil estratégico."
+    )
+
+    why_title = "Why this decision?" if is_en else "¿Por qué esta decisión?"
+    constraints_title = "Main constraints" if is_en else "Principales restricciones"
+    next_title = "Recommended next step" if is_en else "Siguiente paso recomendado"
+
+    st.markdown(
+        f"""
+<style>
+.tm95-panel {{
+    background: linear-gradient(135deg,#ffffff 0%,#f8fbff 100%);
+    border: 1px solid #dbe7f5;
+    border-left: 5px solid #2563eb;
+    border-radius: 22px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 36px rgba(15,23,42,.075);
+    margin: 0 0 18px 0;
+}}
+.tm95-head {{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+}}
+.tm95-eyebrow {{
+    color:#1d4ed8;
+    font-size:.72rem;
+    font-weight:950;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    margin-bottom:5px;
+}}
+.tm95-title {{
+    color:#0f172a;
+    font-size:1.18rem;
+    font-weight:950;
+    line-height:1.15;
+}}
+.tm95-subtitle {{
+    color:#64748b;
+    font-size:.84rem;
+    line-height:1.35;
+    margin-top:4px;
+}}
+.tm95-action {{
+    min-width:118px;
+    text-align:center;
+    border-radius:18px;
+    padding:11px 12px;
+    font-weight:950;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}}
+.tm95-action span {{
+    display:block;
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+}}
+.tm95-action b {{
+    display:block;
+    font-size:1.36rem;
+    line-height:1.05;
+}}
+.tm95-action-buy {{ background:#dcfce7;color:#166534;border:1px solid #86efac; }}
+.tm95-action-compare {{ background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd; }}
+.tm95-action-monitor {{ background:#fef3c7;color:#92400e;border:1px solid #fcd34d; }}
+.tm95-action-avoid {{ background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }}
+.tm95-grid {{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px;
+    margin-top:12px;
+}}
+.tm95-box {{
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    padding:14px 15px;
+}}
+.tm95-box h4 {{
+    margin:0 0 10px 0;
+    color:#0f172a;
+    font-size:.88rem;
+    font-weight:950;
+}}
+.tm95-evidence-row {{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid #eef2f7;
+    padding:8px 0;
+}}
+.tm95-evidence-row:last-child {{ border-bottom:0; }}
+.tm95-evidence-row span {{
+    display:block;
+    color:#0f172a;
+    font-weight:900;
+    font-size:.82rem;
+}}
+.tm95-evidence-row small {{
+    display:block;
+    color:#64748b;
+    font-size:.74rem;
+    line-height:1.3;
+    margin-top:2px;
+}}
+.tm95-evidence-row b {{
+    color:#0f172a;
+    font-size:.86rem;
+    white-space:nowrap;
+}}
+.tm95-next {{
+    margin-top:14px;
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:16px;
+    padding:12px 14px;
+    color:#1e3a8a;
+    font-size:.86rem;
+    line-height:1.35;
+}}
+.tm95-next b {{
+    display:block;
+    color:#0f172a;
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    margin-bottom:4px;
+}}
+.tm95-empty {{
+    color:#64748b;
+    font-size:.80rem;
+}}
+@media (max-width: 900px) {{
+    .tm95-head {{ flex-direction:column; }}
+    .tm95-action {{ width:100%; }}
+    .tm95-grid {{ grid-template-columns:1fr; }}
+}}
+</style>
+<div class="tm95-panel">
+    <div class="tm95-head">
+        <div>
+            <div class="tm95-eyebrow">{html.escape(title)}</div>
+            <div class="tm95-title">{html.escape(recommendation.context.player_name)}</div>
+            <div class="tm95-subtitle">{html.escape(subtitle)} · {html.escape(strategy.label)}</div>
+        </div>
+        <div class="tm95-action tm95-action-{action_class}">
+            <span>{html.escape("Action" if is_en else "Acción")}</span>
+            <b>{html.escape(str(action))}</b>
+            <span>{html.escape(score_txt)}</span>
+        </div>
+    </div>
+    <div class="tm95-grid">
+        <div class="tm95-box">
+            <h4>{html.escape(why_title)}</h4>
+            {_tm95_evidence_html(recommendation.positive_evidence)}
+        </div>
+        <div class="tm95-box">
+            <h4>{html.escape(constraints_title)}</h4>
+            {_tm95_evidence_html(recommendation.negative_evidence)}
+        </div>
+    </div>
+    <div class="tm95-next">
+        <b>{html.escape(next_title)}</b>
+        {html.escape(recommendation.recommended_next_step)}
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 # Player page title is now simple and section-led.
 def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
     render_product_page_header("Player Intelligence", "Player Intelligence", "Ficha profesional: decisión, identidad, mercado, rendimiento y evidencia." if LANG != "EN" else "Professional profile: decision, identity, market, performance and evidence.")
@@ -34288,6 +34571,7 @@ def render_player_intelligence_page(source_df: pd.DataFrame) -> None:
     tabs = st.tabs(tab_labels)
     with tabs[0]:
         render_tm69_executive_summary_tab(snapshot_row, name_col)
+        render_dss_recommendation_panel(snapshot_row)
     with tabs[1]:
         render_tm69_profile_role_tab(snapshot_row, table, name_col)
     with tabs[2]:
