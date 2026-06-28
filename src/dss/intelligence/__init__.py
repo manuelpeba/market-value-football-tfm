@@ -1,4 +1,5 @@
 from .context import build_player_decision_context
+from .adapter import build_decision_context_from_player_view
 from .evidence import attach_evidence, build_decision_evidence
 from .narrative import build_executive_decision_narrative
 from .recommendation import build_dss_recommendation, classify_decision_action, generate_dss_recommendation
@@ -11,6 +12,7 @@ __all__ = [
     "DecisionContext",
     "DSSRecommendation",
     "build_player_decision_context",
+    "build_decision_context_from_player_view",
     "build_decision_evidence",
     "attach_evidence",
     "build_dss_recommendation",
