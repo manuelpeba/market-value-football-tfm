@@ -23,7 +23,7 @@ try:
 
     from src.dss.identity import load_identity_layer, build_identity_lookup
     from src.dss.player_service import get_player_view
-    from src.dss.presentation import build_presentation_row, build_presentation_df
+    from src.dss.presentation import build_display_row, build_display_dataset
     from src.dss.performance import build_performance_lookup
 
     try:
@@ -46,8 +46,8 @@ except Exception as _tm70_exc:
     load_identity_layer = None
     build_identity_lookup = None
     get_player_view = None
-    build_presentation_row = None
-    build_presentation_df = None
+    build_display_row = None
+    build_display_dataset = None
     build_performance_lookup = None
     TM95_IMPORT_ERROR = TM70_IMPORT_ERROR
     build_decision_context_from_player_view = None
@@ -299,10 +299,10 @@ def tm70_format_market_value(value):
 # =========================================================
 def tm71_build_presentation_row(row):
     """Return one row enriched with display_* fields from Snapshot Authority."""
-    if build_presentation_row is None:
+    if build_display_row is None:
         return row
     try:
-        return build_presentation_row(row, load_tm70_identity_lookup())
+        return build_display_row(row, load_tm70_identity_lookup())
     except Exception:
         return row
 
@@ -329,7 +329,7 @@ def tm71_build_presentation_df(df):
         enriched_rows = []
         for _, row in df.iterrows():
             try:
-                enriched = build_presentation_row(
+                enriched = build_display_row(
                     row,
                     identity_lookup=lookup,
                     performance_lookup=performance_lookup,
