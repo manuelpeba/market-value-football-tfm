@@ -3,6 +3,11 @@ from __future__ import annotations
 from .evidence import attach_evidence
 from .models import DecisionAction, DecisionContext, DecisionEvidence
 from .policies import evaluate_decision_policies, policy_score
+from .recommendation_result import (
+    DSSRecommendation,
+    build_executive_summary,
+    recommended_next_step_for_action,
+)
 from .strategy import BALANCED, StrategyProfile
 
 
@@ -32,10 +37,10 @@ def classify_decision_action(
     return "AVOID"
 
 
-def generate_dss_recommendation(
+def build_dss_recommendation(
     context: DecisionContext,
     strategy_profile: StrategyProfile = BALANCED,
-) -> dict:
+) -> DSSRecommendation:
     policy_results = evaluate_decision_policies(
         context,
         strategy_profile=strategy_profile,
@@ -58,19 +63,54 @@ def generate_dss_recommendation(
 
     action = classify_decision_action(enriched, strategy_profile=strategy_profile)
 
-    positives = [e for e in enriched.evidence if e.polarity == "positive"]
-    negatives = [e for e in enriched.evidence if e.polarity == "negative"]
-    neutrals = [e for e in enriched.evidence if e.polarity == "neutral"]
+    positives = tuple(e for e in enriched.evidence if e.polarity == "positive")
+    negatives = tuple(e for e in enriched.evidence if e.polarity == "negative")
+    neutrals = tuple(e for e in enriched.evidence if e.polarity == "neutral")
+
+    return DSSRecommendation(
+        player_name=enriched.player_name,
+        action=action,
+        strategy_profile=strategy_profile,
+        policy_score=policy_score(enriched, strategy_profile=strategy_profile),
+        context=enriched,
+        policy_results=policy_results,
+        evidence=enriched.evidence,
+        positive_evidence=positives,
+        negative_evidence=negatives,
+        neutral_evidence=neutrals,
+        recommended_next_step=recommended_next_step_for_action(action),
+        executive_summary=build_executive_summary(
+            player_name=enriched.player_name,
+            action=action,
+            strategy_profile=strategy_profile,
+            positive_evidence=positives,
+            negative_evidence=negatives,
+        ),
+    )
+
+
+def generate_dss_recommendation(
+    context: DecisionContext,
+    strategy_profile: StrategyProfile = BALANCED,
+) -> dict:
+    """
+    Backward-compatible dictionary adapter.
+
+    New code should prefer build_dss_recommendation().
+    """
+    rec = build_dss_recommendation(context, strategy_profile=strategy_profile)
 
     return {
-        "player_name": enriched.player_name,
-        "decision_action": action,
-        "strategy_profile": strategy_profile,
-        "policy_score": policy_score(enriched, strategy_profile=strategy_profile),
-        "policy_results": policy_results,
-        "positive_evidence": positives,
-        "negative_evidence": negatives,
-        "neutral_evidence": neutrals,
-        "evidence": enriched.evidence,
-        "context": enriched,
+        "player_name": rec.player_name,
+        "decision_action": rec.action,
+        "strategy_profile": rec.strategy_profile,
+        "policy_score": rec.policy_score,
+        "policy_results": rec.policy_results,
+        "positive_evidence": list(rec.positive_evidence),
+        "negative_evidence": list(rec.negative_evidence),
+        "neutral_evidence": list(rec.neutral_evidence),
+        "evidence": rec.evidence,
+        "context": rec.context,
+        "recommended_next_step": rec.recommended_next_step,
+        "executive_summary": rec.executive_summary,
     }
