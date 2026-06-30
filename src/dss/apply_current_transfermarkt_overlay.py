@@ -1,3 +1,17 @@
+
+# =============================================================================
+# TM.8.8 DATA CONTRACT WARNING
+# =============================================================================
+# This legacy script overwrites season-context fields (`club`, `league`, `season`,
+# `market_value_eur`) with current Transfermarkt overlay values and recalculates
+# valuation gaps against that mixed context.
+#
+# It is therefore unsafe for production DSS artefacts after TM.8.8.
+#
+# Use `src/dss/apply_current_player_snapshot.py` and the TM.8.8 dataset contract
+# instead. This script is retained only for historical auditability.
+# =============================================================================
+
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -417,6 +431,12 @@ def apply_overlay_to_file(path: Path, overlay: pd.DataFrame) -> None:
 
 
 def main() -> None:
+    raise SystemExit(
+        'Unsafe legacy overlay disabled by TM.8.8: '
+        'do not overwrite season context with current Transfermarkt values.'
+    )
+
+def _legacy_main_disabled() -> None:
     overlay = build_current_tm_overlay()
 
     print("=" * 100)
