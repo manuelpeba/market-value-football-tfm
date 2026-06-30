@@ -41,6 +41,27 @@ def write_table(df: pd.DataFrame, path: Path) -> None:
         df.to_csv(path, index=False, encoding="utf-8")
 
 
+def remove_numbered_duplicate_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop pandas duplicate-name artifacts such as column.1, column.2."""
+    duplicate_suffix = re.compile(r"\.\d+$")
+    drop_cols = [c for c in df.columns if duplicate_suffix.search(str(c))]
+    if drop_cols:
+        df = df.drop(columns=drop_cols)
+    if df.columns.duplicated().any():
+        df = df.loc[:, ~df.columns.duplicated()].copy()
+    return df
+
+
+def as_series(df: pd.DataFrame, col: str, default=pd.NA) -> pd.Series:
+    """Return a single Series even when previous corrupt runs created duplicate columns."""
+    if col not in df.columns:
+        return pd.Series(default, index=df.index)
+    value = df[col]
+    if isinstance(value, pd.DataFrame):
+        return value.iloc[:, 0]
+    return value
+
+
 def load_snapshot(path: str | Path) -> pd.DataFrame:
     path = Path(path)
     if not path.is_absolute():
@@ -103,7 +124,10 @@ def preserve_historical_context(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    df = remove_numbered_duplicate_columns(df)
+    snapshot = remove_numbered_duplicate_columns(snapshot)
     df = standardize_input_identity(preserve_historical_context(df))
+    df = remove_numbered_duplicate_columns(df)
 
     snap_cols = [
         "player_id_tm",
@@ -130,7 +154,8 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
         on="player_id_tm",
         how="left",
         suffixes=("", "_snapshot"),
-    )
+    ).reset_index(drop=True)
+    by_id = remove_numbered_duplicate_columns(by_id)
     by_id["identity_match_method"] = np.where(by_id["current_club"].notna(), "player_id_tm", pd.NA)
 
     # 2) Conservative fallback by unique normalized name only.
@@ -165,6 +190,41 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
         by_id["display_club"] = by_id["current_club"].fillna(by_id.get("season_context_club"))
     if "display_league" not in by_id.columns:
         by_id["display_league"] = by_id["current_league"].fillna(by_id.get("season_context_league"))
+
+    # ==========================================================
+    # TM.8.8 — Dataset Governance Contract
+    # ==========================================================
+    if "current_club_snapshot" not in by_id.columns:
+        by_id["current_club_snapshot"] = by_id["current_club"]
+
+    if "current_league_snapshot" not in by_id.columns:
+        by_id["current_league_snapshot"] = by_id["current_league"]
+
+    if "current_market_value_eur_snapshot" not in by_id.columns and "current_market_value_eur" in by_id.columns:
+        by_id["current_market_value_eur_snapshot"] = by_id["current_market_value_eur"]
+
+    if "display_market_value_eur" not in by_id.columns:
+        current_mv = as_series(by_id, "current_market_value_eur_snapshot")
+        season_mv = as_series(by_id, "season_context_market_value_eur")
+        by_id["display_market_value_eur"] = current_mv.fillna(season_mv)
+
+    season_club = as_series(by_id, "season_context_club").reset_index(drop=True).fillna("").astype(str)
+    current_club = as_series(by_id, "current_club_snapshot").reset_index(drop=True).fillna("").astype(str)
+    season_league = as_series(by_id, "season_context_league").reset_index(drop=True).fillna("").astype(str)
+    current_league = as_series(by_id, "current_league_snapshot").reset_index(drop=True).fillna("").astype(str)
+
+    by_id["club_context_changed"] = season_club.ne(current_club).to_numpy()
+    by_id["league_context_changed"] = season_league.ne(current_league).to_numpy()
+
+    by_id["context_changed"] = by_id["club_context_changed"] | by_id["league_context_changed"]
+
+    by_id["valuation_context"] = "CURRENT_SNAPSHOT_FOR_DISPLAY__SEASON_CONTEXT_FOR_MODEL"
+
+    by_id["gap_interpretation_status"] = np.where(
+        by_id["context_changed"],
+        "CONTEXT_CHANGED_CAUTION",
+        "VALID_SAME_CONTEXT",
+    )
 
     diagnostics = pd.DataFrame(
         {
