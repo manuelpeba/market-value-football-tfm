@@ -1,0 +1,24 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+__________________ test_context_change_control_columns_exist __________________
+
+    def test_context_change_control_columns_exist():
+        df = pd.read_csv(DSS_PATH)
+    
+        required = {
+            "context_changed",
+            "club_context_changed",
+            "league_context_changed",
+            "valuation_context",
+            "gap_interpretation_status",
+        }
+    
+        missing = required - set(df.columns)
+>       assert not missing, f"Missing required TM.8.8 context governance columns: {sorted(missing)}"
+E       AssertionError: Missing required TM.8.8 context governance columns: ['club_context_changed', 'context_changed', 'gap_interpretation_status', 'league_context_changed', 'valuation_context']
+E       assert not {'club_context_changed', 'context_changed', 'gap_interpretation_status', 'league_context_changed', 'valuation_context'}
+
+tests\dss\test_tm88_dataset_contract.py:53: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/dss/test_tm88_dataset_contract.py::test_context_change_control_columns_exist
+1 failed, 1 passed in 0.72s
