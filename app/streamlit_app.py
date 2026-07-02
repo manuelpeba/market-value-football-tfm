@@ -21879,8 +21879,8 @@ def _command_row_context(df, raw):
                 hit = hit.sort_values(sort_col, ascending=False, na_position="last")
                 break
         row = hit.iloc[0]
-        club_raw = _first_valid_command_value(row, ["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"], "")
-        league_raw = _first_valid_command_value(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+        club_raw = _first_valid_command_value(row, ["display_club", "current_club_snapshot"], "")
+        league_raw = _first_valid_command_value(row, ["display_league", "current_league_snapshot"], "")
         return {
             "name": _first_valid_command_value(row, ["player_name_tm", "player_name_tm_snapshot", "player_name_fbref", name_col], q),
             "club": format_club_name(club_raw, "") if "format_club_name" in globals() else club_raw,
@@ -21977,16 +21977,16 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
             seen_players.add(player_key)
 
             position = _first_valid_command_value(row, ["position_group", "position", "role_subgroup"], "")
-            club_raw = _first_valid_command_value(row, ["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"], "")
+            club_raw = _first_valid_command_value(row, ["display_club", "current_club_snapshot"], "")
             club = format_club_name(club_raw, "") if valid(club_raw) else ""
-            league_raw = _first_valid_command_value(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+            league_raw = _first_valid_command_value(row, ["display_league", "current_league_snapshot"], "")
             league = league_display_name(league_raw) if valid(league_raw) else ""
 
             meta = " · ".join([str(x) for x in [position, club, league] if valid(x)])
             add(f"Player · {name}" + (f" · {meta}" if meta else ""), name, "player")
 
     # 2) League commands: one visible option per league.
-    league_col = first_existing(["display_league", "current_league", "current_league_snapshot", "league"])
+    league_col = first_existing(["display_league", "current_league_snapshot"])
     if league_col is not None:
         league_values = sorted(work[league_col].dropna().astype(str).unique().tolist(), key=str.lower)
         for league in league_values:
@@ -22007,7 +22007,7 @@ def build_search_options(df: pd.DataFrame) -> tuple[list[str], dict[str, str]]:
                     add(f"Rol · {role}" if LANG != "EN" else f"Role · {role}", role, "role")
 
     # 5) Club commands: one visible option per product-normalised club.
-    club_col = first_existing(["display_club", "current_club", "current_club_snapshot", "current_club_name_tm", "club_actual", "club"])
+    club_col = first_existing(["display_club", "current_club_snapshot"])
     if club_col is not None:
         normalised_clubs = sorted({format_club_name(c, "") for c in work[club_col].dropna().astype(str).tolist() if valid(c)}, key=str.lower)
         for club in normalised_clubs:
@@ -27726,8 +27726,8 @@ def render_visual_mvp_cards(limit: int = 8) -> None:
     cards = ["<div class='visual-mvp-grid'>"]
     for _, row in df.iterrows():
         player = _visual_mvp_player_name(row)
-        club = _visual_mvp_first(row, ["display_club", "current_club", "current_club_snapshot", "club_actual", "club"], "")
-        league = _visual_mvp_first(row, ["display_league", "current_league", "current_league_snapshot", "league"], "")
+        club = _visual_mvp_first(row, ["display_club", "current_club_snapshot"], "")
+        league = _visual_mvp_first(row, ["display_league", "current_league_snapshot"], "")
         position = _visual_mvp_first(row, ["position_group", "position", "role_subgroup"], "")
         country = VISUAL_MVP_COUNTRY_OVERRIDE.get(normalize_search_text(player), "")
         rank = int(row.get("visual_rank", len(cards))) if pd.notna(row.get("visual_rank", np.nan)) else len(cards)
