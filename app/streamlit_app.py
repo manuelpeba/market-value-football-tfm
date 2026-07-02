@@ -58,6 +58,8 @@ from utils.assets import (
     get_league_logo
 )
 import streamlit.components.v1 as components
+from src.dss.player_registry import load_player_registry
+from src.dss.player_presentation import build_display_dataset
 
 # =========================================================
 # TM6.9 HEADER EXTRACTION LAYER (GENERATED)
@@ -11516,15 +11518,15 @@ def _tm69_score_label(metric: str, value: float) -> str:
 
 @st.cache_data(show_spinner=False)
 def _tm69_load_context_tables() -> dict[str, pd.DataFrame]:
-    return {
-        "snapshot": load_parquet(PROCESSED_PATH / "current_player_snapshot.parquet"),
-        "global": load_csv(DSS_REPORTS_PATH / "global_prospect_universe.csv"),
-        "contract": load_csv(CONTRACT_REPORTS_PATH / "contract_intelligence_dataset.csv"),
-        "risk": load_csv(RANKINGS_PATH / "scouting_shortlist_with_risk.csv"),
-        "role": load_parquet(PROCESSED_PATH / "player_role_features_advanced.parquet"),
-        "role_dna": load_csv(ROOT / "reports" / "roles" / "player_role_dna.csv"),
-        "tm": load_parquet(PROCESSED_PATH / "transfermarkt_features_v13a.parquet"),
-    }
+    registry = load_player_registry(ROOT)
+
+    ctx = registry.as_dict()
+
+    # TM.8.9D.1
+    # Replace the raw global dataset with the canonical presentation dataset.
+    ctx["global"] = build_display_dataset(registry)
+
+    return ctx
 
 
 def _tm69_norm(value: object) -> str:
