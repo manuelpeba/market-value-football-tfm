@@ -315,28 +315,20 @@ def tm71_build_presentation_df(df):
         return df
 
     try:
-        lookup = load_tm70_identity_lookup()
-        lookup = {str(k): v for k, v in dict(lookup).items()}
-
-        try:
-            performance_df = tm71_load_full_modeling_analytics()
-            performance_lookup = build_performance_lookup(performance_df) if "build_performance_lookup" in globals() else None
-        except Exception:
-            performance_lookup = None
-
-        if not lookup:
-            print("[TM.7.1] Empty identity lookup")
-            return df
+        registry = get_tm7_player_registry()
 
         enriched_rows = []
         for _, row in df.iterrows():
             try:
-                enriched = build_display_row(
-                    row,
-                    identity_lookup=lookup,
-                    performance_lookup=performance_lookup,
-                )
-                enriched_rows.append(enriched)
+                player_id = row.get("player_id_tm")
+                display_row = build_display_row(player_id, registry)
+                if display_row:
+                    enriched = row.copy()
+                    for _k, _v in display_row.items():
+                        enriched[_k] = _v
+                    enriched_rows.append(enriched)
+                else:
+                    enriched_rows.append(row)
             except Exception as exc:
                 print(f"[TM.7.2 row enrichment failed] {exc}")
                 enriched_rows.append(row)
