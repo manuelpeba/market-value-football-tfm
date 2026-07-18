@@ -12,6 +12,18 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2] if "src" in Path(__file__).parts else Path.cwd()
 
+
+def _repo_relative(path: str | Path) -> str:
+    """Represent repository files with portable POSIX-style relative paths."""
+    resolved = Path(path).resolve()
+
+    try:
+        return resolved.relative_to(
+            ROOT.resolve()
+        ).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
 TARGET_FILES = [
     Path("reports/dss/global_prospect_universe.csv"),
     Path("reports/tm3_contract_intelligence/contract_intelligence_dataset.csv"),
@@ -323,7 +335,7 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
 def apply_to_file(path: Path, snapshot: pd.DataFrame, backup: bool, out_dir: Path) -> dict:
     full_path = path if path.is_absolute() else ROOT / path
     if not full_path.exists():
-        return {"path": str(full_path), "status": "missing"}
+        return {"path": _repo_relative(full_path), "status": "missing"}
 
     if backup:
         backup_path = full_path.with_suffix(full_path.suffix + ".bak_current_snapshot")
@@ -336,11 +348,11 @@ def apply_to_file(path: Path, snapshot: pd.DataFrame, backup: bool, out_dir: Pat
     out_dir.mkdir(parents=True, exist_ok=True)
     diag_path = out_dir / f"{full_path.stem}_current_snapshot_apply_audit.csv"
     diagnostics.insert(0, "dataset", full_path.stem)
-    diagnostics.insert(1, "path", str(full_path))
+    diagnostics.insert(1, "path", _repo_relative(full_path))
     diagnostics.to_csv(diag_path, index=False, encoding="utf-8")
 
     return {
-        "path": str(full_path),
+        "path": _repo_relative(full_path),
         "status": "ok",
         "rows": int(diagnostics.loc[0, "rows"]),
         "matched_total": int(diagnostics.loc[0, "matched_total"]),
@@ -348,7 +360,7 @@ def apply_to_file(path: Path, snapshot: pd.DataFrame, backup: bool, out_dir: Pat
         "matched_by_player_id": int(diagnostics.loc[0, "matched_by_player_id"]),
         "matched_by_unique_name": int(diagnostics.loc[0, "matched_by_unique_name"]),
         "unmatched": int(diagnostics.loc[0, "unmatched"]),
-        "audit": str(diag_path),
+        "audit": _repo_relative(diag_path),
     }
 
 
