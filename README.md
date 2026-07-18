@@ -11,8 +11,10 @@
 ![SHAP](https://img.shields.io/badge/Explainability-SHAP-success)
 ![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-success)
 ![Coverage](https://img.shields.io/badge/Coverage-11%20Leagues-success)
-![Status](https://img.shields.io/badge/Status-DSS%20Operational-success)
-![Version](https://img.shields.io/badge/version-v1.4.0-blue)
+![DSS](https://img.shields.io/badge/DSS-757%20Players-success)
+![Tests](https://img.shields.io/badge/DSS%20Tests-20%20Passed-success)
+![Status](https://img.shields.io/badge/Status-Cloud%20Operational-success)
+![Version](https://img.shields.io/badge/version-v2.0.0-blue)
 
 ---
 
@@ -24,10 +26,27 @@
 * [🎯 Objetivos del proyecto](#-objetivos-del-proyecto)
 * [🏆 Contribuciones del proyecto](#-contribuciones-del-proyecto)
 * [🏗️ Arquitectura global](#️-arquitectura-global)
+* [🧱 Gobernanza de datos, snapshots y contratos](#-gobernanza-de-datos-snapshots-y-contratos)
+* [🎨 Evolución visual, UX y productización](#-evolución-visual-ux-y-productización)
+* [⚡ Performance y arquitectura de consumo](#-performance-y-arquitectura-de-consumo)
 * [📚 Metodología](#-metodología)
 * [📦 Datos y preparación](#-datos-y-preparación)
+* [🔗 Matching multi-fuente](#-matching-multi-fuente)
+* [📊 Dataset final](#-dataset-final)
+* [⚙️ Feature Engineering](#️-feature-engineering)
 * [📈 Modelización](#-modelización)
+* [📊 Econometría](#-econometría)
+* [🤖 Machine Learning](#-machine-learning)
+* [🔍 Explainability](#-explainability)
+* [🌍 Validación externa](#-validación-externa)
+* [🎯 Opportunity Framework](#-opportunity-framework)
+* [⚠️ Risk Framework](#️-risk-framework)
+* [🧠 Recruitment Intelligence](#-recruitment-intelligence)
+* [🎯 Transfer Strategy Engine](#-transfer-strategy-engine)
+* [🔄 Sprint TM.2 — Multi-League DSS Integration](#-sprint-tm2--multi-league-dss-integration)
+* [📊 Evaluación de negocio](#-evaluación-de-negocio)
 * [🖥️ Decision Support System](#️-decision-support-system)
+* [📸 Dashboard (Demo)](#-dashboard-demo)
 * [⚽ Valor para departamentos deportivos](#-valor-para-departamentos-deportivos)
 * [✅ Estado actual del proyecto](#-estado-actual-del-proyecto)
 * [⚠️ Limitaciones](#️-limitaciones)
@@ -37,6 +56,7 @@
 * [▶️ Ejecución reproducible](#️-ejecución-reproducible)
 * [📚 Referencias](#-referencias)
 * [👨‍🎓 Autoría](#-autoría)
+* [📝 Cambios incorporados en v2.0.0](#-cambios-incorporados-en-v200)
 
 ---
 
@@ -52,33 +72,44 @@ El proyecto integra:
 * Opportunity Detection.
 * Risk Assessment.
 * Recruitment Intelligence.
+* Contract Intelligence.
 * Transfer Strategy Engine.
 * Portfolio Optimization.
 * Decision Support Systems.
-* Contract Intelligence.
+* Gobernanza de datos y contratos de DataFrame.
+* Arquitectura de snapshots y contexto temporal.
+* Productización y despliegue en Streamlit Cloud.
 
-El objetivo trasciende la simple predicción del valor de mercado de futbolistas.
-
-La finalidad consiste en transformar información deportiva y económica en recomendaciones accionables para departamentos de scouting, recruitment y dirección deportiva.
+El objetivo trasciende la simple predicción del valor de mercado de futbolistas. La finalidad consiste en transformar información deportiva y económica en recomendaciones accionables para departamentos de scouting, recruitment y dirección deportiva.
 
 La plataforma permite:
 
-* Estimar el valor de mercado esperado.
-* Detectar ineficiencias de mercado.
-* Identificar oportunidades de fichaje.
-* Cuantificar riesgo e incertidumbre.
-* Evaluar disponibilidad contractual.
-* Identificar oportunidades pre-expiración.
-* Incorporar poder negociador en procesos de recruitment.
-* Construir shortlists de scouting.
-* Comparar candidatos simultáneamente.
-* Optimizar carteras de fichajes.
-* Simular escenarios estratégicos.
-* Apoyar procesos reales de toma de decisiones mediante un DSS interactivo.
+* estimar el valor de mercado esperado;
+* detectar ineficiencias de mercado;
+* identificar oportunidades de fichaje;
+* cuantificar riesgo e incertidumbre;
+* evaluar disponibilidad contractual;
+* identificar oportunidades pre-expiración;
+* incorporar poder negociador en procesos de recruitment;
+* construir shortlists de scouting;
+* comparar candidatos simultáneamente;
+* optimizar carteras de fichajes;
+* simular escenarios estratégicos;
+* separar explícitamente el contexto histórico de modelado del contexto actual de mercado;
+* presentar identidad, club, liga y valor actual mediante una capa de presentación gobernada;
+* apoyar procesos reales de toma de decisiones mediante un DSS interactivo.
 
-La arquitectura final combina Football Analytics, Sports Economics, Machine Learning, Explainability, Decision Science y Operations Research dentro de un único sistema analítico reproducible.
+La arquitectura final combina Football Analytics, Sports Economics, Machine Learning, Explainability, Decision Science y Operations Research dentro de un sistema analítico reproducible, con una separación explícita entre:
 
-La versión actual opera sobre once competiciones europeas y constituye una plataforma DSS reproducible orientada tanto a investigación académica como a aplicaciones profesionales de scouting y recruitment.
+```text
+Modeling Authority
+Current Snapshot Authority
+Presentation Authority
+Contract Intelligence Authority
+Decision Support Layer
+```
+
+La versión actual opera sobre once competiciones europeas y consolida un universo DSS de 757 jugadores únicos. El dashboard está desplegado y validado en Streamlit Cloud, con una arquitectura de consumo refactorizada, DataFrame Contracts y controles de calidad orientados a evitar fugas de contexto, desincronizaciones y errores de esquema.
 
 ---
 
@@ -103,74 +134,94 @@ Transfer Strategy Engine
 ↓
 Portfolio Optimization
 ↓
+Data Governance & Snapshot Authority
+↓
 Decision Support System
 ```
 
-La principal aportación de las versiones recientes consiste en evolucionar desde la identificación de jugadores infravalorados hacia la optimización estratégica de decisiones de recruitment bajo restricciones reales de club.
+La principal aportación de las versiones recientes consiste en evolucionar desde la identificación de jugadores infravalorados hacia un producto DSS gobernado, portable y apto para soportar decisiones de recruitment bajo restricciones reales de club.
 
 ---
 
 ## Release actual
 
 ```text
-v1.4.0 — Contract Intelligence Layer
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
-Sprint completados:
+Sprints y bloques de evolución consolidados:
 
 ```text
-Sprint 13A   — Multi-League Expansion
-Sprint 13A.1 — External Validation
-Sprint 13B   — Advanced Data Expansion
-Sprint 14    — Transfer Strategy Engine
-Sprint 14.1  — Player Level Layer
-Sprint TM.2  — Scoring & Ranking Integration
-Sprint TM.3 — Contract Intelligence Layer
+Sprint 13A     — Multi-League Expansion
+Sprint 13A.1   — External Validation
+Sprint 13B     — Advanced Data Expansion
+Sprint 14      — Transfer Strategy Engine
+Sprint 14.1    — Player Level Layer
+Sprint TM.2    — Scoring & Ranking Integration
+Sprint TM.3    — Contract Intelligence Layer
+Sprint TM.6.x  — Visual Identity, Asset Integration & Mobile UX
+Sprint TM.7.0  — Snapshot Authority
+Sprint TM.7.1  — Presentation Layer
+Sprint TM.7.6  — Legacy View Decommission
+Sprint TM.8.6  — Performance Audit & Closure
+Sprint TM.8.9  — Single Source of Truth / Registry Migration
+Sprint TM.8.10 — DataFrame Contract Layer, Risk Authority & Release Closure
 ```
 
 ---
 
 # 📌 Resultados clave
 
-| Indicador                            |              Valor |
-| ------------------------------------ | -----------------: |
-| Ligas cubiertas                      |                 11 |
-| Temporadas                           |                  7 |
-| Liga-temporada                       |                 77 |
-| Observaciones FBref                  |             43.591 |
-| Dataset modelizable                  |              5.527 |
-| Match Rate global                    |             75,97% |
-| Cobertura DSS                        |           11 ligas |
-| Modelo econométrico oficial          |    Growth OLS v13B |
-| Modelo ML productivo oficial         | Tuned XGBoost v13B |
-| R² OLS productivo                    |             0.4549 |
-| R² XGBoost productivo                |             0.4453 |
-| Mejor R² histórico alcanzado (13A.1) |             0.5664 |
-| Precision@10                         |                90% |
-| Escenarios estratégicos              |                  3 |
-| Player Levels                        |                  5 |
-| Solver Portfolio Optimization        |               PuLP |
-| Cobertura contractual DSS            |             95.90% |
-| Jugadores DSS enriquecidos           |                757 |
-| Contract Intelligence Outputs        |                  3 |
-| Estado actual                        |      DSS Operativo |
+| Indicador | Valor consolidado |
+|---|---:|
+| Ligas cubiertas por modelado y DSS | 11 |
+| Temporadas | 7 |
+| Liga-temporada | 77 |
+| Observaciones FBref | 43.591 |
+| Dataset modelizable | 5.527 |
+| Match Rate global FBref ↔ Transfermarkt | 75,97% |
+| Universo DSS canónico | 757 jugadores |
+| Variables del universo DSS canónico | 118 |
+| Dataset Contract Intelligence | 757 × 134 |
+| Cobertura de snapshot actual | 681/757 — 89,96% |
+| Cobertura de presentación | 757/757 — 100% |
+| Cobertura de Risk Score | 757/757 — 100% |
+| Risk Score con valor cero | 0 jugadores |
+| Cobertura contractual DSS | 95,90% |
+| Modelo econométrico oficial | Growth OLS v13B |
+| Modelo ML productivo oficial | Tuned XGBoost v13B |
+| R² OLS productivo | 0,4549 |
+| RMSE XGBoost productivo | 0,8692 |
+| MAE XGBoost productivo | 0,6955 |
+| R² XGBoost productivo | 0,5651 |
+| Mejor R² histórico alcanzado | 0,5664 |
+| Precision@10 | 90% |
+| Escenarios estratégicos | 3 |
+| Player Levels | 5 |
+| Solver Portfolio Optimization | PuLP |
+| Tests DSS focalizados | 20/20 |
+| Estado actual | DSS operativo en Cloud |
 
 ---
 
 ### Nota metodológica
 
-El mejor resultado predictivo obtenido durante el proyecto corresponde a la validación externa multi-liga de Sprint 13A.1:
+La arquitectura mantiene dos referencias predictivas diferenciadas:
+
+* **Modelo econométrico oficial:** Growth OLS v13B, utilizado como benchmark interpretable.
+* **Modelo productivo de Machine Learning:** Tuned XGBoost v13B, utilizado para estimar el valor esperado.
+
+La validación productiva consolidada del modelo XGBoost registra:
 
 ```text
-Tuned XGBoost
-11 ligas
-R² = 0.5664
-RMSE = 0.8525
-MAE = 0.6834
+RMSE = 0,8692
+MAE  = 0,6955
+R²   = 0,5651
 ```
 
-La versión productiva actual (v1.4.0) utiliza el dataset consolidado generado tras Sprint 13B, la integración DSS multi-liga de Sprint TM.2 y la capa Contract Intelligence incorporada en Sprint TM.3.
+Durante Sprint 13A.1 se alcanzó un máximo histórico de R² = 0,5664 en la validación externa multi-liga. La diferencia entre ambos resultados responde a cortes experimentales y artefactos de validación distintos; el release v2.0.0 utiliza como referencia operativa el pipeline productivo consolidado.
 
+La versión actual incorpora además una regla de gobernanza esencial: el valor esperado se estima sobre el contexto histórico de temporada, mientras que club, liga y valor actual se incorporan desde el snapshot vigente únicamente para presentación y análisis contextual.
 
 ---
 
@@ -182,7 +233,8 @@ Los mercados de fichajes presentan características típicas de mercados imperfe
 * incertidumbre elevada;
 * asimetrías informativas;
 * restricciones presupuestarias;
-* recursos limitados.
+* recursos limitados;
+* cambios rápidos de club, liga, contrato y valoración.
 
 Los clubes deben seleccionar un número reducido de objetivos dentro de un universo potencialmente compuesto por miles de futbolistas distribuidos entre múltiples ligas y contextos competitivos.
 
@@ -192,7 +244,16 @@ La pregunta central del proyecto evoluciona desde:
 
 hacia una cuestión de mayor relevancia operativa:
 
-> ¿Qué combinación de jugadores maximiza el valor esperado bajo restricciones reales de club?
+> ¿Qué combinación de jugadores maximiza el valor esperado bajo restricciones reales de club, considerando riesgo, encaje, contrato y contexto actual?
+
+El problema no es únicamente predictivo. También exige:
+
+* garantizar identidad correcta del jugador;
+* evitar mezclar contexto histórico y contexto actual;
+* disponer de datasets coherentes entre módulos;
+* mantener rankings y visualizaciones sincronizados;
+* presentar la información con latencia asumible;
+* evitar decisiones basadas en columnas ausentes, valores fabricados o fallbacks no equivalentes.
 
 ---
 
@@ -212,6 +273,8 @@ Create Value
 Sell High
 ```
 
+La solución debe ser utilizable como sistema de apoyo a decisión, no solo como ejercicio de modelización.
+
 ---
 
 ## Objetivos analíticos
@@ -223,8 +286,14 @@ Sell High
 5. Diseñar métricas compuestas orientadas a scouting.
 6. Incorporar Explainability para interpretar recomendaciones.
 7. Cuantificar riesgo e incertidumbre.
-8. Optimizar carteras de fichajes bajo restricciones reales.
-9. Implementar un Decision Support System orientado a toma de decisiones deportivas.
+8. Incorporar contexto contractual y poder negociador.
+9. Optimizar carteras de fichajes bajo restricciones reales.
+10. Implementar un Decision Support System orientado a toma de decisiones deportivas.
+11. Separar contexto de modelado, snapshot actual y capa de presentación.
+12. Definir contratos de datos que gobiernen las columnas requeridas por cada vista.
+13. Asegurar consistencia de identidad, scoring y contexto entre módulos.
+14. Optimizar la arquitectura de carga para reducir lecturas y transformaciones redundantes.
+15. Validar el producto mediante tests automatizados y despliegue en Cloud.
 
 ---
 
@@ -243,6 +312,9 @@ Sell High
 * Integración DSS multi-liga.
 * Aplicación de Decision Science al recruitment deportivo.
 * Aplicación de Operations Research a optimización de fichajes.
+* Separación metodológica entre contexto de temporada y contexto actual.
+* Definición de una capa formal de contratos de datos para una aplicación analítica.
+* Discusión explícita de los riesgos de interpretación cuando cambia el contexto competitivo del jugador.
 
 ---
 
@@ -255,16 +327,30 @@ Sell High
 * Opportunity Framework.
 * Risk Framework.
 * Recruitment Intelligence Layer.
+* Contract Intelligence Layer.
 * Transfer Strategy Engine.
 * Portfolio Optimization.
 * Dashboard DSS interactivo.
 * Internationalization EN/ES.
 * Advanced Football Metrics Integration.
-* Multi-League DSS Integration (TM.2).
-* Contract Intelligence Layer.
+* Multi-League DSS Integration.
 * Contract Opportunity Scoring.
 * Negotiation Leverage Framework.
 * Contract-Aware Recruitment Ranking.
+* Identity Registry y Player Registry.
+* Snapshot Authority para club, liga y valor actuales.
+* Presentation Layer con campos `display_*`.
+* DataFrame Contract Layer.
+* Fallbacks restringidos a aliases explícitamente equivalentes.
+* Preservación de valores analíticos ausentes como `NaN`.
+* Helpers seguros para ordenación y agregación.
+* Arquitectura de Single Source of Truth.
+* Migración de consumo del dashboard hacia datasets canónicos.
+* Caché y reducción de lecturas redundantes.
+* Controles de contexto y semántica del gap.
+* Validaciones automatizadas del DSS.
+* Pinning de dependencias para Streamlit Cloud.
+* Eliminación de módulos legacy y runs obsoletos.
 
 ---
 
@@ -282,39 +368,41 @@ Sell High
 * Contract Opportunity Detection.
 * Pre-Expiry Recruitment Targeting.
 * Negotiation Support Intelligence.
-* Contract Intelligence.
-* Negotiation Intelligence.
 * Free-Agent Opportunity Detection.
 * Contract-Aware Recruitment.
+* Visualización ejecutiva de cambio de contexto.
+* Distinción entre señal de oportunidad y fiabilidad de la comparación.
+* Shortlists gobernadas por calidad de datos y riesgo.
+* Reducción de fricción operativa mediante una interfaz más rápida y consistente.
 
 ---
 
 ## Historial de releases
 
-| Release | Contenido principal            |
-| ------- | ------------------------------ |
-| v0.1.0  | Data Pipeline                  |
-| v0.2.0  | Econometric Baseline           |
-| v0.3.0  | MLflow                         |
-| v0.4.0  | Machine Learning               |
-| v0.5.0  | Explainability                 |
-| v0.6.0  | Scoring Engine                 |
-| v0.7.0  | Dashboard                      |
-| v0.8.0  | Dashboard Productization       |
-| v1.0.0  | Scouting Intelligence Platform |
-| v1.1.0  | Recruitment Intelligence       |
-| v1.2.0  | Multi-League Expansion         |
-| v1.2.1  | Transfer Strategy Engine       |
-| v1.2.2  | Multi-League DSS Integration   |
-| v1.3.0  | Recruitment Intelligence & DSS |
-| v1.4.0  | Contract Intelligence Layer    |
+| Release | Contenido principal |
+|---|---|
+| v0.1.0 | Data Pipeline |
+| v0.2.0 | Econometric Baseline |
+| v0.3.0 | MLflow |
+| v0.4.0 | Machine Learning |
+| v0.5.0 | Explainability |
+| v0.6.0 | Scoring Engine |
+| v0.7.0 | Dashboard |
+| v0.8.0 | Dashboard Productization |
+| v1.0.0 | Scouting Intelligence Platform |
+| v1.1.0 | Recruitment Intelligence |
+| v1.2.0 | Multi-League Expansion |
+| v1.2.1 | Transfer Strategy Engine |
+| v1.2.2 | Multi-League DSS Integration |
+| v1.3.0 | Recruitment Intelligence & DSS |
+| v1.4.0 | Contract Intelligence Layer |
+| v2.0.0 | DSS Architecture, Data Contracts & Productization |
 
+---
 
 # 🏗️ Arquitectura global
 
 La arquitectura se organiza en capas analíticas especializadas diseñadas para transformar datos deportivos y económicos en decisiones de recruitment reproducibles.
-
-La versión actual implementa una arquitectura DSS multicapa capaz de conectar modelización predictiva, detección de oportunidades, evaluación de riesgo y optimización estratégica dentro de un único flujo analítico.
 
 ```text
 Raw Sources
@@ -323,44 +411,46 @@ Feature Engineering
 ↓
 Advanced Metrics Layer
 ↓
-Matching Layer
+Matching & Identity Layer
 ↓
-Player Season Panel
+Player-Season Panel
 ↓
 Modeling Dataset
 ↓
-Econometric Modeling
-+
-Machine Learning
+Econometric Modeling + Machine Learning
 ↓
 Operational Predictions
 ↓
-Scoring Feature Reintegration
+Opportunity & Risk Scoring
 ↓
-Opportunity Detection
+Global Prospect Universe
 ↓
-Risk Assessment
+Current Snapshot Overlay
 ↓
-Player Intelligence
+Player Registry & Presentation Layer
 ↓
-Recruitment Intelligence
-↓
-Contract Intelligence
-↓
-Transfer Strategy Engine
+Recruitment / Contract / Strategy Domains
 ↓
 Portfolio Optimization
 ↓
 Decision Support System
 ```
 
-Cada capa añade una nueva capacidad analítica sobre la anterior, evolucionando progresivamente desde predicción hacia soporte cuantitativo a decisiones deportivas.
+La arquitectura v2.0.0 añade una distinción formal entre cinco autoridades:
+
+| Autoridad | Artefacto o componente | Responsabilidad |
+|---|---|---|
+| Modeling Authority | `player_season_modeling_v13b_productive_candidate.parquet` | Variables históricas y predicción |
+| DSS Authority | `reports/dss/global_prospect_universe.csv` | Opportunity, confidence, risk y universo canónico |
+| Current Snapshot Authority | `data/processed/current_player_snapshot.*` | Club, liga y valor actuales |
+| Contract Authority | `reports/tm3_contract_intelligence/contract_intelligence_dataset.csv` | Vencimiento, leverage y oportunidad contractual |
+| Presentation Authority | `PlayerRegistry` + Presentation Layer | Identidad y campos `display_*` |
+
+Esta separación evita que una capa sobrescriba silenciosamente la semántica de otra.
 
 ---
 
 ## Evolución funcional
-
-La evolución metodológica del proyecto puede resumirse mediante:
 
 ```text
 Econometric Modeling
@@ -383,6 +473,10 @@ Portfolio Optimization
 ↓
 Multi-League DSS Integration
 ↓
+Snapshot & Identity Governance
+↓
+Data Contracts
+↓
 Decision Support System
 ```
 
@@ -392,64 +486,55 @@ La plataforma ha evolucionado desde una investigación centrada en valoración d
 
 ## Arquitectura DSS
 
-La arquitectura DSS actual puede representarse mediante:
-
 ```mermaid
 flowchart TD
 
-A[Market Value Prediction]
---> B[Scoring Feature Reintegration]
+A[FBref + Transfermarkt + Understat]
+--> B[Data Preparation & Matching]
 
-B --> C[Opportunity Detection]
+B --> C[Player-Season Modeling Dataset]
 
-C --> D[Risk Assessment]
+C --> D[Econometric Model]
+C --> E[Machine Learning Model]
 
-D --> E[Player Intelligence]
+D --> F[Predicted Market Value]
+E --> F
 
-E --> F[Recruitment Intelligence]
+F --> G[Opportunity Framework]
+G --> H[Risk Framework]
 
-F --> G[Contract Intelligence]
+H --> I[Global Prospect Universe]
 
-G --> H[Transfer Strategy Engine]
+J[Current Player Snapshot]
+--> K[Snapshot Application]
 
-H --> I[Portfolio Optimization]
+I --> K
 
-I --> J[Decision Support System]
+K --> L[Player Registry]
+M[Contract Intelligence Dataset]
+--> L
+N[Portfolio Dataset]
+--> L
+
+L --> O[Presentation Layer]
+O --> P[Streamlit DSS]
 ```
 
 ---
 
 ## Sprint TM.2 — Multi-League DSS Integration
 
-Sprint TM.2 introduce una capa explícita de integración entre modelización y DSS.
+Sprint TM.2 introdujo una capa explícita de integración entre modelización y DSS para garantizar que las once competiciones soportadas por los modelos se propagaran hasta scoring, rankings, portfolio y dashboard.
 
-Objetivo:
+Resultado consolidado:
 
-```text
-Predictions
-↓
-Scoring Feature Reintegration
-↓
-Opportunity Framework
-↓
-Ranking Engine
-↓
-Transfer Strategy Engine
-↓
-Decision Support System
-```
-
-La intervención resuelve una inconsistencia detectada tras la expansión multi-liga, garantizando que las once competiciones soportadas por los modelos productivos se propaguen correctamente hasta todas las capas operativas.
-
-Resultado:
-
-| Componente                 | Cobertura |
-| -------------------------- | --------: |
-| Modeling Dataset           |  11 ligas |
-| Scoring Dataset            |  11 ligas |
-| Opportunity Dataset        |  11 ligas |
-| Transfer Portfolio Dataset |  11 ligas |
-| DSS                        |  11 ligas |
+| Componente | Cobertura |
+|---|---:|
+| Modeling Dataset | 11 ligas |
+| Scoring Dataset | 11 ligas |
+| Opportunity Dataset | 11 ligas |
+| Transfer Portfolio Dataset | 11 ligas |
+| DSS | 11 ligas |
 
 La cobertura competitiva queda alineada de extremo a extremo.
 
@@ -457,11 +542,7 @@ La cobertura competitiva queda alineada de extremo a extremo.
 
 ## Sprint TM.3 — Contract Intelligence Layer
 
-Sprint TM.3 incorpora una nueva capa de inteligencia contractual orientada a complementar la evaluación deportiva y económica de candidatos mediante información procedente de Transfermarkt.
-
-Hasta TM.2, el sistema respondía principalmente a preguntas relacionadas con valor esperado, oportunidad de mercado y encaje deportivo.
-
-TM.3 amplía la capacidad analítica incorporando contexto contractual relevante para procesos reales de negociación y recruitment.
+Sprint TM.3 incorpora una capa de inteligencia contractual orientada a complementar la evaluación deportiva y económica de candidatos mediante información procedente de Transfermarkt.
 
 La nueva capa permite identificar:
 
@@ -470,50 +551,327 @@ La nueva capa permite identificar:
 * potenciales agentes libres;
 * situaciones favorables de negociación.
 
-La integración se basa en información contractual disponible en Transfermarkt mediante la variable:
+Variables principales:
 
 ```text
 contract_expiration_date
+contract_months_remaining
+contract_years_remaining
+contract_expiring_12m
+contract_critical_zone
+free_agent_horizon
+negotiation_leverage_score
+contract_opportunity_score
+recruitment_contract_score
 ```
 
-Cobertura obtenida:
+El `Recruitment Contract Score` combina la señal principal de mercado con la oportunidad contractual:
+
+| Componente | Peso |
+|---|---:|
+| Opportunity Score | 70% |
+| Contract Opportunity Score | 30% |
+
+La información contractual no modifica el modelo predictivo de valor de mercado. Opera aguas abajo, como dominio especializado del DSS.
+
+---
+
+# 🧱 Gobernanza de datos, snapshots y contratos
+
+La versión v2.0.0 incorpora una arquitectura explícita de gobernanza destinada a evitar cruces de datos entre módulos.
+
+## Contextos diferenciados
 
 ```text
-95.90%
+Season Context
+→ Contexto histórico utilizado por el modelo.
+
+Current Snapshot
+→ Club, liga y valor de mercado actuales.
+
+Display Layer
+→ Selección gobernada del dato que se muestra al usuario.
 ```
 
-sobre el universo DSS.
-
-Principales variables derivadas:
-
-* contract_months_remaining
-* contract_years_remaining
-* contract_expiring_12m
-* contract_critical_zone
-* free_agent_horizon
-* negotiation_leverage_score
-* contract_opportunity_score
-
-La nueva capa genera un indicador adicional:
+Campos representativos:
 
 ```text
-Recruitment Contract Score
+season_context_club
+season_context_league
+season_context_market_value_eur
+
+current_club_snapshot
+current_league_snapshot
+current_market_value_eur_snapshot
+
+display_club
+display_league
+display_market_value_eur
 ```
 
-que combina:
+El universo DSS conserva cobertura completa de presentación:
 
-* Opportunity Score
-* Contract Opportunity Score
+```text
+display_club              757/757
+display_league            757/757
+display_market_value_eur  757/757
+```
 
-mediante una ponderación diseñada para mantener la señal principal de mercado mientras incorpora información contractual relevante para la toma de decisiones.
+El snapshot actual cubre 681 de los 757 jugadores. Los 76 casos no enlazados conservan el contexto de temporada para presentación, sin inventar valores actuales.
 
-Esta funcionalidad aproxima la plataforma a procesos reales de scouting y recruitment utilizados por departamentos deportivos profesionales.
+---
 
-| Componente                 | Peso |
-| -------------------------- | ---: |
-| Opportunity Score          |  70% |
-| Contract Opportunity Score |  30% |
+## Semántica del gap
 
+El gap de valoración se interpreta de forma diferente según exista o no cambio de contexto:
+
+```text
+VALID_SAME_CONTEXT
+→ Comparación directa válida.
+
+CONTEXT_CHANGED_CAUTION
+→ El valor esperado pertenece al contexto histórico modelado,
+  mientras que el valor mostrado procede del snapshot actual.
+```
+
+En el artefacto vigente:
+
+```text
+CONTEXT_CHANGED_CAUTION  747 jugadores
+VALID_SAME_CONTEXT        10 jugadores
+```
+
+Esta etiqueta evita presentar como ineficiencia directamente comparable una diferencia que puede estar afectada por cambio de club, liga o valoración posterior.
+
+---
+
+## DataFrame Contract Layer
+
+El módulo `src/dss/contract/dataframe_contract.py` define contratos explícitos para las columnas requeridas por el DSS.
+
+Principios:
+
+* las columnas de identidad, scoring y negocio se validan antes de renderizar;
+* los fallbacks solo utilizan aliases declarados como equivalentes;
+* las métricas ausentes permanecen como `NaN`;
+* no se fabrican valores `0`, `50` o `100` para completar visualizaciones;
+* la aplicación de contratos es idempotente;
+* la ordenación y las agregaciones utilizan helpers seguros;
+* las vistas reciben DataFrames preparados con un esquema estable.
+
+Objetivo operativo:
+
+```text
+Dataset heterogéneo
+↓
+Contract Enforcement
+↓
+DataFrame gobernado
+↓
+Vista sin KeyError por columnas ausentes
+```
+
+---
+
+## Identity Registry y Presentation Layer
+
+La identidad del jugador se resuelve mediante registros especializados, evitando que cada módulo realice matching o enriquecimiento por su cuenta.
+
+Componentes principales:
+
+```text
+Player Registry
+Player Service
+Player View
+Presentation Engine
+Current Snapshot
+Contract Dataset
+Performance Lookup
+```
+
+La capa de presentación es responsable de:
+
+* seleccionar el nombre mostrado;
+* resolver club y liga;
+* aplicar escudos, banderas e imágenes;
+* preservar el contexto de modelado;
+* evitar joins ad hoc dentro de las vistas;
+* entregar una única representación coherente del jugador.
+
+---
+
+## Risk Score Authority
+
+TM.8.10 cerró una desincronización que había dejado `risk_score` a cero en todo el universo DSS.
+
+Estado validado:
+
+| Métrica | Resultado |
+|---|---:|
+| Cobertura | 757/757 |
+| Valores cero | 0 |
+| Valores únicos | 580 |
+| Mínimo | 0,13 |
+| Mediana | 50,07 |
+| Máximo | 100,00 |
+
+La autoridad de riesgo se construye en `src/models/scouting/build_risk_score.py` y se integra en `build_global_prospect_universe.py`, evitando cálculos duplicados en Streamlit.
+
+---
+
+# 🎨 Evolución visual, UX y productización
+
+La fase de productización amplió el dashboard desde una interfaz analítica funcional hacia un producto visual orientado a dirección deportiva.
+
+## Identidad visual y contexto
+
+Se incorporaron:
+
+* escudos de clubes;
+* banderas de nacionalidad y liga;
+* imágenes de jugadores;
+* normalización de nombres de club;
+* identidad visual consistente entre módulos;
+* assets locales para evitar dependencias externas en tiempo de ejecución.
+
+---
+
+## Diseño ejecutivo
+
+Se revisaron:
+
+* jerarquía de títulos y subtítulos;
+* composición de cards;
+* KPIs ejecutivos;
+* tablas Top 5;
+* matrices oportunidad-riesgo;
+* resúmenes de candidato;
+* bloques de decisión y recomendación;
+* consistencia visual entre Opportunity, Recruitment, Contract y Strategy.
+
+El dashboard organiza la información mediante un funnel operativo:
+
+```text
+Universe
+↓
+Filters
+↓
+Candidate Ranking
+↓
+Player Analysis
+↓
+Comparison
+↓
+Decision
+```
+
+---
+
+## Diseño responsive
+
+Se auditó el comportamiento en mobile y desktop para:
+
+* evitar solapes;
+* preservar legibilidad de cards;
+* mantener la composición horizontal en desktop;
+* permitir reflow controlado en mobile;
+* separar físicamente hero, búsqueda y contexto cuando el ancho es reducido;
+* conservar operativas las tablas, matrices y filtros.
+
+---
+
+## Internacionalización
+
+La aplicación mantiene soporte ES/EN en:
+
+* navegación;
+* títulos;
+* KPIs;
+* etiquetas;
+* mensajes ejecutivos;
+* ayudas contextuales;
+* rankings y tablas.
+
+---
+
+## Accesibilidad operativa
+
+Las mejoras priorizan:
+
+* claridad de decisión;
+* reducción de densidad visual;
+* consistencia de formatos;
+* uso de unidades monetarias homogéneas;
+* estados de cautela visibles;
+* ausencia de campos vacíos presentados como valores reales.
+
+---
+
+# ⚡ Performance y arquitectura de consumo
+
+La optimización de velocidad derivó en una refactorización del modo en que Streamlit consume datos.
+
+## Problema detectado
+
+La aplicación realizaba múltiples lecturas, joins y enriquecimientos equivalentes en distintos módulos. Esto incrementaba:
+
+* tiempo de arranque;
+* coste de rerun;
+* riesgo de inconsistencias;
+* complejidad de mantenimiento;
+* probabilidad de usar fuentes distintas para el mismo jugador.
+
+---
+
+## Solución implementada
+
+```text
+Fuentes especializadas
+↓
+Datasets canónicos precomputados
+↓
+Loaders centralizados y cacheados
+↓
+Player Registry
+↓
+Presentation Layer
+↓
+Vistas Streamlit
+```
+
+Cambios principales:
+
+* reducción de lecturas repetidas de CSV y parquet;
+* consolidación del universo DSS;
+* aplicación centralizada del snapshot;
+* eliminación de overlays legacy;
+* migración hacia Single Source of Truth;
+* reutilización de DataFrames preparados;
+* contratos de esquema en el límite de la aplicación;
+* separación entre cálculo analítico y render;
+* pinning de dependencias para Cloud;
+* eliminación de runs y artefactos obsoletos del repositorio.
+
+---
+
+## Estado de performance
+
+El cierre de TM.8.6–TM.8.10 estabiliza el consumo de datos y reduce el trabajo redundante en los principales flujos del dashboard.
+
+La aplicación sigue concentrando gran parte del render en `app/streamlit_app.py`. La modularización adicional de ese archivo permanece como mejora técnica futura, pero ya no es necesaria para garantizar consistencia de datos, despliegue o funcionamiento de la versión actual.
+
+---
+
+## Validación
+
+La arquitectura DSS focalizada dispone de:
+
+```text
+20 tests
+20 passed
+```
+
+Las validaciones cubren contratos, snapshots, registry y componentes DSS críticos. La compilación de la aplicación y de los entrypoints de snapshot forma parte del cierre previo a release.
 
 ---
 
@@ -531,6 +889,7 @@ A[Business Understanding]
 --> E[Evaluation]
 --> F[Deployment]
 --> G[Decision Support]
+--> H[Data Governance]
 ```
 
 ---
@@ -549,7 +908,9 @@ Análisis exploratorio de:
 * calidad de datos;
 * consistencia temporal;
 * compatibilidad entre fuentes;
-* validez externa multi-liga.
+* validez externa multi-liga;
+* disponibilidad de identificadores;
+* calidad de snapshots actuales.
 
 ---
 
@@ -562,7 +923,9 @@ Procesos de:
 * normalización;
 * feature engineering;
 * construcción del panel longitudinal;
-* integración multi-fuente.
+* integración multi-fuente;
+* construcción de registros de identidad;
+* generación de datasets canónicos.
 
 ---
 
@@ -585,7 +948,9 @@ Evaluación mediante:
 * métricas de negocio;
 * validación temporal;
 * validación externa;
-* robustez multi-liga.
+* robustez multi-liga;
+* auditoría de cobertura;
+* tests de integración DSS.
 
 ---
 
@@ -593,10 +958,13 @@ Evaluación mediante:
 
 Implementación mediante:
 
-* MLflow;
 * artefactos reproducibles;
 * pipelines productivos;
-* dashboard DSS interactivo.
+* dashboard DSS interactivo;
+* dependencias fijadas;
+* despliegue en Streamlit Cloud.
+
+MLflow se utiliza para tracking experimental local. El directorio `mlruns/` no forma parte del repositorio distribuido.
 
 ---
 
@@ -607,8 +975,22 @@ Transformación de resultados analíticos en decisiones deportivas accionables m
 * Opportunity Framework.
 * Risk Framework.
 * Recruitment Intelligence.
+* Contract Intelligence.
 * Transfer Strategy Engine.
 * Portfolio Optimization.
+
+---
+
+## 8. Data Governance
+
+Capa adicional incorporada durante la productización:
+
+* autoridades de datos diferenciadas;
+* snapshots actuales;
+* contratos de DataFrame;
+* control de contexto;
+* datasets canónicos;
+* validación automatizada.
 
 ---
 
@@ -616,9 +998,7 @@ Transformación de resultados analíticos en decisiones deportivas accionables m
 
 ## Fuentes de datos
 
-El proyecto integra dos fuentes complementarias de información deportiva y económica.
-
----
+El proyecto integra fuentes complementarias de información deportiva y económica.
 
 ### FBref
 
@@ -635,11 +1015,9 @@ Variables utilizadas:
 * acciones defensivas;
 * métricas avanzadas normalizadas por 90 minutos.
 
----
-
 ### Transfermarkt
 
-Fuente principal de valoración económica.
+Fuente principal de valoración y contexto económico.
 
 Variables utilizadas:
 
@@ -648,22 +1026,28 @@ Variables utilizadas:
 * edad;
 * posición;
 * club;
-* contexto competitivo.
+* liga;
+* contexto contractual;
+* identificadores de jugador.
+
+### Understat
+
+Fuente complementaria para métricas de expected goals y expected assists en los contextos competitivos disponibles.
+
+La integración de Understat se utiliza como enriquecimiento de rendimiento, no como autoridad de identidad ni de valor de mercado.
 
 ---
 
 ## Cobertura actual
 
-La plataforma incorpora actualmente:
-
-| Métrica             |  Valor |
-| ------------------- | -----: |
-| Ligas               |     11 |
-| Temporadas          |      7 |
-| Liga-temporada      |     77 |
+| Métrica | Valor |
+|---|---:|
+| Ligas | 11 |
+| Temporadas | 7 |
+| Liga-temporada | 77 |
 | Observaciones FBref | 43.591 |
-| Dataset modelizable |  5.527 |
-| Match Rate          | 75,97% |
+| Dataset modelizable | 5.527 |
+| Match Rate | 75,97% |
 
 ---
 
@@ -693,23 +1077,9 @@ La plataforma incorpora actualmente:
 
 ## Cobertura DSS
 
-Tras Sprint TM.2 la cobertura multi-liga ya no se limita a modelización.
+La arquitectura DSS completa opera sobre las mismas once competiciones europeas utilizadas en modelización.
 
-La arquitectura DSS completa opera sobre las mismas once competiciones europeas.
-
-```text
-Modeling Layer
-↓
-Scoring Layer
-↓
-Opportunity Layer
-↓
-Ranking Layer
-↓
-Transfer Strategy Engine
-↓
-Decision Support System
-```
+El snapshot actual cubre nueve ligas de primera división. Para Championship y Spanish Segunda División, la Presentation Layer conserva el contexto de temporada cuando no existe un match actual validado.
 
 ---
 
@@ -725,11 +1095,7 @@ Decision Support System
 
 # 🔗 Matching multi-fuente
 
-Uno de los principales retos metodológicos del proyecto consiste en la ausencia de un identificador universal compartido entre FBref y Transfermarkt.
-
-Para resolver este problema se desarrolló un pipeline jerárquico de matching orientado a maximizar precisión sin comprometer cobertura.
-
----
+Uno de los principales retos metodológicos consiste en la ausencia de un identificador universal compartido entre FBref y Transfermarkt.
 
 ## Flujo de matching
 
@@ -738,58 +1104,108 @@ Normalización
 ↓
 Exact Matching
 ↓
+Player ID cuando está disponible
+↓
 Club Validation
 ↓
 Fuzzy Matching
 ↓
 Age Validation
+↓
+Unique-Name Fallback
+↓
+Homonym Guardrails
 ```
-
----
 
 ## Resultado
 
-| Métrica             |  Valor |
-| ------------------- | -----: |
+| Métrica | Valor |
+|---|---:|
 | Observaciones FBref | 43.591 |
-| Match Rate global   | 75,97% |
+| Match Rate global | 75,97% |
+| Universo DSS con `player_id_tm` único | 757/757 |
+| Snapshot actual por `player_id_tm` | 679 |
+| Snapshot actual por nombre único | 2 |
+| Snapshot actual no enlazado | 76 |
 
-La reducción observada respecto a versiones anteriores se explica principalmente por la incorporación de ligas secundarias con menor cobertura histórica.
+El matching por nombre se restringe a nombres únicos. Los homónimos se excluyen del fallback automático y permanecen sujetos a revisión.
 
 ---
 
 # 📊 Dataset final
 
-Tras los procesos de integración y validación se construye un panel longitudinal jugador-temporada.
-
----
+Tras los procesos de integración y validación se construye un panel longitudinal jugador-temporada y varios artefactos de decisión.
 
 ## Panel completo
 
-| Métrica             |  Valor |
-| ------------------- | -----: |
+| Métrica | Valor |
+|---|---:|
 | Observaciones FBref | 43.591 |
-| Ligas               |     11 |
-| Temporadas          |      7 |
-| Liga-temporada      |     77 |
-
----
+| Ligas | 11 |
+| Temporadas | 7 |
+| Liga-temporada | 77 |
 
 ## Dataset modelizable
 
-La modelización se centra en jugadores con potencial de desarrollo y revalorización.
-
-| Métrica       | Valor |
-| ------------- | ----: |
+| Métrica | Valor |
+|---|---:|
 | Observaciones | 5.527 |
-| Ligas         |    11 |
-| Temporadas    |     7 |
+| Ligas | 11 |
+| Temporadas | 7 |
 
-Dataset productivo actual:
+Dataset productivo:
 
 ```text
-player_season_modeling_v13b_productive_candidate.parquet
+data/processed/player_season_modeling_v13b_productive_candidate.parquet
 ```
+
+## Universo DSS canónico
+
+```text
+reports/dss/global_prospect_universe.csv
+```
+
+Características:
+
+```text
+757 jugadores
+118 columnas
+757 player_id_tm únicos
+```
+
+Autoridad de:
+
+* predicción de valor;
+* market value gap;
+* opportunity;
+* confidence;
+* growth;
+* risk;
+* contexto de temporada;
+* snapshot actual;
+* campos de presentación.
+
+## Dataset Contract Intelligence
+
+```text
+reports/tm3_contract_intelligence/contract_intelligence_dataset.csv
+```
+
+Características:
+
+```text
+757 jugadores
+134 columnas
+```
+
+Autoridad de:
+
+* expiración contractual;
+* meses y años restantes;
+* free-agent horizon;
+* negotiation leverage;
+* contract opportunity;
+* recruitment contract score.
 
 ---
 
@@ -797,75 +1213,49 @@ player_season_modeling_v13b_productive_candidate.parquet
 
 El proyecto incorpora múltiples capas de transformación orientadas a capturar rendimiento deportivo, experiencia competitiva y evolución temporal.
 
----
-
 ## Growth Features
 
-Diseñadas para modelar trayectoria y evolución reciente.
-
-Ejemplos:
-
-* market_value_growth_prev
-* delta_log_market_value_prev
-* breakout_indicator
-* career_year
-
----
+* `market_value_growth_prev`
+* `delta_log_market_value_prev`
+* `breakout_indicator`
+* `career_year`
 
 ## Composite Football Indices
 
-Variables sintéticas construidas para representar dimensiones futbolísticas complejas.
-
-Ejemplos:
-
-* finishing_index
-* playmaking_index
-* growth_index
-* experience_index
-
----
+* `finishing_index`
+* `playmaking_index`
+* `growth_index`
+* `experience_index`
 
 ## Advanced Football Metrics (Sprint 13B)
 
-Sprint 13B introduce tres nuevas variables productivas:
-
-* finishing_index_v2
-* availability_index
-* defensive_activity_index
-
-Estas variables constituyen la principal aportación analítica de la fase Advanced Data Expansion.
-
----
+* `finishing_index_v2`
+* `availability_index`
+* `defensive_activity_index`
 
 ## Hallazgo principal
-
-Entre las variables avanzadas evaluadas:
 
 ```text
 finishing_index_v2
 ```
 
-emerge como la métrica con mayor relevancia predictiva agregada dentro de las arquitecturas evaluadas.
-
----
+emerge como la variable avanzada con mayor relevancia predictiva agregada dentro de las arquitecturas evaluadas.
 
 ## Transformaciones aplicadas
-
-El pipeline incorpora:
 
 * transformaciones logarítmicas;
 * winsorización;
 * escalado robusto;
 * estandarización;
-* normalización posicional.
+* normalización posicional;
+* variables por 90 minutos;
+* efectos fijos de liga, posición y temporada.
 
-Estas transformaciones permiten reducir sensibilidad a valores extremos y mejorar estabilidad estadística de los modelos.
+---
 
 # 📈 Modelización
 
-El proyecto combina econometría aplicada y Machine Learning supervisado con el objetivo de estimar el valor de mercado esperado de futbolistas profesionales.
-
-La coexistencia deliberada de ambos enfoques responde a una decisión metodológica explícita:
+El proyecto combina econometría aplicada y Machine Learning supervisado para estimar el valor de mercado esperado.
 
 ```text
 Interpretabilidad
@@ -873,19 +1263,15 @@ Interpretabilidad
 Capacidad predictiva
 ```
 
-en lugar de optimizar únicamente métricas de rendimiento.
-
----
+La predicción se genera sobre el contexto histórico jugador-temporada. El snapshot actual no entra en el entrenamiento ni reescribe las variables del modelo.
 
 ## Variable objetivo
-
-Target principal:
 
 ```text
 market_value_eur
 ```
 
-Transformación utilizada:
+Transformación:
 
 ```text
 log_market_value_eur
@@ -906,8 +1292,6 @@ La transformación logarítmica permite:
 
 Construir un benchmark interpretable capaz de explicar los determinantes económicos y deportivos del valor de mercado.
 
----
-
 ## Especificación oficial
 
 ```python
@@ -923,8 +1307,6 @@ position FE +
 season FE
 ```
 
----
-
 ## Modelo oficial
 
 ```text
@@ -939,28 +1321,20 @@ Características:
 * covarianza robusta HC3;
 * validación temporal.
 
----
-
 ## Resultado
 
-| Modelo                |     R² |
-| --------------------- | -----: |
-| M_A_v13A_base_spec_FE | 0.4505 |
-| M_B_v13B_advanced_FE  | 0.4549 |
-
-Mejora observada:
+| Modelo | R² |
+|---|---:|
+| M_A_v13A_base_spec_FE | 0,4505 |
+| M_B_v13B_advanced_FE | 0,4549 |
 
 ```text
-ΔR² = +0.0044
+ΔR² = +0,0044
 ```
-
----
 
 ## Interpretación
 
-La incorporación de métricas avanzadas aporta capacidad explicativa incremental sin comprometer interpretabilidad.
-
-El modelo econométrico permanece como referencia explicativa oficial del sistema.
+La incorporación de métricas avanzadas aporta capacidad explicativa incremental sin comprometer interpretabilidad. El modelo econométrico permanece como referencia explicativa oficial del sistema.
 
 ---
 
@@ -970,8 +1344,6 @@ El modelo econométrico permanece como referencia explicativa oficial del sistem
 
 Maximizar capacidad predictiva sobre datos no observados.
 
----
-
 ## Arquitecturas evaluadas
 
 * Random Forest
@@ -979,20 +1351,15 @@ Maximizar capacidad predictiva sobre datos no observados.
 * LightGBM
 * XGBoost
 
----
-
 ## Diseño experimental
-
-La evaluación incorpora:
 
 * validación temporal;
 * imputación robusta;
 * codificación categórica;
 * escalado;
 * búsqueda de hiperparámetros;
-* experiment tracking mediante MLflow.
-
----
+* tracking experimental mediante MLflow;
+* evaluación out-of-sample.
 
 ## Modelo productivo oficial
 
@@ -1000,41 +1367,36 @@ La evaluación incorpora:
 Tuned XGBoost v13B
 ```
 
----
+## Resultado productivo consolidado
 
-## Resultado comparativo Sprint 13B
-
-| Modelo               | Mejora observada |
-| -------------------- | ---------------: |
-| XGBoost              |          +0.0096 |
-| Random Forest        |          +0.0097 |
-| HistGradientBoosting |          +0.0144 |
-| LightGBM             |          +0.0291 |
-
----
-
-## Hallazgo metodológico
-
-Todas las arquitecturas mejoran simultáneamente tras incorporar:
-
-* finishing_index_v2
-* availability_index
-* defensive_activity_index
-
-Este comportamiento reduce significativamente el riesgo de sobreajuste metodológico a una única familia de modelos.
-
----
+| Métrica | Valor |
+|---|---:|
+| RMSE | 0,8692 |
+| MAE | 0,6955 |
+| R² | 0,5651 |
 
 ## Resultados históricos relevantes
 
-Durante Sprint 13A.1 se obtuvo el mejor rendimiento predictivo de todo el proyecto mediante una validación externa multi-liga:
+Durante Sprint 13A.1 se alcanzó la mejor referencia histórica del proyecto. La métrica se conserva como benchmark de generalización, mientras que v2.0.0 utiliza el artefacto productivo consolidado descrito en la sección anterior.
 
-| Modelo                   |   RMSE |    MAE |     R² |
-| ------------------------ | -----: | -----: | -----: |
-| Tuned XGBoost (11 ligas) | 0.8525 | 0.6834 | 0.5664 |
+## Resultado comparativo Sprint 13B
 
-Este resultado constituye la referencia histórica de capacidad predictiva alcanzada por la arquitectura Machine Learning desarrollada en el proyecto.
+| Modelo | Mejora observada |
+|---|---:|
+| XGBoost | +0,0096 |
+| Random Forest | +0,0097 |
+| HistGradientBoosting | +0,0144 |
+| LightGBM | +0,0291 |
 
+## Hallazgo metodológico
+
+Todas las arquitecturas mejoran tras incorporar:
+
+* `finishing_index_v2`
+* `availability_index`
+* `defensive_activity_index`
+
+La consistencia entre familias de modelos reduce el riesgo de atribuir la mejora a una única arquitectura.
 
 ---
 
@@ -1045,8 +1407,6 @@ La plataforma incorpora Explainable Artificial Intelligence mediante:
 ```text
 SHAP
 ```
-
----
 
 ## Explainability global
 
@@ -1062,8 +1422,6 @@ Pregunta objetivo:
 ¿Qué variables explican el valor de mercado?
 ```
 
----
-
 ## Explainability local
 
 Permite interpretar recomendaciones individuales.
@@ -1071,23 +1429,12 @@ Permite interpretar recomendaciones individuales.
 Pregunta objetivo:
 
 ```text
-¿Por qué este jugador aparece
-como oportunidad de mercado?
+¿Por qué este jugador aparece como oportunidad?
 ```
-
----
 
 ## Hallazgo principal
 
-Entre todas las variables avanzadas evaluadas:
-
-```text
-finishing_index_v2
-```
-
-emerge como la métrica con mayor relevancia predictiva agregada.
-
-Este constituye el principal hallazgo analítico de Sprint 13B.
+`finishing_index_v2` es la métrica avanzada con mayor relevancia predictiva agregada en los análisis realizados.
 
 ---
 
@@ -1095,7 +1442,7 @@ Este constituye el principal hallazgo analítico de Sprint 13B.
 
 ## Sprint 13A.1 — External Validation
 
-Tras la expansión multi-liga se realizó una validación externa explícita para evaluar la capacidad de generalización del sistema fuera de las cinco grandes ligas europeas.
+La validación externa evalúa la capacidad de generalización del sistema fuera de las cinco grandes ligas europeas.
 
 Competiciones incorporadas:
 
@@ -1104,52 +1451,39 @@ Competiciones incorporadas:
 * Austrian Bundesliga
 * Spanish Segunda División
 
----
-
 ## Cobertura final
 
-| Métrica             |  Valor |
-| ------------------- | -----: |
-| Ligas               |     11 |
-| Temporadas          |      7 |
-| Liga-temporada      |     77 |
+| Métrica | Valor |
+|---|---:|
+| Ligas | 11 |
+| Temporadas | 7 |
+| Liga-temporada | 77 |
 | Observaciones FBref | 43.591 |
-| Dataset modelizable |  5.527 |
-
----
+| Dataset modelizable | 5.527 |
 
 ## Mejor resultado Machine Learning obtenido
 
-| Métrica |         Valor |
-| ------- | ------------: |
-| Modelo  | Tuned XGBoost |
-| RMSE    |        0.8525 |
-| MAE     |        0.6834 |
-| R²      |        0.5664 |
-
----
+| Métrica | Valor |
+|---|---:|
+| Modelo | Tuned XGBoost |
+| RMSE | 0,8525 |
+| MAE | 0,6834 |
+| R² | 0,5664 |
 
 ## Interpretación
 
-La ampliación desde siete hasta once ligas no redujo el rendimiento predictivo del sistema.
-
-Por el contrario, la incorporación de nuevos contextos competitivos permitió mejorar la capacidad de generalización del modelo y obtener el mejor resultado predictivo alcanzado durante el proyecto.
-
-Este experimento constituye la principal evidencia de validez externa de la metodología desarrollada.
-
+La ampliación desde siete hasta once ligas no deterioró la capacidad de generalización. El experimento constituye la principal evidencia de validez externa de la metodología.
 
 ---
 
 # 🎯 Opportunity Framework
 
-La predicción de valor constituye únicamente una etapa intermedia.
-
-El sistema transforma estimaciones en oportunidades accionables mediante:
+La predicción de valor constituye una etapa intermedia.
 
 ```text
 Predicted Market Value
 ↓
-Inefficiency Score
+Market Value Gap
 ↓
 Growth Score
 ↓
@@ -1158,11 +1492,9 @@ Confidence Score
 Opportunity Score
 ```
 
----
-
 ## Inefficiency Score
 
-Captura desviaciones entre:
+La formulación conceptual de ineficiencia compara:
 
 ```text
 Valor esperado
@@ -1170,7 +1502,7 @@ vs
 Valor observado
 ```
 
----
+En v2.0.0 la autoridad operativa utiliza directamente el gap y los scores integrados del universo DSS. La columna histórica `inefficiency_score` no forma parte del artefacto canónico actual y no se fabrica mediante fallback.
 
 ## Growth Score
 
@@ -1180,21 +1512,30 @@ Captura:
 * revalorización;
 * potencial de crecimiento.
 
----
+Cobertura actual:
+
+```text
+757/757
+```
 
 ## Confidence Score
 
 Captura:
 
 * robustez del matching;
-* completitud de datos;
-* estabilidad temporal.
+* completitud;
+* estabilidad;
+* disponibilidad de contexto.
 
----
+Cobertura actual:
+
+```text
+757/757
+```
 
 ## Opportunity Score
 
-Integra simultáneamente:
+Integra:
 
 ```text
 Infravaloración
@@ -1204,7 +1545,11 @@ Potencial
 Robustez
 ```
 
-en una única métrica operativa orientada a scouting.
+Cobertura actual:
+
+```text
+757/757
+```
 
 ---
 
@@ -1212,21 +1557,15 @@ en una única métrica operativa orientada a scouting.
 
 La oportunidad de mercado no implica necesariamente una recomendación segura.
 
-Por este motivo se incorpora:
+## Objetivo
+
+Cuantificar la incertidumbre asociada a cada recomendación mediante:
 
 ```text
 Risk Score
+Risk Level
+Risk-adjusted Opportunity
 ```
-
-como dimensión independiente.
-
----
-
-## Objetivo
-
-Cuantificar incertidumbre asociada a cada recomendación.
-
----
 
 ## Resultado
 
@@ -1238,7 +1577,7 @@ Risk
 Priorización más realista
 ```
 
-para contextos de recruitment profesional.
+La capa de riesgo se calcula antes de servir el universo DSS. Streamlit consume el resultado canónico y no reconstruye scores mediante reglas locales.
 
 ---
 
@@ -1246,21 +1585,25 @@ para contextos de recruitment profesional.
 
 Sprint 11 transforma rankings analíticos en procesos estructurados de scouting y recruitment.
 
-Capacidades implementadas:
+Capacidades:
 
 * Recruitment Board.
 * Candidate Selection.
 * Comparative Player Analysis.
 * Executive Shortlists.
 * Positional Benchmarking.
+* Role-based filtering.
+* Context-aware candidate summaries.
+* Eligibility checks.
+* Seguimiento pasivo mediante Watchlist/Monitor.
+
+La capa de Recruitment Intelligence consume la identidad y los campos de presentación desde el Registry para evitar discrepancias entre listados, fichas y comparadores.
 
 ---
 
 # 🎯 Transfer Strategy Engine
 
 ## Sprint 14
-
-La principal evolución conceptual del proyecto consiste en incorporar optimización estratégica de fichajes.
 
 Pregunta objetivo:
 
@@ -1270,17 +1613,15 @@ maximiza el valor esperado
 bajo restricciones reales de club?
 ```
 
----
-
 ## Inputs
 
 * presupuesto;
 * posiciones requeridas;
 * perfil estratégico;
 * calidad mínima;
-* número máximo de incorporaciones.
-
----
+* número máximo de incorporaciones;
+* coste de cartera;
+* riesgo y upside.
 
 ## Outputs
 
@@ -1289,94 +1630,49 @@ bajo restricciones reales de club?
 * utilización presupuestaria;
 * ROI esperado;
 * upside esperado;
-* score medio de cartera.
-
----
+* score medio;
+* composición por posición;
+* escenario estratégico.
 
 ## Optimización
 
-La resolución utiliza:
-
 ```text
 Binary Integer Programming
-(PuLP)
+PuLP
 ```
 
-permitiendo construir carteras óptimas bajo restricciones simultáneas.
+La formulación permite construir carteras óptimas bajo restricciones simultáneas.
 
 ---
 
 # 🔄 Sprint TM.2 — Multi-League DSS Integration
 
-Tras Sprint 13A y Sprint 13B se detectó una inconsistencia operativa:
-
-```text
-Modeling Layer
-↓
-11 ligas
-
-Scoring DSS
-↓
-7 ligas
-```
-
----
-
-## Objetivo
-
-Garantizar que la expansión multi-liga alcanzara todas las capas operativas del sistema.
-
----
-
-## Resultado
-
-Cobertura final:
-
-```text
-Modeling Dataset
-↓
-Scoring Dataset
-↓
-Opportunity Framework
-↓
-Ranking Engine
-↓
-Transfer Strategy Engine
-↓
-Decision Support System
-```
-
-```text
-11 ligas
-de extremo a extremo
-```
-
----
+TM.2 resolvió una inconsistencia histórica entre la cobertura de modelización y la cobertura del DSS.
 
 ## Impacto
 
-Sprint TM.2 no modifica:
+La integración alineó modelado, scoring, rankings, portfolio y dashboard sin modificar la especificación predictiva.
 
-* modelos econométricos;
-* modelos Machine Learning;
-* metodología de scoring.
+Resultado:
 
-Su contribución consiste en asegurar consistencia metodológica completa entre modelización y DSS.
+```text
+11 ligas de extremo a extremo
+```
+
+La integración no modificó las especificaciones econométricas ni los modelos de Machine Learning. Su aportación fue garantizar que scoring, rankings, portfolio y dashboard consumieran el universo multi-liga correcto.
+
+Este bloque se mantiene como hito histórico. La arquitectura actual añade, sobre esa base, Registry, Snapshot Authority, Presentation Layer y DataFrame Contracts.
 
 ---
 
 # 📊 Evaluación de negocio
 
-La utilidad del sistema se evalúa mediante métricas orientadas a toma de decisiones.
-
-| Métrica       | Valor |
-| ------------- | ----: |
-| Precision@10  |   90% |
-| Precision@20  |   90% |
-| Precision@50  |   90% |
-| Precision@100 |   85% |
-
----
+| Métrica | Valor |
+|---|---:|
+| Precision@10 | 90% |
+| Precision@20 | 90% |
+| Precision@50 | 90% |
+| Precision@100 | 85% |
 
 ## Interpretación
 
@@ -1385,133 +1681,106 @@ Los resultados respaldan la utilidad operativa del sistema para:
 * scouting;
 * recruitment;
 * construcción de shortlists;
-* optimización de carteras de fichajes;
+* optimización de carteras;
 * soporte cuantitativo a decisiones deportivas.
 
-La combinación de modelización, opportunity detection, risk assessment y portfolio optimization constituye la principal aportación metodológica del proyecto.
+La utilidad de negocio no depende únicamente de la precisión predictiva. También requiere:
+
+* identidad correcta;
+* contexto interpretable;
+* cobertura suficiente;
+* latencia operativa;
+* consistencia entre módulos;
+* señal de riesgo;
+* transparencia sobre datos ausentes.
+
+---
 
 # 🖥️ Decision Support System
 
-La capa DSS representa la consolidación de todas las capacidades analíticas desarrolladas a lo largo del proyecto.
-
-Su función consiste en transformar resultados de modelización, scoring, evaluación de riesgo y optimización estratégica en herramientas utilizables por departamentos deportivos.
-
-La aplicación se implementa mediante:
-
-```text
-Streamlit
-```
-
-y actúa como interfaz operativa de toda la arquitectura.
-
----
+La capa DSS consolida modelización, scoring, riesgo, contexto contractual y optimización estratégica dentro de una aplicación Streamlit.
 
 ## Capacidades actuales
 
 ### Opportunity Intelligence
 
-Permite identificar oportunidades de mercado mediante:
-
 * Opportunity Score.
-* Inefficiency Score.
 * Growth Score.
 * Confidence Score.
-
----
+* Market Value Gap.
+* Context Change Caution.
 
 ### Risk Intelligence
 
-Permite evaluar:
-
 * Risk Score.
-* Risk Category.
+* Risk Level.
 * Risk-adjusted Opportunity.
-
----
+* Distribución riesgo-oportunidad.
 
 ### Player Intelligence
-
-Permite:
 
 * análisis individual;
 * benchmarking posicional;
 * radar de rendimiento;
-* interpretación de fortalezas y debilidades.
-
----
+* fortalezas y debilidades;
+* contexto actual y de temporada;
+* identidad visual.
 
 ### Recruitment Intelligence
 
-Permite:
-
-* construcción de shortlists;
-* comparación simultánea de candidatos;
-* priorización de perfiles;
-* evaluación ejecutiva.
-
----
+* shortlists;
+* comparación simultánea;
+* priorización;
+* filtros por rol, liga, edad y valor;
+* resúmenes ejecutivos;
+* board de candidatos.
 
 ### Contract Intelligence
 
-Permite:
-
-* identificar expiraciones contractuales;
-* detectar oportunidades pre-expiración;
-* evaluar poder negociador;
-* priorizar agentes libres potenciales;
-* incorporar contexto contractual a procesos de recruitment.
-
----
+* expiraciones;
+* oportunidades pre-expiración;
+* poder negociador;
+* horizonte de agente libre;
+* Contract Opportunity Score;
+* Recruitment Contract Score.
 
 ### Transfer Strategy Engine
 
-Permite:
-
-* definir restricciones deportivas;
-* definir restricciones presupuestarias;
-* simular escenarios estratégicos;
-* optimizar carteras de fichajes.
-
----
+* restricciones deportivas;
+* restricciones presupuestarias;
+* escenarios;
+* optimización de carteras.
 
 ### Portfolio Optimization
-
-Permite generar automáticamente:
 
 * Recommended Portfolio.
 * Expected Upside.
 * Expected ROI.
 * Budget Utilization.
 * Portfolio Composition.
+* Perfiles conservador, equilibrado y agresivo.
+
+### Data Quality & Governance
+
+* Snapshot Health.
+* Context Status.
+* DataFrame Contracts.
+* Registry Coverage.
+* Safe fallbacks.
+* Auditorías de matching.
 
 ---
 
 ## Cobertura DSS actual
 
-Tras Sprint TM.2 la cobertura competitiva queda alineada con la cobertura de modelización.
-
-```text
-Modeling Layer
-↓
-Scoring Layer
-↓
-Opportunity Framework
-↓
-Ranking Engine
-↓
-Transfer Strategy Engine
-↓
-Decision Support System
-```
-
-Resultado:
-
 ```text
 11 ligas
-77 league-seasons
+757 jugadores
+118 variables canónicas
+100% cobertura de presentación
+100% cobertura de Opportunity, Confidence y Risk
+89,96% cobertura de snapshot actual
 ```
-
-integradas de extremo a extremo.
 
 ---
 
@@ -1521,7 +1790,15 @@ integradas de extremo a extremo.
 
 ![Executive Dashboard](reports/figures/dashboard/executive_overview.png)
 
-Visualización ejecutiva de oportunidades, riesgo y métricas clave del sistema.
+Vista ejecutiva del universo, oportunidades, riesgo y métricas clave.
+
+---
+
+## Opportunity–Risk Matrix
+
+![Opportunity Risk Matrix](reports/figures/dashboard/opportunity_risk_matrix_v2.png)
+
+Priorización visual de candidatos según oportunidad y riesgo.
 
 ---
 
@@ -1529,7 +1806,7 @@ Visualización ejecutiva de oportunidades, riesgo y métricas clave del sistema.
 
 ![Player Intelligence](reports/figures/dashboard/player_intelligence.png)
 
-Análisis individual de jugadores con benchmarking posicional y métricas compuestas.
+Análisis individual con benchmarking posicional, contexto e indicadores compuestos.
 
 ---
 
@@ -1537,7 +1814,7 @@ Análisis individual de jugadores con benchmarking posicional y métricas compue
 
 ![Recruitment Intelligence](reports/figures/dashboard/recruitment_intelligence.png)
 
-Comparación simultánea de candidatos y construcción de shortlists operativas.
+Comparación de candidatos y construcción de shortlists.
 
 ---
 
@@ -1545,32 +1822,23 @@ Comparación simultánea de candidatos y construcción de shortlists operativas.
 
 ![Transfer Strategy Engine](reports/figures/dashboard/transfer_strategy_engine.png)
 
-Optimización de carteras de fichajes bajo restricciones reales de club.
+Optimización de carteras bajo restricciones de club.
 
 ---
 
 # ⚽ Valor para departamentos deportivos
 
-La plataforma permite responder preguntas habituales dentro de procesos de scouting y recruitment.
-
----
-
 ## Valoración de mercado
 
 ```text
-¿Cuál debería ser el valor de mercado esperado
-de este jugador?
+¿Cuál debería ser el valor de mercado esperado de este jugador?
 ```
-
----
 
 ## Oportunidades de mercado
 
 ```text
-¿Qué jugadores parecen infravalorados?
+¿Qué jugadores presentan mayor gap positivo con suficiente confianza?
 ```
-
----
 
 ## Riesgo
 
@@ -1578,40 +1846,37 @@ de este jugador?
 ¿Cuánto riesgo implica esta recomendación?
 ```
 
----
-
 ## Recruitment
 
 ```text
-¿Qué candidatos cumplen nuestros criterios?
+¿Qué candidatos cumplen nuestros criterios deportivos y económicos?
 ```
-
----
 
 ## Comparación
 
 ```text
-¿Qué jugador ofrece mejor combinación
-de potencial, riesgo y coste?
+¿Qué jugador ofrece mejor combinación de potencial, riesgo y coste?
 ```
-
----
 
 ## Estrategia
 
 ```text
-¿Qué combinación de jugadores maximiza
-el valor esperado bajo restricciones reales?
+¿Qué combinación de jugadores maximiza el valor esperado
+bajo restricciones reales?
 ```
----
-
 
 ## Oportunidad contractual
 
 ```text
-¿Qué jugadores combinan
-oportunidad deportiva
+¿Qué jugadores combinan oportunidad deportiva
 y situación contractual favorable?
+```
+
+## Gobernanza
+
+```text
+¿La comparación utiliza el mismo contexto
+o requiere una advertencia por cambio de club, liga o valoración?
 ```
 
 ---
@@ -1621,55 +1886,55 @@ y situación contractual favorable?
 ## Estado general
 
 ```text
-Release:
-v1.4.0
+Release: v2.0.0
+Estado: Operativo
+Despliegue: Streamlit Cloud validado
 ```
-
-Estado:
-
-```text
-Activo
-```
-
----
 
 ## Sprint completados
 
 ```text
-Sprint 13A   — Multi-League Expansion
-Sprint 13A.1 — External Validation
-Sprint 13B   — Advanced Data Expansion
-Sprint 14    — Transfer Strategy Engine
-Sprint 14.1  — Player Level Layer
-Sprint TM.2  — Scoring & Ranking Integration
-Sprint TM.3  — Contract Intelligence Layer
+13A / 13A.1 / 13B
+14 / 14.1
+TM.2 / TM.3
+TM.6.x
+TM.7.0 / TM.7.1 / TM.7.6
+TM.8.6 / TM.8.9 / TM.8.10
 ```
-
----
 
 ## Cobertura actual
 
-| Métrica             |    Valor |
-| ------------------- | -------: |
-| Ligas               |       11 |
-| Temporadas          |        7 |
-| Liga-temporada      |       77 |
-| Observaciones FBref |   43.591 |
-| Dataset modelizable |    5.527 |
-| Cobertura DSS       | 11 ligas |
-
----
+| Métrica | Valor |
+|---|---:|
+| Ligas | 11 |
+| Temporadas | 7 |
+| Liga-temporada | 77 |
+| Observaciones FBref | 43.591 |
+| Dataset modelizable | 5.527 |
+| Universo DSS | 757 |
+| Cobertura snapshot | 89,96% |
+| Cobertura presentación | 100% |
+| Tests DSS | 20/20 |
 
 ## Modelos oficiales
 
-| Capa                         | Modelo                       |
-| ---------------------------- | ---------------------------- |
-| Econometría                  | Growth OLS v13B              |
-| Machine Learning             | Tuned XGBoost v13B           |
-| Mejor resultado histórico ML | Tuned XGBoost (Sprint 13A.1) |
+| Capa | Modelo |
+|---|---|
+| Econometría | Growth OLS v13B |
+| Machine Learning | Tuned XGBoost v13B |
+| Referencia histórica | Tuned XGBoost — Sprint 13A.1 |
 
+## Autoridades productivas
 
----
+| Dominio | Autoridad |
+|---|---|
+| Modeling | `data/processed/player_season_modeling_v13b_productive_candidate.parquet` |
+| DSS | `reports/dss/global_prospect_universe.csv` |
+| Snapshot actual | `data/processed/current_player_snapshot.*` |
+| Contratos | `reports/tm3_contract_intelligence/contract_intelligence_dataset.csv` |
+| Portfolio | `reports/strategy/transfer_portfolio_dataset.csv` |
+| Presentación | `src/dss/player_registry.py` + `src/dss/presentation.py` |
+| Data contracts | `src/dss/contract/dataframe_contract.py` |
 
 ## Estado funcional
 
@@ -1690,6 +1955,8 @@ Transfer Strategy Engine
 ↓
 Portfolio Optimization
 ↓
+Snapshot & Context Governance
+↓
 Decision Support System
 ```
 
@@ -1697,104 +1964,110 @@ Decision Support System
 
 # ⚠️ Limitaciones
 
-Aunque la arquitectura principal puede considerarse completada, existen limitaciones inherentes a la disponibilidad de datos.
-
----
-
 ## Matching
 
-La ausencia de identificadores universales entre FBref y Transfermarkt obliga a utilizar procesos probabilísticos de matching.
+La ausencia de identificadores universales entre FBref y Transfermarkt obliga a combinar identificadores, normalización y matching probabilístico.
 
----
+## Snapshot actual
+
+La cobertura del snapshot actual es del 89,96%. Los jugadores no enlazados conservan el contexto de temporada para presentación y no reciben datos actuales fabricados.
+
+## Cambio de contexto
+
+La mayoría del universo DSS ha cambiado de club, liga o valoración respecto a la observación histórica. El gap requiere interpretación cautelosa cuando `gap_interpretation_status = CONTEXT_CHANGED_CAUTION`.
+
+## Información contractual
+
+La cobertura contractual es elevada, pero no completa. Las variables contractuales ausentes se mantienen como `NaN`.
 
 ## Competiciones internacionales
 
-Actualmente no se incorporan explícitamente:
+No se incorporan explícitamente:
 
 * Champions League;
 * Europa League;
 * Conference League;
-* competiciones de selecciones nacionales.
-
----
+* competiciones de selecciones.
 
 ## Lesiones
 
-La plataforma no incorpora todavía:
+No se incorpora todavía un historial médico completo ni un modelo específico de Injury Prediction.
 
-* historial de lesiones;
-* disponibilidad médica;
-* modelos de Injury Prediction.
+## Arquitectura de interfaz
+
+El consumo de datos está refactorizado, pero `app/streamlit_app.py` conserva una elevada concentración de lógica de render. La modularización adicional mejoraría mantenibilidad y capacidad de test.
+
+## Automatización
+
+Los snapshots y artefactos se generan mediante pipelines reproducibles, pero el refresh completo todavía requiere una ejecución controlada y validación de guardrails antes de promoción.
 
 ---
 
 # 🛣️ Roadmap
 
-Las siguientes líneas representan extensiones naturales del sistema.
+## Prioridad alta
 
----
+### TabPFN Benchmark
+
+Evaluación de arquitecturas fundacionales para datos tabulares bajo validación out-of-sample.
+
+### CatBoost Benchmark
+
+Comparación frente al stack productivo actual, especialmente en el tratamiento de variables categóricas.
+
+### Modularización Streamlit
+
+Separación progresiva de `streamlit_app.py` en módulos de dominio, render y controladores.
+
+### Automated Snapshot Promotion
+
+Automatización del refresh con:
+
+* candidate build;
+* guardrails;
+* health report;
+* promoción controlada;
+* rollback.
+
+### CI de contratos y documentación
+
+Incorporación de validaciones automáticas para:
+
+* DataFrame contracts;
+* imports;
+* tests DSS;
+* enlaces Markdown;
+* artefactos canónicos.
+
+## Prioridad media
 
 ### UEFA Club Strength Layer
-
-Variables previstas:
 
 * coeficiente UEFA;
 * rendimiento europeo;
 * experiencia continental.
 
----
-
-### CatBoost Benchmark
-
-Comparación frente al stack actual.
-
----
-
-### TabPFN Benchmark
-
-Evaluación experimental de arquitecturas fundacionales para datos tabulares.
-
----
-
-## Prioridad media
-
 ### National Team Layer
 
-Variables previstas:
-
 * internacionalidades;
-* minutos internacionales;
-* torneos disputados.
-
----
+* minutos;
+* torneos.
 
 ### European Competition Layer
-
-Variables previstas:
 
 * Champions League;
 * Europa League;
 * Conference League.
 
----
-
 ### Club Development Index
 
-Medición de la capacidad histórica de desarrollo y revalorización de talento de cada club.
-
----
+Medición de la capacidad histórica de desarrollo y revalorización de talento.
 
 ## Investigación futura
 
 ### Injury Prediction
 
-Línea independiente de investigación orientada a:
-
-```text
-Health Intelligence
-```
-
-mediante modelización específica de riesgo de lesión.
+Línea independiente de Health Intelligence orientada a modelizar disponibilidad y riesgo de lesión.
 
 ---
 
@@ -1803,132 +2076,133 @@ mediante modelización específica de riesgo de lesión.
 ```bash
 market-value-football-tfm/
 
-├── app/                                   # Aplicación interactiva y capa Decision Support
-│   ├── streamlit_app.py                   # Executive Dashboard
-│   └── utils/                             # Utilidades específicas del dashboard
-│       ├── charts.py                      # Visualizaciones y gráficos interactivos
-│       ├── formatters.py                  # Formateo de KPIs, métricas y valores monetarios
-│       └── loaders.py                     # Carga de datos y outputs analíticos
+├── .devcontainer/                         # Entorno reproducible de desarrollo
+├── .streamlit/                            # Configuración de Streamlit
 │
-├── artifacts/                             # Artefactos persistidos de modelos y predicciones
-│   ├── encoders/                          # Encoders categóricos serializados
-│   ├── feature_importance/                # Importancia de variables exportada
-│   ├── metadata/                          # Metadata y hashes de datasets versionados
-│   ├── models/                            # Modelos entrenados (.joblib)
-│   ├── predictions/                       # Predicciones persistidas
-│   └── scalers/                           # Transformadores numéricos serializados
+├── app/                                   # Aplicación DSS
+│   ├── streamlit_app.py                   # Entry point principal
+│   ├── assets/                            # Escudos, banderas e imágenes locales
+│   ├── data/                              # Manifests y datos auxiliares de presentación
+│   └── ui/                                # Componentes visuales reutilizables
 │
-├── config/                                # Configuración centralizada del sistema
+├── artifacts/                             # Modelos y metadata persistida
+│   ├── metadata/
+│   └── models/
+│
+├── config/                                # Configuración centralizada
 │   ├── config.yaml
-│   ├── config_backup.yaml
-│   ├── features.yaml                      # Configuración de feature engineering
-│   ├── matching.yaml                      # Parámetros de matching
-│   ├── modeling.yaml                      # Configuración de modelización
-│   ├── paths.yaml                         # Paths del proyecto
-│   ├── project.yaml                       # Configuración global
-│   ├── scoring.yaml                       # Configuración de scoring y rankings
-│   └── validation.yaml                    # Configuración centralizada de validación temporal
+│   ├── features.yaml
+│   ├── matching.yaml
+│   ├── modeling.yaml
+│   ├── paths.yaml
+│   ├── project.yaml
+│   ├── scoring.yaml
+│   └── validation.yaml
 │
 ├── data/
 │   ├── external/                          # Datos auxiliares externos
-│   ├── interim/                           # Datos parcialmente transformados
-│   ├── processed/                         # Datasets finales reutilizables
-│   └── raw/                               # Datos originales sin procesar
+│   ├── interim/                           # Transformaciones intermedias
+│   ├── processed/                         # Datasets finales y snapshots
+│   └── raw/                               # Fuentes originales
 │
-├── docs/                                  # Documentación técnica y metodológica
-│   ├── architecture.md                    # Arquitectura completa del sistema
-│   ├── data_dictionary.md                 # Diccionario de variables y outputs
-│   ├── data_quality.md                    # Evaluación de calidad de datos
-│   ├── data_sources.md                    # Fuentes de datos y matching
-│   ├── feature_engineering_plan.md        # Roadmap de feature engineering
-│   ├── modeling_decisions.md              # Decisiones metodológicas de modelización
-│   ├── pipeline_reference.md              # Referencia técnica de pipelines
-│   ├── README.md                          # Índice central de documentación
-│   └── schema_decisions.md                # Diseño de esquema y arquitectura de datos
+├── docs/
+│   ├── README.md                          # Índice técnico
+│   ├── architecture.md                    # Arquitectura del sistema
+│   ├── data_contract.md                   # Contratos y gobernanza de DataFrames
+│   ├── data_dictionary.md                 # Diccionario de variables
+│   ├── data_quality.md                    # Calidad y auditorías
+│   ├── data_sources.md                    # Fuentes y matching
+│   ├── feature_engineering_plan.md        # Feature engineering
+│   ├── modeling_decisions.md              # Decisiones metodológicas
+│   ├── pipeline_reference.md              # Pipelines productivos
+│   └── schema_decisions.md                # Decisiones de esquema
 │
-├── logs/                                  # Logs de ejecución y debugging
-│
-├── mlruns/                                # Tracking experimental MLflow
-│
-├── notebooks/                             # Notebooks exploratorios y análisis
+├── notebooks/
 │   ├── 01_data_understanding.ipynb
 │   ├── 02_econometric_baseline.ipynb
 │   ├── 03_econometric_model.ipynb
 │   ├── 04_supervised_machine_learning.ipynb
 │   └── README.md
 │
-├── reports/                               # Outputs analíticos y reporting
-│   ├── business/                          # Métricas de negocio y evaluación de impacto
-│   ├── evaluation/                        # Resultados de validación y evaluación de modelos
-│   ├── figures/                           # Visualizaciones y figuras exportadas
-│   │   ├── dashboard/                     # Capturas del DSS y Scouting Intelligence Platform
-│   │   └── explainability/                # SHAP, feature importance y análisis interpretativo
-│   ├── model_diagnostics/                 # Diagnósticos econométricos y de Machine Learning
-│   ├── portfolio/                         # Outputs del Transfer Strategy Engine
-│   │   ├── portfolio_candidates.csv
-│   │   ├── portfolio_candidates.parquet
-│   │   ├── portfolio_dataset_metadata.json
-│   │   ├── portfolio_dataset_summary.csv
-│   │   ├── recommended_portfolio.csv
-│   │   ├── recommended_portfolio_summary.json
-│   │   └── scenarios/
-│   │       ├── recommended_portfolio_conservative.csv
-│   │       ├── recommended_portfolio_balanced.csv
-│   │       ├── recommended_portfolio_aggressive.csv
-│   │       ├── recommended_portfolio_conservative_summary.json
-│   │       ├── recommended_portfolio_balanced_summary.json
-│   │       ├── recommended_portfolio_aggressive_summary.json
-│   │       ├── scenario_simulation_summary.csv
-│   │       └── scenario_simulation_metadata.json
-│   ├── rankings/                          # Rankings de scouting y oportunidades de mercado
-│   ├── scouting_reports/                  # Informes individuales de scouting
-│   └── tables/                            # Métricas, tablas y resultados exportados
+├── reports/
+│   ├── data_quality/                      # Auditorías y health reports
+│   ├── dss/
+│   │   └── global_prospect_universe.csv   # Universo DSS canónico
+│   ├── figures/
+│   │   ├── dashboard/
+│   │   └── explainability/
+│   ├── performance/                       # Auditorías de carga y runtime
+│   ├── portfolio/                         # Carteras y escenarios
+│   ├── scouting_reports/                  # Informes individuales
+│   ├── strategy/                          # Dataset de estrategia
+│   ├── tables/
+│   └── tm3_contract_intelligence/
+│       └── contract_intelligence_dataset.csv
 │
-├── src/                                   # Lógica principal del sistema
-│   ├── data/                              # Ingesta, matching y datasets
+├── scripts/                               # Auditorías y utilidades operativas
+│
+├── src/
+│   ├── data/                              # Ingesta, matching y refresh
+│   ├── dss/
+│   │   ├── contract/                      # DataFrame Contract Layer
+│   │   ├── intelligence/                  # Dominios DSS
+│   │   ├── apply_current_player_snapshot.py
+│   │   ├── build_global_prospect_universe.py
+│   │   ├── player_registry.py
+│   │   ├── player_service.py
+│   │   ├── player_view.py
+│   │   ├── presentation.py
+│   │   ├── registry.py
+│   │   └── run_snapshot_refresh.py
 │   ├── features/                          # Feature engineering
 │   ├── models/
-│   │   ├── econometric/                   # Pipeline OLS
-│   │   ├── evaluation/                    # Métricas y comparación
-│   │   ├── machine_learning/              # Pipelines ML
-│   │   └── scoring/                       # Inefficiency scoring
-│   ├── strategy/                          # Transfer Strategy Engine
-│   │   ├── build_portfolio_dataset.py     # Construcción del universo optimizable
-│   │   ├── optimize_transfer_strategy.py  # Optimización 0-1 Knapsack
-│   │   └── simulate_transfer_scenarios.py # Simulación de escenarios estratégicos
-│   └── utils/                             # Utilidades compartidas
-│       ├── config.py                      # Loader centralizado de configuración YAML
-│       ├── dataset_versioning.py          # Versionado y hashing de datasets
-│       └── experiment_tracking.py         # Integración MLflow
+│   │   ├── econometric/
+│   │   ├── evaluation/
+│   │   ├── machine_learning/
+│   │   └── scouting/
+│   ├── scouting/
+│   │   └── contracts/                     # Contract Intelligence
+│   ├── strategy/                          # Portfolio Optimization
+│   ├── utils/
+│   └── visual/
 │
-├── tests/                                 # Estructura reservada para validaciones automatizadas futuras
-│   └── .gitkeep                           # Mantiene la carpeta en Git aunque esté vacía
+├── tests/
+│   └── dss/                               # Tests automatizados del DSS
 │
-├── .gitignore                             # Reglas de exclusión de Git
-├── dataset-metadata.json                  # Metadata versionada del dataset actual
-├── environment.yml                        # Entorno Conda
-├── PROJECT_STATUS.md                      # Estado operativo del proyecto
-├── README.md                              # Documentación principal
-├── requirements-lock.txt                  # Dependencias fijadas
-├── requirements.txt                       # Dependencias Python
-└── LICENSE
+├── .gitignore
+├── dataset-metadata.json
+├── environment.local.yml
+├── LICENSE
+├── PROJECT_STATUS.md
+├── pytest.ini
+├── README.md
+├── requirements-lock.txt
+└── requirements.txt
 ```
+
+Los directorios `logs/`, `mlruns/`, caches, backups y candidatos de snapshot son outputs locales o regenerables y no forman parte del repositorio distribuido.
 
 ---
 
 # 🔁 Reproducibilidad
 
-El proyecto ha sido diseñado bajo principios de reproducibilidad científica.
+El proyecto ha sido diseñado bajo principios de reproducibilidad científica y operativa.
 
-Características principales:
+Características:
 
-* versionado completo;
+* versionado de código y artefactos;
 * configuración centralizada;
-* MLflow;
+* dependencias fijadas;
+* tracking experimental local;
 * artefactos persistentes;
 * separación entre experimentación y producción;
 * pipelines deterministas;
-* documentación metodológica completa.
+* snapshots auditables;
+* contratos de datos;
+* tests automatizados;
+* documentación metodológica.
+
+Los outputs temporales, logs, caches y backups están excluidos del repositorio. Los artefactos necesarios para reproducir la aplicación se mantienen versionados o se generan mediante pipelines documentados.
 
 ---
 
@@ -1938,11 +2212,8 @@ Características principales:
 
 ```bash
 git clone https://github.com/manuelpeba/market-value-football-tfm.git
-
 cd market-value-football-tfm
 ```
-
----
 
 ## 2. Crear entorno virtual
 
@@ -1958,19 +2229,40 @@ source .venv/bin/activate
 
 ### Windows
 
-```bash
-.venv\Scripts\activate
+#### PowerShell
+
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
----
+#### Git Bash
+
+```bash
+source .venv/Scripts/activate
+```
 
 ## 3. Instalar dependencias
 
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
----
+Dependencias principales fijadas:
+
+```text
+Python 3.11
+Streamlit 1.57.0
+Pandas 2.3.3
+NumPy 2.4.4
+Plotly 6.7.0
+PyArrow 23.0.1
+Scikit-learn 1.8.0
+XGBoost 3.2.0
+PuLP 3.3.2
+RapidFuzz 3.14.5
+Pillow 12.2.0
+```
 
 ## 4. Ejecutar notebooks
 
@@ -1978,49 +2270,62 @@ Orden recomendado:
 
 ```text
 01_data_understanding.ipynb
-
 ↓
-
 02_econometric_baseline.ipynb
-
 ↓
-
 03_econometric_model.ipynb
-
 ↓
-
 04_supervised_machine_learning.ipynb
 ```
-
----
 
 ## 5. Generar rankings
 
 ```bash
 python -m src.models.scoring.build_inefficiency_score
-
 python -m src.models.scoring.build_growth_score
-
 python -m src.models.scoring.build_confidence_score
-
 python -m src.models.scoring.build_opportunity_score
-
-python -m src.models.scoring.generate_rankings
+python -m src.models.scouting.build_risk_score
+python src/dss/build_global_prospect_universe.py
 ```
 
----
+## 8. Generar Contract Intelligence
+
+```bash
+python src/scouting/contracts/build_contract_intelligence.py
+```
+
+## 9. Aplicar snapshot actual
+
+```bash
+python src/dss/apply_current_player_snapshot.py
+```
+
+Para inspeccionar el pipeline completo y sus guardrails:
+
+```bash
+python src/dss/run_snapshot_refresh.py --help
+python src/dss/manage_snapshot_registry.py --help
+```
 
 ## 6. Generar estrategia de fichajes
 
 ```bash
-python -m src.models.scouting.build_risk_score
-
 python src/strategy/build_transfer_portfolio_dataset.py
-
 python src/strategy/optimize_transfer_portfolio.py
 ```
 
----
+## 10. Ejecutar tests
+
+```bash
+python -m pytest tests/dss -q
+```
+
+Resultado validado para v2.0.0:
+
+```text
+20 passed
+```
 
 ## 7. Lanzar dashboard
 
@@ -2032,7 +2337,7 @@ streamlit run app/streamlit_app.py
 
 # 📚 Referencias
 
-La construcción metodológica del proyecto combina contribuciones procedentes de:
+La construcción metodológica combina contribuciones procedentes de:
 
 * Football Analytics
 * Sports Economics
@@ -2042,6 +2347,8 @@ La construcción metodológica del proyecto combina contribuciones procedentes d
 * Decision Science
 * Operations Research
 * Portfolio Optimization
+* Data Engineering
+* Software Architecture
 
 ## Referencias metodológicas principales
 
@@ -2076,8 +2383,6 @@ La construcción metodológica del proyecto combina contribuciones procedentes d
 
 * Markowitz — *Portfolio Selection*
 
----
-
 ## Herramientas y tecnologías utilizadas
 
 * Python
@@ -2091,14 +2396,16 @@ La construcción metodológica del proyecto combina contribuciones procedentes d
 * DuckDB
 * MLflow
 * Streamlit
+* Plotly
 * PuLP
 * RapidFuzz
+* PyArrow
 
 ---
 
 # 👨‍🎓 Autoría
 
-Trabajo desarrollado como Trabajo Fin de Máster (TFM).
+Trabajo desarrollado como Trabajo Fin de Máster.
 
 Título:
 
@@ -2116,17 +2423,8 @@ Market Value Dynamics and Market Inefficiency Detection in Professional Football
 
 - Antonio Pita Lozano
 
-## Desarrollo técnico y evolución posterior del proyecto
-
-- Manuel Pérez Bañuls
-  - Arquitectura software
-  - Data Science
-  - Machine Learning
-  - Dashboard DSS
-  - Transfer Strategy Engine
-
 Versión actual:
 
 ```text
-v1.4.0 — Contract Intelligence Layer
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
