@@ -3,33 +3,11 @@
     "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\dss\\global_prospect_universe.csv",
     "status": "ok",
     "rows": 757,
-    "matched_total": 698,
-    "matched_pct": 92.21,
-    "matched_by_player_id": 698,
-    "matched_by_unique_name": 0,
-    "unmatched": 59,
+    "matched_total": 681,
+    "matched_pct": 89.96,
+    "matched_by_player_id": 679,
+    "matched_by_unique_name": 2,
+    "unmatched": 76,
     "audit": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\data_quality\\current_snapshot_apply\\global_prospect_universe_current_snapshot_apply_audit.csv"
-  },
-  {
-    "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\tm3_contract_intelligence\\contract_intelligence_dataset.csv",
-    "status": "ok",
-    "rows": 757,
-    "matched_total": 698,
-    "matched_pct": 92.21,
-    "matched_by_player_id": 698,
-    "matched_by_unique_name": 0,
-    "unmatched": 59,
-    "audit": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\data_quality\\current_snapshot_apply\\contract_intelligence_dataset_current_snapshot_apply_audit.csv"
-  },
-  {
-    "path": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\strategy\\transfer_portfolio_dataset.csv",
-    "status": "ok",
-    "rows": 6208,
-    "matched_total": 5640,
-    "matched_pct": 90.85,
-    "matched_by_player_id": 5640,
-    "matched_by_unique_name": 0,
-    "unmatched": 568,
-    "audit": "C:\\Users\\manue\\Projects\\market-value-football-tfm\\reports\\data_quality\\current_snapshot_apply\\transfer_portfolio_dataset_current_snapshot_apply_audit.csv"
   }
 ]

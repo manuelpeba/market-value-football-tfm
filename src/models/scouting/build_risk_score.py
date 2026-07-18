@@ -51,17 +51,44 @@ def calculate_confidence_risk(confidence_score: pd.Series) -> pd.Series:
 
 
 def calculate_gap_extreme_risk(df: pd.DataFrame) -> pd.Series:
-    if "market_value_gap_pct" in df.columns:
-        gap_pct = pd.to_numeric(df["market_value_gap_pct"], errors="coerce")
-    elif {"market_value_gap_eur", "market_value_eur"}.issubset(df.columns):
-        gap_pct = (
-            pd.to_numeric(df["market_value_gap_eur"], errors="coerce")
-            / pd.to_numeric(df["market_value_eur"], errors="coerce")
-        ) * 100
-    else:
-        return pd.Series(50, index=df.index)
+    """
+    Calculate valuation-gap risk in percentage points.
 
-    abs_gap = gap_pct.abs()
+    Project convention:
+    market_value_gap_pct is stored as a ratio, where 0.25 means 25%.
+    Business thresholds in this function are expressed in percentage points.
+    """
+    if {"market_value_gap_eur", "market_value_eur"}.issubset(df.columns):
+        gap_eur = pd.to_numeric(
+            df["market_value_gap_eur"],
+            errors="coerce",
+        )
+        market_value_eur = pd.to_numeric(
+            df["market_value_eur"],
+            errors="coerce",
+        )
+
+        gap_percentage_points = pd.Series(
+            np.where(
+                market_value_eur > 0,
+                gap_eur / market_value_eur * 100,
+                np.nan,
+            ),
+            index=df.index,
+            dtype="float64",
+        )
+
+    elif "market_value_gap_pct" in df.columns:
+        gap_ratio = pd.to_numeric(
+            df["market_value_gap_pct"],
+            errors="coerce",
+        )
+        gap_percentage_points = gap_ratio * 100
+
+    else:
+        return pd.Series(50, index=df.index, dtype="float64")
+
+    abs_gap = gap_percentage_points.abs()
 
     risk = np.select(
         [
@@ -74,7 +101,7 @@ def calculate_gap_extreme_risk(df: pd.DataFrame) -> pd.Series:
         default=50,
     )
 
-    return pd.Series(risk, index=df.index)
+    return pd.Series(risk, index=df.index, dtype="float64")
 
 
 def assign_risk_level(risk_score: pd.Series) -> pd.Series:

@@ -2,6 +2,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.models.scouting.build_risk_score import build_risk_score
+
 
 SCORING_PATH = Path("reports/rankings/scoring_dataset_opportunity.csv")
 PORTFOLIO_PATH = Path("reports/strategy/transfer_portfolio_dataset.csv")
@@ -96,13 +98,99 @@ def main() -> None:
         suffixes=("", "_portfolio"),
     )
 
-    # 6. Add DSS metadata
+    # 6. Build the official risk layer over the complete productive universe.
+    # Risk percentiles must be estimated after the one-row-per-player universe
+    # has been resolved, not copied from a partial historical shortlist.
+    dss = build_risk_score(dss)
+
+    required_risk_columns = [
+        "risk_age_component",
+        "risk_minutes_component",
+        "risk_confidence_component",
+        "risk_gap_component",
+        "risk_score_raw",
+        "risk_score",
+        "risk_level",
+        "risk_adjusted_opportunity_score",
+    ]
+
+    missing_risk_columns = [
+        column
+        for column in required_risk_columns
+        if column not in dss.columns
+    ]
+
+    if missing_risk_columns:
+        raise RuntimeError(
+            "Risk layer is incomplete. "
+            f"Missing columns: {missing_risk_columns}"
+        )
+
+    risk_score = pd.to_numeric(
+        dss["risk_score"],
+        errors="coerce",
+    )
+
+    risk_score_raw = pd.to_numeric(
+        dss["risk_score_raw"],
+        errors="coerce",
+    )
+
+    risk_gap_component = pd.to_numeric(
+        dss["risk_gap_component"],
+        errors="coerce",
+    )
+
+    risk_validation_errors = []
+
+    if risk_score.isna().any():
+        risk_validation_errors.append(
+            "risk_score contains null values"
+        )
+
+    if not risk_score.dropna().between(0, 100).all():
+        risk_validation_errors.append(
+            "risk_score contains values outside [0, 100]"
+        )
+
+    if risk_score.eq(0).all():
+        risk_validation_errors.append(
+            "risk_score is degenerate: all values are zero"
+        )
+
+    if risk_score.nunique(dropna=True) <= 10:
+        risk_validation_errors.append(
+            "risk_score has insufficient variation"
+        )
+
+    if risk_score_raw.nunique(dropna=True) <= 10:
+        risk_validation_errors.append(
+            "risk_score_raw has insufficient variation"
+        )
+
+    if risk_gap_component.nunique(dropna=True) < 4:
+        risk_validation_errors.append(
+            "risk_gap_component does not cover all expected bands"
+        )
+
+    if dss["risk_level"].isna().any():
+        risk_validation_errors.append(
+            "risk_level contains null values"
+        )
+
+    if risk_validation_errors:
+        raise RuntimeError(
+            "Risk layer validation failed: "
+            + "; ".join(risk_validation_errors)
+        )
+
+    # 7. Add DSS metadata
     dss["dss_entity"] = "player"
     dss["dss_universe"] = "global_prospect_universe"
     dss["dss_model"] = PRODUCTIVE_MODEL
     dss["dss_feature_set"] = PRODUCTIVE_FEATURE_SET
 
-    # 7. Sort for operational use
+    # 8. Sort for operational use
     if "opportunity_score" in dss.columns:
         dss = dss.sort_values("opportunity_score", ascending=False)
 

@@ -148,6 +148,53 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
     ]
     snap_cols = [c for c in snap_cols if c in snapshot.columns]
 
+    # TM.8.10 — Snapshot application must be idempotent.
+    #
+    # Remove values managed by the snapshot before applying the current
+    # authority. Otherwise, repeated executions generate columns such as
+    # current_age_snapshot and preserve stale current-context values.
+    snapshot_value_cols = [
+        column
+        for column in snap_cols
+        if column != "player_id_tm"
+    ]
+
+    accidental_snapshot_aliases = [
+        f"{column}_snapshot"
+        for column in snapshot_value_cols
+    ]
+
+    derived_snapshot_cols = [
+        "identity_match_method",
+        "current_snapshot_applied",
+        "identity_review_required",
+        "display_club",
+        "display_league",
+        "display_market_value_eur",
+        "club_context_changed",
+        "league_context_changed",
+        "context_changed",
+        "valuation_context",
+        "gap_interpretation_status",
+    ]
+
+    snapshot_managed_cols = set(
+        snapshot_value_cols
+        + accidental_snapshot_aliases
+        + derived_snapshot_cols
+    )
+
+    drop_snapshot_managed_cols = [
+        column
+        for column in df.columns
+        if column in snapshot_managed_cols
+    ]
+
+    if drop_snapshot_managed_cols:
+        df = df.drop(
+            columns=drop_snapshot_managed_cols
+        )
+
     # 1) Primary match by player_id_tm.
     by_id = df.merge(
         snapshot[snap_cols],
@@ -184,29 +231,44 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
     by_id["current_snapshot_applied"] = by_id["current_club"].notna()
     by_id["identity_review_required"] = ~by_id["current_snapshot_applied"]
 
-    # Do NOT overwrite historical market_value_eur. Keep current context in current_* columns.
-    # For UI compatibility only, expose display columns if absent.
-    if "display_club" not in by_id.columns:
-        by_id["display_club"] = by_id["current_club"].fillna(by_id.get("season_context_club"))
-    if "display_league" not in by_id.columns:
-        by_id["display_league"] = by_id["current_league"].fillna(by_id.get("season_context_league"))
+    # Do NOT overwrite historical market_value_eur.
+    # Rebuild current/display authority on every execution.
+    by_id["display_club"] = (
+        by_id["current_club"]
+        .fillna(by_id.get("season_context_club"))
+    )
+
+    by_id["display_league"] = (
+        by_id["current_league"]
+        .fillna(by_id.get("season_context_league"))
+    )
 
     # ==========================================================
     # TM.8.8 — Dataset Governance Contract
     # ==========================================================
-    if "current_club_snapshot" not in by_id.columns:
-        by_id["current_club_snapshot"] = by_id["current_club"]
+    by_id["current_club_snapshot"] = by_id["current_club"]
+    by_id["current_league_snapshot"] = by_id["current_league"]
 
-    if "current_league_snapshot" not in by_id.columns:
-        by_id["current_league_snapshot"] = by_id["current_league"]
+    if "current_market_value_eur" in by_id.columns:
+        by_id["current_market_value_eur_snapshot"] = (
+            by_id["current_market_value_eur"]
+        )
+    else:
+        by_id["current_market_value_eur_snapshot"] = pd.NA
 
-    if "current_market_value_eur_snapshot" not in by_id.columns and "current_market_value_eur" in by_id.columns:
-        by_id["current_market_value_eur_snapshot"] = by_id["current_market_value_eur"]
+    current_mv = as_series(
+        by_id,
+        "current_market_value_eur_snapshot",
+    )
 
-    if "display_market_value_eur" not in by_id.columns:
-        current_mv = as_series(by_id, "current_market_value_eur_snapshot")
-        season_mv = as_series(by_id, "season_context_market_value_eur")
-        by_id["display_market_value_eur"] = current_mv.fillna(season_mv)
+    season_mv = as_series(
+        by_id,
+        "season_context_market_value_eur",
+    )
+
+    by_id["display_market_value_eur"] = (
+        current_mv.fillna(season_mv)
+    )
 
     season_club = as_series(by_id, "season_context_club").reset_index(drop=True).fillna("").astype(str)
     current_club = as_series(by_id, "current_club_snapshot").reset_index(drop=True).fillna("").astype(str)
@@ -234,7 +296,21 @@ def build_joined(df: pd.DataFrame, snapshot: pd.DataFrame) -> tuple[pd.DataFrame
             "matched_by_player_id": [int((by_id["identity_match_method"] == "player_id_tm").sum())],
             "matched_by_unique_name": [int((by_id["identity_match_method"] == "unique_name_norm").sum())],
             "unmatched": [int((~by_id["current_snapshot_applied"]).sum())],
-            "homonym_review_rows": [int(by_id.get("is_homonym_name", pd.Series(False, index=by_id.index)).fillna(False).sum())],
+            "homonym_review_rows": [
+                int(
+                    by_id.get(
+                        "is_homonym_name",
+                        pd.Series(
+                            False,
+                            index=by_id.index,
+                            dtype="boolean",
+                        ),
+                    )
+                    .astype("boolean")
+                    .fillna(False)
+                    .sum()
+                )
+            ],
             "current_leagues": [" | ".join(sorted(by_id["current_league"].dropna().astype(str).unique()))],
         }
     )
