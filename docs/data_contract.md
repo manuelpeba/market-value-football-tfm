@@ -1,4 +1,4 @@
-# TM.8.8 — DSS Dataset Contract
+# TM.8.8–TM.8.10 — DSS Dataset Contract
 
 ## Objetivo
 
@@ -75,3 +75,16 @@ Valores recomendados para gap_interpretation_status:
 - VALID_SAME_CONTEXT
 - CONTEXT_CHANGED_CAUTION
 - INVALID_CURRENT_INTERPRETATION
+
+## Contrato productivo v2.0.0
+
+TM.8.10 convirtió estas reglas en la DataFrame Contract Layer de la release. Además de distinguir los tres contextos, el contrato debe garantizar:
+
+- identidad canónica mediante el Player Registry;
+- presencia y tipos compatibles de campos obligatorios;
+- ausencia de fabricación silenciosa de `inefficiency_score`;
+- uso del `risk_score` procedente de la autoridad de riesgo;
+- trazabilidad del snapshot y de su fecha de valoración;
+- coherencia entre `current_*` y `display_*` sin sobrescribir `season_*`.
+
+Los consumidores deben fallar de forma explícita ante un contrato inválido o degradar la presentación con un estado documentado; no deben rellenar con ceros una señal analítica ausente.

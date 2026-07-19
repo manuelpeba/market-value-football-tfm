@@ -5,7 +5,7 @@
 Este documento describe la arquitectura completa de pipelines implementada en la release:
 
 ```text
-v1.2.2 — Transfer Strategy Engine
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su finalidad es garantizar:
@@ -309,7 +309,7 @@ Portfolio Optimization
 Decision Support System
 ```
 
-Esta arquitectura constituye el estado productivo oficial del proyecto tras la finalización de Sprint 14 y Sprint 14.1.
+Esta arquitectura constituyó el estado productivo tras Sprint 14 y 14.1 y fue ampliada posteriormente por TM.2, TM.3 y los cierres TM.6–TM.8 descritos en este documento.
 
 # 📦 Data Ingestion Pipeline
 
@@ -851,6 +851,8 @@ La arquitectura permite reconstruir completamente cualquier resultado publicado 
 
 # 🛣️ Roadmap
 
+> TM.2 está completado. TM.1 quedó parcialmente absorbido por 13A.1; las prioridades todavía abiertas se mantienen en [project_evolution.md](project_evolution.md#roadmap-vigente).
+
 ## TM.1 — Transfermarkt Coverage Audit
 
 Estado:
@@ -980,3 +982,21 @@ Decision Support System
 ```
 
 La incorporación de Sprint 14 y Sprint 14.1 constituye la transición desde la identificación de oportunidades individuales hacia la optimización estratégica de decisiones de fichaje bajo restricciones reales de club, incorporando formalmente conceptos de Decision Science y Operations Research dentro de la arquitectura del proyecto.
+
+## Pipelines añadidos hasta v2.0.0
+
+### Snapshot y presentación
+
+El snapshot actual se aplica mediante un entrypoint controlado y conserva separadas las columnas históricas. El Presentation Layer deriva nombres, club, liga, nacionalidad, valor e identidad visual consumidos por Streamlit.
+
+### Registry y contratos
+
+El Identity Registry actúa como SSOT de jugadores. La DataFrame Contract Layer valida esquema y contexto antes de entregar el universo a scoring, rankings, portfolio o interfaz.
+
+### Riesgo y contexto DSS
+
+La Risk Authority suministra el score canónico. El contexto DSS agrega una sola vez las fuentes necesarias y se reutiliza mediante caché, evitando cargas y transformaciones redundantes por vista.
+
+### Validación de cierre
+
+La secuencia de release incluye tests de contratos, snapshots, registry, presentación y consumidores DSS, además de compilación de la aplicación. La promoción automatizada de snapshots y el CI documental continúan en roadmap.

@@ -5,7 +5,7 @@
 Este documento describe las fuentes de datos utilizadas en la versión:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su finalidad es documentar:
@@ -920,7 +920,9 @@ sin afectar a la validez metodológica de Sprint 13B.
 
 ---
 
-# 🛣️ Roadmap
+# 🗂️ Roadmap histórico
+
+> Este bloque reproduce la planificación posterior a 13B. TM.2 y Sprint 14 están completados; el roadmap vigente se centraliza en [project_evolution.md](project_evolution.md#roadmap-vigente).
 
 ## TM.1 — Transfermarkt Coverage Audit
 
@@ -932,7 +934,7 @@ Objetivo:
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Scoring & Ranking Integration v13B — completado
 
 Objetivo:
 
@@ -950,7 +952,7 @@ Rankings v13B
 
 ---
 
-## Sprint 14 — Transfer Strategy Enhancement
+## Sprint 14 — Transfer Strategy Enhancement — completado
 
 Próxima fase principal del proyecto.
 
@@ -1024,7 +1026,15 @@ Los resultados obtenidos muestran que la calidad y riqueza de los datos constitu
 La release:
 
 ```text id="i8j86o"
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 consolida una arquitectura de datos más amplia, más profunda y metodológicamente más robusta que cualquier versión anterior del proyecto.
+
+## Consumo de fuentes en v2.0.0
+
+La release distingue la función temporal de cada fuente. FBref y el panel Transfermarkt histórico alimentan el modelado jugador-temporada; el snapshot actual de Transfermarkt alimenta contexto de club, liga, valor y contrato para el DSS. Ambas ramas se unen mediante identidad canónica, no mediante sobrescritura de columnas históricas.
+
+Las imágenes y escudos son activos de presentación y no autoridades analíticas. Su ausencia activa un recurso visual predeterminado, pero nunca altera el matching, los scores o el contexto del jugador.
+
+Las futuras capas UEFA, selecciones, competiciones europeas y lesiones permanecen fuera de la autoridad productiva hasta superar sus propios controles de cobertura, temporalidad y licencia.

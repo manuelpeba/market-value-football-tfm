@@ -6,8 +6,8 @@
 ![Architecture](https://img.shields.io/badge/Architecture-Modular-success)
 ![Methodology](https://img.shields.io/badge/Methodology-CRISP--DM-orange)
 ![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
-![Version](https://img.shields.io/badge/Version-v1.2.1-purple)
-![Status](https://img.shields.io/badge/Status-Advanced%20Data%20Expansion-success)
+![Version](https://img.shields.io/badge/Version-v2.0.0-purple)
+![Status](https://img.shields.io/badge/Status-DSS%20Productized-success)
 
 </div>
 
@@ -36,6 +36,9 @@ La documentación recoge las decisiones relacionadas con:
 * recruitment intelligence;
 * decision support systems;
 * validación externa.
+* contratos de datos y separación de contextos temporales;
+* autoridad de snapshots, identidad, presentación y riesgo;
+* rendimiento, accesibilidad, responsive design e internacionalización.
 
 Su objetivo no es únicamente describir el código, sino justificar las decisiones metodológicas adoptadas durante la evolución del sistema.
 
@@ -45,22 +48,16 @@ Su objetivo no es únicamente describir el código, sino justificar las decision
 
 La plataforma ha evolucionado desde un sistema predictivo centrado en estimación de valor de mercado hacia una solución integral de Football Analytics orientada a scouting profesional.
 
-Estado actual:
+Estado productivo de la release `v2.0.0`:
 
 ```text
-Historical Evaluation Layer
-↓
-Current Scouting Layer
-↓
-Player Intelligence Layer
-↓
-Recruitment Intelligence Layer
-↓
-Decision Support System
-↓
-External Validation
-↓
-Advanced Metrics Layer
+Data Sources → Historical Modeling Authority
+             → Current Snapshot Authority
+             → Identity Registry
+             → Presentation Authority
+             → Risk Authority
+             → DSS Context
+             → Streamlit Decision Support System
 ```
 
 ---
@@ -74,6 +71,8 @@ Advanced Metrics Layer
 * panel longitudinal jugador-temporada;
 * expansión multi-liga;
 * dataset modelizable reproducible.
+* universo DSS canónico con snapshot actual;
+* contratos explícitos para `season`, `current_snapshot` y `presentation`.
 
 ---
 
@@ -94,6 +93,8 @@ Advanced Metrics Layer
 * Confidence Score;
 * Opportunity Score;
 * Risk Score.
+* Contract Opportunity Score;
+* Risk Adjusted Opportunity Score sin fallbacks silenciosos.
 
 ---
 
@@ -112,6 +113,9 @@ Advanced Metrics Layer
 * Candidate Selection;
 * Comparative Player Analysis;
 * Executive Scouting Workflow.
+* Contract Intelligence;
+* Transfer Strategy Engine;
+* Portfolio Optimization.
 
 ---
 
@@ -122,6 +126,9 @@ Advanced Metrics Layer
 * Explainability SHAP;
 * Rankings interactivos;
 * Internationalization EN/ES.
+* diseño responsive y accesibilidad operativa;
+* caché de contexto DSS y carga centralizada;
+* registry canónico de identidad y presentación.
 
 ---
 
@@ -136,10 +143,14 @@ Advanced Metrics Layer
 | Liga-temporada                 |                    77 |
 | Modelo econométrico oficial    |       Growth OLS v13B |
 | Modelo productivo oficial      |    Tuned XGBoost v13B |
+| Release                        |                v2.0.0 |
+| Universo DSS canónico          |          757 jugadores |
+| Competiciones DSS              |                    11 |
+| Cobertura contractual          |                95,90% |
 
 ---
 
-## Contribuciones recientes
+## Evolución consolidada
 
 ### Sprint 13A — Multi-League Expansion
 
@@ -157,9 +168,43 @@ Advanced Metrics Layer
 * mejora simultánea en econometría y Machine Learning;
 * fortalecimiento de la capacidad explicativa.
 
+### Sprint 14 y 14.1 — Strategy & Player Level
+
+* Transfer Strategy Engine y escenarios de cartera;
+* optimización bajo presupuesto y restricciones;
+* capa de decisión a nivel de jugador.
+
+### TM.2 y TM.3 — Integración DSS
+
+* propagación multi-liga hasta scoring, rankings y portfolio;
+* Contract Intelligence y contexto negociador;
+* separación entre modelización histórica e inteligencia contractual operativa.
+
+### TM.6.x — Productización visual
+
+* identidad visual, activos de jugadores y clubes;
+* UX móvil, diseño ejecutivo y consistencia Cloud/local;
+* internacionalización y accesibilidad operativa.
+
+### TM.7.0, TM.7.1 y TM.7.6 — Autoridades de consumo
+
+* autoridad del snapshot actual;
+* Presentation Layer canónica;
+* retirada de vistas y rutas legacy.
+
+### TM.8.6, TM.8.9 y TM.8.10 — Cierre arquitectónico
+
+* auditoría y cierre de rendimiento;
+* migración a Single Source of Truth e Identity Registry;
+* DataFrame Contract Layer;
+* restauración de la autoridad productiva de `risk_score`;
+* cierre de release `v2.0.0`.
+
 ---
 
 # 📂 Índice documental
+
+La cronología completa de releases, sprints, estado y roadmap se mantiene en [project_evolution.md](project_evolution.md).
 
 ## 🏗️ Arquitectura y sistema
 
@@ -168,6 +213,7 @@ Advanced Metrics Layer
 | architecture.md       | Arquitectura global del sistema y evolución metodológica                 |
 | pipeline_reference.md | Referencia completa de pipelines y flujos operativos                     |
 | schema_decisions.md   | Diseño de datasets, target, unidades de análisis y prevención de leakage |
+| data_contract.md      | Contrato de contextos, campos obligatorios e invariantes DSS             |
 
 ---
 
@@ -187,6 +233,8 @@ Advanced Metrics Layer
 | --------------------------- | ----------------------------------------------------------------- |
 | modeling_decisions.md       | Decisiones metodológicas de econometría, ML, scoring y evaluación |
 | feature_engineering_plan.md | Estrategia completa de Feature Engineering                        |
+| memoria_metodologica_notas.md | Notas para la memoria académica, hipótesis y resultados          |
+| project_evolution.md         | Cronología canónica, releases, sprints y roadmap vigente          |
 
 ---
 
@@ -211,6 +259,17 @@ La documentación refleja la evolución progresiva del proyecto.
 | Sprint 13A   | Multi-League Expansion                |
 | Sprint 13A.1 | External Validation & Coverage Audit  |
 | Sprint 13B   | Advanced Data Expansion               |
+| Sprint 14    | Transfer Strategy Engine              |
+| Sprint 14.1  | Player Level Layer                    |
+| TM.2         | Multi-League DSS Integration          |
+| TM.3         | Contract Intelligence Layer           |
+| TM.6.x       | Visual Identity, Assets & Mobile UX   |
+| TM.7.0       | Snapshot Authority                    |
+| TM.7.1       | Presentation Layer                    |
+| TM.7.6       | Legacy View Decommission              |
+| TM.8.6       | Performance Audit & Closure           |
+| TM.8.9       | SSOT / Registry Migration             |
+| TM.8.10      | Contracts, Risk Authority & Release   |
 
 ---
 
@@ -218,14 +277,17 @@ La documentación refleja la evolución progresiva del proyecto.
 
 Para comprender el sistema de forma progresiva se recomienda el siguiente orden:
 
-1. architecture.md
-2. pipeline_reference.md
-3. schema_decisions.md
-4. data_sources.md
-5. data_quality.md
-6. data_dictionary.md
-7. modeling_decisions.md
-8. feature_engineering_plan.md
+1. `project_evolution.md`
+2. `architecture.md`
+3. `pipeline_reference.md`
+4. `schema_decisions.md`
+5. `data_contract.md`
+6. `data_sources.md`
+7. `data_quality.md`
+8. `data_dictionary.md`
+9. `feature_engineering_plan.md`
+10. `modeling_decisions.md`
+11. `memoria_metodologica_notas.md`
 
 ---
 
@@ -234,10 +296,15 @@ Para comprender el sistema de forma progresiva se recomienda el siguiente orden:
 ```mermaid
 flowchart TD
 
-A[architecture.md]
+A[project_evolution.md]
+--> B0[architecture.md]
+
+B0
 --> B[pipeline_reference.md]
 
-A --> C[schema_decisions.md]
+B0 --> C[schema_decisions.md]
+
+C --> C2[data_contract.md]
 
 C --> D[data_sources.md]
 C --> E[data_quality.md]
@@ -248,6 +315,8 @@ E --> G
 F --> G
 
 G --> H[feature_engineering_plan.md]
+
+G --> N[memoria_metodologica_notas.md]
 
 H --> I[Current Scouting Layer]
 
@@ -503,7 +572,7 @@ Mientras que la capa productiva v13B genera principalmente:
 
 ## Decisión metodológica
 
-No integrar esta capa dentro de Sprint 13B.
+No integrar esta capa dentro de Sprint 13B fue la decisión adoptada en aquel momento; la integración se ejecutó posteriormente como TM.2.
 
 Motivos:
 
@@ -514,7 +583,9 @@ Motivos:
 
 ---
 
-# 🛣️ Próximas líneas documentales
+# 🗂️ Backlog histórico documentado
+
+> Esta sección conserva el plan existente al cierre de 13B. TM.2 y Sprint 14 fueron completados después; TM.1 quedó absorbido parcialmente por los diagnósticos de 13A.1. El roadmap vigente está en [project_evolution.md](project_evolution.md#roadmap-vigente).
 
 ## TM.1 — Transfermarkt Coverage Audit
 
@@ -526,7 +597,7 @@ Objetivo:
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Scoring & Ranking Integration v13B — completado
 
 Objetivo:
 
@@ -546,7 +617,7 @@ Stability Analysis
 
 ---
 
-## Sprint 14 — Transfer Strategy Enhancement
+## Sprint 14 — Transfer Strategy Enhancement — completado
 
 Siguiente fase oficial del proyecto.
 
@@ -593,7 +664,7 @@ Advanced Data Expansion
 Las contribuciones más relevantes de la release:
 
 ```text id="t6qj2v"
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 corresponden a:
@@ -620,7 +691,7 @@ Las variables:
 
 aportan señal predictiva incremental consistente y pasan a formar parte de la arquitectura productiva oficial.
 
-La siguiente evolución natural del proyecto corresponde a:
+La siguiente línea histórica de evolución correspondió a:
 
 ```text id="mpq4u8"
 Sprint 14

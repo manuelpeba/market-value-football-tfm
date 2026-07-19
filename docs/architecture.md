@@ -7,7 +7,7 @@ La arquitectura del proyecto ha evolucionado desde un entorno exploratorio centr
 La versión actual:
 
 ```text
-v1.4.0 — Contract Intelligence Layer
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 implementa una arquitectura multicapa capaz de transformar información deportiva, económica y contractual procedente de múltiples competiciones europeas en recomendaciones accionables para departamentos deportivos profesionales.
@@ -987,6 +987,8 @@ market-value-football-tfm/
 
 # 🛣️ Roadmap arquitectónico
 
+> La auditoría TM.1 quedó parcialmente absorbida por 13A.1. El roadmap canónico de `v2.0.0`, incluidas modularización y automatización de snapshots, se mantiene en [project_evolution.md](project_evolution.md#roadmap-vigente).
+
 ## TM.1 — Transfermarkt Coverage Audit
 
 Estado:
@@ -1142,3 +1144,14 @@ Sprint TM.3 incorpora inteligencia contractual y contexto negociador dentro del 
 La versión productiva actual opera sobre una arquitectura completamente integrada de once ligas europeas, 757 jugadores DSS enriquecidos y una cobertura contractual del 95.90%.
 
 La arquitectura actual constituye una plataforma reproducible, interpretable y orientada a negocio preparada tanto para defensa académica como para evolución hacia una solución profesional de Football Analytics, Recruitment Intelligence y Decision Support Systems.
+
+## Cierre arquitectónico v2.0.0
+
+Después de TM.3, la arquitectura evolucionó en cuatro frentes que forman parte del sistema actual:
+
+1. **TM.6.x — Productización visual:** activos locales, identidad de clubes y jugadores, diseño ejecutivo, responsive, accesibilidad e internacionalización.
+2. **TM.7.x — Autoridades de consumo:** separación formal entre snapshot actual, datos de presentación y retirada de rutas legacy.
+3. **TM.8.6 — Rendimiento:** contexto DSS centralizado, caché y eliminación de cargas redundantes en los principales flujos de Streamlit.
+4. **TM.8.9–TM.8.10 — Gobernanza:** SSOT, Identity Registry, DataFrame Contract Layer y autoridad productiva de riesgo.
+
+La cadena física vigente es `fuentes → modelado histórico / snapshot actual → registry → presentation → risk → DSS context → Streamlit`. Ninguna vista debe reconstruir identidades, valores actuales o riesgo mediante fallbacks locales.

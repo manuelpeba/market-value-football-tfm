@@ -5,7 +5,7 @@
 Este documento describe la estrategia de calidad de datos implementada en la versión:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su objetivo es garantizar:
@@ -863,7 +863,9 @@ sin afectar a la validez metodológica de Sprint 13B.
 
 ---
 
-# 🛣️ Roadmap de calidad
+# 🗂️ Roadmap histórico de calidad
+
+> TM.2 fue completado y TM.1 quedó parcialmente cubierto por 13A.1. Para las líneas abiertas véase [project_evolution.md](project_evolution.md#roadmap-vigente).
 
 ## TM.1 — Transfermarkt Coverage Audit
 
@@ -875,7 +877,7 @@ Objetivo:
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Scoring & Ranking Integration v13B — completado
 
 Objetivo:
 
@@ -908,7 +910,7 @@ La calidad de datos constituye uno de los pilares fundamentales de la arquitectu
 La versión:
 
 ```text id="vgzwz0"
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 incorpora dos contribuciones metodológicas especialmente relevantes.
@@ -940,3 +942,17 @@ Sprint 13B
 reforzando simultáneamente la solidez de los datos, la calidad de las variables y la confianza en los resultados obtenidos.
 
 La calidad de datos deja de ser únicamente un mecanismo de control interno para convertirse en una evidencia empírica de robustez, generalización y reproducibilidad de la metodología propuesta.
+
+## Controles incorporados en v2.0.0
+
+La calidad se amplía desde la validación del dataset hasta sus consumidores:
+
+- contratos de DataFrame para season, snapshot y presentation;
+- auditoría de unicidad y cobertura del Identity Registry;
+- comprobación de fechas y procedencia del snapshot;
+- validación de que el riesgo no sea sustituido por ceros o fallbacks locales;
+- tests de presentación e identidad sobre el universo DSS;
+- controles de rendimiento para evitar reconstrucciones repetidas del contexto global;
+- compilación de la aplicación y entrypoints de snapshot antes del cierre de release.
+
+Los resultados de 13A/13B siguen siendo evidencia histórica válida; TM.7–TM.8 añaden calidad operativa y de gobernanza sin reestimar los modelos oficiales.

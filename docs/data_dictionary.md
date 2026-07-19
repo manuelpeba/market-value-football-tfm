@@ -5,7 +5,7 @@
 Este documento describe las variables utilizadas en la versión:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su objetivo es garantizar:
@@ -596,7 +596,7 @@ Las variables:
 * availability_index
 * defensive_activity_index
 
-fueron promovidas a producción tras la validación experimental de Sprint 13B y forman parte del conjunto oficial de features productivas de la versión v1.2.1.
+fueron promovidas a producción tras la validación experimental de Sprint 13B y permanecen en el conjunto oficial de features productivas de la versión v2.0.0.
 
 # Variables de modelización
 
@@ -1093,7 +1093,7 @@ Risk Score
 Rankings v13B
 ```
 
-queda documentada como trabajo futuro independiente.
+quedó documentada entonces como trabajo independiente y fue completada posteriormente en TM.2.
 
 Backlog asociado:
 
@@ -1324,7 +1324,7 @@ La arquitectura actual integra:
 Las principales contribuciones metodológicas de la versión:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 son:
@@ -1377,3 +1377,15 @@ Advanced Data Expansion
 ```
 
 lo que consolida la transición desde un proyecto de modelización predictiva hacia una plataforma integral de apoyo a decisiones deportivas basada en datos.
+
+## Extensión semántica v2.0.0
+
+El diccionario se interpreta ahora por contexto:
+
+- `season_*`: verdad histórica utilizada por la autoridad de modelado;
+- `current_*_snapshot`: fotografía vigente procedente del snapshot canónico;
+- `display_*`: adaptación de presentación derivada del snapshot;
+- campos de identidad: resueltos por el Player Registry;
+- `risk_score` y derivados: servidos por la Risk Authority.
+
+Los campos `context_changed`, `club_context_changed`, `league_context_changed`, `valuation_context` y `gap_interpretation_status` controlan cuándo un gap histórico puede mostrarse como referencia actual. Véase [data_contract.md](data_contract.md) para las invariantes obligatorias.

@@ -12,7 +12,7 @@ in Professional Football
 Su propósito es servir como base para la redacción de la memoria académica final del TFM y documentar la evolución metodológica completa hasta la release:
 
 ```text
-v1.2.2 — Transfer Strategy Engine
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 ---
@@ -1080,7 +1080,7 @@ Las restricciones explícitas de calidad mejoran el realismo deportivo del siste
 Release actual:
 
 ```text
-v1.2.2 — Transfer Strategy Engine
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Estado:
@@ -1110,3 +1110,14 @@ R² = 0.4453
 
 
 La arquitectura metodológica desarrollada proporciona una base reproducible, interpretable y académicamente consistente para la identificación de ineficiencias de mercado, el scouting cuantitativo y la optimización estratégica de decisiones de fichaje en fútbol profesional.
+
+## Addendum metodológico v2.0.0
+
+Tras TM.2 se completaron TM.3, TM.6.x, TM.7.0, TM.7.1, TM.7.6, TM.8.6, TM.8.9 y TM.8.10. Estos bloques no cambian los resultados científicos de 13A.1/13B: consolidan su explotación como producto mediante inteligencia contractual, UX, autoridades de datos, rendimiento y gobernanza.
+
+La contribución final debe defenderse en dos planos complementarios:
+
+- **evidencia analítica:** panel multi-liga, econometría, ML, explainability y validación externa;
+- **evidencia de ingeniería de decisión:** contratos, snapshots, identidad, riesgo, presentación y DSS reproducible.
+
+La métrica `R² = 0,5664` se conserva como máximo histórico de validación externa; `R² = 0,4453` corresponde al artefacto productivo consolidado. No son resultados contradictorios porque pertenecen a cortes experimentales distintos.

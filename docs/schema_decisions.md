@@ -7,7 +7,7 @@
 ![Modeling](https://img.shields.io/badge/Modeling-Football%20Analytics-orange)
 ![Validation](https://img.shields.io/badge/Validation-Leakage%20Aware-important)
 ![Tracking](https://img.shields.io/badge/Tracking-MLflow-success)
-![Version](https://img.shields.io/badge/Version-v1.2.1-purple)
+![Version](https://img.shields.io/badge/Version-v2.0.0-purple)
 
 </div>
 
@@ -18,7 +18,7 @@
 Este documento describe las decisiones de diseño del esquema de datos utilizadas en la release:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su objetivo es documentar:
@@ -999,7 +999,7 @@ Mientras que la capa productiva genera principalmente:
 
 ## Decisión metodológica
 
-No integrar esta capa dentro de Sprint 13B.
+No integrar esta capa dentro de Sprint 13B fue la decisión adoptada en aquel momento; la integración se ejecutó posteriormente como TM.2.
 
 Justificación:
 
@@ -1069,7 +1069,9 @@ Contiene:
 
 ---
 
-# 🛣️ Roadmap
+# 🗂️ Roadmap histórico
+
+> TM.2 y Sprint 14 están completados. Este bloque conserva la intención original; las líneas abiertas se mantienen en [project_evolution.md](project_evolution.md#roadmap-vigente).
 
 ## TM.1 — Transfermarkt Coverage Audit
 
@@ -1081,7 +1083,7 @@ Objetivo:
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Scoring & Ranking Integration v13B — completado
 
 Objetivo:
 
@@ -1101,7 +1103,7 @@ Stability Analysis
 
 ---
 
-## Sprint 14 — Transfer Strategy Enhancement
+## Sprint 14 — Transfer Strategy Enhancement — completado
 
 Próxima evolución principal del proyecto.
 
@@ -1207,7 +1209,21 @@ Las variables:
 aportan señal predictiva incremental consistente y pasan a formar parte del esquema oficial de la release:
 
 ```text id="wuxz87"
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 La arquitectura resultante mantiene rigor metodológico, separación explícita de responsabilidades y capacidad de evolución futura hacia sistemas avanzados de scouting, recruitment y soporte estratégico a decisiones deportivas.
+
+## Esquema de autoridades v2.0.0
+
+El esquema productivo ya no se interpreta como un único DataFrame indiferenciado. Se organiza en cinco autoridades:
+
+| Autoridad | Responsabilidad |
+| --- | --- |
+| Modeling | observación histórica jugador-temporada y predicción |
+| Snapshot | club, liga, valoración y fecha actuales |
+| Identity | clave canónica y resolución de alias |
+| Presentation | campos `display_*` y activos visuales |
+| Risk | `risk_score`, nivel y derivados ajustados |
+
+La DataFrame Contract Layer gobierna la unión de estas autoridades. Se prohíbe sobrescribir `season_*` con `current_*`, reconstruir identidades por vista o completar scores ausentes con valores sintéticos no trazables.

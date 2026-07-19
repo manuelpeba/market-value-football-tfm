@@ -5,7 +5,7 @@
 Este documento recoge las principales decisiones metodológicas adoptadas durante el desarrollo del sistema y su evolución hasta la release:
 
 ```text
-v1.4.0 — Contract Intelligence Layer
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su finalidad es justificar formalmente las decisiones tomadas desde una perspectiva de:
@@ -1251,4 +1251,12 @@ Inteligencia contractual operativa
 
 preservando la validez científica de los modelos mientras se incrementa significativamente la utilidad práctica del DSS.
 
-La versión v1.4.0 representa la arquitectura metodológica más completa desarrollada durante el proyecto y constituye la base para futuras extensiones relacionadas con UEFA Intelligence, National Team Layer, CatBoost, TabPFN y Health Intelligence.
+La versión v2.0.0 representa la arquitectura metodológica más completa desarrollada durante el proyecto y constituye la base para futuras extensiones relacionadas con UEFA Intelligence, National Team Layer, CatBoost, TabPFN y Health Intelligence.
+
+## MD-016 — Separación de autoridades en v2.0.0
+
+Se adopta como decisión final que modelado, snapshot, identidad, presentación y riesgo tengan autoridades independientes y contratos explícitos. La capa de interfaz no puede redefinir esas señales.
+
+Esta decisión resuelve tres riesgos metodológicos: mezclar valor histórico con valor actual, duplicar jugadores por variantes de identidad y presentar un riesgo artificialmente nulo. También permite optimizar el dashboard sin cambiar el significado de sus métricas.
+
+Los benchmarks CatBoost y TabPFN permanecen en roadmap. Hasta que una evaluación reproducible justifique una promoción, Growth OLS v13B y Tuned XGBoost v13B continúan siendo las autoridades oficiales.

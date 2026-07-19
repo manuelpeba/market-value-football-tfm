@@ -5,7 +5,7 @@
 Este documento describe la estrategia de Feature Engineering implementada en la release:
 
 ```text
-v1.2.1 — Advanced Data Expansion
+v2.0.0 — DSS Architecture, Data Contracts & Productization
 ```
 
 Su finalidad es documentar:
@@ -379,7 +379,7 @@ Las variables:
 * availability_index
 * defensive_activity_index
 
-han sido promovidas a producción y forman parte del conjunto oficial de features de la versión v1.2.1.
+han sido promovidas a producción y permanecen en el conjunto oficial de features de la versión v2.0.0.
 
 # Sprint 5 — Scoring Features
 
@@ -800,7 +800,7 @@ Risk Score
 Rankings v13B
 ```
 
-queda documentada como trabajo futuro independiente.
+quedó documentada entonces como trabajo independiente y fue completada posteriormente en TM.2.
 
 Backlog asociado:
 
@@ -827,7 +827,9 @@ La decisión metodológica fue no ejecutar esta integración dentro de Sprint 13
 
 ---
 
-# Roadmap
+# Roadmap histórico
+
+> TM.2 y Sprint 14 se completaron después de redactarse este plan. El roadmap vigente está en [project_evolution.md](project_evolution.md#roadmap-vigente).
 
 ## TM.1 — Transfermarkt Coverage Audit
 
@@ -839,7 +841,7 @@ Objetivo:
 
 ---
 
-## TM.2 — Scoring & Ranking Integration v13B
+## TM.2 — Scoring & Ranking Integration v13B — completado
 
 Objetivo:
 
@@ -855,7 +857,7 @@ Rankings v13B
 
 ---
 
-## Sprint 14 — Transfer Strategy Enhancement
+## Sprint 14 — Transfer Strategy Enhancement — completado
 
 Líneas de trabajo previstas:
 
@@ -949,3 +951,15 @@ Advanced Football Metrics
 ```
 
 consolidando la transición desde un sistema predictivo hacia una plataforma integral de Football Analytics orientada a scouting, recruitment y soporte avanzado a decisiones deportivas.
+
+## Estado de features en v2.0.0
+
+TM.2 completó la propagación de las features v13B hacia scoring y rankings. TM.3 añadió variables contractuales únicamente aguas abajo, en el DSS; no entran en Growth OLS v13B ni Tuned XGBoost v13B. TM.7–TM.8 añadieron campos de contexto, identidad, presentación y control, que son variables operativas y no predictores.
+
+Esta separación conserva tres familias:
+
+1. features predictivas históricas, libres de leakage;
+2. señales de decisión derivadas de predicciones y scoring;
+3. atributos actuales de contexto y presentación.
+
+El roadmap vigente se limita a benchmarks o nuevas capas explícitas; la integración TM.2 ya no se considera trabajo futuro.
